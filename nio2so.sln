@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTPS", "TSOHTTPS\nio2so.TSOHTTPS.csproj", "{CB17B825-8A70-4F5F-A2AC-EED040925E1D}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTP", "nio2so.TSOHTTP\nio2so.TSOHTTP.csproj", "{71596EAC-EF76-4349-861D-A94F0839E035}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOProtocol", "nio2so.TSOProtocol\nio2so.TSOProtocol.csproj", "{F1955FD1-F272-40BF-B960-7F5212FB26BC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOTCP.City", "nio2so.TSOTCP.City\nio2so.TSOTCP.City.csproj", "{D601BDB2-5846-43FD-8117-917A51700603}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPQuaZar", "..\TCPQuaZar\TCPQuaZar\TCPQuaZar.csproj", "{A9AC133D-39CF-4B43-A496-B45EBE6590FA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Formats", "nio2so.Formats\nio2so.Formats.csproj", "{544A5728-F382-499D-810B-A5BA7FE62643}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71596EAC-EF76-4349-861D-A94F0839E035}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71596EAC-EF76-4349-861D-A94F0839E035}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71596EAC-EF76-4349-861D-A94F0839E035}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71596EAC-EF76-4349-861D-A94F0839E035}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D601BDB2-5846-43FD-8117-917A51700603}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D601BDB2-5846-43FD-8117-917A51700603}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D601BDB2-5846-43FD-8117-917A51700603}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D601BDB2-5846-43FD-8117-917A51700603}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9AC133D-39CF-4B43-A496-B45EBE6590FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9AC133D-39CF-4B43-A496-B45EBE6590FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9AC133D-39CF-4B43-A496-B45EBE6590FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9AC133D-39CF-4B43-A496-B45EBE6590FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{544A5728-F382-499D-810B-A5BA7FE62643}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{544A5728-F382-499D-810B-A5BA7FE62643}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{544A5728-F382-499D-810B-A5BA7FE62643}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{544A5728-F382-499D-810B-A5BA7FE62643}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}
+	EndGlobalSection
+EndGlobal
