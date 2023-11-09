@@ -1,6 +1,6 @@
 ﻿namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU)]
     internal class TSOSetInvisiblePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU;
@@ -16,7 +16,7 @@
 
         public uint Value { get; set; }
     }
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU)]
     internal class TSOSetInvisibleResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU;

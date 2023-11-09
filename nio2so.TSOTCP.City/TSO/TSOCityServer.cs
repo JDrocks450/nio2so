@@ -1,18 +1,17 @@
-﻿using nio2so.TSOTCP.City.TSO.Aries;
-using QuazarAPI.Networking.Data;
-using QuazarAPI;
-using QuazarAPI.Networking.Standard;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
+﻿#define MAKEMANY
+#undef MAKEMANY
+
+using nio2so.Formats.BPS;
+using nio2so.Formats.TSOData;
+using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
-using nio2so.Formats.TSOData;
+using nio2so.TSOTCP.City.TSO.Voltron.Regulator;
+using QuazarAPI;
+using QuazarAPI.Networking.Standard;
+using System.Net;
+using System.Net.Sockets;
 
 namespace nio2so.TSOTCP.City.TSO
 {
@@ -22,16 +21,20 @@ namespace nio2so.TSOTCP.City.TSO
 
         public TSOCityServer(int port, IPAddress ListenIP = null) : base("TSOCity", port, 5, ListenIP)
         {
-            ReceiveAmount = TSO_Aries_SendRecvLimit;
-            CachePackets = false;
-            DisposePacketOnSent = true;
+            SendAmount = ReceiveAmount = TSO_Aries_SendRecvLimit; // 1MB by default           
+            CachePackets = false; // massive memory pit here if true
+            DisposePacketOnSent = true; // no more memory leaks :)
         }
 
         public override void Start()
         {
+            //PARSE TSO DATA DEFINITION DAT TO ROOT DIR
             var file = TSODataImporter.Import(@"E:\Games\TSO Pre-Alpha\TSO\TSOData_DataDefinition.dat");
             File.WriteAllText("/packets/datadefinition.json", file.ToString());
 
+            var bps = BPSFileInterpreter.Interpret(@"E:\Games\TSO Pre-Alpha\packetlog.bps");
+
+            //START THE SERVER
             BeginListening();
         }
 
@@ -59,9 +62,7 @@ namespace nio2so.TSOTCP.City.TSO
                         QConsole.WriteLine($"Client: {ID}", sessionData.ToString());
 
                         //HOST_ONLINE_PDU
-                        HandleSendClientHostOnlinePacket(ID);
-                        //UPDATE_PLAYER_PDU
-                        HandleSendClientPlayerOnlinePacket(ID);
+                        HandleSendClientHostOnlinePacket(ID);                        
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
@@ -80,20 +81,30 @@ namespace nio2so.TSOTCP.City.TSO
                                 var returnPackets = OnIncomingVoltronPacket(ID, packet, ref _handled);
                                 if (!_handled)
                                 { // HANDLER FAILED
-                                    QConsole.WriteLine("TSO City Server Warnings", "Handling the aforementioned Voltron packet was not successful.");
+                                    QConsole.WriteLine("TSO City Server Warnings", $"Handling {packet.KnownPacketType} Voltron packet was not successful.");
                                     continue;
                                 }
                                 packetSendQueue.AddRange(returnPackets); // ADD TO SEND QUEUE
                             }
                             catch (Exception ex)
                             {
-                                QConsole.WriteLine("TSO City Server Warnings", $"Handling the aforementioned Voltron packet resulted in an error. {ex.Message}");
+                                QConsole.WriteLine("TSO City Server Warnings", $"Handling the {packet.KnownPacketType} Voltron packet resulted in an error. \n" +
+                                    $"{ex.Message}");
                             }
                         }
+#if MAKEMANY
                         //MAKE ARIES FRAME WITH MANY VOlTRON PACKETS
                         var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(packetSendQueue);
                         ariesPacket.WritePacketToDisk(false);
                         Send(ID, ariesPacket);
+#else
+                        foreach (var voltronPacket in packetSendQueue)
+                        {
+                            var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(voltronPacket);
+                            ariesPacket.WritePacketToDisk(false);
+                            Send(ID, ariesPacket);
+                        }
+#endif
                     avoidHandlers:
                         ;
                     }
@@ -118,29 +129,15 @@ namespace nio2so.TSOTCP.City.TSO
             {                
                 Debug_LogSendPDU(ID, packetToSend);
                 packets.Add(packetToSend);               
-            }
-
-            if (Handled) return packets;
-            //Handled = true;
+            }            
+          
+            Handled = true;
             switch (Packet.KnownPacketType)
-            {
-                case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:
-                    {
-                        var formattedPacket = (TSOSetAcceptAlertsPDU)Packet;
-                        defaultSend(new TSOSetAcceptAlertsResponsePDU(true));
-                    }
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU:                    
-                    defaultSend(new TSOSetAcceptFlashesResponsePDU(true));
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU:                    
-                    defaultSend(new TSOSetIgnoreListResponsePDU());
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
-                    defaultSend(new TSOSetInvincibleResponsePDU(true));
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU:
-                    defaultSend(new TSOSetInvisibleResponsePDU(true));
+            {                
+                case TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU:
+                    //SEND AN UPDATE_PLAYER_PDU
+                    defaultSend(HandleSendClientPlayerOnlinePacket());
+                    Handled = false;
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU:
                     {
@@ -163,29 +160,49 @@ namespace nio2so.TSOTCP.City.TSO
 	                    ** sent us a request packet--just like (in response to HostOnlinePDU) the game sends us a
 	                    ** LoadHouseResponsePDU without us ever having sent it a LoadHousePDU. ;)
 	                    */
+
                         defaultSend(new TSOHouseSimConstraintsResponsePDU());
-                        Handled = true;
+                        Handled = false;
+                    }
+                    break;
+                case TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU:
+                    {
+                        TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)Packet;
+                        defaultSend(new TSOBCVersionListPDU(pdu.VersionString, "", 0x01));
+                        Handled = false;
                     }
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     { // DB Request packets all start with the same Packet Type.
                         TSODBRequestWrapper? dbPacket = Packet as TSODBRequestWrapper;
-                        if (dbPacket == default) break;
+                        if (dbPacket == default) break;                        
                         //Handle DB request packets here and enqueue the response packets into the return value of this function.
-                        TSODBRequestWrapper? returnDBPacket = HandleDBWrapperPDUPacket(dbPacket);
-                        if (returnDBPacket == default)
+                        if (!TSORegulatorManager.HandleIncomingDBRequest(dbPacket, out var returnpackets))
                         { // handle failed!
                             QConsole.WriteLine("TSODBRequestWrapper Handler", $"Could not handle " +
                                 $"{(TSO_PreAlpha_DBStructCLSIDs)dbPacket.TSOPacketFormatCLSID}::" +
                                 $"{(TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID}!");
                             break;
                         }
+                        QConsole.WriteLine("TSODBRequestWrapper Handler", $"Handled " +
+                                $"{(TSO_PreAlpha_DBStructCLSIDs)dbPacket.TSOPacketFormatCLSID}::" +
+                                $"{(TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID}!");
                         //handle success!
-                        defaultSend(returnDBPacket);
-                        Handled = true;
+                        foreach (var packet in returnpackets)    
+                            defaultSend(packet);
                     }
                     break;
                 default: Handled = false; break;
+            }
+            // TRY USING THE REGULATOR MANAGER TO HANDLE THIS PACKET
+            if (!Handled)
+            { // INVOKE THE SERVER-SIDE REGULATOR MANAGER
+                if (TSORegulatorManager.HandleIncomingPDU(Packet, out var returnPDUs))
+                {
+                    foreach (var packet in returnPDUs)
+                        defaultSend(Packet);
+                    Handled = true;                    
+                }
             }
             return packets;
         }
@@ -196,22 +213,6 @@ namespace nio2so.TSOTCP.City.TSO
         }
 
         #region HANDLERS
-        private TSODBRequestWrapper? HandleDBWrapperPDUPacket(TSODBRequestWrapper DBPacket)
-        {
-            switch ((TSO_PreAlpha_DBStructCLSIDs)DBPacket.TSOPacketFormatCLSID)
-            {
-                case TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard:
-                    { // TSO Net Message Standard type responses (most common)
-                        switch ((TSO_PreAlpha_DBActionCLSIDs)DBPacket.TSOSubMsgCLSID)
-                        {
-                            case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDRequest:
-                                return new TSOGetRoommateInfoByLotIDResponse(DBPacket.AriesID, DBPacket.MasterID);
-                        }
-                    }
-                    break;
-            }
-            return null;
-        }
         /// <summary>
         /// Handles an incoming connection by sending it the <see cref="TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU"/>
         /// </summary>
@@ -230,13 +231,11 @@ namespace nio2so.TSOTCP.City.TSO
         /// </summary>
         /// <param name="ID"></param>
         /// <param name="PacketProperties"></param>
-        private void HandleSendClientPlayerOnlinePacket(uint ID, TSOUpdatePlayerPDU? PacketProperties = default)
+        private TSOUpdatePlayerPDU HandleSendClientPlayerOnlinePacket(TSOUpdatePlayerPDU? PacketProperties = default)
         {
-            if (PacketProperties == default) PacketProperties = new TSOUpdatePlayerPDU("1337", "asdf");
-            var sendPacket = TSOVoltronPacket.MakeVoltronAriesPacket(PacketProperties); //new TSOHostOnlinePDU(1, 1024, "Hello", "World"));
-            sendPacket.WritePacketToDisk(false);
-            Send(ID, sendPacket);
-            Debug_LogSendPDU(ID, PacketProperties);
+            if (PacketProperties == default) 
+                PacketProperties = new TSOUpdatePlayerPDU("161", "Bloaty");
+            return PacketProperties;
         }
         #endregion
         /// <summary>

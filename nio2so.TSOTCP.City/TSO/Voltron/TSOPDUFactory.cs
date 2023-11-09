@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
     [System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    sealed class TSOVoltronPacketAssociationAttribute : Attribute
+    sealed class TSOVoltronPDU : Attribute
     {
-        public TSOVoltronPacketAssociationAttribute(TSO_PreAlpha_VoltronPacketTypes Type)
+        public TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes Type)
         {
             this.Type = Type;
         }
@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         {
             foreach(var type in typeof(TSOPDUFactory).Assembly.GetTypes())
             {
-                var attribute = type.GetCustomAttribute<TSOVoltronPacketAssociationAttribute>();
+                var attribute = type.GetCustomAttribute<TSOVoltronPDU>();
                 if (attribute != null)
                 {
                     bool value = typeMap.TryAdd(attribute.Type, type);

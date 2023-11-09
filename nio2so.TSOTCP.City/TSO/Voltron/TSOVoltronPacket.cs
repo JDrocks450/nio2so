@@ -22,7 +22,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     internal abstract class TSOVoltronPacket : ExtendedBufferOperations, ITSOVoltron
     {
         public virtual string FriendlyPDUName => GetType().Name;
-        public virtual UInt16 VoltronPacketType { get; } = 0x0;
+        public abstract UInt16 VoltronPacketType { get; }
         public TSO_PreAlpha_VoltronPacketTypes KnownPacketType => (TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType;
         public UInt32 PayloadSize { get; protected set; }
 
@@ -44,10 +44,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         {
             AllocateBody(2);  //clear old data...!         
 
+            if (VoltronPacketType == 0x00)
+                throw new InvalidDataException($"{nameof(VoltronPacketType)} is 0x00! This cannot be -- no packet should ever leave without a type.");
+
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)VoltronPacketType)); // voltron packet type emplaced
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt32)00)); // followed by placeholder data as we have no clue how big it is. 
 
-            foreach (var property in GetPropertiesToCopy()) {
+            foreach (var property in GetPropertiesToCopy()) {                
                 bool hasAttrib = getPropertyAttribute(property, out TSOVoltronValueTypes type) != default;
                 object? myValue = property.GetValue(this);
                 if (myValue == default) continue;
@@ -57,6 +60,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                             EndianBitConverter.Little);
 
                 bool wroteValue = true;
+
+                if (property.PropertyType == typeof(Byte[]))
+                {
+                    EmplaceBody((byte[])myValue);
+                    continue;
+                }
 
                 //---NUMERICS
                 if (property.PropertyType == typeof(UInt16))
@@ -245,15 +254,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             return attribute;
         }
 
-        public static TSOTCPPacket MakeVoltronAriesPacket(TSOVoltronPacket VoltronPacket, bool includePacketCloser = true)
+        public static TSOTCPPacket MakeVoltronAriesPacket(TSOVoltronPacket VoltronPacket)
         {
-            if (includePacketCloser)
-            {
-                //emplace packet closer
-                VoltronPacket.SetPosition((int)VoltronPacket.BodyLength);
-                VoltronPacket.EmplaceBody(new byte[] { 0x41, 0x01 });
-                VoltronPacket.ReevaluateSize();
-            }
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, VoltronPacket.Body);
         }      
             
@@ -263,12 +265,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             long totalSize = VoltronPackets.Sum(x => x.PayloadSize) + 2;
             byte[] bodyBuffer = new byte[totalSize];
             int currentIndex = 0;
-
-            //put packet closer in last packet 
-            var lastVoltronPacket = VoltronPackets.Last();
-            lastVoltronPacket.SetPosition((int)lastVoltronPacket.BodyLength);
-            lastVoltronPacket.EmplaceBody(new byte[] { 0x41, 0x01 });
-            lastVoltronPacket.ReevaluateSize();
 
             foreach (var p in VoltronPackets)
             {
@@ -306,6 +302,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     AriesPacket.SetPosition((int)currentIndex);
                     continue;
                 }
+                if(cTSOVoltronpacket is TSODBRequestWrapper dbPacket)
+                    dbPacket.ReadAdditionalMetadata(); // make sure the metadata is read!
                 if (cTSOVoltronpacket != default)
                     packets.Add(cTSOVoltronpacket);
             }
@@ -339,7 +337,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// Gets all the properties which are eligible for encoding into the packet body
         /// </summary>
         /// <returns></returns>
-        protected IEnumerable<PropertyInfo> GetPropertiesToCopy() =>
+        protected virtual IEnumerable<PropertyInfo> GetPropertiesToCopy() =>
             GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
             .Where(
                 //Hard-Coded absolutely avoided names

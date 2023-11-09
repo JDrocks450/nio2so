@@ -22,13 +22,23 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
 
         public static AvatarDataPacketStructure Default = new()
         {
-            AvatarID = 0x00A1,
+            AvatarID = 0x0539,
             Name = "Bloaty",
             Popularity = 5,
             PopularityDelta = 1,
             ShardName = "Blazing Falls",
             SimoleanDelta = 5000,
             Simoleans = 20000
+        };
+        public static AvatarDataPacketStructure Empty = new()
+        {
+            AvatarID = 0x0,
+            Name = "\0",
+            Popularity = 0,
+            PopularityDelta = 0,
+            ShardName = "Blazing Falls",
+            SimoleanDelta = 0,
+            Simoleans = 0
         };
 
         public AvatarDataPacket(params AvatarDataPacketStructure[] Avatars) : base(TSOCitySelectorAvatarDataBase)

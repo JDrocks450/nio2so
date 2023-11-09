@@ -1,6 +1,6 @@
 ﻿namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU)]
     internal class TSOSetInvinciblePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU;
@@ -16,7 +16,7 @@
 
         public uint Value { get; set; }
     }
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_RESPONSE_PDU)]
     internal class TSOSetInvincibleResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_RESPONSE_PDU;

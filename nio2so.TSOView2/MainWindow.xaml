@@ -1,0 +1,36 @@
+﻿<Window x:Class="nio2so.TSOView2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:nio2so.TSOView2"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="768" Width="1024">
+    <DockPanel>
+        <ToolBarPanel DockPanel.Dock="Top">
+            <ToolBar ToolBarTray.IsLocked="True">
+                <Menu Name="DefaultMenu" ToolBar.OverflowMode="Never">
+                    <MenuItem Header="File...">
+                        <MenuItem Header="Open...">
+                            <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
+                        </MenuItem>
+                        <Separator/>
+                        <MenuItem Name="ExitItem" Header="Exit"/>
+                    </MenuItem>
+                    <MenuItem Header="Edit...">
+
+                    </MenuItem>
+                    <MenuItem Header="View...">
+                        <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
+                    </MenuItem>
+                    <MenuItem Header="Help...">
+
+                    </MenuItem>
+                </Menu>
+            </ToolBar>
+        </ToolBarPanel>
+        <Grid>
+            <Frame Name="MainPageContent"/>
+        </Grid>
+    </DockPanel>
+</Window>

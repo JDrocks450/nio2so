@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU)]
     internal class TSOSetAcceptAlertsPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;
@@ -21,7 +21,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 
         public uint Value { get; set; }
     }
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_RESPONSE)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_RESPONSE)]
     internal class TSOSetAcceptAlertsResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;

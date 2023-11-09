@@ -33,7 +33,9 @@ namespace nio2so.TSOProtocol.Controllers
         {
             _logger.LogInformation("Client requests AvatarData...");
             var avatarData = AvatarDataPacket.Default;
+            bool CASActivated = false;
             var packetStr = new AvatarDataPacket(avatarData).ToString();
+            if (CASActivated) packetStr = new AvatarDataPacket().ToString();
             _logger.LogInformation($"CitySelector: AvatarData() === \n {packetStr} \n===");
             return Ok(packetStr);
         }

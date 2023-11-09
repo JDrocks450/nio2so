@@ -1,6 +1,6 @@
 ﻿namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU)]
     internal class TSOSetAcceptFlashesPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU;
@@ -16,7 +16,7 @@
 
         public uint Value { get; set; }
     }
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_RESPONSE_PDU)]
     internal class TSOSetAcceptFlashesResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_RESPONSE_PDU;

@@ -17,6 +17,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         public uint Arg1 { get; set;  }
         public string AriesID { get; set; }
         public string MasterID { get; set; }
+        public byte Arg2 { get; set; } = 0x41;
+        public byte Arg3 { get; set; } = 0x01;
 
         public TSOUpdatePlayerPDU(string ariesID, string masterID, uint arg1 = 0x1C)
         {

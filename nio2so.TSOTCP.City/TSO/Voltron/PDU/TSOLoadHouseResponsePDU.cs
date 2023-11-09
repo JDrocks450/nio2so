@@ -12,7 +12,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     /// sent to the Client, and <see cref="TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU"/> will be sent 
     /// instead.</para>
     /// </summary>
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU)]
     internal class TSOLoadHouseResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU;
@@ -20,9 +20,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// One UInt32 with an ID to load.
         /// </summary>
         public uint HouseID { get; set; }
-        public TSOLoadHouseResponsePDU() : base() { }
+        public TSOLoadHouseResponsePDU() : base() { MakeBodyFromProperties(); }
 
-        public TSOLoadHouseResponsePDU(uint houseID) : this()
+        public TSOLoadHouseResponsePDU(uint houseID) : base()
         {
             HouseID = houseID;
             MakeBodyFromProperties();

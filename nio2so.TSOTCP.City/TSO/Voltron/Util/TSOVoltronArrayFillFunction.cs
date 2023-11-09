@@ -22,6 +22,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Util
         {
             if (Target.Length >= FillSize) return Target;
             byte[] returnArray = new byte[FillSize];
+            Target.CopyTo(returnArray, 0);
             for(uint index = (uint)Target.Length; index < FillSize; index++)
             {
                 byte fillByte = 0xBA;
@@ -29,9 +30,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Util
                 else if (index % 4 == 1) fillByte = 0xAD;
                 else if (index % 4 == 2) fillByte = 0xF0;
                 else fillByte = 0x0D;
-                Target[index] = fillByte;
+                returnArray[index] = fillByte;
             }
-            return Target;
+            return returnArray;
         }
     }
 }

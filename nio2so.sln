@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOTCP.City", "nio2s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPQuaZar", "..\TCPQuaZar\TCPQuaZar\TCPQuaZar.csproj", "{A9AC133D-39CF-4B43-A496-B45EBE6590FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Formats", "nio2so.Formats\nio2so.Formats.csproj", "{544A5728-F382-499D-810B-A5BA7FE62643}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.Formats", "nio2so.Formats\nio2so.Formats.csproj", "{544A5728-F382-499D-810B-A5BA7FE62643}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.TSOView2", "nio2so.TSOView2\nio2so.TSOView2.csproj", "{FBA66FA8-C5BE-48CA-86BE-8290920DAFA6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{544A5728-F382-499D-810B-A5BA7FE62643}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{544A5728-F382-499D-810B-A5BA7FE62643}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{544A5728-F382-499D-810B-A5BA7FE62643}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBA66FA8-C5BE-48CA-86BE-8290920DAFA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBA66FA8-C5BE-48CA-86BE-8290920DAFA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBA66FA8-C5BE-48CA-86BE-8290920DAFA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBA66FA8-C5BE-48CA-86BE-8290920DAFA6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU)]
     internal class TSOHouseSimConstraintsResponsePDU : TSOVoltronPacket
     {
-        public TSOHouseSimConstraintsResponsePDU() : base() { }
-        public TSOHouseSimConstraintsResponsePDU(uint arg1) : this()
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU;
+        public TSOHouseSimConstraintsResponsePDU() : base() { MakeBodyFromProperties(); }
+        public TSOHouseSimConstraintsResponsePDU(uint arg1) : base()
         {
             Arg1 = arg1;
             MakeBodyFromProperties();

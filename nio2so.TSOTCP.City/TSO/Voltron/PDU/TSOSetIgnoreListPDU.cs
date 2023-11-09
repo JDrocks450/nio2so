@@ -1,6 +1,6 @@
 ﻿namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU)]
     internal class TSOSetIgnoreListPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU;
@@ -16,7 +16,7 @@
 
         public ushort Value { get; set; }
     }
-    [TSOVoltronPacketAssociation(TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_RESPONSE_PDU)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_RESPONSE_PDU)]
     internal class TSOSetIgnoreListResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_RESPONSE_PDU;
