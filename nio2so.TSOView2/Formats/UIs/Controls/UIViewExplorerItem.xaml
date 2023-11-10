@@ -1,0 +1,23 @@
+﻿<HeaderedContentControl x:Class="nio2so.TSOView2.Formats.UIs.Controls.UIViewExplorerItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:nio2so.TSOView2.Formats.UIs.Controls"
+             mc:Ignorable="d" 
+             d:DesignHeight="150" d:DesignWidth="300" Header="Sample Header" Name="This">
+    <HeaderedContentControl.Template>
+        <ControlTemplate TargetType="HeaderedContentControl">
+            <Button HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Padding="5">
+                <DockPanel>
+                    <ContentPresenter Content="{Binding Header, ElementName=This}" DockPanel.Dock="Top"/>
+                    <Separator DockPanel.Dock="Top" Margin="0,5"/>
+                    <ContentPresenter/>
+                </DockPanel>
+            </Button>
+        </ControlTemplate>
+    </HeaderedContentControl.Template>
+    <Grid>
+            
+    </Grid>
+</HeaderedContentControl>

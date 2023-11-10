@@ -17,10 +17,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Formats\UIs\Controls\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
   </ItemGroup>
 

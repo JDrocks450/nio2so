@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using nio2so.Formats.CST;
 using nio2so.Formats.UI.TSOTheme;
 using nio2so.Formats.UI.UIScript;
 using System;
@@ -19,7 +20,7 @@ namespace nio2so.TSOView2.Formats.UIs
             Current = new UIsHandler();
         }
         //----
-        
+
         /// <summary>
         /// The <see cref="UIScriptFile"/> the User opened
         /// </summary>
@@ -28,8 +29,16 @@ namespace nio2so.TSOView2.Formats.UIs
         /// The file name the User supplied to visit <see cref="CurrentFile"/>
         /// </summary>
         public string CurrentFilePath { get; private set; }
-
+        /// <summary>
+        /// The current theme -- the map of AssetIDs to images stored in the game directory
+        /// </summary>
         public TSOThemeFile CurrentTheme { get; private set; } = new();
+        /// <summary>
+        /// The imported UIText directory
+        /// </summary>
+        public CSTDirectory StringTables { get; private set; }
+
+        private TSOUIScriptImporter defaultImporter = new();
 
         private UIsHandler()
         {
@@ -40,13 +49,21 @@ namespace nio2so.TSOView2.Formats.UIs
                     CurrentTheme = file;
             }
             catch { }
-        }    
+            // LOAD CST FILE
+            var directory = CSTImporter.ImportDirectory(
+                System.IO.Path.Combine(
+                    TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "UIText.dir"
+                ));
+            if (directory != null)
+                StringTables = directory;
+            defaultImporter.SetCST(StringTables);
+        } 
         /// <summary>
         /// Closes the current session and frees all resources related to it.
         /// </summary>
         private void FinishUp()
         {
-
+            CurrentFile = null;
         }
 
         /// <summary>
@@ -72,7 +89,7 @@ namespace nio2so.TSOView2.Formats.UIs
                 return; // user dismissed the dialog away
             try
             {
-                CurrentFile = TSOUIScriptImporter.Import(dlg.FileName);
+                CurrentFile = defaultImporter.ImportFromFile(dlg.FileName);
                 CurrentFilePath = dlg.FileName;
                 OnOK();
             }

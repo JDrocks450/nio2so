@@ -1,10 +1,10 @@
 ﻿using nio2so.Formats.UI.TSOTheme;
 using nio2so.Formats.UI.UIScript;
+using nio2so.TSOView2.Formats.UIs.Controls;
 using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -20,6 +20,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Xml.Linq;
 
 namespace nio2so.TSOView2.Formats.UIs
 {
@@ -43,7 +44,13 @@ namespace nio2so.TSOView2.Formats.UIs
         {
             InitializeComponent();
             Loaded += OnLoaded;
-        }        
+            Unloaded += OnUnloaded;
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            
+        }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
@@ -61,82 +68,82 @@ namespace nio2so.TSOView2.Formats.UIs
             //LOAD LIVE VIEW
             ReloadUIViewer();
         }
-
+        
         private void ReloadUIViewer()
         {
             var theme = UIsHandler.Current.CurrentTheme;
             //DEREFERNCE CONTENT FIRST
-            bool successful = theme.LoadReferencedImages(
+            bool successful = theme.Initialize(
                 TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_UIGraphicsDirectory,
-                CurrentUIScriptFile
-            );
+                CurrentUIScriptFile,
+                out string[] Missing);
+            
             if (!successful)
-                return;
-
-            BitmapSource GetManaged(ulong AssetID)
             {
-                var image = theme[AssetID].TextureRef;
-                if (image == null) image = new Bitmap(1,1);
-                using (System.Drawing.Bitmap bmp = new System.Drawing.Bitmap(image))
+                if (MessageBox.Show("This script has missing Image references.\n" +
+                    $"{string.Join(", ", Missing)}" +
+                    "Want to try Mrs.Shipper?", "Mrs. Shipper", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    bmp.MakeTransparent(System.Drawing.Color.FromArgb(255, 255, 0, 255)); // magenta
-                    return bmp.Convert(true);
+                    int completed = theme.TryMrsShipper(CurrentUIScriptFile);
+                    MessageBox.Show($"Mrs.Shipper found {completed} references. Please validate.");
+                }
+                return;
+            }            
+
+            List<FrameworkElement> elements = new List<FrameworkElement>();
+            ControlsStack.Children.Clear();
+            UICanvas.Children.Clear();
+
+            //UNREFERENCED IMAGES FIRST
+            foreach (var definition in theme.Values)
+            {
+                if (!definition.ReferencedBy.Any())
+                {
+                    var imgControl = UIControlFactory.MakeImageFromDefinition(definition);
+                    if (imgControl == default) continue;
+                    elements.Add(imgControl);
                 }
             }
-            ImageBrush MakeImage(ulong AssetID)
-            {
-                var managed = GetManaged(AssetID);                
-                return new ImageBrush(managed);
-            }
-            ImageBrush MakeImageName(string Name)
-            {
-                var define = CurrentUIScriptFile.GetDefineByName(Name);
-                var assetIDprop = define.GetProperty("assetID");
-                return MakeImage(Convert.ToUInt64(assetIDprop.GetValue<UIScriptString>(),16));
-            }
-
-            // BACKGROUND IMAGE
-            var imgBrush = MakeImageName("BackgroundImage");
-            UICanvas.Background = imgBrush;
-            UICanvas.Width = imgBrush.ImageSource.Width;
-            UICanvas.Height = imgBrush.ImageSource.Height;
             
             //CONTROLS
             foreach(var control in CurrentUIScriptFile.Controls)
             {
-                UIElement element = default;
-                switch (control.Type.ToLower())
-                {
-                    case "button":
-                        Button btn = new Button()
-                        {
-                            Background = null,
-                            Style = null,
-                            BorderBrush = null,                            
-                        };
-                        var prop = control.GetProperty("image");
-                        if (prop != null)
-                        {
-                            var name = prop.GetValue<UIScriptString>();
-                            var brush = MakeImageName(name);
-                            brush.ViewportUnits = BrushMappingMode.Absolute;
-                            brush.Viewport = new Rect(0,0, brush.ImageSource.Width, brush.ImageSource.Height);
-                            RenderOptions.SetBitmapScalingMode(brush, BitmapScalingMode.NearestNeighbor);
-                            btn.Background = brush;
-                            btn.Width = brush.ImageSource.Width / 4;
-                            btn.Height = brush.ImageSource.Height;
-                        }
-                        prop = control.GetProperty("position");
-                        if (prop != null)
-                        {
-                            var position = prop.GetValue<UIScriptValueTuple>();
-                            Canvas.SetLeft(btn, position.Values.ElementAt(0));
-                            Canvas.SetTop(btn, position.Values.ElementAt(1));
-                        }
-                        element = btn;
-                        break;
-                }
+                FrameworkElement? element = UIControlFactory.MakeControl<FrameworkElement>(control);                
                 if (element == default) continue;
+                elements.Add(element);
+            }
+
+            // MAKE CONTROLS NAV BAR
+            foreach(var element in elements)
+            {
+                //CURSOR
+                element.Cursor = Cursors.Hand;                
+
+                UIViewExplorerItem decorButton = new UIViewExplorerItem()
+                {
+                    Header = $"{element.Name} ({element.GetType().Name})",
+                    Margin = new Thickness(0,0,0,5)
+                };
+                CheckBox isVisibleCheck = new CheckBox()
+                {
+                    Content = "Visible",
+                    IsChecked = true,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    Margin = new Thickness(10)
+                };
+                RoutedEventHandler action = delegate
+                {
+                    element.Visibility = isVisibleCheck.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+                };
+                isVisibleCheck.Checked += action;
+                isVisibleCheck.Unchecked += action;
+                element.MouseLeftButtonUp += delegate
+                {
+                    isVisibleCheck.IsChecked = !isVisibleCheck.IsChecked;
+                };               
+                decorButton.Content = isVisibleCheck;
+                ControlsStack.Children.Add(decorButton);
+
                 UICanvas.Children.Add(element);
             }
         }
@@ -158,7 +165,7 @@ namespace nio2so.TSOView2.Formats.UIs
 
             //setup UI properties for ThemeDefinition
             if (currentDefinitionForDefine == null)
-                currentDefinitionForDefine = new(); // blank definition here
+                currentDefinitionForDefine = new(default); // blank definition here
             PropertyUtil.MakePropertyControlsToPanel(ImagePropertiesBinGrid, currentDefinitionForDefine);
             TextBox URIBox = (TextBox)ImagePropertiesBinGrid.Children[ImagePropertiesBinGrid.Children.Count - 1];
             URIBox.IsReadOnly = false;

@@ -7,4 +7,14 @@
             </Style>
         </Style.Resources>
     </Style>
+    <Style x:Key="TSOPreAlpha_BasicTextStyle" TargetType="TextBlock">
+        <Setter Property="Effect">
+            <Setter.Value>
+                <DropShadowEffect BlurRadius="0" ShadowDepth="1.5"/>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="#FFFFF99D"/>
+        <Setter Property="FontFamily" Value="Comic Sans MS"/>
+    </Style>
 </ResourceDictionary>

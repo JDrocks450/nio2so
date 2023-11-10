@@ -24,6 +24,10 @@
     }
     public class UIScriptValueTuple : ITSOUIScriptValueType<UIScriptValueTuple>
     {
+        public int Value1 => Values.ElementAt(0);
+        public int Value2 => Values.ElementAt(1);
+        public int Value3 => Values.ElementAt(2);
+
         public IEnumerable<int> Values { get; private set; }
         public UIScriptValueTuple(params int[] Values) => this.Values = Values;
         
@@ -42,7 +46,7 @@
         {
             if (typeof(T) == typeof(UIScriptValueTuple)) return new UIScriptValueTuple().Parse(Value) as T;
             if (typeof(T) == typeof(UIScriptString)) return new UIScriptString(Value) as T;
-            if (typeof(T) == typeof(UIScriptNumber)) return Value as T;
+            if (typeof(T) == typeof(UIScriptNumber)) return new UIScriptNumber(int.Parse(Value)) as T;
             return default;
         }
 

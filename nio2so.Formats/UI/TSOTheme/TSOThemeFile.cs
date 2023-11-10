@@ -14,11 +14,26 @@ namespace nio2so.Formats.UI.TSOTheme
     [Serializable]
     public class TSOThemeDefinition : IDisposable
     {
+        public TSOThemeDefinition(string? filePath)
+        {
+            FilePath = filePath;
+        }
         public string? FilePath { get; set; }
 
+        /// <summary>
+        /// Use the <see cref="TSOThemeFile.Initialize(string, UIScriptFile, out string[])"/> function to populate this property.
+        /// </summary>
         [JsonIgnore]
         [TSOUIScriptEditorVisible(false)]
         public Image? TextureRef { get; internal set; }
+
+        /// <summary>
+        /// Lists the names of <see cref="UIScriptObject"/>s that reference this image.
+        /// <para/>Use the <see cref="TSOThemeFile.Initialize(string, UIScriptFile, out string[])"/> function to populate this property.
+        /// </summary>
+        [JsonIgnore]
+        [TSOUIScriptEditorVisible(false)]
+        public IEnumerable<string> ReferencedBy { get; internal set; } = new List<string>();
 
         public void Dispose()
         {
@@ -33,14 +48,42 @@ namespace nio2so.Formats.UI.TSOTheme
     /// </summary>
     public class TSOThemeFile : Dictionary<ulong, TSOThemeDefinition>, ITSOImportable
     {
+        public int TryMrsShipper(UIScriptFile File)
+        {
+            MrsShipper.DereferenceImageDefines(File, this, out int completed);
+            return completed;
+        }
+
+        public bool Initialize(string BaseDirectory, UIScriptFile Script, out string[] MissingItems)
+        {
+            bool success = LoadImages(BaseDirectory, Script, out MissingItems);
+            if (!success) return false;
+            MapControlsToImages(Script);
+            return true;
+        }
+
+        private void MapControlsToImages(UIScriptFile Script)
+        {
+            foreach(var control in Script.Controls)
+            {
+                var imgProperty = control.GetProperty("image");
+                if (imgProperty == default) continue;
+                var imageName = imgProperty.GetValue<UIScriptString>();
+                var define = Script.GetDefineByName(imageName);
+                if (define == null) continue;
+                ((List<String>)this[define.GetAssetID()].ReferencedBy).Add(control.Name);
+            }
+        }
+
         /// <summary>
         /// Loads all defined images into the <see cref="TSOThemeDefinition"/>s added to this object.
         /// <para>Note: Prior to calling this, you should ensure all <see cref="TSOThemeDefinition.FilePath"/> 
         /// are accurate and relative to the <paramref name="BaseDirectory"/></para>
         /// </summary>
         /// <param name="BaseDirectory"></param>
-        public bool LoadReferencedImages(string BaseDirectory, UIScriptFile Script)
+        public bool LoadImages(string BaseDirectory, UIScriptFile Script, out string[] MissingItems)
         {
+            List<string> missings = new();
             bool completelySuccessful = true;
             foreach(var define in Script.Defines)
             {
@@ -52,18 +95,23 @@ namespace nio2so.Formats.UI.TSOTheme
                     if (!define.TryGetReference(this, out definition, out ulong assetID))
                     {
                         completelySuccessful = false;
+                        missings.Add(define.Name);  
                         continue;
                     }
                 }
                 catch(InvalidDataException e)
                 {
                     completelySuccessful = false;
+                    missings.Add(define.Name);
                     continue;
                 }
                 if (definition == null) continue;
+                if (definition.FilePath.StartsWith('/') || definition.FilePath.StartsWith('\\'))
+                    definition.FilePath = definition.FilePath.Substring(1);
                 string path = Path.Combine(BaseDirectory, definition.FilePath);
                 if (!File.Exists(path)) { // file not found!
                     completelySuccessful = false;
+                    missings.Add(define.Name);
                     continue;
                 }                
                 if (definition.TextureRef != null)                
@@ -75,6 +123,7 @@ namespace nio2so.Formats.UI.TSOTheme
                     bmp = TargaImage.LoadTargaImage(path);
                 definition.TextureRef = bmp;
             }
+            MissingItems = missings.ToArray();
             return completelySuccessful;
         }
 

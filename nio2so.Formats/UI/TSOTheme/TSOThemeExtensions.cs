@@ -15,20 +15,14 @@ namespace nio2so.Formats.UI.TSOTheme
             Definition = default;
             AssetID = 0;
             string message = "OK";
-            string? assetIdStr = DefineComponent.GetProperty("assetID")?.GetValue<UIScriptString>()?.Value; // avoid implicit here
-            if (assetIdStr == null) // no property found!
-            {
-                message = "AssetID Property not found!!";
-                goto catastrophic;
-            }
             try
             {
-                AssetID = Convert.ToUInt64(assetIdStr, 16);
+                AssetID = GetAssetID(DefineComponent);
             }
-            catch
+            catch (Exception e)
             {
                 // can't parse value!
-                message = $"Can't parse the value: {assetIdStr}!!";
+                message = e.Message;
                 goto catastrophic;
             }
             if (!Theme.TryGetValue(AssetID, out Definition) || Definition == default)
@@ -39,6 +33,29 @@ namespace nio2so.Formats.UI.TSOTheme
         skip:
             return false;
         //can't recover!
+        catastrophic:
+            throw new InvalidDataException($"An error has occured! {message}");
+        }
+
+        public static ulong GetAssetID(this UIScriptDefineComponent DefineComponent)
+        {
+            string message = "OK";
+            string? assetIdStr = DefineComponent.GetProperty("assetID")?.GetValue<UIScriptString>()?.Value; // avoid implicit here
+            if (assetIdStr == null) // no property found!
+            {
+                message = "AssetID Property not found!!";
+                goto catastrophic;
+            }
+            try
+            {
+                return Convert.ToUInt64(assetIdStr, 16);
+            }
+            catch
+            {
+                // can't parse value!
+                message = $"Can't parse the value: {assetIdStr}!!";
+                goto catastrophic;
+            }
         catastrophic:
             throw new InvalidDataException($"An error has occured! {message}");
         }

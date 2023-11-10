@@ -1,6 +1,8 @@
-﻿using nio2so.Formats.TSOData;
+﻿using nio2so.Formats.CST;
+using nio2so.Formats.TSOData;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,7 +13,16 @@ namespace nio2so.Formats.UI.UIScript
 
     public class TSOUIScriptImporter : TSOFileImporterBase<UIScriptFile>
     {
+        private CSTDirectory? stringTables;
+
         public static UIScriptFile Import(string FilePath) => new TSOUIScriptImporter().ImportFromFile(FilePath);
+
+        /// <summary>
+        /// Allow the <see cref="TSOUIScriptImporter"/> to use a string table to find string references
+        /// <para>You need to set this before calling <see cref="Import(Stream)"/></para>
+        /// </summary>
+        /// <param name="CSTTables"></param>
+        public void SetCST(CSTDirectory CSTTables) => stringTables = CSTTables;
 
         public override UIScriptFile Import(Stream stream)
         {
@@ -75,6 +86,9 @@ namespace nio2so.Formats.UI.UIScript
                 do {
                     bool success = ReadProperty(out string propertyName, out string value);
                     if (!success) break;
+                    //Check if this value is a string reference
+                    if(file.GetDefineByName(value) != default)
+                        value = EvaluateString(file, value); // dereference it
                     UIScriptComponentPropertyValue valueObject = new(value);
                     Component.MyProperties.Add(propertyName, valueObject);
                     if (lastReadUntilDiscard == '>') break;
@@ -103,10 +117,16 @@ namespace nio2so.Formats.UI.UIScript
             {
                 if (groupStack.TryPeek(out var upperLevelGroup))
                 {
-                    AddStackGroupInheritedPropertiesToComponent(Component);
+                    if (InheritProperties)
+                        AddStackGroupInheritedPropertiesToComponent(Component);
+                    Component.Parent = upperLevelGroup;
                     upperLevelGroup.Items.Add(Component);
                 }
-                else file.Items.Add(Component);
+                else
+                {
+                    Component.Parent = file;
+                    file.Items.Add(Component);
+                }
             }
 
             //---- START IMPORTER LOGIC            
@@ -142,7 +162,7 @@ namespace nio2so.Formats.UI.UIScript
                         case "setcontrolproperties": // set properties for a control by name
                             UIScriptControlPropertiesComponent ctrl = new();
                             ReadNamedComponent(ctrl);
-                            groupStack.Peek().Items.Add(ctrl);
+                            AddToStackObject(ctrl, false);
                             DefaultAppendLine(TSOImporterBaseChannel.Message, $"SetControlProperties {ctrl}");
                             break;
                         default:
@@ -171,7 +191,52 @@ namespace nio2so.Formats.UI.UIScript
                     continue;
                 }
             }
+            EvaluateReferences(file);
             return file;
+        }
+
+        private string EvaluateString(UIScriptFile File, string StrName)
+        {
+            if (stringTables == null) return StrName;
+            var define = File.GetDefineByName(StrName);
+            if (define == null) return StrName;
+            if (define.Type != "string") return StrName;
+            try
+            {
+                int tableID = define.GetProperty("stringTable").GetValue<UIScriptNumber>();
+                var cstFile = stringTables[(uint)tableID];
+                if (!cstFile.Populated) 
+                    cstFile.Populate();
+                string stringID = define.GetProperty("stringIndex").GetValue<UIScriptString>();
+                return cstFile[stringID];
+            }
+            catch
+            {
+                return StrName;
+            }
+        }
+
+        /// <summary>
+        /// Connects <see cref="UIScriptControlPropertiesComponent"/> objects to components
+        /// </summary>
+        private void EvaluateReferences(UIScriptFile File)
+        {
+            var controls = File.Controls;
+            var controlprops = File.NestedSearch().OfType<UIScriptControlPropertiesComponent>();
+            foreach(var ctrlProp in controlprops)
+            {
+                string myName = ctrlProp.Name;
+                var hits = controls.Where(x => x.Name == myName);
+                UIScriptComponentBase Target = default;
+                if (!hits.Any())
+                { // Make an Inferred Object now since there are no objects actually defined with this name
+                    UIScriptObject Object = new UIScriptObject("n2_InferredObject", myName);
+                    (ctrlProp.Parent ?? File).Items.Add(Object);
+                    Target = Object;
+                }
+                else Target = hits.First();
+                Target.CombineProperties(Target.MyProperties, ctrlProp.GetProperties());
+            }
         }
     }
 }

@@ -16,6 +16,9 @@ namespace nio2so.Formats.UI.UIScript
         [TSOUIScriptEditorVisible(false)]
         public Dictionary<string, UIScriptComponentPropertyValue> InheritedProperties { get; } = new();
 
+        [TSOUIScriptEditorVisible(false)]
+        public UIScriptGroup? Parent { get; set; }
+
         public UIScriptComponentPropertyValue? GetProperty(string Name)
         {
             if (InheritedProperties.TryGetValue(Name, out var value))
