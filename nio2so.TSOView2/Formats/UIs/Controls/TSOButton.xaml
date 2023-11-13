@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:nio2so.TSOView2.Formats.UIs.Controls"
              mc:Ignorable="d" Name="this" Background="Navy" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-             d:DesignHeight="30" d:DesignWidth="200" MouseEnter="this_MouseEnter" MouseLeave="this_MouseLeave" MouseDown="this_MouseDown" MouseUp="this_MouseUp">
+             d:DesignHeight="30" d:DesignWidth="200" MouseEnter="this_MouseEnter" MouseLeave="this_MouseLeave" MouseDown="this_MouseDown" MouseUp="this_MouseUp" IsEnabledChanged="this_IsEnabledChanged">
     <UserControl.Style>
         <Style TargetType="UserControl">
             <Setter Property="Template">

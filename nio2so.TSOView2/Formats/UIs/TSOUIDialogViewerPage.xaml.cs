@@ -32,13 +32,7 @@ namespace nio2so.TSOView2.Formats.UIs
         /// <summary>
         /// Gets the <see cref="UIsHandler.CurrentFile"/>
         /// </summary>
-        public UIScriptFile CurrentUIScriptFile => UIsHandler.Current.CurrentFile;
-
-        /// <summary>
-        /// The function to call when the Save button is pressed. 
-        /// <para>See: <see cref="ImageBin_SwitchReference(object, MouseButtonEventArgs)"/></para>
-        /// </summary>
-        private Action OnSaveCallback;
+        public UIScriptFile CurrentUIScriptFile => UIsHandler.Current.CurrentFile;        
 
         public TSOUIDialogViewerPage()
         {
@@ -53,43 +47,40 @@ namespace nio2so.TSOView2.Formats.UIs
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            //LOAD ASSET REFS
-            ImagePropertiesBin.Items.Clear();
-            foreach (var define in CurrentUIScriptFile.Defines)
-            {
-                if (define.Type.ToLower() == "image")
-                {
-                    var control = new ListViewItem() { Content = define.Name, Tag = define };
-                    ImagePropertiesBin.Items.Add(control);
-                    control.PreviewMouseLeftButtonUp += ImageBin_SwitchReference;
-                }
-            }
+        {            
             //LOAD LIVE VIEW
             ReloadUIViewer();
         }
         
         private void ReloadUIViewer()
         {
+            UIGizmo.Visibility = Visibility.Collapsed;
+            bool retriedOnce = false;
+
+        retry:
             var theme = UIsHandler.Current.CurrentTheme;
             //DEREFERNCE CONTENT FIRST
             bool successful = theme.Initialize(
-                TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_UIGraphicsDirectory,
+                TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory,
                 CurrentUIScriptFile,
                 out string[] Missing);
             
             if (!successful)
             {
-                if (MessageBox.Show("This script has missing Image references.\n" +
-                    $"{string.Join(", ", Missing)}" +
-                    "Want to try Mrs.Shipper?", "Mrs. Shipper", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                //MISSING REFS!
+                if (!retriedOnce)
                 {
-                    int completed = theme.TryMrsShipper(CurrentUIScriptFile);
-                    MessageBox.Show($"Mrs.Shipper found {completed} references. Please validate.");
+                    theme.UpdateDatabaseWithMrsShipper(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory);
+                    theme.Save(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnlinePreAlpha_ThemePath);
+                    retriedOnce = true;
+                    goto retry;
                 }
+                MessageBox.Show("Tried to use Mrs. Shipper to read AssetID database. Failed. Check your TSO installation.\n" +
+                    $"We're missing these assets: \n{string.Join(", ", Missing)}");
                 return;
             }            
 
+            //SUCCESS
             List<FrameworkElement> elements = new List<FrameworkElement>();
             ControlsStack.Children.Clear();
             UICanvas.Children.Clear();
@@ -97,6 +88,7 @@ namespace nio2so.TSOView2.Formats.UIs
             //UNREFERENCED IMAGES FIRST
             foreach (var definition in theme.Values)
             {
+                if (definition.TextureRef == null) continue;
                 if (!definition.ReferencedBy.Any())
                 {
                     var imgControl = UIControlFactory.MakeImageFromDefinition(definition);
@@ -139,7 +131,19 @@ namespace nio2so.TSOView2.Formats.UIs
                 isVisibleCheck.Unchecked += action;
                 element.MouseLeftButtonUp += delegate
                 {
-                    isVisibleCheck.IsChecked = !isVisibleCheck.IsChecked;
+                    ShowUIGizmoForControl(element.Name, element);
+                    var gizmoVisCheck = new CheckBox()
+                    {
+                        Content = "Visible",
+                        IsChecked = true,
+                    };
+                    RoutedEventHandler action1 = delegate
+                    {
+                        isVisibleCheck.IsChecked = !isVisibleCheck.IsChecked;
+                    };
+                    gizmoVisCheck.Checked += action1;
+                    gizmoVisCheck.Unchecked += action1;
+                    GizmoControlStack.Children.Add(gizmoVisCheck);
                 };               
                 decorButton.Content = isVisibleCheck;
                 ControlsStack.Children.Add(decorButton);
@@ -148,56 +152,74 @@ namespace nio2so.TSOView2.Formats.UIs
             }
         }
 
-        private void ImageBin_SwitchReference(object sender, MouseButtonEventArgs e)
+        private void ShowUIGizmoForControl(string Title, UIElement Element)
         {
-            var control = (ListViewItem)sender;
-            control.IsSelected = true;
-            var define = (UIScriptDefineComponent)control.Tag;
+            GizmoName.Text = Title;
 
-            ImagePropertiesBinGrid.Children.Clear();
-            PropertyUtil.MakePropertyControlsToPanel(ImagePropertiesBinGrid, define);
-            TSOThemeDefinition currentDefinitionForDefine = default;
-
-            //ASSET ID
-            string message = "OK.";
-            bool assetFound = define.TryGetReference(UIsHandler.Current.CurrentTheme, out TSOThemeDefinition? ThemeDefinition, out ulong assetID);
-            currentDefinitionForDefine = ThemeDefinition;
-
-            //setup UI properties for ThemeDefinition
-            if (currentDefinitionForDefine == null)
-                currentDefinitionForDefine = new(default); // blank definition here
-            PropertyUtil.MakePropertyControlsToPanel(ImagePropertiesBinGrid, currentDefinitionForDefine);
-            TextBox URIBox = (TextBox)ImagePropertiesBinGrid.Children[ImagePropertiesBinGrid.Children.Count - 1];
-            URIBox.IsReadOnly = false;
-
-            if (!assetFound)
-                URIBox.BorderBrush = System.Windows.Media.Brushes.Red;
-
-            OnSaveCallback = Callback;
-
-            //blessed C# is blessed
-            void Callback()
+            void AddControllable(string Name, DependencyProperty e, Type PropertyType)
             {
-                string filePath = URIBox.Text;
-                try
+                void ChangeValue(object sender)
                 {
-                    currentDefinitionForDefine.FilePath = filePath;
+                    object value = null;
+                    if (PropertyType == typeof(string))
+                        value = (sender as TextBox).Text;
+                    if (PropertyType == typeof(bool))
+                        value = (sender as CheckBox).IsChecked;
+                    Element.SetValue(e, value);
                 }
-                catch (Exception e)
-                {
-                    message = e.Message;
-                    MessageBox.Show($"An error has occured on save! {message}", "Big oopsies!");
-                }
-                UIsHandler.Current.CurrentTheme.Remove(assetID); // just in case B)
-                UIsHandler.Current.CurrentTheme.Add(assetID, currentDefinitionForDefine);
-                UIsHandler.Current.CurrentTheme.Save(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnlinePreAlpha_ThemePath);
-                
-                ImageBin_SwitchReference(sender, e);
-            }
-            return;        
-        }
 
-        private void SaveDefinePropertiesButton_Click(object sender, RoutedEventArgs e) => OnSaveCallback();
+                GizmoControlStack.Children.Add(new TextBlock()
+                {
+                    Text = Name,
+                });
+                if (PropertyType == typeof(string))
+                {
+                    var input = new TextBox()
+                    {
+                        Margin = new Thickness(0, 0, 0, 5),
+                        Text = Element.GetValue(e).ToString()
+                    };
+                    TextChangedEventHandler textChangeValue = delegate
+                    {
+                        ChangeValue(input);
+                    };
+                    input.TextChanged += textChangeValue;
+                    GizmoControlStack.Children.Add(input);
+                    return;
+                }
+                if (PropertyType == typeof(bool))
+                {
+                    var input = new CheckBox()
+                    {
+                        Margin = new Thickness(0, 0, 0, 5),
+                        Content = Element.GetValue(e).ToString(),
+                        IsChecked = (bool)Element.GetValue(e)
+                    };
+                    RoutedEventHandler checkedChangeValue = delegate
+                    {
+                        ChangeValue(input);
+                    };
+                    input.Checked += checkedChangeValue; 
+                    input.Unchecked += checkedChangeValue;
+                    GizmoControlStack.Children.Add(input);
+                    return;
+                }
+            }
+
+            if (Element == null) return;
+            GizmoControlStack.Children.Clear();
+
+            if (Element is TextBlock)
+                AddControllable("Display Text", TextBlock.TextProperty, typeof(string));
+            if (Element is TextBox)
+                AddControllable("Display Text", TextBox.TextProperty, typeof(string));
+            if (Element is TSOButton)
+                AddControllable("Enabled", IsEnabledProperty, typeof(bool));
+
+            var position = Mouse.GetPosition(UICanvas);
+            UIGizmo.Margin = new Thickness(position.X, position.Y, 0, 0);
+            UIGizmo.Visibility = Visibility.Visible;
+        }        
 
         private void RefreshUIButton_Click(object sender, RoutedEventArgs e)
         {

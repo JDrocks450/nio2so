@@ -48,14 +48,20 @@ namespace nio2so.Formats.UI.TSOTheme
     /// </summary>
     public class TSOThemeFile : Dictionary<ulong, TSOThemeDefinition>, ITSOImportable
     {
-        public int TryMrsShipper(UIScriptFile File)
+        [Obsolete] public int TryMrsShipper(UIScriptFile File)
         {
             MrsShipper.DereferenceImageDefines(File, this, out int completed);
             return completed;
         }
+        /// <summary>
+        /// Uses the packingslips.log file to update the current theme's database of asset IDs.
+        /// </summary>
+        /// <param name="TSODirectory"></param>
+        public void UpdateDatabaseWithMrsShipper(string TSODirectory) => MrsShipper.BreakdownPackingslips(TSODirectory, this);
 
         public bool Initialize(string BaseDirectory, UIScriptFile Script, out string[] MissingItems)
         {
+            UnloadPreviousSession();
             bool success = LoadImages(BaseDirectory, Script, out MissingItems);
             if (!success) return false;
             MapControlsToImages(Script);
@@ -73,6 +79,12 @@ namespace nio2so.Formats.UI.TSOTheme
                 if (define == null) continue;
                 ((List<String>)this[define.GetAssetID()].ReferencedBy).Add(control.Name);
             }
+        }
+
+        private void UnloadPreviousSession()
+        {
+            foreach (var img in Values.Where(x => x.TextureRef != null))
+                img.Dispose();
         }
 
         /// <summary>

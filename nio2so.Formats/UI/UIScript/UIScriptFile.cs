@@ -1,9 +1,15 @@
-﻿using System.Data;
+﻿using nio2so.Formats.CST;
+using System.Data;
 
 namespace nio2so.Formats.UI.UIScript
 {
     public class UIScriptFile : UIScriptGroup, ITSOImportable
     {
+        /// <summary>
+        /// After importing the <see cref="UIScriptFile"/> using the <see cref="TSOUIScriptImporter.Import(Stream)"/>
+        /// method, this is populated with all <see cref="CSTFile"/>s actually referenced by a control in this document. 
+        /// </summary>
+        public HashSet<uint> ReferencedCSTFiles { get; } = new();
         /// <summary>
         /// Be careful with this -- uses a nested search algorithm. Need to optimze this later.
         /// </summary>

@@ -24,4 +24,8 @@
     <Resource Include="Resources\caution.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Formats\Terrain\" />
+  </ItemGroup>
+
 </Project>

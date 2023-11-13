@@ -3,6 +3,7 @@ using nio2so.Formats.TSOData;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -207,11 +208,13 @@ namespace nio2so.Formats.UI.UIScript
                 var cstFile = stringTables[(uint)tableID];
                 if (!cstFile.Populated) 
                     cstFile.Populate();
+                File.ReferencedCSTFiles.Add((uint)tableID);
                 string stringID = define.GetProperty("stringIndex").GetValue<UIScriptString>();
                 return cstFile[stringID];
             }
-            catch
+            catch (Exception e)
             {
+                Debug.WriteLine("Error when importing a CST document!!! \n" + e);
                 return StrName;
             }
         }

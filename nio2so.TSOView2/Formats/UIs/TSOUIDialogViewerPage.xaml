@@ -20,25 +20,76 @@
                             <ColumnDefinition Width="4*"/>
                             <ColumnDefinition Width="1*"/>
                         </Grid.ColumnDefinitions>
-                        <Canvas Width="800" Height="600" Name="UICanvas" Margin="10,10,0,0" VerticalAlignment="Center" HorizontalAlignment="Center" UseLayoutRounding="True">
-                            <Canvas.Resources>
-                                <Style TargetType="TextBlock" BasedOn="{StaticResource TSOPreAlpha_BasicTextStyle}"/>
-                            </Canvas.Resources>
-                            <TextBlock>TEST TEST TEST</TextBlock>
-                            <controls:TSOButton Margin="0,20,0,0">Hello There</controls:TSOButton>
-                        </Canvas>
-                        <DockPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Grid.Column="1">
-                            <TextBlock Margin="10,10" FontSize="16" FontWeight="Bold" DockPanel.Dock="Top">Controls</TextBlock>
-                            <Grid>
-                                <Button Click="RefreshUIButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Height="27" Width="56" Margin="0,-40,0,0">Refresh</Button>
-                                <Separator VerticalAlignment="Top" Margin="0,-5,0,0"/>
-                                <ScrollViewer>
-                                    <StackPanel Name="ControlsStack" Margin="10,0,5,10">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                            <Grid Margin="10,10,0,0" VerticalAlignment="Center" UseLayoutRounding="True" ClipToBounds="False">
+                                <Canvas Name="UICanvas" Width="800" Height="600" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Canvas.Resources>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource TSOPreAlpha_BasicTextStyle}"/>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Background" Value="{x:Null}"/>
+                                            <Setter Property="BorderThickness" Value="0"/>
+                                            <Setter Property="FontFamily" Value="Comic Sans MS"/>
+                                        </Style>
+                                    </Canvas.Resources>
+                                    <TextBlock>TEST TEST TEST</TextBlock>
+                                    <controls:TSOButton Margin="0,20,0,0">Hello There</controls:TSOButton>
+                                </Canvas>
+                                <Border x:Name="UIGizmo" BorderThickness="1" MinWidth="200" MaxWidth="350" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}" BorderBrush="#FFFFD258">
+                                    <Border.Resources>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontFamily" Value="Comic Sans MS"/>
+                                        </Style>
+                                    </Border.Resources>
+                                    <DockPanel Margin="5">
+                                        <TextBlock x:Name="GizmoName" DockPanel.Dock="Top" FontWeight="Bold" FontSize="14">Control Properties</TextBlock>
+                                        <UniformGrid Name="GizmoControlStack" Margin="0,5,0,0" MinHeight="25" Columns="2">
 
-                                    </StackPanel>
-                                </ScrollViewer>
+                                        </UniformGrid>
+                                    </DockPanel>
+                                </Border>
                             </Grid>
-                        </DockPanel>
+                        </ScrollViewer>
+                        <TabControl Grid.Column="1" TabStripPlacement="Left" Margin="-76,0,0,0" Panel.ZIndex="2">
+                            <TabItem Header="Controls">
+                                <DockPanel>
+                                    <TextBlock Margin="10,10" FontSize="16" FontWeight="Bold" DockPanel.Dock="Top">Controls</TextBlock>
+                                    <GroupBox Header="UI State" DockPanel.Dock="Bottom" Padding="5">
+                                        <Grid >
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition/>
+                                                <RowDefinition/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition/>
+                                                <ColumnDefinition/>
+                                            </Grid.ColumnDefinitions>
+                                            <Button>Save</Button>
+                                            <Button Grid.Column="1">Save As...</Button>
+                                            <Button Grid.ColumnSpan="2" Grid.Row="1">Reset</Button>
+                                        </Grid>
+                                    </GroupBox>
+                                    <Grid>
+                                        <Button Click="RefreshUIButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Height="27" Width="56" Margin="0,-40,0,0">Refresh</Button>
+                                        <Separator VerticalAlignment="Top" Margin="0,-5,0,0"/>
+                                        <ScrollViewer>
+                                            <StackPanel Name="ControlsStack" Margin="10,0,5,10">
+
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </Grid>
+                                </DockPanel>
+                            </TabItem>
+                            <TabItem Header="UI States">
+                                <DockPanel>
+                                    <TextBlock Margin="10,10,10,0" FontSize="16" FontWeight="Bold" DockPanel.Dock="Top">UI States</TextBlock>
+                                    <Separator VerticalAlignment="Top" Margin="0,5,0,5" DockPanel.Dock="Top"/>
+                                    <ScrollViewer>
+                                        <StackPanel Name="StatesStack" Margin="10,0,5,10">
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </DockPanel>
+                            </TabItem>                                
+                        </TabControl>
                         <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="1" BorderBrush="Silver" Background="#FFA0A0A0"/>
                     </Grid>
                 </TabItem>
@@ -50,76 +101,11 @@
                     </Frame>
                 </TabItem>
                 <TabItem Header="Asset References (Theme)">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <DockPanel>
-                            <TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,10,0,0" FontWeight="Bold">String References (Text)</TextBlock>
-                        </DockPanel>
-                        <GridSplitter Width="2" HorizontalAlignment="Left" Grid.Column="1"/>
-                        <DockPanel Grid.Column="1" Margin="10">
-                            <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,10" FontWeight="Bold">Image References</TextBlock>
-                            <GroupBox DockPanel.Dock="Bottom" MinHeight="150" Margin="0,10,0,0" Header="Properties" Padding="5">
-                                <DockPanel>
-                                    <Button x:Name="SaveDefinePropertiesButton" DockPanel.Dock="Bottom" Width="60" HorizontalAlignment="Right" Click="SaveDefinePropertiesButton_Click">Save</Button>
-                                    <UniformGrid Columns="2" Name="ImagePropertiesBinGrid" Style="{StaticResource FieldsUniformGridStyle}">
-
-                                    </UniformGrid>
-                                </DockPanel>
-                            </GroupBox>
-                            <Grid DockPanel.Dock="Top">
-                                <!--Design only-->
-                                <ListBox/>
-                                <ScrollViewer>
-                                    <ListView Name="ImagePropertiesBin" Margin="10" FontFamily="Courier New" SelectedIndex="1">
-                                        <ListView.Template>
-                                            <ControlTemplate TargetType="ListView">
-                                                <WrapPanel IsItemsHost="True" Orientation="Horizontal"/>
-                                            </ControlTemplate>
-                                        </ListView.Template>
-                                        <ListView.Resources>
-                                            <Style TargetType="ListViewItem">
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter Property="Foreground" Value="Black"/>
-                                                        <Setter Property="Background" Value="{DynamicResource PaletteNodeColor}"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="False">
-                                                        <Setter Property="Background" Value="Transparent"/>
-                                                        <Setter Property="Foreground" Value="{DynamicResource PaletteNodeColor}"/>
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                                <Setter Property="Margin" Value="10"/>
-                                                <Setter Property="Width" Value="120"/>
-                                                <Setter Property="Template">
-                                                    <Setter.Value>
-                                                        <ControlTemplate TargetType="ListViewItem">
-                                                            <DockPanel>
-                                                                <Border HorizontalAlignment="Center" DockPanel.Dock="Bottom" Background="{TemplateBinding Background}" Padding="5,2">
-                                                                    <ContentPresenter>
-                                                                        <ContentPresenter.ToolTip>
-                                                                            <TextBlock Text="{TemplateBinding ContentStringFormat}"/>
-                                                                        </ContentPresenter.ToolTip>
-                                                                    </ContentPresenter>
-                                                                </Border>
-                                                                <Border Width="100" Height="100">
-                                                                    <Image Width="35" Source="/Resources/caution.png" RenderOptions.BitmapScalingMode="HighQuality"/>
-                                                                </Border>
-                                                            </DockPanel>
-                                                        </ControlTemplate>
-                                                    </Setter.Value>
-                                                </Setter>
-                                            </Style>
-                                        </ListView.Resources>
-                                        <ListViewItem Content="HELLO"/>
-                                        <ListViewItem Content="HELLO"/>
-                                    </ListView>
-                                </ScrollViewer>
-                            </Grid>
-                        </DockPanel>
-                    </Grid>
+                    <Frame>
+                        <Frame.Content>
+                            <subpages:UIAssetReferencesPage />
+                        </Frame.Content>
+                    </Frame>
                 </TabItem>
             </TabControl>
         </Grid>

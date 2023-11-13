@@ -128,6 +128,32 @@ namespace nio2so.TSOView2.Formats.UIs
                     break;
             }
         }
+
+        public static void ApplyTextEditProperties(UIScriptObject Control, TextBox Text)
+        {
+            var control = Control;
+            Text.Text = Control.Name;            
+
+            foreach (var property in control.GetProperties())
+            {
+                switch (property.Name.ToLower())
+                {
+                    case "font":
+                        Text.FontSize = property.Value.GetValue<UIScriptNumber>() + 3;
+                        break;
+                    case "color":
+                    case "textcolor":
+                        var colorValues = property.Value.GetValue<UIScriptValueTuple>();
+                        var color = Color.FromRgb((byte)colorValues.Value1, (byte)colorValues.Value2, (byte)colorValues.Value3);
+                        Text.Foreground = new SolidColorBrush(color);
+                        break;
+                    default: 
+                        ApplyUniversalControlProperty(property, Text);
+                        break;
+                }
+            }
+        }
+
         public static void ApplyTextControlProperties(UIScriptObject Control, TextBlock Text)
         {
             var control = Control;
@@ -225,17 +251,18 @@ namespace nio2so.TSOView2.Formats.UIs
                     };
                     ApplyButtonControlProperties(control, btn);
                     btn.Reset();
+                    Panel.SetZIndex(btn, 2);
                     element = btn;
                     break;
                 case "text":
                     TextBlock block = new TextBlock()
                     {
                         FontFamily = new FontFamily("Comic Sans MS"),
-                        ClipToBounds = false,                        
+                        ClipToBounds = false,
                     };
                     ApplyTextControlProperties(control, block);
                     block.Height = double.NaN;
-                    Panel.SetZIndex(block, 2);
+                    Panel.SetZIndex(block, 3);
                     element = block;
                     break;
                 case "n2_inferredobject":
@@ -245,6 +272,27 @@ namespace nio2so.TSOView2.Formats.UIs
                     };
                     ApplyUniversalControlProperties(control, contentControl);
                     element = contentControl;
+                    break;
+                case "scrollabletext":
+                    {
+                        TextBox textBox = new TextBox()
+                        {
+                            IsReadOnly = true,
+                            VerticalScrollBarVisibility = ScrollBarVisibility.Auto
+                        };
+                        ApplyTextEditProperties(control, textBox);
+                        element = textBox;
+                    }
+                    break;
+                case "textedit":
+                    {
+                        TextBox textBox = new TextBox()
+                        {
+                            IsReadOnly = true,
+                        };
+                        ApplyTextEditProperties(control, textBox);
+                        element = textBox;
+                    }
                     break;
             }
             if (element != null)
