@@ -13,13 +13,7 @@ namespace nio2so.TSOView2.Formats.UIs
 {
     internal class UIsHandler
     {
-        // HANDLER STATIC
-        internal static UIsHandler Current { get; private set; }
-        static UIsHandler()
-        {
-            Current = new UIsHandler();
-        }
-        //----
+        internal static UIsHandler Current { get; private set; } = new();
 
         /// <summary>
         /// The <see cref="UIScriptFile"/> the User opened

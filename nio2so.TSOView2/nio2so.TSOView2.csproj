@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
+    <ProjectReference Include="..\nio2so.TSOView2.TSOWorld\nio2so.TSOView2.TSOWorld.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,10 +23,6 @@
 
   <ItemGroup>
     <Resource Include="Resources\caution.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Formats\Terrain\" />
   </ItemGroup>
 
 </Project>

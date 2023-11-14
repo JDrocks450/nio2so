@@ -13,6 +13,7 @@
                     <MenuItem Header="File...">
                         <MenuItem Header="Open...">
                             <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
+                            <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Blazing Falls..."/>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>

@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.UI.UIScript;
+using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.UIs;
 using System;
 using System.Collections.Generic;
@@ -38,10 +39,14 @@ namespace nio2so.TSOView2
             Loaded += MainWindow_Loaded;
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {            
+            //LOAD CITY VIEW
+            IsEnabled = false;
+            await CityTerrainHandler.LoadCity();
+            IsEnabled = true;
             //HOOK Click Event for all MenuItems with a Name property
-            UIWireUp_HookEvents();            
+            UIWireUp_HookEvents();
         }
 
         public void MainWindow_ShowPlugin(Page NewPage)
@@ -56,7 +61,8 @@ namespace nio2so.TSOView2
             {
                 { ExitItem, Application.Current.Shutdown },
                 { ConfigMenuItem, TSOViewConfigHandler.InvokeConfigViewerDialog },
-                { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile }
+                { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
+                { OpenTSOPreAlphaWorldItem, CityTerrainHandler.Current.ShowCityPlugin }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)
