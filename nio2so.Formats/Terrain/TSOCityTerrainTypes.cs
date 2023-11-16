@@ -4,12 +4,12 @@
     /// Types of terrain found in The Sims Online Cities
     /// </summary>
     public enum TSOCityTerrainTypes
-    {
-        Grass,
-        Water,
-        Snow,
+    {        
+        Water,                        
+        Snow,                
         Rock,
-        Sand,
+        Sand,                         
+        Grass,       
         Nothing = 255
     }
 }

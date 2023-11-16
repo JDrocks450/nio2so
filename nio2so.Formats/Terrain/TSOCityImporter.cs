@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.UI.TSOTheme;
+using System.Diagnostics;
 using System.Drawing;
 
 namespace nio2so.Formats.Terrain
@@ -6,6 +7,28 @@ namespace nio2so.Formats.Terrain
 
     public sealed class TSOPreAlphaCityImporter : TSOCityImporter
     {
+        //all of these files seem reused in both versions so this seems like a good idea.
+        private static Dictionary<TSOCityDataFileTypes, string> _tsoPaCityNameDefaultMap = new()
+        {
+            { TSOCityDataFileTypes.ElevationMap, "elevation00.bmp" },
+            { TSOCityDataFileTypes.RoadMap, "roadmap00.bmp" },
+            { TSOCityDataFileTypes.TerrainTypeMap, "terraintype00.bmp" },
+            { TSOCityDataFileTypes.VertexColorMap, "vertexcolor00.bmp" },
+            { TSOCityDataFileTypes.ForestSprites, "forest00a.bmp" },
+            { TSOCityDataFileTypes.ForestDensity, "forestdensity00.bmp" },
+            { TSOCityDataFileTypes.ForestType, "foresttype00.bmp" }
+        };        
+
+        [Flags]
+        public enum TSOPreAlpha_CityTileIndices : byte
+        {
+            AllBlend = 0,
+            EastBlend = 1,
+            NorthBlend = 2,
+            WestBlend = 4,
+            SouthBlend = 8,
+        }
+
         public new const int TSO_CITY_SIZE = 256;
         public new const int TSO_CITY_TOPL = 152;
         public new const int TSO_CITY_BOTL = 106;
@@ -41,7 +64,7 @@ namespace nio2so.Formats.Terrain
         /// <para>If any assets needed are already loaded, they will be skipped. Always call this before <see cref="LoadCityAsync"/></para>
         /// </summary>
         /// <returns></returns>
-        public override async Task LoadAssetsAsync()
+        public override async Task LoadAssetsAsync(bool ContextTSOPAFileType = true)
         {
             //RESET PREVIOUS SESSION
             TSOCityDataContentItems.Clear();
@@ -54,9 +77,21 @@ namespace nio2so.Formats.Terrain
             totalTuple = await GlobalDefaultContent.LoadDirectory(new DirectoryInfo(CityDataDirectory));
             if (totalTuple.Loaded < totalTuple.TotalMatches)
                 goto error;
+            //SET CONTEXT TODO MAKE BETTER
+            CurrentTSODataContext = ContextTSOPAFileType ? _tsoPaCityNameDefaultMap : _tsoCityNameDefaultMap;
+
             //MAP CONTENT ITEMS
-            foreach (var ValueTuple in TSOCityFileNamesMap)            
-                TSOCityDataContentItems.Add(ValueTuple.Key, GlobalDefaultContent[Path.GetFileNameWithoutExtension(ValueTuple.Value)]);
+            foreach (var ValueTuple in TSOCityFileNamesMap)
+            {
+                try
+                {
+                    TSOCityDataContentItems.Add(ValueTuple.Key, GlobalDefaultContent[Path.GetFileNameWithoutExtension(ValueTuple.Value)]);
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            }
             return;
         error:
             throw new FileNotFoundException($"Only loaded {totalTuple.Loaded} / {totalTuple.TotalMatches} eligible files from the terrain directory!!");
@@ -83,11 +118,16 @@ namespace nio2so.Formats.Terrain
                 //SET LOADED CONTENT TO CITY OBJECT
                 newCity.cityDataMap = TSOCityDataContentItems;
 
+                Debug_ElevationBmp = new Bitmap(512, 512);
+
                 //MAKE A GEOM PROVIDER
                 TSOCityGeom geomMachine = new();
                 geomMachine.OnSignalBlend += TextureRequested; // found a texture to stitch into our skin
 
                 //GENERATE MESH
+                TSOCityBrush defaultBrush = new("blank");
+                _palette.Add("blank", defaultBrush);
+
                 TSOCityMesh mesh = await geomMachine.GenerateMeshGeometry(newCity); // generate the mesh geometry                
 
                 return (newCity, mesh);
@@ -95,37 +135,91 @@ namespace nio2so.Formats.Terrain
         }
 
         /// <summary>
-        /// 
+        /// Generated at runtime, this is used to share a brush across multiple city tiles
+        /// </summary>
+        private static readonly Dictionary<string, TSOCityBrush> _palette = new();
+
+        /// <summary>
+        /// Gets the texture name
         /// </summary>
         /// <param name="City"></param>
         /// <param name="MapX"></param>
         /// <param name="MapY"></param>
         /// <param name="Edges">Up, Right, Down, Left</param>
-        private void TextureRequested(TSOCity City, int MapX, int MapY, TSOCityTerrainTypes This, TSOCityTerrainTypes[] Edges)
+        private void TextureRequested(TSOCity City, int MapX, int MapY, TSOCityTerrainTypes This, TSOCityTerrainTypes Other, int Flags, out TSOCityBrush Brush)
         {
-            void StitchTexture(string Texture)
+            string getAbrv(TSOCityTerrainTypes Type)
             {
-                var item = GlobalDefaultContent[Texture.ToLower()];
-
+                return Type switch
+                {
+                    TSOCityTerrainTypes.Grass => "Gr",
+                    TSOCityTerrainTypes.Water => "Wt",
+                    TSOCityTerrainTypes.Snow => "Sn",
+                    TSOCityTerrainTypes.Rock => "Rk",
+                    TSOCityTerrainTypes.Sand => "Sd",
+                };
             }
-            string getAbrv(TSOCityTerrainTypes)
-
+            string format(TSOCityTerrainTypes Me, TSOCityTerrainTypes Next, TSOPreAlpha_CityTileIndices Tile) =>
+                $"{getAbrv(Next)}{getAbrv(Me)}{(byte)Tile:D2}".ToLower();
 
             int up = 0, right = 1, down = 2, left = 3;
+            TSOCityTerrainTypes other = Other;
 
-            int textureNum = 0; // Isolated
-            if (Edges[up] != This)            
-                textureNum = 2;
-            if (Edges[right] != This)
-                textureNum += 1;
-            if (Edges[left] != This)
-                textureNum += 4;
-            
-            if (textureNum < 8) // valid
+            if (This == TSOCityTerrainTypes.Nothing)
             {
-                
+                Brush = _palette["blank"];
                 return;
             }
+            TSOPreAlpha_CityTileIndices textureNum = (TSOPreAlpha_CityTileIndices)Flags;
+#if false            
+            if (Edges[up] != TSOCityTerrainTypes.Nothing && Edges[up] != This)
+            {
+                other = Edges[up];
+                textureNum |= TSOPreAlpha_CityTileIndices.NorthBlend;
+            }
+            if (Edges[right] != TSOCityTerrainTypes.Nothing && Edges[right] != This)
+            {
+                textureNum |= TSOPreAlpha_CityTileIndices.EastBlend;
+                other = Edges[right];
+            }
+            if (Edges[left] != TSOCityTerrainTypes.Nothing && Edges[left] != This)
+            {
+                textureNum |= TSOPreAlpha_CityTileIndices.WestBlend;
+                other = Edges[left];
+            }
+            if (Edges[down] != TSOCityTerrainTypes.Nothing && Edges[down] != This)
+            {
+                textureNum |= TSOPreAlpha_CityTileIndices.SouthBlend;
+                other = Edges[down];
+            }
+            //check if there is any change
+            if (other == This) textureNum = (TSOPreAlpha_CityTileIndices)15; // no change; skip blending
+#endif
+
+            string tileTexture = "";
+
+            if (textureNum != (TSOPreAlpha_CityTileIndices)15) // blended            
+                tileTexture = format(This, other, textureNum);
+            else tileTexture = format(This, This, (TSOPreAlpha_CityTileIndices)15); // Blend to nothing                
+
+            //check if valid
+            if (!GlobalDefaultContent.ContainsKey(tileTexture))
+            { // invalid try again
+                tileTexture = format(other, This, textureNum); // flip it
+                if (!GlobalDefaultContent.ContainsKey(tileTexture))
+                    tileTexture = format(This, This, (TSOPreAlpha_CityTileIndices)15); // Blend to nothing 
+            }
+
+            unchecked
+            {
+                byte color = (byte)((int)This * 10 + (6 * (int)other));
+                Debug_ElevationBmp.SetPixel(MapX, MapY, Color.FromArgb(color, color, color));
+            }
+
+            //return full texture
+            if (_palette.TryGetValue(tileTexture, out Brush)) return;
+            Brush = new TSOCityBrush(tileTexture);
+            _palette.Add(tileTexture, Brush);
         }
 
         public Bitmap Debug_ImageReadFunctionBmp { get; private set; }
@@ -141,7 +235,10 @@ namespace nio2so.Formats.Terrain
         public const int TSO_CITY_TOPL = 306;
         public const int TSO_CITY_BOTL = 205;
 
-        protected TSOCityContentManager GlobalDefaultContent { get; } = new();
+        /// <summary>
+        /// The default <see cref="TSOCityContentManager"/> instance
+        /// </summary>
+        public static TSOCityContentManager GlobalDefaultContent { get; } = new();
 
         protected TSOCityImporter(string BaseDirectory) : this(BaseDirectory, TSOCityConstants.Default) { }                          
         protected TSOCityImporter(string BaseDirectory, TSOCityConstants CitySettings)
@@ -207,21 +304,22 @@ namespace nio2so.Formats.Terrain
             /// </summary>
             ForestSprites
         }
-        //all of these files seem reused in both versions so this seems like a good idea.
-        private static Dictionary<TSOCityDataFileTypes, string> _tsoCityNameDefaultMap = new()
+        
+        protected static Dictionary<TSOCityDataFileTypes, string> _tsoCityNameDefaultMap = new()
         {
-            { TSOCityDataFileTypes.ElevationMap, "elevation00.bmp" },
-            { TSOCityDataFileTypes.RoadMap, "roadmap00.bmp" },
-            { TSOCityDataFileTypes.TerrainTypeMap, "terraintype00.bmp" },
-            { TSOCityDataFileTypes.VertexColorMap, "vertexcolor00.bmp" },
+            { TSOCityDataFileTypes.ElevationMap, "elevation.bmp" },
+            { TSOCityDataFileTypes.RoadMap, "roadmap.bmp" },
+            { TSOCityDataFileTypes.TerrainTypeMap, "terraintype.bmp" },
+            { TSOCityDataFileTypes.VertexColorMap, "vertexcolor.bmp" },
             { TSOCityDataFileTypes.ForestSprites, "forest00a.bmp" },
-            { TSOCityDataFileTypes.ForestDensity, "forestdensity00.bmp" },
-            { TSOCityDataFileTypes.ForestType, "foresttype00.bmp" }
+            { TSOCityDataFileTypes.ForestDensity, "forestdensity.bmp" },
+            { TSOCityDataFileTypes.ForestType, "foresttype.bmp" }
         };
+        protected Dictionary<TSOCityDataFileTypes, string> CurrentTSODataContext { get; set; } = _tsoCityNameDefaultMap;
         /// <summary>
         /// Maps types of files used in rendering a <see cref="TSOCity"/> to file names in the TSO installation directory
         /// </summary>
-        protected virtual Dictionary<TSOCityDataFileTypes, string> TSOCityFileNamesMap => _tsoCityNameDefaultMap;
+        protected virtual Dictionary<TSOCityDataFileTypes, string> TSOCityFileNamesMap => CurrentTSODataContext;
         /// <summary>
         /// Maps types of files to the content item the asset is connected to
         /// </summary>
@@ -296,7 +394,7 @@ namespace nio2so.Formats.Terrain
             }
         }
 
-        public abstract Task LoadAssetsAsync();
+        public abstract Task LoadAssetsAsync(bool ContextTSOPAFileType = true);
 
         public abstract Task LoadCityAsync();
     }

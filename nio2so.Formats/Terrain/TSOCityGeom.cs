@@ -15,11 +15,18 @@ namespace nio2so.Formats.Terrain
     public record GeomVector3(double X, double Y, double Z);
     public class GeomVertex
     {
-        public Color VertexColor { get; set; }
+        /// <summary>
+        /// The color to display when no <see cref="Brush"/> is set
+        /// </summary>
+        public Color Debug_VertexColor { get; set; }
         public GeomVector3 Position { get; }
         public GeomPoint MapPosition { get; }
         public GeomVector3 Normal { get; set; }
         public GeomPoint TextureCoord { get; }
+        /// <summary>
+        /// The brush implementers can use which describes how this tile should be drawn
+        /// </summary>
+        public TSOCityBrush? Brush { get; set; }
 
         public GeomVertex(GeomVector3 Position, GeomPoint MapPosition, GeomVector3 Normal, GeomPoint TextureCoord)
         {
@@ -31,18 +38,137 @@ namespace nio2so.Formats.Terrain
     }
 
     /// <summary>
+    /// A generic way of storing information on how to draw a texture tile
+    /// </summary>
+    public class TSOCityBrush
+    {
+        public TSOCityBrush()
+        {
+        }
+
+        public TSOCityBrush(string TextureName) : this()
+        {
+            this.TextureName = TextureName;
+        }
+
+        /// <summary>
+        /// Returns the associated <see cref="TextureName"/> from the provided <see cref="TSOCityContentManager"/>
+        /// </summary>
+        /// <param name="Manager"></param>
+        /// <returns></returns>
+        public bool TryGetTextureRef(TSOCityContentManager Manager, out Bitmap? Value)
+        {
+            Value = default;
+            if (Manager.TryGetValue(TextureName.ToLower(), out var imageContent))
+                Value = imageContent.ImageReference as Bitmap;
+            return Value != default;
+        }
+
+        /// <summary>
+        /// Instructs the engine displaying the mesh on what texture to use to draw this tile, if applicable in the given context.
+        /// </summary>
+        public string? TextureName { get; set; }
+        public bool HasTexture => TextureName != null;
+    }
+
+    /// <summary>
+    /// Sub-Meshes that share the same <see cref="TSOCityBrush"/>
+    /// </summary>
+    public class TSOCityBrushGeometry
+    {
+        /// <summary>
+        /// <see cref="Vertices"/> that share the same <see cref="TSOCityBrush"/>
+        /// </summary>
+        public List<GeomVertex> Vertices { get; } = new();
+        /// <summary>
+        /// Vertex Indices that share the same <see cref="TSOCityBrush"/>
+        /// </summary>
+        public List<int> Indices { get; } = new();
+    }
+
+    /// <summary>
     /// A mesh for the city terrain generated using <see cref="TSOCityGeom"/>
     /// </summary>
     public class TSOCityMesh
     {
+        public TSOCityMesh()
+        {
+            UseBrushGeometry = true;
+        }
         /// <summary>
-        /// Vertex collections with optional layer functionality        
+        /// This mesh is marked to not use the <see cref="BrushGeometry"/> property
+        /// </summary>
+        /// <param name="UseBrushGeometry"></param>
+        public TSOCityMesh(bool UseBrushGeometry) : this()
+        {
+            this.UseBrushGeometry = UseBrushGeometry;
+        }
+
+        public void InitializeCollections()
+        {
+            for (int i = 0; i < 6; i++)
+            { // layers for each type of terrain
+                if (i == 5) i = 255;
+                Vertices.Add(i, new());
+                Indices.Add(i, new());               
+            }
+        }
+
+        /// <summary>
+        /// Collections of Vertices grouped by their <see cref="TSOCityTerrainTypes"/> value    
         /// </summary>
         public Dictionary<int, List<GeomVertex>> Vertices { get; } = new();
         /// <summary>
-        /// Vertex Index collections with optional layer functionality        
+        /// Collections of Vertex Indices grouped by their <see cref="TSOCityTerrainTypes"/> value    
         /// </summary>
         public Dictionary<int, List<int>> Indices { get; } = new();
+        /// <summary>
+        /// Groups the Vertices and Indices together by their shared <see cref="TSOCityBrush"/>
+        /// </summary>
+        public Dictionary<TSOCityBrush, TSOCityBrushGeometry> BrushGeometry { get; } = new();
+        public bool UseBrushGeometry { get; }
+
+        /// <summary>
+        /// Maps the <see cref="GeomVertex"/> and optionally its brush to the <see cref="Vertices"/> property and <see cref="BrushGeometry"/>
+        /// </summary>
+        /// <param name="Layer"></param>
+        /// <param name="Vertex"></param>
+        public void AddVertex(int Layer, GeomVertex Vertex)
+        {
+            //add to overall mesh
+            Vertices[Layer].Add(Vertex);
+            //add to brush geom if applicable
+            if (!UseBrushGeometry || Vertex.Brush == default) 
+                return;
+            var geomLayer = BrushGeometry;
+            if(geomLayer == null) 
+                return;
+            if (!geomLayer.TryGetValue(Vertex.Brush, out var collection))
+            {
+                collection = new();
+                geomLayer.Add(Vertex.Brush, collection);
+            }    
+            collection.Vertices.Add(Vertex);            
+        }
+        /// <summary>
+        /// Maps the <see cref="GeomVertex"/> Index and optionally its brush to the <see cref="Indices"/> property and <see cref="BrushGeometry"/>
+        /// </summary>
+        /// <param name="Layer"></param>
+        public void AddIndices(int Layer, TSOCityBrush? Brush = default, params int[] IndexIncrements)
+        {
+            //add to overall mesh
+            int baseInd = Vertices[Layer].Count - 4;
+            foreach (var index in IndexIncrements)
+                Indices[Layer].Add(baseInd + index);
+            //add to brush geom if applicable
+            if (!UseBrushGeometry || Brush == default) return;
+            var geomLayer = BrushGeometry;
+            if (geomLayer == null) return;
+            if (!geomLayer.TryGetValue(Brush, out var collection)) return;                
+            baseInd = collection.Vertices.Count - 4;
+            foreach (var index in IndexIncrements)
+                collection.Indices.Add(baseInd + index);
+        }
     }
 
     /// <summary>
@@ -50,7 +176,7 @@ namespace nio2so.Formats.Terrain
     /// </summary>
     internal class TSOCityGeom
     {
-        public delegate void OnSignalBlendHandler(TSOCity City, int MapX, int MapY, TSOCityTerrainTypes This, TSOCityTerrainTypes[] Edges);   
+        public delegate void OnSignalBlendHandler(TSOCity City, int MapX, int MapY, TSOCityTerrainTypes This, TSOCityTerrainTypes Other, int binary, out TSOCityBrush Brush);   
         public event OnSignalBlendHandler OnSignalBlend;
 
         /// <summary>
@@ -77,28 +203,48 @@ namespace nio2so.Formats.Terrain
         /// <param name="TerrainTypeData"></param>
         /// <param name="y"></param>
         /// <param name="x"></param>
-        private void SignalBlend(UtilImageIndexer<TSOCityTerrainTypes> TerrainTypeData, int y, int x)
+        private TSOCityBrush DoSignalBlend(UtilImageIndexer<TSOCityTerrainTypes> TerrainTypeData, int y, int x)
         {
-            if (OnSignalBlend == null) return; // No one is listening to me
+            if (OnSignalBlend == null) return default; // No one is listening to me
             TSOCityTerrainTypes sample;
             TSOCityTerrainTypes t;
 
-            var edges = new TSOCityTerrainTypes[] { TSOCityTerrainTypes.Nothing, TSOCityTerrainTypes.Nothing,
-                TSOCityTerrainTypes.Nothing, TSOCityTerrainTypes.Nothing };
+            var edges = new int[] { -1, -1,-1, -1 };                
 
             int imgSize = (int)CurrentCity.CityDataResolution.X;
             sample = TerrainTypeData[y * imgSize + x];
             
             t = TerrainTypeData[Math.Abs((y - 1) * imgSize + x)]; // up
-            if ((y - 1 >= 0) && (t > sample) && t != TSOCityTerrainTypes.Nothing) edges[0] = t;
+            if ((y - 1 >= 0) && (t < sample) && t != TSOCityTerrainTypes.Nothing) edges[0] = (int)t;
             t = TerrainTypeData[y * imgSize + x + 1]; // right
-            if ((x + 1 < imgSize) && (t > sample) && t != TSOCityTerrainTypes.Nothing) edges[1] = t;
+            if ((x + 1 < imgSize) && (t < sample) && t != TSOCityTerrainTypes.Nothing) edges[1] = (int)t;
             t = TerrainTypeData[Math.Min((y + 1), imgSize-1) * imgSize + x]; // down
-            if ((y + 1 < imgSize) && (t > sample) && t != TSOCityTerrainTypes.Nothing) edges[2] = t;
+            if ((y + 1 < imgSize) && (t < sample) && t != TSOCityTerrainTypes.Nothing) edges[2] = (int)t;
             t = TerrainTypeData[y * imgSize + x - 1]; // left
-            if ((x - 1 >= 0) && (t > sample) && t != TSOCityTerrainTypes.Nothing) edges[3] = t;
+            if ((x - 1 >= 0) && (t < sample) && t != TSOCityTerrainTypes.Nothing) edges[3] = (int)t;
+            /*
+            t = TerrainTypeData[Math.Abs((y - 1) * imgSize + x)]; // up
+            if ((y - 1 >= 0) && t != TSOCityTerrainTypes.Nothing) edges[0] = t;
+            t = TerrainTypeData[y * imgSize + x + 1]; // right
+            if ((x + 1 < imgSize) && t != TSOCityTerrainTypes.Nothing) edges[1] = t;
+            t = TerrainTypeData[Math.Min((y + 1), imgSize - 1) * imgSize + x]; // down
+            if ((y + 1 < imgSize) && t != TSOCityTerrainTypes.Nothing) edges[2] = t;
+            t = TerrainTypeData[y * imgSize + x - 1]; // left
+            if ((x - 1 >= 0) && t != TSOCityTerrainTypes.Nothing) edges[3] = t;*/
 
-            OnSignalBlend(CurrentCity, x, y, sample, edges);
+            int binary =
+            ((edges[0] > -1) ? 0 : 2) |
+            ((edges[1] > -1) ? 0 : 1) |
+            ((edges[2] > -1) ? 0 : 8) |
+            ((edges[3] > -1) ? 0 : 4);
+
+            int maxEdge = 4;
+
+            for (int i = 0; i < 4; i++)
+                if (edges[i] < maxEdge && edges[i] != -1) maxEdge = edges[i];
+
+            OnSignalBlend(CurrentCity, x, y, sample, (TSOCityTerrainTypes)maxEdge, binary, out var brush);
+            return brush;
         }
 
         /// <summary>
@@ -116,12 +262,7 @@ namespace nio2so.Formats.Terrain
 
             //the mesh
             TSOCityMesh mesh = new TSOCityMesh();
-            for (int i = 0; i < 6; i++)
-            { // layers for each type of terrain
-                if (i == 5) i = 255;
-                mesh.Vertices.Add(i, new());
-                mesh.Indices.Add(i, new());
-            }
+            mesh.InitializeCollections();
 
             return Task.Run(delegate
             {
@@ -185,7 +326,8 @@ namespace nio2so.Formats.Terrain
                                 int mapYPos = i;
                                 GeomPoint mapPos = new(mapXPos, mapYPos);
 
-                                SignalBlend(TerrainData, i, ex); //sets the TSO Pre-Alpha
+                                //rabbit hole here
+                                TSOCityBrush brush = DoSignalBlend(TerrainData, i, ex); //sets the TSO Pre-Alpha texture reference
 
                                 //(smaller) segment of code for generating triangles incoming
                                 var norm1 = GetNormalAt(Math.Min(rXE, Math.Max(rXS, j)), i);
@@ -203,8 +345,8 @@ namespace nio2so.Formats.Terrain
                                 var vert3 = new GeomVertex(pos3, mapPos, norm3, new(1, 1));
                                 var vert4 = new GeomVertex(pos4, mapPos, norm4, new(0, 1));
 
-                                //set vertex colors
-                                vert1.VertexColor = vert2.VertexColor = vert3.VertexColor = vert4.VertexColor =
+                                //set debug vertex colors
+                                vert1.Debug_VertexColor = vert2.Debug_VertexColor = vert3.Debug_VertexColor = vert4.Debug_VertexColor =
                                     (TSOCityTerrainTypes)type switch
                                     {
                                         TSOCityTerrainTypes.Nothing => Color.Black,
@@ -214,21 +356,17 @@ namespace nio2so.Formats.Terrain
                                         TSOCityTerrainTypes.Rock => Color.Brown,
                                         TSOCityTerrainTypes.Sand => Color.SandyBrown
                                     };
+                                //set brushes
+                                vert1.Brush = vert2.Brush = vert3.Brush = vert4.Brush = brush;
 
                                 //set verts
-                                var baseInd = mesh.Vertices[type].Count;
-                                mesh.Vertices[type].Add(vert1);
-                                mesh.Vertices[type].Add(vert2);
-                                mesh.Vertices[type].Add(vert3);
-                                mesh.Vertices[type].Add(vert4);
+                                mesh.AddVertex(type, vert1);
+                                mesh.AddVertex(type, vert2);
+                                mesh.AddVertex(type, vert3);
+                                mesh.AddVertex(type, vert4);
 
                                 //set square indices
-                                mesh.Indices[type].Add(baseInd);
-                                mesh.Indices[type].Add(baseInd + 1);
-                                mesh.Indices[type].Add(baseInd + 2);
-                                mesh.Indices[type].Add(baseInd);
-                                mesh.Indices[type].Add(baseInd + 2);
-                                mesh.Indices[type].Add(baseInd + 3);
+                                mesh.AddIndices(type, brush, 0, 1, 2, 0, 2, 3);
                             }
                         }
                     }

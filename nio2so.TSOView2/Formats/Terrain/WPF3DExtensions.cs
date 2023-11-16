@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.Terrain;
+using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,16 @@ namespace nio2so.TSOView2.Formats.Terrain
         public static Point3D ToPoint3D(this GeomVector3 Point) => new(Point.X, Point.Y, Point.Z);
         public static Point ToPoint2D(this GeomPoint Point) => new(Point.X, Point.Y);
         public static Color ToMediaColor(this System.Drawing.Color MColor) => Color.FromArgb(MColor.A, MColor.R, MColor.G, MColor.B);
+        public static Brush? ToMediaBrush(this TSOCityBrush brush, TSOCityContentManager Manager)
+        {
+            if (!brush.TryGetTextureRef(Manager, out var resource)) return default;
+            var managedRes = resource.Convert();
+            return new ImageBrush()
+            {
+                ImageSource = managedRes
+            };
+        }
+
         /// <summary>
         /// See: <see cref="TSOCityGeom.GenerateMeshGeometry(TSOCity)"/>
         /// <para/><seealso href="https://github.com/riperiperi/FreeSO"/>
@@ -69,7 +80,7 @@ namespace nio2so.TSOView2.Formats.Terrain
                 sum += vec;
             }
             if (sum != Microsoft.Xna.Framework.Vector3.Zero) sum.Normalize();
-            return new Vector3D(sum.X, sum.Y, sum.Z);
+            return new Vector3D(sum.X, -sum.Y, sum.Z);
         }
         /// <summary>
         /// Initializes the <see cref="GeomVertex.Normal"/> property as they come uninitialized
@@ -101,9 +112,29 @@ namespace nio2so.TSOView2.Formats.Terrain
             {
                 Positions = new Point3DCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.Position.ToPoint3D())),
                 TriangleIndices = new System.Windows.Media.Int32Collection(Mesh.Indices[(int)TerrainType]),
-                Normals = new Vector3DCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.Normal.ToVector3D()))
+                Normals = new Vector3DCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.Normal.ToVector3D())),
+                TextureCoordinates = new PointCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.TextureCoord.ToPoint2D()))
             };
-            Debug_VertexColor = Mesh.Vertices[(int)TerrainType][0].VertexColor.ToMediaColor();
+            Debug_VertexColor = Mesh.Vertices[(int)TerrainType][0].Debug_VertexColor.ToMediaColor();
+            return meshGeometry;
+        }
+        /// <summary>
+        /// Converts the given <see cref="TSOCityBrushGeometry"/> into a WPF Media3D <see cref="MeshGeometry3D"/>
+        /// <para>See also: <seealso cref="To3DGeometry(TSOCityMesh)"/></para>
+        /// </summary>
+        /// <param name="Mesh">Please call <see cref="FixNormals(TSOCityMesh)"/> before calling this method.</param>
+        /// <param name="TerrainType"></param>
+        /// <param name="Debug_VertexColor"></param>
+        /// <returns></returns>
+        public static MeshGeometry3D ToMeshGeometry(this TSOCityBrushGeometry Mesh)
+        {
+            MeshGeometry3D meshGeometry = new MeshGeometry3D()
+            {
+                Positions = new Point3DCollection(Mesh.Vertices.Select(x => x.Position.ToPoint3D())),
+                TriangleIndices = new System.Windows.Media.Int32Collection(Mesh.Indices),
+                Normals = new Vector3DCollection(Mesh.Vertices.Select(x => x.Normal.ToVector3D())),
+                TextureCoordinates = new PointCollection(Mesh.Vertices.Select(x => x.TextureCoord.ToPoint2D()))
+            };
             return meshGeometry;
         }
         /// <summary>
@@ -116,19 +147,20 @@ namespace nio2so.TSOView2.Formats.Terrain
             List<GeometryModel3D> models = new();
             var backBrush = new DiffuseMaterial(Brushes.Black);
 
-            foreach (var terrainType in Mesh.Vertices)
+            foreach (var brushMeshKeyValue in Mesh.BrushGeometry)
             {
-                //get mesh geometry
-                MeshGeometry3D meshGeom = Mesh.ToMeshGeometry((TSOCityTerrainTypes)terrainType.Key, out var vColor);
+                //get brush
+                Brush? brush = brushMeshKeyValue.Key.ToMediaBrush(CityTerrainHandler.Current.ContentManager);
+                if (brush == null) brush = new SolidColorBrush(Colors.Black);
+                Material material = new DiffuseMaterial(brush);
 
-                //get draw brush
-                Brush color = new SolidColorBrush(vColor);
-                Material material = new DiffuseMaterial(color);
+                //get mesh geometry
+                MeshGeometry3D meshGeom = brushMeshKeyValue.Value.ToMeshGeometry();
 
                 GeometryModel3D geom = new()
                 {
                     Geometry = meshGeom,
-                    Material = backBrush,
+                    Material = material,
                     BackMaterial = material
                 };
                 models.Add(geom);
