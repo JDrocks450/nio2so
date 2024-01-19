@@ -1,6 +1,11 @@
 # nio2so
 A continuation of niotso (The Sims Online)
 
+![image](https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe)
+
+An image of TSOView2 rendering City terrain as it would appear in TSO Pre-Alpha.
+More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).
+
 ### Original Project
 The original project can be found archived here: https://github.com/daddesio/niotso
 
