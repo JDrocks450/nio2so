@@ -21,7 +21,7 @@ namespace nio2so.Formats.Terrain
         /// </summary>
         public Point? OriginPosition { get; set; } = default;
 
-        public double ElevationScale { get; set; } = 1/12.0;
+        public double ElevationScale { get; set; } = 1/8.0;
 
         public int TopLeftCornerPosition { get; set; } = TSOCityImporter.TSO_CITY_TOPL;
         public int BottomLeftCornerPosition { get; set; } = TSOCityImporter.TSO_CITY_BOTL;

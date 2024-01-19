@@ -15,28 +15,30 @@
                         FarPlaneDistance="10000" 
                         UpDirection="0,1,0" 
                         LookDirection=".5,.5,.5" 
-                        NearPlaneDistance="0" 
-                        Position="0,0,0"    
+                        NearPlaneDistance="100" 
+                        Position="0,-247,0"
                         Width="140" />
             </Viewport3D.Camera>
             <Viewport3D.Children>
                 <ModelVisual3D>
                     <ModelVisual3D.Content>
                         <Model3DGroup>
-                            <!-- Lights, MeshGeometry3D and DiffuseMaterial objects are added to the ModelVisual3D. -->
-                            <DirectionalLight Color="#FFFFFFFF" Direction="0,1,0"/>
+                            <DirectionalLight Color="#FFFFFFFF" Direction=".25,.5,0"/>
                             <Model3DGroup x:Name="MainSceneGroup"/>
                         </Model3DGroup>
                     </ModelVisual3D.Content>
                 </ModelVisual3D>
             </Viewport3D.Children>
         </Viewport3D>
-        <TextBlock Name="DebugText" Foreground="LawnGreen" FontFamily="Comic Sans MS" FontWeight="Bold">
-            DEBUG DISPLAY
-        </TextBlock>
         <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,30,0,0">
+            <TextBlock Name="DebugText" Foreground="LawnGreen" FontFamily="Comic Sans MS" FontWeight="Bold">
+            DEBUG DISPLAY
+            </TextBlock>
             <Button Name="TSOViewButton" Padding="5,0" Click="TSOViewButton_Click">The Sims Online angle</Button>
             <Button Name="TrainsetViewButton" Click="TrainsetViewButton_Click">Trainset View</Button>
         </StackPanel>
+        <Border Padding="5" Background="Black" VerticalAlignment="Bottom" HorizontalAlignment="Right" MaxWidth="256">
+            <Image Name="Mini_HUD_Image"/>
+        </Border>
     </Grid>
 </Page>

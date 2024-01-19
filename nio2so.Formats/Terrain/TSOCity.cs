@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using nio2so.Data.Common;
+using System.Drawing;
 using System.Runtime;
 
 namespace nio2so.Formats.Terrain
@@ -53,6 +54,19 @@ namespace nio2so.Formats.Terrain
             return new UtilImageIndexer<TSOCityTerrainTypes>((Bitmap)img, conv);
         }
         public static TSOCityTerrainTypes GetTerrainType(Color color) => colorMap[color.ToArgb()];
+
+        /// <summary>
+        /// Returns a <see cref="UtilImageIndexer"/> allowing you to read per-pixel Terrain information from the resource
+        /// <para>See: <see cref="GetTerrainType(Color)"/></para>
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="NullReferenceException"></exception>
+        public UtilImageIndexer GetVertexColorMap()
+        {
+            if (!TryGetLayer(TSOCityImporter.TSOCityDataFileTypes.VertexColorMap, out var img))
+                throw new NullReferenceException("Vertex Color map not present!!");
+            return new UtilImageIndexer((Bitmap)img);
+        }
 
         internal Dictionary<TSOCityImporter.TSOCityDataFileTypes, TSOCityContentItem> cityDataMap { get; set; } = new();
         /// <summary>

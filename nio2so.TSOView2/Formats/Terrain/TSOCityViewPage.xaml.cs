@@ -12,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
@@ -24,12 +25,14 @@ namespace nio2so.TSOView2.Formats.Terrain
     /// </summary>
     public partial class TSOCityViewPage : Page
     {
+        Camera currentCamera => Camera;
+
         private record CameraSettings(Point3D Position,Vector3D LookAt, int Width);
 
         static Dictionary<int, CameraSettings> settings = new()
         {
-            { 0, new(new(0,132,256), new(0.5,-0.5,-0.5),140) },
-            { 1, new(new(142,110,301),new(-.08,-.65,-.75),400) }
+            { 0, new(new(0,132,256), new(0.5,0.5,0.5),140) },
+            { 1, new(new(0,-256,0),new(.5,.5,.5),140) }
         };
 
         TSOCity CurrentCity => CityTerrainHandler.Current.City;
@@ -52,6 +55,8 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         private void LoadMap()
         {
+            ortho_targetWidth = (currentCamera as OrthographicCamera)?.Width ?? 0;
+
             // CLEAR 3D SCENE
             MainSceneGroup.Children.Clear();
 
@@ -63,9 +68,10 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         private void OrthoSetCam(CameraSettings settings)
         {
-            Camera.Width = settings.Width;
-            Camera.Position = settings.Position;
-            Camera.LookDirection = settings.LookAt;
+            var cam = currentCamera as OrthographicCamera;
+            cam.Width = settings.Width;
+            cam.Position = settings.Position;
+            cam.LookDirection = settings.LookAt;
         }
 
         private void OnCameraMoved()
@@ -76,9 +82,9 @@ namespace nio2so.TSOView2.Formats.Terrain
         private void UserKeyboardInput(object sender, KeyEventArgs e)
         {
             bool handled = false;
-            if (Camera is PerspectiveCamera)
+            if (currentCamera is PerspectiveCamera)
                 PERSPECTIVE_HandleKeyboard(e, ref handled);
-            else if (Camera is OrthographicCamera)
+            else if (currentCamera is OrthographicCamera)
                 ORTHO_HandleKeyboard(e, ref handled);
             if (!handled) return;
 
@@ -89,9 +95,9 @@ namespace nio2so.TSOView2.Formats.Terrain
         private void Page_MouseMove(object sender, MouseEventArgs e)
         {
             bool handled = false;
-            if (Camera is PerspectiveCamera)
+            if (currentCamera is PerspectiveCamera)
                 PERSPECTIVE_HandleMouse(sender, e, ref handled);
-            else if (Camera is OrthographicCamera)
+            else if (currentCamera is OrthographicCamera)
                 ORTHO_HandleMouse(sender, e, ref handled);
             if (!handled) return;
 
@@ -124,6 +130,8 @@ namespace nio2so.TSOView2.Formats.Terrain
             Camera.MoveBy(e.Key, 10).RotateBy(e.Key, 3);
             Handled = true;
         }
+
+        double ortho_targetWidth = 0;
 
         private void ORTHO_HandleMouse(object sender, MouseEventArgs e, ref bool Handled)
         {
@@ -159,10 +167,15 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         private void CityView_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            if (Camera is PerspectiveCamera) return;
-            (Camera as OrthographicCamera).Width += (e.Delta/5);
-            if ((Camera as OrthographicCamera).Width <= 0)
-                (Camera as OrthographicCamera).Width = 100;
+            if (currentCamera is PerspectiveCamera) return;
+            ortho_targetWidth += (-e.Delta/5);
+            if (ortho_targetWidth <= 0)
+                ortho_targetWidth = 20; // bounce effect
+            currentCamera.BeginAnimation(OrthographicCamera.WidthProperty, new DoubleAnimation(ortho_targetWidth, TimeSpan.FromSeconds(.5))
+            {
+                AccelerationRatio = .25,
+                DecelerationRatio = .75
+            });
         }
     }
 }

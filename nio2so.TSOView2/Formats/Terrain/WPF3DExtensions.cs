@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.Terrain;
+﻿using nio2so.Data.Common;
+using nio2so.Formats.Terrain;
 using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,8 @@ namespace nio2so.TSOView2.Formats.Terrain
     /// </summary>
     internal static class WPF3DExtensions
     {
+        const double VertexColorStrength = 1;
+
         public static Vector3D ToVector3D(this GeomVector3 Point) => new(Point.X, Point.Y, Point.Z);
         public static Point3D ToPoint3D(this GeomVector3 Point) => new(Point.X, Point.Y, Point.Z);
         public static Point ToPoint2D(this GeomPoint Point) => new(Point.X, Point.Y);
@@ -115,7 +118,37 @@ namespace nio2so.TSOView2.Formats.Terrain
                 Normals = new Vector3DCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.Normal.ToVector3D())),
                 TextureCoordinates = new PointCollection(Mesh.Vertices[(int)TerrainType].Select(x => x.TextureCoord.ToPoint2D()))
             };
-            Debug_VertexColor = Mesh.Vertices[(int)TerrainType][0].Debug_VertexColor.ToMediaColor();
+            Debug_VertexColor = Mesh.Vertices[(int)TerrainType][0].Debug_TileColorHilight.ToMediaColor();
+            return meshGeometry;
+        }
+        /// <summary>
+        /// Converts the given <see cref="TSOCityMesh"/> into a WPF Media3D <see cref="MeshGeometry3D"/>
+        /// <para>See also: <seealso cref="To3DGeometry(TSOCityMesh)"/></para>
+        /// </summary>
+        /// <param name="Mesh">Please call <see cref="FixNormals(TSOCityMesh)"/> before calling this method.</param>
+        /// <param name="TerrainType"></param>
+        /// <param name="Debug_VertexColor"></param>
+        /// <returns></returns>
+        public static MeshGeometry3D ToVertexColorMeshGeometry(this TSOCityMesh Mesh, out Material VertexColorMaterial)
+        {
+            var flattenedVerts = Mesh.Vertices[155];
+            var indices = Mesh.Indices[155];
+
+            MeshGeometry3D meshGeometry = new MeshGeometry3D()
+            {
+                Positions = new Point3DCollection(flattenedVerts.Select(y => y.Position.ToPoint3D())),
+                TriangleIndices = new System.Windows.Media.Int32Collection(indices),
+                Normals = new Vector3DCollection(flattenedVerts.Select(y => y.Normal.ToVector3D())),
+                TextureCoordinates = new PointCollection(flattenedVerts.Select(y => y.VertexColorAtlasCoord.ToPoint2D()))
+            };
+            //set texture of vertex color atlas
+            var managedRes = Mesh.VertexColorAtlas.Convert();
+            var brush = new ImageBrush()
+            {
+                ImageSource = managedRes,
+                Opacity = VertexColorStrength
+            };
+            VertexColorMaterial = new DiffuseMaterial(brush);            
             return meshGeometry;
         }
         /// <summary>
@@ -147,6 +180,7 @@ namespace nio2so.TSOView2.Formats.Terrain
             List<GeometryModel3D> models = new();
             var backBrush = new DiffuseMaterial(Brushes.Black);
 
+            //brush geometry
             foreach (var brushMeshKeyValue in Mesh.BrushGeometry)
             {
                 //get brush
@@ -154,17 +188,32 @@ namespace nio2so.TSOView2.Formats.Terrain
                 if (brush == null) brush = new SolidColorBrush(Colors.Black);
                 Material material = new DiffuseMaterial(brush);
 
+                MaterialGroup group = new MaterialGroup();
+                group.Children.Add(material);                
+
                 //get mesh geometry
                 MeshGeometry3D meshGeom = brushMeshKeyValue.Value.ToMeshGeometry();
 
                 GeometryModel3D geom = new()
                 {
                     Geometry = meshGeom,
-                    Material = material,
-                    BackMaterial = material
+                    Material = group,
+                    BackMaterial = group
                 };
                 models.Add(geom);
             }
+
+            //vertex colors
+            var vertexColorMesh = Mesh.ToVertexColorMeshGeometry(out var atlas);
+            GeometryModel3D vertColGeom = new()
+            {
+                Geometry = vertexColorMesh,
+                Material = atlas,
+                Transform = new TranslateTransform3D(0,-.000001,0),
+                //BackMaterial = testMat
+            };
+            models.Add(vertColGeom);
+
             return models;
         }
     }

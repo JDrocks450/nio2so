@@ -118,11 +118,11 @@ namespace nio2so.Formats.Terrain
                 //SET LOADED CONTENT TO CITY OBJECT
                 newCity.cityDataMap = TSOCityDataContentItems;
 
-                Debug_ElevationBmp = new Bitmap(512, 512);
+                Debug_ElevationBmp = new Bitmap((int)newCity.CityDataResolution.X, (int)newCity.CityDataResolution.Y);
 
                 //MAKE A GEOM PROVIDER
                 TSOCityGeom geomMachine = new();
-                geomMachine.OnSignalBlend += TextureRequested; // found a texture to stitch into our skin
+                geomMachine.OnTileTextureRequested += TextureRequested; // found a texture to stitch into our skin
 
                 //GENERATE MESH
                 TSOCityBrush defaultBrush = new("blank");
@@ -140,7 +140,7 @@ namespace nio2so.Formats.Terrain
         private static readonly Dictionary<string, TSOCityBrush> _palette = new();
 
         /// <summary>
-        /// Gets the texture name
+        /// Gets the texture brush based on the neighboring tiles and which tile we're currently reading
         /// </summary>
         /// <param name="City"></param>
         /// <param name="MapX"></param>
@@ -222,7 +222,9 @@ namespace nio2so.Formats.Terrain
             _palette.Add(tileTexture, Brush);
         }
 
-        public Bitmap Debug_ImageReadFunctionBmp { get; private set; }
+
+
+        public Bitmap Debug_VertexColorRead { get; private set; }
         public Bitmap Debug_ElevationBmp { get; private set; }
     }
 

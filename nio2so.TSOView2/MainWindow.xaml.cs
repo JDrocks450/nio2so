@@ -41,10 +41,6 @@ namespace nio2so.TSOView2
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {            
-            //LOAD CITY VIEW
-            IsEnabled = false;
-            await CityTerrainHandler.LoadCity();
-            IsEnabled = true;
             //HOOK Click Event for all MenuItems with a Name property
             UIWireUp_HookEvents();
         }
@@ -62,7 +58,7 @@ namespace nio2so.TSOView2
                 { ExitItem, Application.Current.Shutdown },
                 { ConfigMenuItem, TSOViewConfigHandler.InvokeConfigViewerDialog },
                 { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
-                { OpenTSOPreAlphaWorldItem, CityTerrainHandler.Current.ShowCityPlugin }
+                { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

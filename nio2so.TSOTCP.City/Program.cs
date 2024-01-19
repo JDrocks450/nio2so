@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.City
     {
         static void Main(string[] args)
         {
-            TSOCityServer cityServer = new(36101);
+            TSOCityServer cityServer = new(36100);
             cityServer.Start();
         }
     }

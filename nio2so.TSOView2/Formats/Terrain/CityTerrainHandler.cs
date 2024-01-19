@@ -1,5 +1,9 @@
-﻿using nio2so.Formats.Terrain;
+﻿using Microsoft.Win32;
+using nio2so.Formats.Terrain;
+using nio2so.TSOView2.Formats.UIs;
 using nio2so.TSOView2.Util;
+using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,40 +24,71 @@ namespace nio2so.TSOView2.Formats.Terrain
             Mesh = mesh;
         }
 
-        public static async Task<CityTerrainHandler> LoadCity()
+        public static Task<CityTerrainHandler?> PromptLoadCity()
         {
             //TSO CONFIG FILE
             string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
 
-            //CITY LOADER
-            TSOPreAlphaCityImporter importer = new(gamePath, "D:\\Games\\FreeSO\\The Sims Online\\TSOClient\\cities\\city_0002")
+            //PROMPT FOR CITY DIRECTORY
+            OpenFileDialog dlg = new()
             {
-                CitySettings = new()
-                {
-                    ElevationScale = 1/15.0
-                }
+                AddExtension = true,
+                DefaultExt = "*.uis",
+                CheckFileExists = true,
+                RestoreDirectory = true,
+                InitialDirectory = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory +"\\FarZoom",
+                Filter = "The Sims Online City Bitmap|*.bmp",
+                Multiselect = false,
+                Title = "Open any City file in a City folder..."
             };
-            await importer.LoadAssetsAsync(false); // asset loader
-            (TSOCity city, TSOCityMesh mesh) values = await importer.LoadCityAsync(); // parse assets into city render            
-            values.mesh.FixNormals(values.city); // mandatory
-
-            
-            Window debugWindow = new Window()
-            {
-                Content = new Image()
-                {
-                    Source = importer.Debug_ElevationBmp.Convert()
-                }
-            };
-            debugWindow.Show();
-                      
-
-            return new CityTerrainHandler(values.city, values.mesh);
+            if (!dlg.ShowDialog() ?? true)
+                return default; // user dismissed the dialog away
+                                // 
+            return LoadCity(Path.GetDirectoryName(dlg.FileName));
         }
 
-        public void ShowCityPlugin()
+        public static async Task<CityTerrainHandler?> LoadCity(string FolderName)
         {
+            //TSO CONFIG FILE
+            string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
+
+            string verb = "parsing";
+            try
+            {
+                //CREATE CITY LOADER
+                TSOPreAlphaCityImporter importer = new(gamePath, FolderName)
+                {
+                    CitySettings = new()
+                    {
+                        ElevationScale = 1 / 8.0
+                    }
+                };
+                //LOAD ASSETS
+                verb = "loading assets for";
+                await importer.LoadAssetsAsync(false); // asset loader
+                //LOAD GEOMETRY TO MEM
+                verb = "generating geometry for";
+                (TSOCity city, TSOCityMesh mesh) values = await importer.LoadCityAsync(); // parse assets into city render                                                                                          
+                values.mesh.FixNormals(values.city); // mandatory                                  
+
+                //LOAD PLUG-IN
+                return new CityTerrainHandler(values.city, values.mesh);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show($"An error occured while {verb} that city: \n{e.Message}");
+            }
+            return default; // default fail-out
+        }
+
+        public static async void PromptUserShowCityPlugin()
+        {
+            var handler = await PromptLoadCity();
+            if (handler == null) return; // process above failure
+
             TSOCityViewPage page = new();
+            page.Mini_HUD_Image.Source = Current.Mesh.VertexColorAtlas.Convert();
+
             (Application.Current.MainWindow as ITSOView2Window).MainWindow_ShowPlugin(page);
         }
     }
