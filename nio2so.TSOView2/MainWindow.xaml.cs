@@ -58,7 +58,8 @@ namespace nio2so.TSOView2
                 { ExitItem, Application.Current.Shutdown },
                 { ConfigMenuItem, TSOViewConfigHandler.InvokeConfigViewerDialog },
                 { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
-                { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin }
+                { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin },
+                { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(CityTerrainHandler.TSOVersion.NewImproved) }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

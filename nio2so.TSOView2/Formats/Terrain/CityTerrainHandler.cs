@@ -24,7 +24,7 @@ namespace nio2so.TSOView2.Formats.Terrain
             Mesh = mesh;
         }
 
-        public static Task<CityTerrainHandler?> PromptLoadCity()
+        public static async Task<CityTerrainHandler?> PromptLoadCity(TSOVersion Version)
         {
             //TSO CONFIG FILE
             string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
@@ -44,10 +44,16 @@ namespace nio2so.TSOView2.Formats.Terrain
             if (!dlg.ShowDialog() ?? true)
                 return default; // user dismissed the dialog away
                                 // 
-            return LoadCity(Path.GetDirectoryName(dlg.FileName));
+            return await LoadCity(Path.GetDirectoryName(dlg.FileName), Version);
         }
 
-        public static async Task<CityTerrainHandler?> LoadCity(string FolderName)
+        public enum TSOVersion
+        {
+            PreAlpha,
+            NewImproved
+        }
+
+        public static async Task<CityTerrainHandler?> LoadCity(string FolderName, TSOVersion Version)
         {
             //TSO CONFIG FILE
             string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
@@ -65,7 +71,7 @@ namespace nio2so.TSOView2.Formats.Terrain
                 };
                 //LOAD ASSETS
                 verb = "loading assets for";
-                await importer.LoadAssetsAsync(false); // asset loader
+                await importer.LoadAssetsAsync(Version == TSOVersion.PreAlpha); // asset loader
                 //LOAD GEOMETRY TO MEM
                 verb = "generating geometry for";
                 (TSOCity city, TSOCityMesh mesh) values = await importer.LoadCityAsync(); // parse assets into city render                                                                                          
@@ -81,9 +87,11 @@ namespace nio2so.TSOView2.Formats.Terrain
             return default; // default fail-out
         }
 
-        public static async void PromptUserShowCityPlugin()
+        public static async void PromptUserShowCityPlugin() => await PromptUserShowCityPlugin(TSOVersion.PreAlpha);
+
+        public static async Task PromptUserShowCityPlugin(TSOVersion Version)
         {
-            var handler = await PromptLoadCity();
+            var handler = await PromptLoadCity(Version);
             if (handler == null) return; // process above failure
 
             TSOCityViewPage page = new();

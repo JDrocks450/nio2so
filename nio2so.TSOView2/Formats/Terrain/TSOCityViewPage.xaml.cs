@@ -29,7 +29,10 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         private record CameraSettings(Point3D Position,Vector3D LookAt, int Width);
 
-        static Dictionary<int, CameraSettings> settings = new()
+        /// <summary>
+        /// Camera presets for Orthographic camera
+        /// </summary>
+        static Dictionary<int, CameraSettings> CameraPresets = new()
         {
             { 0, new(new(0,132,256), new(0.5,0.5,0.5),140) },
             { 1, new(new(0,-256,0),new(.5,.5,.5),140) }
@@ -157,12 +160,12 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         private void TSOViewButton_Click(object sender, RoutedEventArgs e)
         {
-            OrthoSetCam(settings[0]);
+            OrthoSetCam(CameraPresets[0]);
         }
 
         private void TrainsetViewButton_Click(object sender, RoutedEventArgs e)
         {
-            OrthoSetCam(settings[1]);
+            OrthoSetCam(CameraPresets[1]);
         }
 
         private void CityView_MouseWheel(object sender, MouseWheelEventArgs e)
