@@ -14,14 +14,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     internal class TSOHostOnlinePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU;
-        public uint Arg1 { get; }
-        public ushort Arg2 { get; }
+        public uint HostVersion { get; }
+        public ushort SizeLimit { get; }
         public uint Arg3 { get; }
 
-        public TSOHostOnlinePDU(uint arg1 = 0x0C, ushort arg2 = 1024, uint arg3 = 0x7FFF7FFF)
+        public TSOHostOnlinePDU(uint hostVersion = 0x0C, ushort packetSize = 1024, uint arg3 = 0x7FFF7FFF)
         {
-            Arg1 = arg1;
-            Arg2 = arg2;
+            HostVersion = hostVersion;
+            SizeLimit = packetSize;
             Arg3 = arg3;
             MakeBodyFromProperties();
         }

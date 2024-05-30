@@ -62,7 +62,7 @@ namespace nio2so.TSOTCP.City.TSO
                         QConsole.WriteLine($"Client: {ID}", sessionData.ToString());
 
                         //HOST_ONLINE_PDU
-                        HandleSendClientHostOnlinePacket(ID, new(12, 0));                        
+                        HandleSendClientHostOnlinePacket(ID);                        
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:

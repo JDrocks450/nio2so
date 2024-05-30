@@ -147,7 +147,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             if (HasData4)
                 Data4 = ReadBodyDword();
         }
-#endif
+#else
         /// <summary>
         /// Uses the <see cref="DBMessageBody"/> combined with <see cref="Flags"/> to get remaining fields in this message.
         /// </summary>
@@ -185,7 +185,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             _bodyBuffer.Position += 3;
             MessageString = HasString ? string.Join(", ", ReadStrings()) : "None.";
         }
-
+#endif
         /// <summary>
         /// Use this function to extend the Body property to the <see cref="MessageSize"/> parameter.
         /// <para>See: <see cref="MessageSize"/> property for more info.</para>

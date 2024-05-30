@@ -47,7 +47,7 @@ namespace nio2so.TSOProtocol.Controllers
                 return Ok(new ErrorMessagePacket(1337, errorMsg));
             }                               
 
-            packet = new ShardSelectionPacket(new ShardSelectionStructure("localhost:36",TSOSessionTicket.CityDefault,uint.Parse(AvatarID)));
+            packet = new ShardSelectionPacket(new ShardSelectionStructure("localhost:49",TSOSessionTicket.CityDefault,uint.Parse(AvatarID)));
             _logger.LogInformation($"CitySelector: Returned === \n {packet.ToString()} \n ===");
             return Ok(packet.ToString());
         }

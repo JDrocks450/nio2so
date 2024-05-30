@@ -25,7 +25,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     internal class TSOSetAcceptAlertsResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;
-        public TSOSetAcceptAlertsResponsePDU(bool AcceptsAlerts, uint statusCode = 200, string reasonText = "OK.")
+        public TSOSetAcceptAlertsResponsePDU(bool AcceptsAlerts, 
+            uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
+            string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {
             StatusCode = statusCode;
             ReasonText = reasonText;

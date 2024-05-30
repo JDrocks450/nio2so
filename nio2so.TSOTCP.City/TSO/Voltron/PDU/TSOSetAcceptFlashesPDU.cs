@@ -21,7 +21,8 @@
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_RESPONSE_PDU;
 
-        public TSOSetAcceptFlashesResponsePDU(bool AcceptsFlashes, uint statusCode = 200, string reasonText = "OK.")
+        public TSOSetAcceptFlashesResponsePDU(bool AcceptsFlashes, uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
+            string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {
             StatusCode = statusCode;
             ReasonText = reasonText;

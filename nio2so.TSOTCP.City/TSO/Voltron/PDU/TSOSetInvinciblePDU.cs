@@ -21,7 +21,9 @@
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_RESPONSE_PDU;
 
-        public TSOSetInvincibleResponsePDU(bool IsInvincible, uint statusCode = 200, string reasonText = "OK.")
+        public TSOSetInvincibleResponsePDU(bool IsInvincible, 
+            uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode, 
+            string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {
             StatusCode = statusCode;
             ReasonText = reasonText;

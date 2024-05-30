@@ -21,7 +21,8 @@
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU;
 
-        public TSOSetInvisibleResponsePDU(bool IsInvisible, uint statusCode = 200, string reasonText = "OK.")
+        public TSOSetInvisibleResponsePDU(bool IsInvisible, uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
+            string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {
             StatusCode = statusCode;
             ReasonText = reasonText;
