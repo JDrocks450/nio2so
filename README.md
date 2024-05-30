@@ -1,6 +1,11 @@
 # nio2so
 A continuation of niotso (The Sims Online)
 
+![image](https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe)
+
+An image of TSOView2 rendering City terrain as it would appear in TSO Pre-Alpha.
+More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).
+
 ### Original Project
 The original project can be found archived here: https://github.com/daddesio/niotso
 
@@ -15,10 +20,10 @@ Disclaimer: nio2so currently is used for research purposes for discovery about T
 
 ### Sitemap
 nio2so has the following components:
- * nio2so.TSOHTTP(S) - This handles the all HTTP(S) communication with the game client. These use the exact same schema, just one is configured for HTTP, and the other is HTTPS.
- * nio2so.TSOProtocol - This is the schema used for HTTP and HTTPS communcation.
- * nio2so.TSOTCP.City - This emulates the TSO: Pre-Alpha City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis.
- * TCOQuaZar: A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar
+ * **nio2so.TSOHTTP(S)** - This handles the all HTTP(S) communication with the game client. These use the exact same schema, just one is configured for HTTP, and the other is HTTPS.
+ * **nio2so.TSOProtocol** - This is the schema used for HTTP and HTTPS communcation.
+ * **nio2so.TSOTCP.City** - This emulates the TSO: Pre-Alpha City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis.
+ * **TCOQuaZar** - A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar
 
 ## Setting up
 You do need a copy of The Sims Online: Pre-Alpha installed on your system.
@@ -67,10 +72,10 @@ The City Server is a daunting animal. Let me give you some insight below.
 
 ## Voltron? Cadence? Aries? What are you talking about?
 I will tell you a little bit about these technologies.
- * Cadence - Cadence & CadenceClient are the lowest level transport for TCP communication. They're libraries facilitating the transport of data using TCP. This isn't too important.
- * Aries - Aries is the next level up on top of Cadence. Aries has AriesPackets, which have a Type, timestamp, and size. [Read up about it more here](http://wiki.niotso.org/Maxis_Protocol#Aries_packets)http://wiki.niotso.org/Maxis_Protocol#Aries_packets.
+ * **Cadence** - Cadence & CadenceClient are the lowest level transport for TCP communication. They're libraries facilitating the transport of data using TCP. This isn't too important.
+ * **Aries** - Aries is the next level up on top of Cadence. Aries has AriesPackets, which have a Type, timestamp, and size. [Read up about it more here](http://wiki.niotso.org/Maxis_Protocol#Aries_packets)http://wiki.niotso.org/Maxis_Protocol#Aries_packets.
 Aries, in truth, isn't really crucial either since the Sims Online development team made Voltron packets which do a similar thing as Aries.
- * Voltron - It's the protocol The Sims Online used to create the gameplay experience. Every action the Client can perform is largely dictated using Voltron Packets (Pre-Alpha calls these PDUs). PDUs are sent and received from Regulators (controllers, basically). A Regulator handles a certain aspect of the Engine powering the game. For example, there is a LoginRegulator which handles... logging in!
+ * **Voltron** - It's the protocol The Sims Online used to create the gameplay experience. Every action the Client can perform is largely dictated using Voltron Packets (Pre-Alpha calls these PDUs). PDUs are sent and received from Regulators (controllers, basically). A Regulator handles a certain aspect of the Engine powering the game. For example, there is a LoginRegulator which handles... logging in!
 
 ## Voltron Packets & PDUs
 Voltron as a framework uses Voltron Packets wrapped inside of Aries Packets to get the job done. [The structure of a Voltron Packet can be found here.](http://wiki.niotso.org/Maxis_Protocol#Voltron_packets)
@@ -108,7 +113,7 @@ The developers referred to Regulators in the source code as cTSORegulator.cpp
 ## Areas of Operation
 This project is a lot of Reverse-Engineering. Here's some helpful tips on what some assemblies generally do.
 
- * cTSOServiceClientD.dll - Database Operations
- * cTSOVoltronDMServiceD.dll - Voltron/City Server
- * Aries.dll - Packet Send/Receive
- * Cadence.dll - Packet Send/Receive
+ * **cTSOServiceClientD.dll** - Database Operations
+ * **cTSOVoltronDMServiceD.dll** - Voltron/City Server
+ * **Aries.dll** - Packet Send/Receive
+ * **Cadence.dll** - Packet Send/Receive
