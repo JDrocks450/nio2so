@@ -53,6 +53,7 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                     control.PreviewMouseLeftButtonUp += ImageBin_SwitchReference;
                 }
             }
+
             //CSTS
             OptionsTabViewer.Items.Clear();
             OptionsTabViewer.SelectionChanged -= ChangeStringTab;
@@ -73,10 +74,9 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
         }
 
         private void ChangeStringTab(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender == null) return;
+        {            
             var tabItem = (TabItem)OptionsTabViewer.SelectedItem;
-
+            if (sender == null || tabItem == null) return;
             var stringFile = (CSTFile)tabItem.Tag;
             StringReferencesGrid.ItemsSource = stringFile;
         }
@@ -107,6 +107,7 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                 URIBox.BorderBrush = System.Windows.Media.Brushes.Red;
 
             OnSaveCallback = Callback;
+            SaveDefinePropertiesButton.IsEnabled = true;
 
             //blessed C# is blessed
             void Callback()
@@ -130,6 +131,11 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
             return;
         }
 
-        private void SaveDefinePropertiesButton_Click(object sender, RoutedEventArgs e) => OnSaveCallback();
+        private void SaveDefinePropertiesButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (OnSaveCallback != null)
+                OnSaveCallback();
+            else SaveDefinePropertiesButton.IsEnabled = false;
+        }
     }
 }

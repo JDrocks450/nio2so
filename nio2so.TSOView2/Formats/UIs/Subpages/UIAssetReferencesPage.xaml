@@ -34,7 +34,7 @@
             <TextBlock DockPanel.Dock="Top" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,0,0,10" FontWeight="Bold">Image References</TextBlock>
             <GroupBox DockPanel.Dock="Bottom" MinHeight="150" Margin="0,10,0,0" Header="Properties" Padding="5">
                 <DockPanel>
-                    <Button x:Name="SaveDefinePropertiesButton" DockPanel.Dock="Bottom" Width="60" HorizontalAlignment="Right" Click="SaveDefinePropertiesButton_Click">Save</Button>
+                    <Button x:Name="SaveDefinePropertiesButton" IsEnabled="False" DockPanel.Dock="Bottom" Width="60" HorizontalAlignment="Right" Click="SaveDefinePropertiesButton_Click">Save</Button>
                     <UniformGrid Columns="2" Name="ImagePropertiesBinGrid" Style="{StaticResource FieldsUniformGridStyle}">
 
                     </UniformGrid>

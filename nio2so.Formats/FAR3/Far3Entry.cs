@@ -7,8 +7,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-
-namespace FSO.Files.FAR3
+/*
+ * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
+ * https://github.com/riperiperi/FreeSO
+ */
+namespace nio2so.Formats.FAR3
 {
     /// <summary>
     /// Represents an entry in a FAR3 archive.

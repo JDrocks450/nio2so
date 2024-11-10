@@ -8,8 +8,11 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-
-namespace FSO.Files.FAR1
+/*
+ * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
+ * https://github.com/riperiperi/FreeSO
+ */
+namespace nio2so.Formats.FAR1
 {
     /// <summary>
     /// A FAR1 (File Archive v1) archive.
@@ -54,9 +57,9 @@ namespace FSO.Files.FAR1
             //Version - A 4-byte unsigned integer specifying the version; 1a and 1b each specify 1.
             uint Version = m_Reader.ReadUInt32();
 
-            if ((Header != "FAR!byAZ") || (Version != 1))
+            if (Header != "FAR!byAZ" || Version != 1)
             {
-                throw (new Exception("Archive wasn't a valid FAR V.1 archive!"));
+                throw new Exception("Archive wasn't a valid FAR V.1 archive!");
             }
 
             //File table offset - A 4-byte unsigned integer specifying the offset to the file table 
@@ -74,11 +77,11 @@ namespace FSO.Files.FAR1
                 Entry.DataLength = m_Reader.ReadInt32();
                 Entry.DataLength2 = m_Reader.ReadInt32();
                 Entry.DataOffset = m_Reader.ReadInt32();
-                Entry.FilenameLength = (v1b) ? m_Reader.ReadInt16() : (short)m_Reader.ReadInt32();
+                Entry.FilenameLength = v1b ? m_Reader.ReadInt16() : (short)m_Reader.ReadInt32();
                 Entry.Filename = Encoding.ASCII.GetString(m_Reader.ReadBytes(Entry.FilenameLength));
 
                 m_Entries.Add(Entry);
-            }                  
+            }
         }
 
         /// <summary>
@@ -134,7 +137,7 @@ namespace FSO.Files.FAR1
         /// <returns>A List of KeyValuePair instances.</returns>
         public List<KeyValuePair<string, byte[]>> GetAllEntries()
         {
-            List<KeyValuePair<string, byte[]>> Entries = new List<KeyValuePair<string,byte[]>>();
+            List<KeyValuePair<string, byte[]>> Entries = new List<KeyValuePair<string, byte[]>>();
 
             foreach (FarEntry Entry in m_Entries)
             {

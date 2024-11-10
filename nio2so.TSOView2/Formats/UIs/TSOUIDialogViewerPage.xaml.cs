@@ -59,27 +59,62 @@ namespace nio2so.TSOView2.Formats.UIs
 
         retry:
             var theme = UIsHandler.Current.CurrentTheme;
+            //CHECK IF GAME PATH IS SET
+            if (!UIsHandler.Current.EnsureSetGameDirectoryFirstRun()) return;
+            string? basePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;            
+            // BASE PATH IS NOT NULL
+            // THE SIMS ONLINE DIRECTORY ISN'T THE SAME AS THE UI SCRIPT
+            // -- could be wrong, allow the user to bypass if false positive, obviously.
+            if (basePath.Substring(0, Math.Min(basePath.Length, UIsHandler.Current.CurrentFilePath.Length)) !=
+                UIsHandler.Current.CurrentFilePath.Substring(0, Math.Min(basePath.Length, UIsHandler.Current.CurrentFilePath.Length)))
+            {
+                if (MessageBox.Show("The Sims Online directory chosen isn't the same as where your UI Script is. Want to select a new " +
+                    "The Sims Online directory? Failure to do so will probably cause the import to fail.",
+                    "Warning", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                {
+                    //sneaky trick to make it convenient for the user
+                    string initialDirectory = System.IO.Path.GetDirectoryName(UIsHandler.Current.CurrentFilePath);
+                    while (true)
+                    {
+                        TSOViewConfigHandler.Directory_PromptAndSaveResult("Select a The Sims Online Directory",
+                            ref initialDirectory);
+                        if (MessageBox.Show($"You selected: {initialDirectory}. Is this correct?", "Confirm", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                            break;
+                    }
+                    basePath = initialDirectory;
+                }
+            }
+            if (basePath == null) return;  
+            //Ensure if this game directory changed, reload necessary components
+            UIsHandler.Current.ChangeGameDirectory(basePath);
+
             //DEREFERNCE CONTENT FIRST
-            bool successful = theme.Initialize(
-                TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory,
+            bool successful = theme.Initialize(basePath,                
                 CurrentUIScriptFile,
-                out string[] Missing);
-            
+                out string[] Missing);            
+
             if (!successful)
             {
-                //MISSING REFS!
+                //MISSING REFS!                
                 if (!retriedOnce)
                 {
+                    //warn user this may take a very long time
+                    if (MessageBox.Show($"Missing ({Missing.Length}) references. Reload packingslips from The Sims Online installation? " +
+                    $"This may take a while.", "Mrs. Shipper has a message", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
+                    {
+                        //skip reloading the packingslips
+                        goto skip;
+                    }
                     theme.UpdateDatabaseWithMrsShipper(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory);
                     theme.Save(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnlinePreAlpha_ThemePath);
                     retriedOnce = true;
+
                     goto retry;
                 }
                 MessageBox.Show("Tried to use Mrs. Shipper to read AssetID database. Failed. Check your TSO installation.\n" +
                     $"We're missing these assets: \n{string.Join(", ", Missing)}");
-                return;
             }            
-
+        skip:
             //SUCCESS
             List<FrameworkElement> elements = new List<FrameworkElement>();
             ControlsStack.Children.Clear();

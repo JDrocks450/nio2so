@@ -9,8 +9,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
-
-namespace FSO.Files.FAR3
+/*
+ * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
+ * https://github.com/riperiperi/FreeSO
+ */
+namespace nio2so.Formats.FAR3
 {
     /// <summary>
     /// Represents a decompresser that can decompress files in a FAR3
@@ -94,193 +97,193 @@ namespace FSO.Files.FAR3
             // if data is big enough for compress
             if (Data.Length > 6)
             {
-	            // some Compression Data
-	            const int MAX_OFFSET = 0x20000;
-	            const int MAX_COPY_COUNT = 0x404;
-	            // used to finetune the lookup (small values increase the
-	            // compression for Big Files)
-	            const int QFS_MAXITER = 0x80;
+                // some Compression Data
+                const int MAX_OFFSET = 0x20000;
+                const int MAX_COPY_COUNT = 0x404;
+                // used to finetune the lookup (small values increase the
+                // compression for Big Files)
+                const int QFS_MAXITER = 0x80;
 
-	            // contains the latest offset for a combination of two
-	            // characters
-	            Dictionary<int, ArrayList> cmpmap2 = new Dictionary<int, ArrayList>();
+                // contains the latest offset for a combination of two
+                // characters
+                Dictionary<int, ArrayList> cmpmap2 = new Dictionary<int, ArrayList>();
 
-	            // will contain the compressed data (maximal size =
-	            // uncompressedSize+MAX_COPY_COUNT)
-	            byte[] cData = new byte[Data.Length + MAX_COPY_COUNT];
+                // will contain the compressed data (maximal size =
+                // uncompressedSize+MAX_COPY_COUNT)
+                byte[] cData = new byte[Data.Length + MAX_COPY_COUNT];
 
-	            // init some vars
-	            int writeIndex = 9; // leave 9 bytes for the header
-	            int lastReadIndex = 0;
-	            ArrayList indexList = null;
-	            int copyOffset = 0;
-	            int copyCount = 0;
-	            int index = -1;
-	            bool end = false;
+                // init some vars
+                int writeIndex = 9; // leave 9 bytes for the header
+                int lastReadIndex = 0;
+                ArrayList indexList = null;
+                int copyOffset = 0;
+                int copyCount = 0;
+                int index = -1;
+                bool end = false;
 
-	            // begin main compression loop
-	            while (index < Data.Length - 3)
+                // begin main compression loop
+                while (index < Data.Length - 3)
                 {
-		            // get all Compression Candidates (list of offsets for all
-		            // occurances of the current 3 bytes)
-		            do 
+                    // get all Compression Candidates (list of offsets for all
+                    // occurances of the current 3 bytes)
+                    do
                     {
-			            index++;
-			            if (index >= Data.Length - 2)
+                        index++;
+                        if (index >= Data.Length - 2)
                         {
-				            end = true;
-				            break;
-			            }
-			            int mapindex = Data[index] + (Data[index + 1] << 8)
-					            + (Data[index + 2] << 16);
+                            end = true;
+                            break;
+                        }
+                        int mapindex = Data[index] + (Data[index + 1] << 8)
+                                + (Data[index + 2] << 16);
 
-			            indexList = cmpmap2[mapindex];
-			            if (indexList == null)
+                        indexList = cmpmap2[mapindex];
+                        if (indexList == null)
                         {
-				            indexList = new ArrayList();
-				            cmpmap2.Add(mapindex, indexList);
-			            }
-			            indexList.Add(index);
-		            } while (index < lastReadIndex);
-		            if (end)
-			            break;
+                            indexList = new ArrayList();
+                            cmpmap2.Add(mapindex, indexList);
+                        }
+                        indexList.Add(index);
+                    } while (index < lastReadIndex);
+                    if (end)
+                        break;
 
-		            // find the longest repeating byte sequence in the index
-		            // List (for offset copy)
-		            int offsetCopyCount = 0;
-		            int loopcount = 1;
-		            while ((loopcount < indexList.Count) && (loopcount < QFS_MAXITER))
+                    // find the longest repeating byte sequence in the index
+                    // List (for offset copy)
+                    int offsetCopyCount = 0;
+                    int loopcount = 1;
+                    while (loopcount < indexList.Count && loopcount < QFS_MAXITER)
                     {
-			            int foundindex = (int) indexList[(indexList.Count - 1) - loopcount];
-			            if ((index - foundindex) >= MAX_OFFSET)
+                        int foundindex = (int)indexList[indexList.Count - 1 - loopcount];
+                        if (index - foundindex >= MAX_OFFSET)
                         {
-				            break;
-			            }
+                            break;
+                        }
 
-			            loopcount++;
-			            copyCount = 3;
+                        loopcount++;
+                        copyCount = 3;
 
-			            while ((Data.Length > index + copyCount)&& (Data[index + copyCount] == Data[foundindex + copyCount]) && (copyCount < MAX_COPY_COUNT))
+                        while (Data.Length > index + copyCount && Data[index + copyCount] == Data[foundindex + copyCount] && copyCount < MAX_COPY_COUNT)
                         {
-				            copyCount++;
-			            }
+                            copyCount++;
+                        }
 
-			            if (copyCount > offsetCopyCount)
+                        if (copyCount > offsetCopyCount)
                         {
-				            offsetCopyCount = copyCount;
-				            copyOffset = index - foundindex;
-			            }
-		            }
+                            offsetCopyCount = copyCount;
+                            copyOffset = index - foundindex;
+                        }
+                    }
 
-		            // check if we can compress this
-		            // In FSH Tool stand additionally this:
-		            if (offsetCopyCount > Data.Length - index)
+                    // check if we can compress this
+                    // In FSH Tool stand additionally this:
+                    if (offsetCopyCount > Data.Length - index)
                     {
-			            offsetCopyCount = index - Data.Length;
-		            }
-		            if (offsetCopyCount <= 2)
+                        offsetCopyCount = index - Data.Length;
+                    }
+                    if (offsetCopyCount <= 2)
                     {
-			            offsetCopyCount = 0;
-		            } 
-                    else if ((offsetCopyCount == 3) && (copyOffset > 0x400)) 
+                        offsetCopyCount = 0;
+                    }
+                    else if (offsetCopyCount == 3 && copyOffset > 0x400)
                     { // 1024
-			            offsetCopyCount = 0;
-		            } 
-                    else if ((offsetCopyCount == 4) && (copyOffset > 0x4000)) 
+                        offsetCopyCount = 0;
+                    }
+                    else if (offsetCopyCount == 4 && copyOffset > 0x4000)
                     { // 16384
-			            offsetCopyCount = 0;
-		            }
+                        offsetCopyCount = 0;
+                    }
 
-		            // this is offset-compressable? so do the compression
-		            if (offsetCopyCount > 0)
+                    // this is offset-compressable? so do the compression
+                    if (offsetCopyCount > 0)
                     {
-			            // plaincopy
+                        // plaincopy
 
-			            // In FSH Tool stand this (A):
-			            while (index - lastReadIndex >= 4)
+                        // In FSH Tool stand this (A):
+                        while (index - lastReadIndex >= 4)
                         {
-				            copyCount = (index - lastReadIndex) / 4 - 1;
-				            if (copyCount > 0x1B)
+                            copyCount = (index - lastReadIndex) / 4 - 1;
+                            if (copyCount > 0x1B)
                             {
-					            copyCount = 0x1B;
-				            }
+                                copyCount = 0x1B;
+                            }
                             cData[writeIndex++] = (byte)(0xE0 + copyCount);
-				            copyCount = 4 * copyCount + 4;
+                            copyCount = 4 * copyCount + 4;
 
-				            ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
-				            lastReadIndex += copyCount;
-				            writeIndex += copyCount;
-			            }
+                            ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
+                            lastReadIndex += copyCount;
+                            writeIndex += copyCount;
+                        }
 
-			            // offsetcopy
-			            copyCount = index - lastReadIndex;
-			            copyOffset--;
-			            if ((offsetCopyCount <= 0x0A) && (copyOffset < 0x400))
+                        // offsetcopy
+                        copyCount = index - lastReadIndex;
+                        copyOffset--;
+                        if (offsetCopyCount <= 0x0A && copyOffset < 0x400)
                         {
-				            cData[writeIndex++] = (byte) (((copyOffset >> 8) << 5)
-						            + ((offsetCopyCount - 3) << 2) + copyCount);
+                            cData[writeIndex++] = (byte)((copyOffset >> 8 << 5)
+                                    + (offsetCopyCount - 3 << 2) + copyCount);
                             cData[writeIndex++] = (byte)(copyOffset & 0xff);
-			            } 
-                        else if ((offsetCopyCount <= 0x43) && (copyOffset < 0x4000))
+                        }
+                        else if (offsetCopyCount <= 0x43 && copyOffset < 0x4000)
                         {
                             cData[writeIndex++] = (byte)(0x80 + (offsetCopyCount - 4));
-				            cData[writeIndex++] = (byte) ((copyCount << 6) + (copyOffset >> 8));
-				            cData[writeIndex++] = (byte) (copyOffset & 0xff);
-			            } 
-                        else if ((offsetCopyCount <= MAX_COPY_COUNT) && (copyOffset < MAX_OFFSET))
+                            cData[writeIndex++] = (byte)((copyCount << 6) + (copyOffset >> 8));
+                            cData[writeIndex++] = (byte)(copyOffset & 0xff);
+                        }
+                        else if (offsetCopyCount <= MAX_COPY_COUNT && copyOffset < MAX_OFFSET)
                         {
                             cData[writeIndex++] = (byte)(0xc0
-						            + ((copyOffset >> 16) << 4)
-						            + (((offsetCopyCount - 5) >> 8) << 2) + copyCount);
-                            cData[writeIndex++] = (byte)((copyOffset >> 8) & 0xff);
+                                    + (copyOffset >> 16 << 4)
+                                    + (offsetCopyCount - 5 >> 8 << 2) + copyCount);
+                            cData[writeIndex++] = (byte)(copyOffset >> 8 & 0xff);
                             cData[writeIndex++] = (byte)(copyOffset & 0xff);
-                            cData[writeIndex++] = (byte)((offsetCopyCount - 5) & 0xff);
-			            }
+                            cData[writeIndex++] = (byte)(offsetCopyCount - 5 & 0xff);
+                        }
 
-			            // do the offset copy
-			            ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
-			            writeIndex += copyCount;
-			            lastReadIndex += copyCount;
-			            lastReadIndex += offsetCopyCount;
-		            }
-	            }
+                        // do the offset copy
+                        ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
+                        writeIndex += copyCount;
+                        lastReadIndex += copyCount;
+                        lastReadIndex += offsetCopyCount;
+                    }
+                }
 
-	            // add the End Record
-	            index = Data.Length;
-	            // in FSH Tool stand the same as above (A)
-	            while (index - lastReadIndex >= 4)
+                // add the End Record
+                index = Data.Length;
+                // in FSH Tool stand the same as above (A)
+                while (index - lastReadIndex >= 4)
                 {
-		            copyCount = (index - lastReadIndex) / 4 - 1;
-		            
+                    copyCount = (index - lastReadIndex) / 4 - 1;
+
                     if (copyCount > 0x1B)
-			            copyCount = 0x1B;
+                        copyCount = 0x1B;
 
                     cData[writeIndex++] = (byte)(0xE0 + copyCount);
-		            copyCount = 4 * copyCount + 4;
+                    copyCount = 4 * copyCount + 4;
 
-		            ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
-		            lastReadIndex += copyCount;
-		            writeIndex += copyCount;
-	            }
+                    ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
+                    lastReadIndex += copyCount;
+                    writeIndex += copyCount;
+                }
 
-	            copyCount = index - lastReadIndex;
-	            cData[writeIndex++] = (byte) (0xfc + copyCount);
-	            ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
-	            writeIndex += copyCount;
-	            lastReadIndex += copyCount;
+                copyCount = index - lastReadIndex;
+                cData[writeIndex++] = (byte)(0xfc + copyCount);
+                ArrayCopy2(Data, lastReadIndex, ref cData, writeIndex, copyCount);
+                writeIndex += copyCount;
+                lastReadIndex += copyCount;
 
                 MemoryStream DataStream = new MemoryStream();
                 BinaryWriter Writer = new BinaryWriter(DataStream);
 
-	            // write the header for the compressed data
-	            // set the compressed size
+                // write the header for the compressed data
+                // set the compressed size
                 Writer.Write((uint)writeIndex);
                 m_CompressedSize = writeIndex;
-	            // set the MAGICNUMBER
+                // set the MAGICNUMBER
                 Writer.Write((ushort)0xFB10);
-	            // set the decompressed size
-	            byte[] revData = BitConverter.GetBytes(Data.Length);
-                Writer.Write((revData[2] << 16) | (revData[1] << 8) | revData[0]);
+                // set the decompressed size
+                byte[] revData = BitConverter.GetBytes(Data.Length);
+                Writer.Write(revData[2] << 16 | revData[1] << 8 | revData[0]);
                 Writer.Write(cData);
 
                 //Avoid nasty swearing here!
@@ -288,7 +291,7 @@ namespace FSO.Files.FAR3
 
                 m_DecompressedSize = Data.Length;
 
-	            return DataStream.ToArray();
+                return DataStream.ToArray();
             }
 
             return Data;
@@ -327,23 +330,23 @@ namespace FSO.Files.FAR3
                         // 0x00 - 0x7F
                         long control2 = Data[Pos];
                         Pos++;
-                        long numberOfPlainText = (Control1 & 0x03);
+                        long numberOfPlainText = Control1 & 0x03;
                         ArrayCopy2(Data, Pos, ref DecompressedData, DataPos, numberOfPlainText);
                         DataPos += (int)numberOfPlainText;
                         Pos += (int)numberOfPlainText;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
 
-                        int offset = (int)(((Control1 & 0x60) << 3) + (control2) + 1);
+                        int offset = (int)(((Control1 & 0x60) << 3) + control2 + 1);
                         long numberToCopyFromOffset = ((Control1 & 0x1C) >> 2) + 3;
                         OffsetCopy(ref DecompressedData, offset, DataPos, numberToCopyFromOffset);
                         DataPos += (int)numberToCopyFromOffset;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
                     }
-                    else if ((Control1 >= 128 && Control1 <= 191))
+                    else if (Control1 >= 128 && Control1 <= 191)
                     {
                         // 0x80 - 0xBF
                         long control2 = Data[Pos];
@@ -351,26 +354,26 @@ namespace FSO.Files.FAR3
                         long control3 = Data[Pos];
                         Pos++;
 
-                        long numberOfPlainText = (control2 >> 6) & 0x03;
+                        long numberOfPlainText = control2 >> 6 & 0x03;
                         ArrayCopy2(Data, Pos, ref DecompressedData, DataPos, numberOfPlainText);
                         DataPos += (int)numberOfPlainText;
                         Pos += (int)numberOfPlainText;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
 
-                        int offset = (int)(((control2 & 0x3F) << 8) + (control3) + 1);
+                        int offset = (int)(((control2 & 0x3F) << 8) + control3 + 1);
                         long numberToCopyFromOffset = (Control1 & 0x3F) + 4;
                         OffsetCopy(ref DecompressedData, offset, DataPos, numberToCopyFromOffset);
                         DataPos += (int)numberToCopyFromOffset;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
                     }
                     else if (Control1 >= 192 && Control1 <= 223)
                     {
                         // 0xC0 - 0xDF
-                        long numberOfPlainText = (Control1 & 0x03);
+                        long numberOfPlainText = Control1 & 0x03;
                         long control2 = Data[Pos];
                         Pos++;
                         long control3 = Data[Pos];
@@ -381,15 +384,15 @@ namespace FSO.Files.FAR3
                         DataPos += (int)numberOfPlainText;
                         Pos += (int)numberOfPlainText;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
 
-                        int offset = (int)(((Control1 & 0x10) << 12) + (control2 << 8) + (control3) + 1);
-                        long numberToCopyFromOffset = ((Control1 & 0x0C) << 6) + (control4) + 5;
+                        int offset = (int)(((Control1 & 0x10) << 12) + (control2 << 8) + control3 + 1);
+                        long numberToCopyFromOffset = ((Control1 & 0x0C) << 6) + control4 + 5;
                         OffsetCopy(ref DecompressedData, offset, DataPos, numberToCopyFromOffset);
                         DataPos += (int)numberToCopyFromOffset;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
                     }
                     else if (Control1 >= 224 && Control1 <= 251)
@@ -400,18 +403,18 @@ namespace FSO.Files.FAR3
                         DataPos += (int)numberOfPlainText;
                         Pos += (int)numberOfPlainText;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
                     }
                     else
                     {
-                        long numberOfPlainText = (Control1 & 0x03);
+                        long numberOfPlainText = Control1 & 0x03;
                         ArrayCopy2(Data, Pos, ref DecompressedData, DataPos, numberOfPlainText);
 
                         DataPos += (int)numberOfPlainText;
                         Pos += (int)numberOfPlainText;
 
-                        if (DataPos == (DecompressedData.Length))
+                        if (DataPos == DecompressedData.Length)
                             break;
                     }
                 }

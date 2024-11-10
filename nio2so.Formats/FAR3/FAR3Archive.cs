@@ -10,7 +10,11 @@ using System.Text;
 using System.IO;
 using System.Threading;
 
-namespace FSO.Files.FAR3
+/*
+ * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
+ * https://github.com/riperiperi/FreeSO
+ */
+namespace nio2so.Formats.FAR3
 {
     /// <summary>
     /// Represents a single FAR3 archive.
@@ -50,7 +54,7 @@ namespace FSO.Files.FAR3
                 string Header = Encoding.ASCII.GetString(m_Reader.ReadBytes(8));
                 uint Version = m_Reader.ReadUInt32();
 
-                if ((Header != "FAR!byAZ") || (Version != 3))
+                if (Header != "FAR!byAZ" || Version != 3)
                 {
                     throw new FAR3Exception("Archive wasn't a valid FAR V.3 archive! (FAR3Archive())");
                 }
@@ -67,7 +71,7 @@ namespace FSO.Files.FAR3
                     Far3Entry Entry = new Far3Entry();
                     Entry.DecompressedFileSize = m_Reader.ReadUInt32();
                     byte[] Dummy = m_Reader.ReadBytes(3);
-                    Entry.CompressedFileSize = (uint)((Dummy[0] << 0) | (Dummy[1] << 8) | (Dummy[2]) << 16);
+                    Entry.CompressedFileSize = (uint)(Dummy[0] << 0 | Dummy[1] << 8 | Dummy[2] << 16);
                     Entry.DataType = m_Reader.ReadByte();
                     Entry.DataOffset = m_Reader.ReadUInt32();
                     //Entry.HasFilename = m_Reader.ReadUInt16();
@@ -83,6 +87,8 @@ namespace FSO.Files.FAR3
                     m_EntriesList.Add(Entry);
 
                     m_EntryByID.Add(Entry.FileID, Entry); //isn't this a bad idea? i have a feeling this is a bad idea...
+
+
                 }
 
                 //Keep the stream open, it helps peformance.
@@ -100,7 +106,7 @@ namespace FSO.Files.FAR3
         {
             lock (m_Reader)
             {
-                m_Reader.BaseStream.Seek((long)Entry.DataOffset, SeekOrigin.Begin);
+                m_Reader.BaseStream.Seek(Entry.DataOffset, SeekOrigin.Begin);
 
                 isReadingSomething = true;
 
@@ -113,7 +119,7 @@ namespace FSO.Files.FAR3
                     if (CompressionID == 0xFB10)
                     {
                         byte[] Dummy = m_Reader.ReadBytes(3);
-                        uint DecompressedSize = (uint)((Dummy[0] << 0x10) | (Dummy[1] << 0x08) | +Dummy[2]);
+                        uint DecompressedSize = (uint)(Dummy[0] << 0x10 | Dummy[1] << 0x08 | +Dummy[2]);
 
                         Decompresser Dec = new Decompresser();
                         Dec.CompressedSize = Filesize;
@@ -128,7 +134,7 @@ namespace FSO.Files.FAR3
                     }
                     else
                     {
-                        m_Reader.BaseStream.Seek((m_Reader.BaseStream.Position - 15), SeekOrigin.Begin);
+                        m_Reader.BaseStream.Seek(m_Reader.BaseStream.Position - 15, SeekOrigin.Begin);
 
                         byte[] Data = m_Reader.ReadBytes((int)Entry.DecompressedFileSize);
                         //m_Reader.Close();

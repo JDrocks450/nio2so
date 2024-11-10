@@ -7,14 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="FAR1\**" />
-    <Compile Remove="FAR3\**" />
     <Compile Remove="Formats\**" />
-    <EmbeddedResource Remove="FAR1\**" />
-    <EmbeddedResource Remove="FAR3\**" />
     <EmbeddedResource Remove="Formats\**" />
-    <None Remove="FAR1\**" />
-    <None Remove="FAR3\**" />
     <None Remove="Formats\**" />
   </ItemGroup>
 

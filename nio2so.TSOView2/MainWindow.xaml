@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:nio2so.TSOView2"
         mc:Ignorable="d"
-        Title="MainWindow" Height="768" Width="1024">
+        Title="The Sims Online Pre-Alpha (and New &amp; Improved) Asset Viewer" Height="768" Width="1024">
     <DockPanel>
         <ToolBarPanel DockPanel.Dock="Top">
             <ToolBar ToolBarTray.IsLocked="True">

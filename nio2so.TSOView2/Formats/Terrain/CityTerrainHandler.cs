@@ -26,6 +26,9 @@ namespace nio2so.TSOView2.Formats.Terrain
 
         public static async Task<CityTerrainHandler?> PromptLoadCity(TSOVersion Version)
         {
+            //IS THE DIRECTORY SELECTED? 
+            if (!UIsHandler.Current.EnsureSetGameDirectoryFirstRun()) return null; // idk anymore
+
             //TSO CONFIG FILE
             string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
 

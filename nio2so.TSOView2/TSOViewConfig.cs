@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Microsoft.Win32;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows;
@@ -35,15 +37,18 @@ namespace nio2so.TSOView2
 
     internal static class TSOViewConfigHandler
     {
+        private const string PATH = "tsoview2.config";
+
         static TSOViewConfigHandler()
         {
             CurrentConfiguration = new()
             {
-                TheSimsOnline_BaseDirectory = @"E:\Games\TSO Pre-Alpha\TSO"
+                TheSimsOnline_BaseDirectory = null
             };
         }
 
         public static TSOViewConfig CurrentConfiguration { get; set; }
+
         /// <summary>
         /// Spawns a dialog that displays the current <see cref="TSOViewConfig"/> properties
         /// </summary>
@@ -64,5 +69,41 @@ namespace nio2so.TSOView2
             };
             wnd.Show();
         }
+
+        /// <summary>
+        /// Prompts the user to select a file and returns the directory it's in.
+        /// </summary>
+        /// <returns></returns>
+        public static bool Directory_PromptAndSaveResult(string Prompt, ref string DirectoryResult)
+        {
+            OpenFileDialog fileDialog = new()
+            {
+                Title = Prompt,
+                InitialDirectory = DirectoryResult,
+                Multiselect = false,
+                DereferenceLinks = true,
+                CheckFileExists = true,
+            };
+            if (fileDialog.ShowDialog() ?? false)
+            {
+                DirectoryResult = Path.GetDirectoryName(fileDialog.FileName);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Loads from the default location to the <see cref="CurrentConfiguration"/> property
+        /// </summary>
+        /// <returns></returns>
+        public static bool LoadFromFile()
+        {
+            if (!File.Exists(PATH))
+                return false;
+            CurrentConfiguration = JsonSerializer.Deserialize<TSOViewConfig>(File.ReadAllText(PATH));
+            return true;
+        }
+
+        internal static void SaveConfiguration() => File.WriteAllText(PATH, JsonSerializer.Serialize<TSOViewConfig>(CurrentConfiguration));
     }
 }

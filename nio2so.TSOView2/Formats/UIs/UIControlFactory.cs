@@ -66,7 +66,7 @@ namespace nio2so.TSOView2.Formats.UIs
             if (Definition?.TextureRef == default) return default;
             return new Image()
             {
-                Name = System.IO.Path.GetFileNameWithoutExtension(Definition.FilePath).Replace("-",""),
+                //Name = System.IO.Path.GetFileNameWithoutExtension(Definition.FilePath).Replace("-","").Replace(" ",""),
                 Source = GetManaged(Definition.TextureRef),
                 Width = Definition.TextureRef.Width,
                 Height = Definition.TextureRef.Height,

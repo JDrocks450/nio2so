@@ -145,7 +145,7 @@ namespace nio2so.Formats.UI.UIScript
                 if (currentChar == '\r' || currentChar == '\n' || currentChar == '\t') continue;
                 if (currentChar == '<') // BEGIN TAG
                 {
-                    string tagName = ReadUntil(true,'>',' ').ToLower();
+                    string tagName = ReadUntil(true,'>',' ','\r','\n','\t').ToLower();
                     switch (tagName)
                     {
                         case "begin": // Push new group

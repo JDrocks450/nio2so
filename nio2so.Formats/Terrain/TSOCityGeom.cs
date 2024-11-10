@@ -171,7 +171,7 @@ namespace nio2so.Formats.Terrain
                             if (i2 < botLeft) rXE2 = (topLeft + 1) + i2;
                             else rXE2 = imgSize - (i2 - botLeft);
 
-                            var fadeRange = 10;
+                            var fadeRange = 0;
                             var fR = 1 / 9f;
                             xStart = Math.Max(xStart - fadeRange, xLim);
                             xEnd = Math.Min(xLimEnd, xEnd + fadeRange);

@@ -10,7 +10,7 @@ namespace nio2so.Formats.UI.TSOTheme
 {
     /// <summary>
     /// Dereferences Image Asset links automatically.
-    /// <para/>A reference to Mr.Shipper used in FreeSO.     
+    /// <para/>A reference to Mr.Shipper used in FreeSO/TSO.     
     /// </summary>
     internal static class MrsShipper
     {
@@ -25,14 +25,78 @@ namespace nio2so.Formats.UI.TSOTheme
         /// </summary>
         public static void BreakdownPackingslips(string TSODirectory, TSOThemeFile File)
         {
+            //TRY PRE-ALPHA FIRST
             string packingPath = System.IO.Path.Combine(TSODirectory, "packingslips", "packingslip.log");
+            TSOThemeFile.ThemeVersionNames versionName = TSOThemeFile.ThemeVersionNames.PreAlpha;
+            //Not found, try N&I
+            if (!System.IO.Path.Exists(packingPath))
+            {
+                packingPath = System.IO.Path.Combine(TSODirectory, "packingslips", "packingslips.txt");
+                if (!System.IO.Path.Exists(packingPath))
+                    throw new FileNotFoundException("Could not locate packingslips in the The Sims Online directory.");
+                versionName = TSOThemeFile.ThemeVersionNames.NandI;
+            }
+            if (File.GetVersionName() != versionName)
+            {
+                Debug.WriteLine($"[TSOTheme] WARNING! TSOTheme file was CLEARED due to version mis-match! Rebuilding packingslips...");
+                File.Clear(); // Yikes! This is not a good way to do this. It should have multiple theme files but too much to do now
+            }
+            switch (versionName)
+            {
+                case TSOThemeFile.ThemeVersionNames.NandI:
+                    DoNIPackingslips(File, packingPath);
+                    break;
+                case TSOThemeFile.ThemeVersionNames.PreAlpha:
+                    DoPreAlphaPackingslips(File, packingPath);
+                    break;
+            }
+            File.SetVersionName(versionName);
+        }
+
+        private static void DoNIPackingslips(TSOThemeFile File, string packingPath)
+        {
+            //Open file for reading
+            using (StreamReader sr = new StreamReader(packingPath))
+            {
+                while (!sr.EndOfStream)
+                {
+                    string currentLine = sr.ReadLine();
+                    if (!currentLine.StartsWith("LoadPackingSlips"))
+                        continue;
+                    break;
+                }
+                while (!sr.EndOfStream)
+                {
+                    //read each line
+                    string lineText = sr.ReadLine();
+                    lineText = lineText.TrimStart();
+                    if (lineText.StartsWith("LoadPackingSlips"))
+                        break;
+                    char escapeChar = (char)0x09;
+                    string hexText = lineText.Substring(0, lineText.IndexOf(' '));
+                    string pathText = lineText.Substring(lineText.IndexOf(' '));
+                    pathText = pathText.TrimStart().TrimEnd();
+                    ulong assetID = Convert.ToUInt64(hexText, 16);
+                    if (File.TryGetValue(assetID, out _))
+                    {
+                        Debug.WriteLine($"[TSOTheme] Packingslip {assetID} was ignored as it already exists.");
+                        continue;
+                    }
+                    Debug.WriteLine($"[TSOTheme] Packingslip {assetID} was added to the current theme.");
+                    File.Add(assetID, new(pathText));
+                }
+            }
+        }
+
+        private static void DoPreAlphaPackingslips(TSOThemeFile File, string packingPath)
+        {
             //Open file for reading
             using (StreamReader sr = new StreamReader(packingPath))
             {
                 string lineAmount = sr.ReadLine();
                 uint linesCount = uint.Parse(lineAmount);
                 //read each line
-                for(int line = 0; line < linesCount; line++)
+                for (int line = 0; line < linesCount; line++)
                 {
                     string lineText = sr.ReadLine();
                     char escapeChar = (char)0x09;

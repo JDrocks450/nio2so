@@ -6,6 +6,10 @@ namespace nio2so.Formats.CST
     {
         public static CSTDirectory ImportDirectory(string Directory)
         {
+            if (!System.IO.Directory.Exists(Directory))
+                Directory = Path.Combine(Path.GetDirectoryName(Directory),Path.GetFileNameWithoutExtension(Directory));
+            if (System.IO.Directory.Exists(Path.Combine(Directory,"english.dir")))
+                Directory = Path.Combine(Directory, "english.dir");
             CSTDirectory retVal = new();
             DirectoryInfo info = new DirectoryInfo(Directory);
             if (!info.Exists) throw new DirectoryNotFoundException(Directory);
@@ -17,7 +21,9 @@ namespace nio2so.Formats.CST
                     id = noId++;
                 else
                 {
-                    string numberStr = file.Name.Substring(1, file.Name.LastIndexOf('_') - 1);
+                    string numberStr = "";
+                    foreach (char c in file.Name)
+                        if (char.IsDigit(c)) numberStr += c;
                     id = uint.Parse(numberStr);
                 }
                 retVal.Add(id, new CSTFile() { FilePath = file.FullName });
