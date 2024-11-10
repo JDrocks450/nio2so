@@ -1,6 +1,7 @@
 ﻿using nio2so.Formats.UI.UIScript;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.UIs;
+using nio2so.TSOView2.Formats.UIs.Subpages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -57,6 +58,7 @@ namespace nio2so.TSOView2
             {
                 { ExitItem, Application.Current.Shutdown },
                 { ConfigMenuItem, TSOViewConfigHandler.InvokeConfigViewerDialog },
+                { ViewTGAItem, ResourceToolWindow.SpawnWithPrompt },
                 { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
                 { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin },
                 { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(CityTerrainHandler.TSOVersion.NewImproved) }

@@ -22,19 +22,23 @@
     /// </summary>
     public class UIScriptObject : UIScriptComponentBase, IUIScriptNamedComponent
     {
+        private string _type;
+
         public UIScriptObject(string type,string name)
         {
             Name = name;
             Type = type;
         }
 
-        public TSOUIsDefineTypes KnownType
+        public string KnownType
         {
             get
             {
-                if (Enum.GetNames<TSOUIsDefineTypes>().Contains(Type))
-                    return Enum.Parse<TSOUIsDefineTypes>(Type);
-                return 0;
+                if (Enum.TryParse<TSOUIsObjectTypes>(Type,true, out var result))
+                    return result.ToString();
+                if (Enum.TryParse<TSOUIsDefineTypes>(Type, true, out var result2))
+                    return result2.ToString();
+                return TSOUIsObjectTypes.None.ToString();
             }
         }
 
@@ -44,6 +48,9 @@
         }
 
         public string Name { get; set; }
-        public string Type { get; set; }
+        public string Type {
+            get => _type.ToLower();
+            set => _type = value.ToLower();
+        }
     }
 }

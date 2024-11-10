@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:nio2so.TSOView2.Formats.UIs" xmlns:subpages="clr-namespace:nio2so.TSOView2.Formats.UIs.Subpages" xmlns:controls="clr-namespace:nio2so.TSOView2.Formats.UIs.Controls"
       mc:Ignorable="d" 
-      d:DesignHeight="768" d:DesignWidth="1024"
+      d:DesignHeight="768" d:DesignWidth="1024" KeyUp="Page_KeyUp" MouseLeftButtonUp="Page_MouseLeftButtonUp"
       Title="TSOUIDialogViewerPage" Background="CornflowerBlue">
 
     <DockPanel>
@@ -72,7 +72,7 @@
                                         <Button Click="RefreshUIButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Height="27" Width="56" Margin="0,-40,0,0">Refresh</Button>
                                         <Separator VerticalAlignment="Top" Margin="0,-5,0,0"/>
                                         <ScrollViewer>
-                                            <StackPanel Name="ControlsStack" Margin="10,0,5,10">
+                                            <StackPanel Name="ControlsStack" Margin="0,0,5,10">
 
                                             </StackPanel>
                                         </ScrollViewer>

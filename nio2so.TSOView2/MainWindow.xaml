@@ -23,6 +23,7 @@
 
                     </MenuItem>
                     <MenuItem Header="View...">
+                        <MenuItem Header="View TGA..." Name="ViewTGAItem"/>
                         <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
                     </MenuItem>
                     <MenuItem Header="Help...">

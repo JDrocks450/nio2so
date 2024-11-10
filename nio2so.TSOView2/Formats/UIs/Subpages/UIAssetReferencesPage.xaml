@@ -51,8 +51,8 @@
                             </ControlTemplate>
                         </ListView.Template>
                         <ListView.Resources>
-                            <Style TargetType="ListViewItem">
-                                <Style.Triggers>
+                            <Style TargetType="HeaderedContentControl">
+                                <!--<Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="Foreground" Value="Black"/>
                                         <Setter Property="Background" Value="{DynamicResource PaletteNodeColor}"/>
@@ -61,22 +61,17 @@
                                         <Setter Property="Background" Value="Transparent"/>
                                         <Setter Property="Foreground" Value="{DynamicResource PaletteNodeColor}"/>
                                     </Trigger>
-                                </Style.Triggers>
+                                </Style.Triggers>-->
                                 <Setter Property="Margin" Value="10"/>
-                                <Setter Property="Width" Value="120"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
-                                        <ControlTemplate TargetType="ListViewItem">
+                                        <ControlTemplate TargetType="HeaderedContentControl">
                                             <DockPanel>
                                                 <Border HorizontalAlignment="Center" DockPanel.Dock="Bottom" Background="{TemplateBinding Background}" Padding="5,2">
-                                                    <ContentPresenter>
-                                                        <ContentPresenter.ToolTip>
-                                                            <TextBlock Text="{TemplateBinding ContentStringFormat}"/>
-                                                        </ContentPresenter.ToolTip>
-                                                    </ContentPresenter>
+                                                    <TextBlock Text="{TemplateBinding Header}"/>
                                                 </Border>
                                                 <Border Width="100" Height="100">
-                                                    <Image Width="35" Source="/Resources/caution.png" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                                    <Image Source="{TemplateBinding Content}" RenderOptions.BitmapScalingMode="HighQuality"/>
                                                 </Border>
                                             </DockPanel>
                                         </ControlTemplate>
@@ -84,8 +79,8 @@
                                 </Setter>
                             </Style>
                         </ListView.Resources>
-                        <ListViewItem Content="HELLO"/>
-                        <ListViewItem Content="HELLO"/>
+                        <HeaderedContentControl Header="HELLO" Content="/Resources/caution.png"/>
+                        <HeaderedContentControl Header="HELLO" Content="/Resources/caution.png"/>
                     </ListView>
                 </ScrollViewer>
             </Grid>

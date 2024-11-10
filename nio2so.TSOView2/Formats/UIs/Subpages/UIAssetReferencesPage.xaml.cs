@@ -48,7 +48,11 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
             {
                 if (define.Type.ToLower() == "image")
                 {
-                    var control = new ListViewItem() { Content = define.Name, Tag = define };
+                    var control = new HeaderedContentControl() { Header = define.Name, Tag = define };
+                    //ASSET ID
+                    if(define.TryGetReference(UIsHandler.Current.CurrentTheme, out TSOThemeDefinition? ThemeDefinition, out ulong assetID))
+                        control.Content = ThemeDefinition.TextureRef.Convert(true);
+
                     ImagePropertiesBin.Items.Add(control);
                     control.PreviewMouseLeftButtonUp += ImageBin_SwitchReference;
                 }
@@ -83,8 +87,8 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
 
         private void ImageBin_SwitchReference(object sender, MouseButtonEventArgs e)
         {
-            var control = (ListViewItem)sender;
-            control.IsSelected = true;
+            var control = (HeaderedContentControl)sender;
+            //control.IsSelected = true;
             var define = (UIScriptDefineComponent)control.Tag;
 
             ImagePropertiesBinGrid.Children.Clear();
@@ -105,9 +109,10 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
 
             if (!assetFound)
                 URIBox.BorderBrush = System.Windows.Media.Brushes.Red;
-
+            else ResourceToolWindow.SpawnWithImageStream(currentDefinitionForDefine.TextureRef.Convert(true));
+                 
             OnSaveCallback = Callback;
-            SaveDefinePropertiesButton.IsEnabled = true;
+            SaveDefinePropertiesButton.IsEnabled = true;            
 
             //blessed C# is blessed
             void Callback()

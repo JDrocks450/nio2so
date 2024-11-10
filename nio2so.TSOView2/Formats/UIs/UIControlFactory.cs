@@ -66,7 +66,7 @@ namespace nio2so.TSOView2.Formats.UIs
             if (Definition?.TextureRef == default) return default;
             return new Image()
             {
-                //Name = System.IO.Path.GetFileNameWithoutExtension(Definition.FilePath).Replace("-","").Replace(" ",""),
+                Name = System.IO.Path.GetFileNameWithoutExtension(Definition.FilePath).Replace("-","").Replace(" ",""),
                 Source = GetManaged(Definition.TextureRef),
                 Width = Definition.TextureRef.Width,
                 Height = Definition.TextureRef.Height,
@@ -147,6 +147,10 @@ namespace nio2so.TSOView2.Formats.UIs
                         var color = Color.FromRgb((byte)colorValues.Value1, (byte)colorValues.Value2, (byte)colorValues.Value3);
                         Text.Foreground = new SolidColorBrush(color);
                         break;
+                    case "text":
+                        var text = property.Value.GetValue<UIScriptString>();
+                        Text.Text = (string)text;
+                        break;
                     default: 
                         ApplyUniversalControlProperty(property, Text);
                         break;
@@ -196,6 +200,10 @@ namespace nio2so.TSOView2.Formats.UIs
                                 break;
                         }
                         break;
+                    case "text":                        
+                        var text = property.Value.GetValue<UIScriptString>();
+                        Text.Text = (string)text;
+                        break;
                     default:
                         ApplyUniversalControlProperty(property, Text);
                         break;
@@ -212,6 +220,8 @@ namespace nio2so.TSOView2.Formats.UIs
             {
                 switch (property.Name.ToLower())
                 {
+                    case "buttonimage":
+                        goto case "image"; // makes this scenario debuggable
                     case "image":
                         var name = property.Value.GetValue<UIScriptString>();
                         var brush = MakeImageName(name);
@@ -265,7 +275,7 @@ namespace nio2so.TSOView2.Formats.UIs
                     Panel.SetZIndex(block, 3);
                     element = block;
                     break;
-                case "n2_inferredobject":
+                case "genericcontrol":
                     Border contentControl = new Border()
                     {
 

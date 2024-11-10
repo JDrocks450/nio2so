@@ -15,14 +15,19 @@
         </Grid.ColumnDefinitions>
         <DockPanel Margin="5">
             <TextBlock DockPanel.Dock="Top" Margin="0,0,0,5" FontWeight="Bold">UI Script Objects View</TextBlock>
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" Height="15" Margin="0,5,0,0">
-                <Rectangle x:Name="CommentPreview" Width="15" Fill="Green"/>
-                <Rectangle x:Name="DefinePreview" Margin="5,0,0,0" Width="15" Fill="DeepSkyBlue"/>
-                <Rectangle x:Name="GroupPreview" Margin="5,0,0,0" Width="15" Fill="Goldenrod"/>
-                <Rectangle x:Name="ObjectPreview" Margin="5,0,0,0" Width="15" Fill="Coral"/>
-                <Rectangle x:Name="ControlPropertiesPreview" Margin="5,0,0,0" Width="15" Fill="#FF3F17D2"/>
-                <Rectangle x:Name="OtherPreview" Margin="5,0,0,0" Width="15" Fill="MediumPurple"/>
-            </StackPanel>
+            <DockPanel LastChildFill="False" DockPanel.Dock="Bottom">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" Height="15" Margin="0,5,0,0">
+                    <Rectangle x:Name="CommentPreview" Width="15" Fill="Green" ToolTip="Comments"/>
+                    <Rectangle x:Name="DefinePreview" Margin="5,0,0,0" Width="15" Fill="DeepSkyBlue" ToolTip="Constants"/>
+                    <Rectangle x:Name="GroupPreview" Margin="5,0,0,0" Width="15" Fill="Goldenrod" ToolTip="Groups"/>
+                    <Rectangle x:Name="ObjectPreview" Margin="5,0,0,0" Width="15" Fill="Coral" ToolTip="Objects"/>
+                    <Rectangle x:Name="ControlPropertiesPreview" Margin="5,0,0,0" Width="15" Fill="#FF3F17D2" ToolTip="Properties"/>
+                    <Rectangle x:Name="OtherPreview" Margin="5,0,0,0" Width="15" Fill="MediumPurple" ToolTip="Misc"/>
+                </StackPanel>
+                <Button Name="OpenScriptButton" DockPanel.Dock="Right" Padding="5,0" Click="OpenScriptButton_Click">
+                    Open Script File
+                </Button>
+            </DockPanel>
             <TreeView Name="UiScriptsTreeObject"/>
         </DockPanel>
         <GridSplitter Grid.Column="1" HorizontalAlignment="Left" Width="2"/>

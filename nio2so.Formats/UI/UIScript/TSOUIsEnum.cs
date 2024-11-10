@@ -16,7 +16,7 @@
         /// <see cref="UIScriptObject"/> with this type is created and the properties are applied to it.</para>
         /// <para>These objects have no other functionality.</para>
         /// </summary>
-        n2_InferredObject,
+        GenericControl,
         /// <summary>
         /// A button.
         /// </summary>

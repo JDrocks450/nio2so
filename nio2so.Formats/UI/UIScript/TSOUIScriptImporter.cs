@@ -11,7 +11,12 @@ using System.Xml.Linq;
 
 namespace nio2so.Formats.UI.UIScript
 {
-
+    /// <summary>
+    /// Imports a new <see cref="UIScriptFile"/> from <see cref="Stream"/>
+    /// <para>Usage:</para><para/>
+    /// Use the <see cref="SetCST(CSTDirectory)"/> function first to reference the directory of <see cref="CSTFile"/>s to get Strings from
+    /// <para/> Use the <see cref="Import(Stream)"/> function(s) to then attain a <see cref="UIScriptFile"/> instance for the given *.uis file.
+    /// </summary>
     public class TSOUIScriptImporter : TSOFileImporterBase<UIScriptFile>
     {
         private CSTDirectory? stringTables;
@@ -233,12 +238,17 @@ namespace nio2so.Formats.UI.UIScript
                 UIScriptComponentBase Target = default;
                 if (!hits.Any())
                 { // Make an Inferred Object now since there are no objects actually defined with this name
-                    UIScriptObject Object = new UIScriptObject("n2_InferredObject", myName);
+                    UIScriptObject Object = new UIScriptObject(Enum.GetName(TSOUIsObjectTypes.GenericControl) ?? "GenericControl", myName);
                     (ctrlProp.Parent ?? File).Items.Add(Object);
                     Target = Object;
                 }
                 else Target = hits.First();
                 Target.CombineProperties(Target.MyProperties, ctrlProp.GetProperties());
+                if (Target is UIScriptObject UIObject && UIObject.KnownType == "GenericControl")
+                { // GenericObject should try to be figured out
+                    if (Target.MyProperties.ContainsKey("buttonImage"))
+                        UIObject.Type = TSOUIsObjectTypes.Button.ToString();
+                }
             }
         }
     }

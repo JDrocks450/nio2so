@@ -121,70 +121,157 @@ namespace nio2so.TSOView2.Formats.UIs
             UICanvas.Children.Clear();
 
             //UNREFERENCED IMAGES FIRST
+            MakeExpanderGroup(5, "Unreferenced Objects", out var noRefExpand, out var noRefGroup);
             foreach (var definition in theme.Values)
             {
-                if (definition.TextureRef == null) continue;
+                if (definition.TextureRef == null)
+                {
+                    GetErrorNavItem("NO TEXTURE: " + System.IO.Path.GetFileName(definition.FilePath));
+                    continue;
+                }
                 if (!definition.ReferencedBy.Any())
                 {
                     var imgControl = UIControlFactory.MakeImageFromDefinition(definition);
-                    if (imgControl == default) continue;
+                    if (imgControl == default)
+                    {
+                        GetErrorNavItem("NO RENDER: " + System.IO.Path.GetFileName(definition.FilePath));
+                        continue;
+                    }
                     elements.Add(imgControl);
+
+                    var navItem = MakeControlsNavigationMenuItem(imgControl, null);
+                    noRefGroup.Children.Add(navItem);
                 }
             }
-            
+            ControlsStack.Children.Add(noRefExpand);
+
             //CONTROLS
-            foreach(var control in CurrentUIScriptFile.Controls)
+            Queue<Panel> currentEnclosure = new();
+            void RunUIScript(HashSet<UIScriptComponentBase> items, out int AddedControls)
             {
-                FrameworkElement? element = UIControlFactory.MakeControl<FrameworkElement>(control);                
-                if (element == default) continue;
-                elements.Add(element);
-            }
-
-            // MAKE CONTROLS NAV BAR
-            foreach(var element in elements)
-            {
-                //CURSOR
-                element.Cursor = Cursors.Hand;                
-
-                UIViewExplorerItem decorButton = new UIViewExplorerItem()
+                AddedControls = 0;
+                foreach (var ScriptComponent in items)
                 {
-                    Header = $"{element.Name} ({element.GetType().Name})",
-                    Margin = new Thickness(0,0,0,5)
-                };
-                CheckBox isVisibleCheck = new CheckBox()
+                    //GROUP
+                    if (ScriptComponent is UIScriptGroup group)
+                    {
+                        MakeExpanderGroup(5 * currentEnclosure.Count, "Group", out var expander, out var groupStack);
+                        currentEnclosure.Peek().Children.Add(expander);
+
+                        currentEnclosure.Enqueue(groupStack);
+                        RunUIScript(group.Items, out int added);
+                        currentEnclosure.Dequeue();
+
+                        if (added == 0)
+                            expander.Visibility = Visibility.Collapsed;
+                    }
+                    //CONTROL FOUND
+                    if (ScriptComponent is UIScriptObject control)
+                    {
+                        //MAKE CONTROL FROM DEFINITION
+                        FrameworkElement? element = UIControlFactory.MakeControl<FrameworkElement>(control);
+                        if (element == default) { // ERROR BLOCK
+                            currentEnclosure.Peek().Children.Add(GetErrorNavItem(control.Name));
+                            AddedControls++;
+                            continue;
+                        }
+                        AddedControls++;
+                        elements.Add(element);
+
+                        //ADD CONTROL TO CONTROLS NAVIGATION BAR
+                        var navItem = MakeControlsNavigationMenuItem(element, control);
+                        currentEnclosure.Peek().Children.Add(navItem);                        
+                    }
+                }
+            }
+            currentEnclosure.Enqueue(ControlsStack);
+            RunUIScript(CurrentUIScriptFile.Items, out _);
+
+            foreach(var element in elements)
+                //ADD CONTROL TO THE CANVAS
+                UICanvas.Children.Add(element);
+        }        
+
+        private void MakeExpanderGroup(int HorizontalPadding, string Title, out Expander expander, out StackPanel groupStack)
+        {
+            groupStack = new StackPanel()
+            {
+                Margin = new Thickness(HorizontalPadding, 5, 0, 5),
+            };
+            expander = new Expander()
+            {
+                IsExpanded = true,
+                Header = Title,
+                Content = groupStack
+            };
+        }
+
+        private Border GetErrorNavItem(string Message)
+        {
+            return new Border()
+            {
+                Background = Brushes.Red,
+                Padding = new Thickness(10),                
+                Child = new TextBlock() { Foreground = Brushes.White, Text = $"ERROR: {Message}" }
+            };
+        }
+
+        private UIViewExplorerItem MakeControlsNavigationMenuItem(FrameworkElement element, UIScriptObject scriptObject)
+        {
+            //CURSOR
+            element.Cursor = Cursors.Hand;
+
+            UIViewExplorerItem decorButton = new UIViewExplorerItem()
+            {
+                Header = $"{element.Name} ({element.GetType().Name})",
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            CheckBox isVisibleCheck = new CheckBox()
+            {
+                Content = "Visible",
+                IsChecked = true,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(10)
+            };
+            RoutedEventHandler action = delegate
+            {
+                element.Visibility = isVisibleCheck.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+            };
+            isVisibleCheck.Checked += action;
+            isVisibleCheck.Unchecked += action;
+            element.MouseRightButtonUp += delegate
+            {                
+                ShowUIGizmoForControl(element.Name, element);
+                var gizmoVisCheck = new CheckBox()
                 {
                     Content = "Visible",
                     IsChecked = true,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    Margin = new Thickness(10)
                 };
-                RoutedEventHandler action = delegate
+                RoutedEventHandler action1 = delegate
                 {
-                    element.Visibility = isVisibleCheck.IsChecked ?? false ? Visibility.Visible : Visibility.Collapsed;
+                    isVisibleCheck.IsChecked = !isVisibleCheck.IsChecked;
                 };
-                isVisibleCheck.Checked += action;
-                isVisibleCheck.Unchecked += action;
-                element.MouseLeftButtonUp += delegate
+                gizmoVisCheck.Checked += action1;
+                gizmoVisCheck.Unchecked += action1;
+                GizmoControlStack.Children.Add(gizmoVisCheck);
+            };
+            decorButton.Content = isVisibleCheck;
+            //CLICK TO HIDE
+            decorButton.PreviewMouseDown += delegate
+            {
+                foreach (UIElement control in UICanvas.Children)
                 {
-                    ShowUIGizmoForControl(element.Name, element);
-                    var gizmoVisCheck = new CheckBox()
-                    {
-                        Content = "Visible",
-                        IsChecked = true,
-                    };
-                    RoutedEventHandler action1 = delegate
-                    {
-                        isVisibleCheck.IsChecked = !isVisibleCheck.IsChecked;
-                    };
-                    gizmoVisCheck.Checked += action1;
-                    gizmoVisCheck.Unchecked += action1;
-                    GizmoControlStack.Children.Add(gizmoVisCheck);
-                };               
-                decorButton.Content = isVisibleCheck;
-                ControlsStack.Children.Add(decorButton);
-
-                UICanvas.Children.Add(element);
-            }
+                    if (control == element) continue;
+                    control.Opacity = .1;
+                }
+            };
+            //CLICK TO SHOW
+            decorButton.PreviewMouseUp += delegate
+            {
+                foreach (UIElement control in UICanvas.Children)
+                    control.Opacity = 1;
+            };
+            return decorButton;
         }
 
         private void ShowUIGizmoForControl(string Title, UIElement Element)
@@ -259,6 +346,16 @@ namespace nio2so.TSOView2.Formats.UIs
         private void RefreshUIButton_Click(object sender, RoutedEventArgs e)
         {
             ReloadUIViewer();
+        }
+
+        private void Page_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape) UIGizmo.Visibility = Visibility.Collapsed;
+        }
+
+        private void Page_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            UIGizmo.Visibility = Visibility.Collapsed;
         }
     }
 }

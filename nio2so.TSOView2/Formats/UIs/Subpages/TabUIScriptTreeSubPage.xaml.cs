@@ -55,6 +55,7 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
+            UiScriptsTreeObject.Items.Clear();
             // SET TREE OBJECT VIEWER
             void AddGroup(TreeViewItem Node, UIScriptGroup Current)
             {
@@ -84,6 +85,7 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
             };
             AddGroup(node, CurrentUIScriptFile);
             UiScriptsTreeObject.Items.Add(node);
+            node.IsExpanded = true;
         }
 
         private void ObjectTreeNode_Selected(object sender, RoutedEventArgs e)
@@ -103,6 +105,11 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
 
             //crucial
             e.Handled = true;
+        }
+
+        private void OpenScriptButton_Click(object sender, RoutedEventArgs e)
+        {
+             using var proc = System.Diagnostics.Process.Start("notepad", UIs.UIsHandler.Current.CurrentFilePath);
         }
     }
 }
