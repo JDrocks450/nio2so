@@ -25,9 +25,20 @@
     /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
-    sealed class TSOVoltronIgnorable : Attribute
+    class TSOVoltronIgnorable : Attribute
     {
         public TSOVoltronIgnorable()
+        {
+
+        }
+    }
+    /// <summary>
+    /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable -- because it is in a <see cref="DBWrapper"/> packet
+    /// </summary>
+    [System.AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+    sealed class TSOVoltronDBWrapperField : TSOVoltronIgnorable
+    {
+        public TSOVoltronDBWrapperField()
         {
 
         }

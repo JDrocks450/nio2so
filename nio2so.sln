@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTPS", "TSOHTTPS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTP", "nio2so.TSOHTTP\nio2so.TSOHTTP.csproj", "{71596EAC-EF76-4349-861D-A94F0839E035}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOProtocol", "nio2so.TSOProtocol\nio2so.TSOProtocol.csproj", "{F1955FD1-F272-40BF-B960-7F5212FB26BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTPS.Protocol", "nio2so.TSOProtocol\nio2so.TSOHTTPS.Protocol.csproj", "{F1955FD1-F272-40BF-B960-7F5212FB26BC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOTCP.City", "nio2so.TSOTCP.City\nio2so.TSOTCP.City.csproj", "{D601BDB2-5846-43FD-8117-917A51700603}"
 EndProject
@@ -25,7 +25,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOView2.TSOWorld", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.Data", "nio2so.Data", "{66AC1B39-99F4-44C0-8F10-4A1C23D777DD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Data.Common", "nio2so.Data.Common\nio2so.Data.Common.csproj", "{25D905FD-4585-4BC3-8E4D-9AB354E79A6C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.Data.Common", "nio2so.Data.Common\nio2so.Data.Common.csproj", "{25D905FD-4585-4BC3-8E4D-9AB354E79A6C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.SimsLib", "nio2so.SimsLib\nio2so.SimsLib.csproj", "{900A8160-3788-48F5-B92C-CDED1133EE6F}"
 EndProject

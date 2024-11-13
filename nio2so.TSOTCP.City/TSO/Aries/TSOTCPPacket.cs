@@ -1,4 +1,5 @@
-﻿using QuazarAPI;
+﻿using nio2so.TSOTCP.City.Telemetry;
+using QuazarAPI;
 using QuazarAPI.Networking.Data;
 using System;
 using System.Collections.Generic;
@@ -26,8 +27,13 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         RelogonComplete = 44
     }
 
+    /// <summary>
+    /// An Aries Packet.
+    /// </summary>
     internal class TSOTCPPacket : QuazarAPI.Networking.Data.PacketBase
     {
+        private static bool _warningShownOnce = false;
+
         /// <summary>
         /// Aries Packet Type <para/>
         /// See <see cref="TSOAriesPacketTypes"/> for known Packet Types for TSO.        
@@ -84,8 +90,9 @@ namespace nio2so.TSOTCP.City.TSO.Aries
                 var headerSuccess = TryGetAriesHeader(headerBytes, out uint pType, out uint time, out uint size);
                 if (!headerSuccess) // THROW IF FIRST PACKET
                 {
-                    if (currentIndex == 0)                    
-                        QConsole.WriteLine("TSOTCPPacket_Warnings", "First packet in the response body isn't an Aries packet."); // FIRST PACKET ISN'T EVEN ARIES
+                    if (currentIndex == 0)
+                        TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
+                            "cTSOTCPPacket", "First packet in the response body isn't an Aries packet.")); // FIRST PACKET ISN'T EVEN ARIES
                     break;
                 }
                 uint packetBuffer = size + ARIES_FRAME_HEADER_LEN;
@@ -125,7 +132,11 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             if (Timestamp == 0)
             {
                 Timestamp = 0xA1A2A3A4;
-                QConsole.WriteLine("TSOTCPPacket_Warnings", "Timestamp parameter was 0x0. Changed to 0xA1A2A3A4 just in time...");
+                if (!_warningShownOnce)
+                    TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Warnings,
+                        "cTSOTCPPacket", "Timestamp parameter was 0x0. Changed to 0xA1A2A3A4 just in time. " +
+                        "This warning will not be shown again."));
+                _warningShownOnce = true;
             }
             Array.Copy(BitConverter.GetBytes(Timestamp), 0, packetData, sizeof(uint) * 1, sizeof(uint));
             Array.Copy(BitConverter.GetBytes(PayloadSize), 0, packetData, sizeof(uint) * 2, sizeof(uint));
@@ -164,7 +175,8 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             }
             catch (Exception e)
             { // TRY FUNCTION WILL IGNORE ERRORS
-                QConsole.WriteLine("AriesHelper", $"Error when parsing Aries header: {e.Message}");
+                TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
+                    "cTSOTCPPacket", $"Error when parsing Aries header: {e.Message}"));
                 return false;
             }
             return PayloadSize != 0;
@@ -181,10 +193,20 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             }
         }
 
-        public void WritePacketToDisk(bool Incoming = true, string Directory = "/packets/tsotcppackets/")
+        /// <summary>
+        /// Writes this <see cref="TSOTCPPacket"/>'s contents to the disk
+        /// <para>You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.</para>
+        /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/>
+        /// </summary>
+        /// <param name="Incoming">Dictates whether this <see cref="TSOTCPPacket"/> coming from the Server or from the local machine. 
+        /// <see langword="true"/> for local machine.</param>
+        /// <param name="PacketName">You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.
+        /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/></param>
+        /// <param name="Directory"></param>
+        public void WritePacketToDisk(bool Incoming = true, string? PacketName = default, string Directory = "/packets/tsotcppackets/")
         {
             System.IO.Directory.CreateDirectory(Directory);
-            string myName = $"{(Incoming ? "IN" : "OUT")} [{(TSOAriesPacketTypes)PacketType}] Packet {DateTime.Now.ToFileTime()}.dat";
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{(PacketName ?? ((TSOAriesPacketTypes)PacketType).ToString())}] Packet {DateTime.Now.ToFileTime()}.dat";
             File.WriteAllBytes(Path.Combine(Directory, myName), GetBytes());
         }
     }

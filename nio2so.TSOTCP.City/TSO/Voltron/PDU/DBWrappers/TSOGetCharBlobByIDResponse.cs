@@ -59,15 +59,17 @@
             0x41,0x4E,0x44,0x3D,0x67,0x75,0x61,0x6F,0x5F,0x70,0x69,0x6E,0x6B,0x67,0x01,0x74,
             0x08,0x4A,0x6F,0x6C,0x6C,0x79,0x53,0x69,0x6D,0x01,0x42
         };
-
+        
         private static byte[] ReadDefaultSimData() => File.ReadAllBytes("/packets/const/TSOSimData.dat");
+
+        [TSOVoltronDBWrapperField] public uint AvatarID { get; private set; }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint TransactionID) :
+        public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint TransactionID, uint avatarID) :
             base(
                     AriesID,
                     MasterID,
@@ -77,9 +79,9 @@
                     0x21,
                     TransactionID,
                     TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDResponse,
-                    _combine(new byte[]
+                    CombineArrays(new byte[]
                     {
-                        0x00,0x00,0x05,0x39,
+                        0x00,0x00,0x05,0x39, // <--- AVATARID
                         0x01,
                         0x00,0x00,0x03,0x20,
                         0x00,0x1B,0x03,0x00,0x00,
@@ -87,15 +89,10 @@
                     niotso_TSOPreAlphaDefaultSimData)
                 )
         {
-
-        }
-
-        private static byte[] _combine(byte[] one, byte[] two)
-        {
-            int index = one.Length;
-            Array.Resize(ref one, one.Length + two.Length);
-            two.CopyTo(one, index);
-            return one;
+            AvatarID = avatarID;
+            
+            MoveBufferPositionToDBMessageBody();
+            EmplaceBody(AvatarID); // <--- overwrite avatarid here for now            
         }
     }
 }

@@ -14,6 +14,20 @@ using System.Xml.Linq;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron
 {
+    internal class TSODBWrapperMessageSize
+    {
+        public TSODBWrapperMessageSize(uint Size) => this.Size = Size;
+        /// <summary>
+        /// Use this in the <see cref="TSODBRequestWrapper"/> constructor for MessageSize to have
+        /// the packet autosize using the <see cref="TSODBRequestWrapper.DBMessageBody"/> property
+        /// </summary>
+        public static TSODBWrapperMessageSize AutoSize => 0xFFFFFFFF;
+        public bool IsAutoSize => Size == 0xFFFFFFFF;
+        public uint Size { get; set; } = 0xFFFFFFFF;
+
+        public static implicit operator TSODBWrapperMessageSize(uint Other) => new TSODBWrapperMessageSize(Other);
+        public static implicit operator uint(TSODBWrapperMessageSize Other) => Other.Size;
+    }
     /// <summary>
     /// A class for cTSONetMessageStandard structs wrapped inside a <see cref="TSODBRequestWrapper"/> PDU
     /// </summary>
@@ -89,7 +103,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public string MasterID { get; set; }
         public ushort Bitfield_Arg1 { get; set; }
         /// <summary>
-        /// The distance (in bytes) from the end of the DWORD to the end of the packet. 
+        /// The distance (in bytes) from the end of this specific DWORD to the end of the packet. 
         /// <para>Basically, all other fields after this one are included in the "Body" of the packet.</para>
         /// <para>For clarity and usability, values stored in the Body have been pulled-up to the class level,
         /// such as <see cref="TSOPacketFormatCLSID"/></para>
@@ -149,6 +163,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         }
 #else
         /// <summary>
+        /// For writing into the DBMessageBody property of this <see cref="TSODBRequestWrapper"/> packet,
+        /// you can use this function to move the position of the buffer to the DBMessageBody
+        /// </summary>
+        protected void MoveBufferPositionToDBMessageBody()
+        {
+            SetPosition((int)(BodyLength - DBMessageBody.Length));
+        }
+
+        /// <summary>
         /// Uses the <see cref="DBMessageBody"/> combined with <see cref="Flags"/> to get remaining fields in this message.
         /// </summary>
         internal void ReadAdditionalMetadata()
@@ -166,7 +189,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 }
                 return strings;
             }
-            SetPosition((int)(BodyLength - DBMessageBody.Length));
+            MoveBufferPositionToDBMessageBody();
             uint value = ReadBodyDword();
             if (HasData1)
                 Data1 = value;
@@ -223,6 +246,28 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 $"Data4:{(HasData4 ? Data4 : "n/a")}\n " +
                 $"Extra CLSID:{(HasExtraCLSID ? ExtraCLSID.ToString("X8") : "n/a")}\n " +
                 $"Extra String:{(HasString ? MessageString : "n/a")}\n ";
+        }
+
+        public override string ToShortString(string Arguments = "")
+        {
+            return $"[{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}] 1: {Data1} 2: {Data2} 3: {Data3}";
+        }
+
+        protected static byte[] CombineArrays(params byte[][] arrays)
+        {
+            if (!arrays.Any()) throw new ArgumentException("No arrays provided to combine!!!");
+            if (arrays.Length < 2) throw new ArgumentException("Only one array provided to combine!!!");
+
+            byte[] current = arrays[0];
+            for (int i = 1; i < arrays.Length; i++)
+            {
+                byte[] next = arrays[i];
+
+                int index = current.Length;
+                Array.Resize(ref current, current.Length + next.Length);
+                next.CopyTo(current, index);
+            }
+            return current;
         }
     }
 }

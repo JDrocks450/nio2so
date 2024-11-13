@@ -27,10 +27,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             {
                 case TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard:
                     { // TSO Net Message Standard type responses (most common)
-                        switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
+                        var clsID = (TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID;
+                        switch (clsID)
                         {
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDRequest:
-                                returnPackets.Add(new TSOGetCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID));
+                                returnPackets.Add(new TSOGetCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID, TSOVoltronConst.MyAvatarID));
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetBookmarksRequest:
                                 returnPackets.Add(new TSOGetBookmarksResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID));
@@ -68,7 +69,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     defaultSend(new TSOSetAcceptFlashesResponsePDU(true));
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU:
-                    defaultSend(new TSOSetIgnoreListResponsePDU());
+                    defaultSend(new TSOSetIgnoreListResponsePDU(true));
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
                     defaultSend(new TSOSetInvincibleResponsePDU(true));

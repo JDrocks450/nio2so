@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+﻿using nio2so.TSOTCP.City.Telemetry;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -66,9 +67,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     {
                         bool value = typeMap.Add((ITSOProtocolRegulator)instance);
                         if (value)
-                            QConsole.WriteLine("cTSORegulatorManager", $"Mapped {type.Name}!");
+                            TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
+                                "cTSORegulatorManager", $"Mapped {type.Name}!"));
                     }
-                    QConsole.WriteLine("cTSORegulatorManager", $"Error when mapping {type.Name}! (Already added?)");
+                    TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
+                        "cTSORegulatorManager", $"Error when mapping {type.Name}! (Already added?)"));
                 }
             }
         }

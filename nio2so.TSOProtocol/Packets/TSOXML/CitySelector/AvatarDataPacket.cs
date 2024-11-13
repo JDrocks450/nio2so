@@ -22,7 +22,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
 
         public static AvatarDataPacketStructure Default = new()
         {
-            AvatarID = 0x0539,
+            AvatarID = 0xA1,
             Name = "Bloaty",
             Popularity = 5,
             PopularityDelta = 1,

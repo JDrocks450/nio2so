@@ -27,6 +27,7 @@ namespace nio2so.TSOProtocol.Controllers
         {
             _logger.LogInformation("Client requests Shard Status(es)...");
             var shardStatus = ShardStatusStructure.Default;
+            //shardStatus = new ShardStatusStructure(ShardLocation.PUBLIC,"Bloaty Land",ShardStatusReason.Up, 87);                                
             var packetStr = new ShardStatusPacket(shardStatus).ToString();
             _logger.LogInformation($"CitySelector: ShardStatus() === \n {packetStr} \n===");
             return Ok(packetStr);

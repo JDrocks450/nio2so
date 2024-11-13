@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\nio2so.TSOProtocol\nio2so.TSOProtocol.csproj" />
+    <ProjectReference Include="..\nio2so.TSOProtocol\nio2so.TSOHTTPS.Protocol.csproj" />
   </ItemGroup>
 
 </Project>

@@ -10,15 +10,17 @@ using System.Xml.Linq;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
-
     internal class TSOHostOnlinePDU : TSOVoltronPacket
     {
+        //CONST/TUNING
+        const ushort PACKET_SIZE_LIMIT = TSO.TSOCityServer.DefaultSendAmt;
+
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU;
-        public uint HostVersion { get; }
-        public ushort SizeLimit { get; }
+        public uint HostVersion { get; } 
+        public ushort SizeLimit { get; }               
         public uint Arg3 { get; }
 
-        public TSOHostOnlinePDU(uint hostVersion = 0x0C, ushort packetSize = 1024, uint arg3 = 0x7FFF7FFF)
+        public TSOHostOnlinePDU(uint hostVersion = 0x0C, ushort packetSize = PACKET_SIZE_LIMIT, uint arg3 = 0x0)
         {
             HostVersion = hostVersion;
             SizeLimit = packetSize;

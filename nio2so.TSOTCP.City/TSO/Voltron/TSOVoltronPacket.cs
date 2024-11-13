@@ -6,6 +6,7 @@ using QuazarAPI.Networking.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
@@ -162,6 +163,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             BodyStream.Position = _bodyBuffer.Position = 0;
             BodyStream.CopyTo(_bodyBuffer, (int)PayloadSize);
             SetPosition(6);
+            if (BodyPosition == PayloadSize) return (int)PayloadSize;
 
             foreach (var property in GetPropertiesToCopy()) {                
                 //check if this property is the body array property
@@ -292,6 +294,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     if (cTSOVoltronpacket is TSOBlankPDU)
                     {
                         TSOPDUFactory.LogDiscoveryPacketToDisk(VPacketType, temporaryBuffer);
+                        QConsole.WriteLine("TSOVoltronPacket_Discovery", $"[{cTSOVoltronpacket.KnownPacketType}] " +
+                            $"This packet has no associated type. Make one now!");
                         continue;
                     }
                     cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
@@ -335,6 +339,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         }
         /// <summary>
         /// Gets all the properties which are eligible for encoding into the packet body
+        /// <para/>Eligible Properties are ones that meet the following conditions:
+        /// <list type="bullet">Properties that are NOT named <c>VoltronPacketType</c> or <c>FriendlyPDUName</c></list>
+        /// <list type="bullet">Properties enclosed in a <see cref="TSOVoltronPacket"/> or any inheritors (super class down to base class order)</list>
+        /// <list type="bullet">Properties that are not <see cref="TSOVoltronIgnorable"/> or any inheritors of this attribute
+        /// (for example: <see cref="TSOVoltronDBWrapperField"/> which is also ignorable)</list>
         /// </summary>
         /// <returns></returns>
         protected virtual IEnumerable<PropertyInfo> GetPropertiesToCopy() =>
@@ -351,9 +360,31 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public override string ToString()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var property in GetPropertiesToCopy())            
-                sb.AppendLine($"    {property.Name}: {property.GetValue(this)}");            
+            foreach (var property in GetPropertiesToCopy())
+                sb.AppendLine($"    {property.Name}: {property.GetValue(this)}");
             return $"c{FriendlyPDUName} -> {{\n{sb}\n}}";
+        }
+
+        public virtual string ToShortString(string Arguments = "")
+        {
+            return $"{KnownPacketType} ({FriendlyPDUName}.cs) " + Arguments ?? "";
+        }
+
+        /// <summary>
+        /// Writes this <see cref="TSOTCPPacket"/>'s contents to the disk
+        /// <para>You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.</para>
+        /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/>
+        /// </summary>
+        /// <param name="Incoming">Dictates whether this <see cref="TSOTCPPacket"/> coming from the Server or from the local machine. 
+        /// <see langword="true"/> for local machine.</param>
+        /// <param name="PacketName">You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.
+        /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/></param>
+        /// <param name="Directory"></param>
+        public void WritePDUToDisk(bool Incoming = true, string Directory = "/packets/tsotcppackets/")
+        {
+            System.IO.Directory.CreateDirectory(Directory);
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{KnownPacketType}] PDU {DateTime.Now.ToFileTime()}.dat";
+            File.WriteAllBytes(Path.Combine(Directory, myName), Body);
         }
     }
 }

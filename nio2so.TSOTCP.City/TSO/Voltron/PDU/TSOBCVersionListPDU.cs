@@ -19,7 +19,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU;
-        public string VersionString { get; set; }
+        [TSOVoltronString] public string VersionString { get; set; }
         [TSOVoltronString]
         public string Str1 { get; set; }
         public uint Arg1 { get; set; }

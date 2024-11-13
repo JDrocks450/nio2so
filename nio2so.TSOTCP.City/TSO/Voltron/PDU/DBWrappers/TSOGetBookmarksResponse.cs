@@ -6,21 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
-{
-    internal class TSODBWrapperMessageSize
-    {
-        public TSODBWrapperMessageSize(uint Size) => this.Size = Size;
-        /// <summary>
-        /// Use this in the <see cref="TSODBRequestWrapper"/> constructor for MessageSize to have
-        /// the packet autosize using the <see cref="TSODBRequestWrapper.DBMessageBody"/> property
-        /// </summary>
-        public static TSODBWrapperMessageSize AutoSize => 0xFFFFFFFF;
-        public bool IsAutoSize => Size == 0xFFFFFFFF;
-        public uint Size { get; set; } = 0xFFFFFFFF;
-
-        public static implicit operator TSODBWrapperMessageSize(uint Other) => new TSODBWrapperMessageSize(Other);
-        public static implicit operator uint(TSODBWrapperMessageSize Other) => Other.Size;
-    }
+{    
     /// <summary>
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetBookmarksQuery"/>
     /// </summary>

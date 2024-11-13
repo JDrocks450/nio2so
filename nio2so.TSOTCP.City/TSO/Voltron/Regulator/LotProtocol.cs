@@ -29,9 +29,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     { // TSO Net Message Standard type responses (most common)
                         switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
                         {
-                            case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDRequest: 
-                                returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID));
+                            case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDRequest:
+                                {
+                                    uint HouseID = PDU.Data1; // DATA1 is HouseID
+                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID,
+                                        HouseID, TSOVoltronConst.MyAvatarID));
+                                }
                                 return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByIDRequest:
+                                {
+                                    uint HouseID = PDU.Data1; // DATA1 is HouseID
+                                    returnPackets.Add(new TSOGetHouseBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID,HouseID));                                        
+                                }
+                                return true;                               
                         }
                     }
                     break;
