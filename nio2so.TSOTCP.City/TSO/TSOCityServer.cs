@@ -52,7 +52,7 @@ namespace nio2so.TSOTCP.City.TSO
     /// </summary>
     internal class TSOCityServer : QuazarServer<TSOTCPPacket>
     {
-        public const UInt16 TSO_Aries_SendRecvLimit = 1024;
+        public const UInt16 TSO_Aries_SendRecvLimit = 256;
 
         public TSOCityTelemetryServer Telemetry { get; }
 
@@ -78,6 +78,9 @@ namespace nio2so.TSOTCP.City.TSO
 
             var bps = BPSFileInterpreter.Interpret(@"E:\Games\TSO Pre-Alpha\packetlog.bps");
 
+            //HOOK EVENTS
+            OnIncomingPacket += OnIncomingAriesFrame;
+
             //START THE SERVER
             BeginListening();
         }
@@ -95,7 +98,7 @@ namespace nio2so.TSOTCP.City.TSO
             Send(ID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));            
         }
 
-        protected override void OnIncomingPacket(uint ID, TSOTCPPacket Data)
+        private void OnIncomingAriesFrame(uint ID, TSOTCPPacket Data)
         {
             //**Telemetry
             Telemetry.OnAriesPacket(NetworkTrafficDirections.INBOUND,DateTime.Now,Data);
@@ -258,11 +261,6 @@ namespace nio2so.TSOTCP.City.TSO
                 }
             }
             return packets;
-        }
-
-        protected override void OnOutgoingPacket(uint ID, TSOTCPPacket Data)
-        {
-            
         }
 
         #region HANDLERS

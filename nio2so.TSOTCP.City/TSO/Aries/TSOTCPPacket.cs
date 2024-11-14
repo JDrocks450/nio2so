@@ -34,6 +34,8 @@ namespace nio2so.TSOTCP.City.TSO.Aries
     {
         private static bool _warningShownOnce = false;
 
+        public override uint GetHeaderSize() => ARIES_FRAME_HEADER_LEN;
+
         /// <summary>
         /// Aries Packet Type <para/>
         /// See <see cref="TSOAriesPacketTypes"/> for known Packet Types for TSO.        
@@ -145,8 +147,15 @@ namespace nio2so.TSOTCP.City.TSO.Aries
                 Array.Copy(bytes, 0, packetData, ARIES_FRAME_HEADER_LEN, PayloadSize);
             }
             return packetData;
-        }        
+        }
 
+        public override bool TryGetHeaderData(in Byte[] Buffer, out uint Size)
+        {
+            Size = 0;
+            if (Buffer == null) throw new NullReferenceException();
+            if (Buffer.Length < ARIES_FRAME_HEADER_LEN) return false;
+            return TryGetAriesHeader(Buffer, out _, out _, out Size);
+        }
         /// <summary>
         /// Attempts to read the Aries Packet Header.
         /// <para>Make sure to handle exceptions yourself, or use <see cref="TryGetAriesHeader(byte[], out uint, out uint, out uint)"/></para>
