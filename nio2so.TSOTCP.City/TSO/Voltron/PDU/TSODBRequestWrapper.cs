@@ -175,38 +175,37 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// Uses the <see cref="DBMessageBody"/> combined with <see cref="Flags"/> to get remaining fields in this message.
         /// </summary>
         internal void ReadAdditionalMetadata()
-        {
+        {           
             IEnumerable<string> ReadStrings()
             {
                 List<string> strings = new List<string>();
                 while (true)
                 {
                     ushort length = ReadBodyUshort();
-                    if (length <= 0) break;
-                    byte[] buffer = new byte[length];
-                    ReadBodyByteArray(length);
-                    strings.Add(Encoding.UTF8.GetString(buffer,0,length));
+                    if (length <= 0 || length > 1024) break;
+                    byte[] buffer = ReadBodyByteArray(length);
+                    strings.Add(Encoding.UTF8.GetString(buffer, 0, length));
                 }
                 return strings;
             }
             MoveBufferPositionToDBMessageBody();
             uint value = ReadBodyDword();
-            if (HasData1)
-                Data1 = value;
+            //if (HasData1)
+            Data1 = value;
             value = ReadBodyDword();
-            if (HasData2)
-                Data2 = value;
+            //if (HasData2)
+            Data2 = value;
             value = ReadBodyDword();
-            if (HasData3)
-                Data3 = value;
+            //if (HasData3)
+            Data3 = value;
             value = ReadBodyDword();
-            if (HasExtraCLSID)
-                ExtraCLSID = value;            
+            //if (HasExtraCLSID)
+            ExtraCLSID = value;
             value = ReadBodyDword();
-            if (HasData4)
-                Data4 = value;
+            //if (HasData4)
+            Data4 = value;
             _bodyBuffer.Position += 3;
-            MessageString = HasString ? string.Join(", ", ReadStrings()) : "None.";
+            MessageString = string.Join(", ", ReadStrings());
         }
 #endif
         /// <summary>
@@ -239,19 +238,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         public override string ToString()
         {
-            return $"{base.ToString()}\n " +
+            return $"{GetDBWrapperName()}\n " +
                 $"Data1:{(HasData1 ? Data1 : "n/a")}\n " +
                 $"Data2:{(HasData2 ? Data2 : "n/a")}\n " +
                 $"Data3:{(HasData3 ? Data3 : "n/a")}\n " +
                 $"Data4:{(HasData4 ? Data4 : "n/a")}\n " +
-                $"Extra CLSID:{(HasExtraCLSID ? ExtraCLSID.ToString("X8") : "n/a")}\n " +
+                $"Extra CLSID:{(HasExtraCLSID ? (TSO_PreAlpha_DBStructCLSIDs)ExtraCLSID : "n/a")}\n " +
                 $"Extra String:{(HasString ? MessageString : "n/a")}\n ";
         }
 
         public override string ToShortString(string Arguments = "")
         {
-            return $"[{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}] 1: {Data1} 2: {Data2} 3: {Data3}";
+            return $"{GetDBWrapperName()}({Data1}, {Data2}, {Data3}, {Data4}, {(TSO_PreAlpha_DBStructCLSIDs)ExtraCLSID}, \"{MessageString}\")";
         }
+
+        public string GetDBWrapperName() => $"{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}";
 
         protected static byte[] CombineArrays(params byte[][] arrays)
         {

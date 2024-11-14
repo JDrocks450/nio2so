@@ -1,9 +1,12 @@
 ﻿namespace nio2so.TSOTCP.City.TSO.Voltron
 {
+    /// <summary>
+    /// For discovering more PDUs, please refer to: http://niotso.org/files/prealpha_pdu_tables.txt
+    /// </summary>
     public enum TSO_PreAlpha_VoltronPacketTypes : ushort
     {
         UNKNOWN_MSG_ID_PDU = 0x0,
-        CLIENT_BYE = 0x06,
+        BYE_PDU = 0x06,
         CLIENT_ONLINE_PDU = 0x09,
         HOST_ONLINE_PDU = 0x1D,
         SET_ACCEPT_ALERTS_PDU = 0x31,
@@ -25,7 +28,11 @@
         LOAD_HOUSE_RESPONSE_PDU = 0x0099,
         UPDATE_PLAYER_PDU = 0x3C,
         HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU = 0x0097,
-        HOST_OFFLINE_PDU = 0x001C
+        HOST_OFFLINE_PDU = 0x001C,
+        READ_PROFILE_PDU = 0x002D,
+        READ_PROFILE_RESPONSE_PDU = 0x2E,
+
+        SPLIT_BUFFER_PDU = 0x0045
     }
     /// <summary>
     /// <para>For discovering more CLSIDs, please refer to: http://niotso.org/files/prealpha_constants_table.txt</para>
@@ -47,7 +54,8 @@
         cTSODeadStream =                    0x0A9D7E3A,
         cTSOTopicUpdateMessage =            0x09736027,
         cTSODataTransportBuffer =           0x0A2C6585,
-        cTSOTopicUpdateErrorMessage =       0x2A404946
+        cTSOTopicUpdateErrorMessage =       0x2A404946,
+        GZPROBEID_cEAS =                    0x1D873D36
     }
     /// <summary>
     /// The Sims Online makes a distinction between Queries, Requests and Responses

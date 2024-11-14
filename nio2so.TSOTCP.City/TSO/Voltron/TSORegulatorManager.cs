@@ -11,6 +11,14 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 {
     /// <summary>
+    /// A response to a <see cref="ITSOProtocolRegulator"/> Handle() method
+    /// </summary>
+    /// <param name="ResponsePackets"> These are packets that the server should send to the client in response to the incoming data </param>
+    /// <param name="InsertionPackets"> These are packets that should be immediately inserted into the Server receive queue for processing </param>
+    /// <param name="EnqueuePackets"> These are packets that should be added to the end of the Server's receive queue for processing </param>
+    internal record TSOProtocolRegulatorResponse(IEnumerable<TSOVoltronPacket> ResponsePackets, IEnumerable<TSOVoltronPacket> InsertionPackets, IEnumerable<TSOVoltronPacket> EnqueuePackets);
+
+    /// <summary>
     /// Inheritors of this class will handle incoming PDUs (and DB Requests).
     /// <para>You should make use of the <see cref="TSORegulator"/> attribute to mark one as a Regulator.</para>
     /// </summary>
@@ -24,7 +32,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// <param name="PDU">The PDU the client sent</param>
         /// <param name="ResponsePackets">Packets sent in response to this PDU.</param>
         /// <returns></returns>
-        bool HandleIncomingPDU(TSOVoltronPacket PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets);
+        bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response);
         /// <summary>
         /// Handles an incoming <see cref="TSODBRequestWrapper"/> PDU.
         /// <para>Returns <see langword="false"/> if this particular <see cref="ITSOProtocolRegulator"/> cannot handle that request.</para>
@@ -32,7 +40,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// <param name="PDU">The PDU the client sent</param>
         /// <param name="ResponsePackets">Packets sent in response to this PDU.</param>
         /// <returns></returns>
-        bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets);
+        bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response);
     }
 
     [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
@@ -76,14 +84,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
         }
 
-        public static bool HandleIncomingPDU(TSOVoltronPacket Incoming, out IEnumerable<TSOVoltronPacket> Outgoing)
+        public static bool HandleIncomingPDU(TSOVoltronPacket Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {
             foreach(var regulator in  typeMap)            
                 if (regulator.HandleIncomingPDU(Incoming, out Outgoing)) return true;
             Outgoing = null;
             return false;
         }
-        public static bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out IEnumerable<TSOVoltronPacket> Outgoing)
+        public static bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {            
             foreach (var regulator in typeMap)
                 if (regulator.HandleIncomingDBRequest(Incoming, out Outgoing)) return true;

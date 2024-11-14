@@ -13,7 +13,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     /// then once finished sends it's payload to Voltron. This is sent afterwards so the Client notifies the Server 
     /// it is disconnecting on purpose.</para>
     /// </summary>
-    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CLIENT_BYE)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BYE_PDU)]
     internal class TSOClientBye : TSOVoltronPacket
     {
         public uint StatusCode { get; set; }
@@ -32,6 +32,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             MakeBodyFromProperties();
         }
 
-        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.CLIENT_BYE;
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.BYE_PDU;
     }
 }

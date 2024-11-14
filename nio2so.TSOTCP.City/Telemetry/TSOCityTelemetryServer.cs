@@ -117,15 +117,18 @@ namespace nio2so.TSOTCP.City.Telemetry
                 _ => ConsoleColor.DarkBlue
             };
             Console.WriteLine($"{Time.ToLongTimeString()} - *VOLTRON_DATABASE* [{Direction}] {PDU.ToShortString()}");
+
+            //**LOG PDU TO DISK
+            PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
         }
 
         internal void OnConsoleLog(ConsoleLogEntry Entry)
         {
             Console.ForegroundColor = Entry.Severity switch
             {
-                LogSeverity.Message => ConsoleColor.White,
+                LogSeverity.Message => ConsoleColor.Yellow,
                 LogSeverity.TCPLayer => ConsoleColor.White,
-                LogSeverity.Warnings => ConsoleColor.Yellow,
+                LogSeverity.Warnings => ConsoleColor.DarkYellow,
                 LogSeverity.Errors => ConsoleColor.Red,
                 _ => ConsoleColor.White,
             };

@@ -34,6 +34,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public TSOVoltronPacket() { }
 
         /// <summary>
+        /// When overridden by a class, can be used to throw exceptions when checking the packet after being received.
+        /// </summary>
+        public virtual void EnsureNoErrors() { }
+
+        /// <summary>
         /// Uses reflection to create a packet body from the properties you implement. 
         /// <para>You should be using the <see cref="TSOVoltronString"/> attribute to control this feature.</para>
         /// <para>ONLY super-class PUBLIC PROPERTIES are included! No properties from 
@@ -276,44 +281,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, bodyBuffer);            
         }
 
-        public static IEnumerable<TSOVoltronPacket> ParseAllPackets(TSOTCPPacket AriesPacket)
-        {
-            List<TSOVoltronPacket> packets = new();
-            AriesPacket.SetPosition(0);
-            uint currentIndex = 0;
-            do
-            {
-                TSOVoltronPacket? cTSOVoltronpacket = default;
-                try
-                {                    
-                    ReadVoltronHeader(AriesPacket.BodyStream, out ushort VPacketType, out uint Size);
-                    currentIndex += Size;
-                    cTSOVoltronpacket = TSOPDUFactory.CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType);                    
-                    byte[] temporaryBuffer = new byte[Size];
-                    AriesPacket.BodyStream.ReadExactly(temporaryBuffer, 0, (int)Size);
-                    if (cTSOVoltronpacket is TSOBlankPDU)
-                    {
-                        TSOPDUFactory.LogDiscoveryPacketToDisk(VPacketType, temporaryBuffer);
-                        QConsole.WriteLine("TSOVoltronPacket_Discovery", $"[{cTSOVoltronpacket.KnownPacketType}] " +
-                            $"This packet has no associated type. Make one now!");
-                        continue;
-                    }
-                    cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
-                }
-                catch (Exception ex)
-                {
-                    QConsole.WriteLine("TSOVoltronPacket_Warnings", $"An error occured in the ParsePackets function. {ex.Message}");
-                    AriesPacket.SetPosition((int)currentIndex);
-                    continue;
-                }
-                if(cTSOVoltronpacket is TSODBRequestWrapper dbPacket)
-                    dbPacket.ReadAdditionalMetadata(); // make sure the metadata is read!
-                if (cTSOVoltronpacket != default)
-                    packets.Add(cTSOVoltronpacket);
-            }
-            while (!AriesPacket.IsBodyEOF);
-            return packets;
-        }
+        public static IEnumerable<TSOVoltronPacket> ParseAllPackets(TSOTCPPacket AriesPacket) =>
+            TSOPDUFactory.CreatePacketObjectsFromAriesPacket(AriesPacket);
 
         public static T? ParsePacket<T>(byte[] Data, out int ReadAmount) where T : ITSOVoltron, new()
         {

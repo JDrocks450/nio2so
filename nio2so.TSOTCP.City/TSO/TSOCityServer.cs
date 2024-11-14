@@ -6,6 +6,7 @@ using nio2so.Formats.TSOData;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.Collections;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.City.TSO.Voltron.Regulator;
@@ -54,6 +55,8 @@ namespace nio2so.TSOTCP.City.TSO
     {
         public const UInt16 TSO_Aries_SendRecvLimit = 256;
 
+        private List<TSOVoltronPacket> _VoltronBacklog = new();
+
         public TSOCityTelemetryServer Telemetry { get; }
 
         public TSOCityServer(int port, IPAddress ListenIP = null) : base("TSOCity", port, 5, ListenIP)
@@ -80,6 +83,11 @@ namespace nio2so.TSOTCP.City.TSO
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrame;
+
+            //**PLAYGROUND            
+            byte[] data = File.ReadAllBytes(@"E:\packets\discoveries\IN [Voltron] DB REQUEST INSERT LOG.dat");
+            var logRequest = TSOTCPPacket.ParseAll<TSOTCPPacket>(ref data);
+            OnIncomingAriesFrame(0, logRequest.First());            
 
             //START THE SERVER
             BeginListening();
@@ -115,17 +123,19 @@ namespace nio2so.TSOTCP.City.TSO
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
-                    {
-                        bool tryHandler = true;
+                    {                        
                         //GET VOLTRON PACKETS OUT OF DATA BUFFER
                         var packets = TSOVoltronPacket.ParseAllPackets(Data);
+                        _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
                         List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>(); // WE WILL SEND THESE TO CLIENT
-                        foreach (var packet in packets)
-                        {
+                        while (_VoltronBacklog.Count > 0)
+                        { // Work through all incoming PDUs
+                            var packet = _VoltronBacklog[0];
+                            _VoltronBacklog.RemoveAt(0);
+
                             //TSOVoltronPacket.MakeVoltronAriesPacket(packet).WritePacketToDisk(true,packet.KnownPacketType.ToString());
                             Debug_LogSendPDU(ID, packet, NetworkTrafficDirections.INBOUND); // DEBUG LOGGING
-                            
-                            if (!tryHandler) goto avoidHandlers;
+
                             try
                             {
                                 bool _handled = false; // DICTATES WHETHER HANDLER WAS SUCCESSFUL
@@ -145,6 +155,7 @@ namespace nio2so.TSOTCP.City.TSO
                                     $"{ex.Message}"));
                             }
                         }
+                        bool disconnecting = false;
 #if MAKEMANY
                         //MAKE ARIES FRAME WITH MANY VOlTRON PACKETS
                         var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(packetSendQueue);
@@ -153,13 +164,14 @@ namespace nio2so.TSOTCP.City.TSO
 #else
                         foreach (var voltronPacket in packetSendQueue)
                         {
+                            if (voltronPacket is TSOClientBye) disconnecting = true; // When sending the BYE_PDU we should disconnect from the Server cleanly.
                             var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(voltronPacket);
                             Send(ID, ariesPacket);
                             Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING
                         }
 #endif
-                    avoidHandlers:
-                        ;
+                        if (disconnecting)
+                            Disconnect(ID, SocketError.Disconnecting);                                         
                     }
                     break;
             }
@@ -186,52 +198,15 @@ namespace nio2so.TSOTCP.City.TSO
           
             Handled = true;
             switch (Packet.KnownPacketType)
-            {                
-                case TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU:
-                    //SEND AN UPDATE_PLAYER_PDU
-                    defaultSend(HandleSendClientPlayerOnlinePacket());
-                    Handled = true;
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU:
-                    {
-                        /* From niotso:                  hello, fatbag - bisquick :]
-                         * TODO: It is known that sending HouseSimConstraintsResponsePDU (before the
-	                    ** GetCharBlobByID response and other packets) is necessary for the game to post
-	                    ** kMSGID_LoadHouse and progress HouseLoadRegulator from kStartedState to kLoadingState.
-	                    ** However, the game appears to never send HouseSimConstraintsPDU to the server at
-	                    ** any point.
-	                    **
-	                    ** The question is:
-	                    ** Is there a packet that we can send to the game to have it send us
-	                    ** HouseSimConstraintsPDU?
-	                    ** Actually, (in New & Improved at least), manually sending a kMSGID_LoadHouse packet
-	                    ** to the client (in an RSGZWrapperPDU) will cause the client to send
-	                    ** HouseSimConstraintsPDU to the server.
-	                    ** It is not known at this point if that is the "correct" thing to do.
-	                    **
-	                    ** So, for now, we will send the response packet to the game, without it having explicitly
-	                    ** sent us a request packet--just like (in response to HostOnlinePDU) the game sends us a
-	                    ** LoadHouseResponsePDU without us ever having sent it a LoadHousePDU. ;)
-	                    */
-                        var houseID = ((TSOLoadHouseResponsePDU)Packet).HouseID;
-                        defaultSend(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
-                        Handled = true;
-                    }
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU:
-                    {
-                        TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)Packet;
-                        defaultSend(new TSOBCVersionListPDU(pdu.VersionString, "", 0x01));
-                        Handled = false;
-                    }
-                    break;
+            {                                
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     { // DB Request packets all start with the same Packet Type.
                         TSODBRequestWrapper? dbPacket = Packet as TSODBRequestWrapper;
                         if (dbPacket == default) break;
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID;
                         //Handle DB request packets here and enqueue the response packets into the return value of this function.
-                        if (!TSORegulatorManager.HandleIncomingDBRequest(dbPacket, out var returnpackets))
+                        if (!TSORegulatorManager.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
+                            returnValue == null)
                         { // handle failed!
                             Telemetry.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Discoveries,  "TSODBRequestWrapper Handler",
                                         $"Could not handle " +
@@ -239,12 +214,9 @@ namespace nio2so.TSOTCP.City.TSO
                                 $"{(TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID}!"));
                             break;
                         }
-                        Telemetry.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message,  "TSODBRequestWrapper Handler",
-                                        $"Handled " +
-                                $"{(TSO_PreAlpha_DBStructCLSIDs)dbPacket.TSOPacketFormatCLSID}::" +
-                                $"{(TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID}!"));
+                        
                         //handle success!
-                        foreach (var packet in returnpackets)    
+                        foreach (var packet in returnValue.ResponsePackets)    
                             defaultSend(packet);
                     }
                     break;
@@ -253,11 +225,27 @@ namespace nio2so.TSOTCP.City.TSO
             // TRY USING THE REGULATOR MANAGER TO HANDLE THIS PACKET
             if (!Handled)
             { // INVOKE THE SERVER-SIDE REGULATOR MANAGER
-                if (TSORegulatorManager.HandleIncomingPDU(Packet, out var returnPDUs))
-                {
-                    foreach (var packet in returnPDUs)
-                        defaultSend(Packet);
-                    Handled = true;                    
+                if (TSORegulatorManager.HandleIncomingPDU(Packet, out TSOProtocolRegulatorResponse Response))
+                { // REGULATOR HANDLED
+                    if (Response != null)
+                    {
+                        if (Response.InsertionPackets != null) // ADD INSERTIONS TO BACKLOG
+                        {
+                            foreach (var packet in Response.InsertionPackets)
+                                _VoltronBacklog.Insert(0,packet);
+                        }
+                        if (Response.EnqueuePackets != null) // ADD INSERTIONS TO BACKLOG
+                        {
+                            foreach (var packet in Response.EnqueuePackets)
+                                _VoltronBacklog.Add(packet);
+                        }
+                        if (Response.ResponsePackets != null) // ADD RESPONSE TO SENDQUEUE
+                        {
+                            foreach (var packet in Response.ResponsePackets)
+                                defaultSend(Packet);
+                        }
+                        Handled = true;
+                    }
                 }
             }
             return packets;
@@ -275,18 +263,7 @@ namespace nio2so.TSOTCP.City.TSO
             var sendPacket = TSOVoltronPacket.MakeVoltronAriesPacket(PacketProperties); //new TSOHostOnlinePDU(1, 1024, "Hello", "World"));            
             Send(ID, sendPacket);      
             Debug_LogSendPDU(ID, PacketProperties, NetworkTrafficDirections.CREATED);      
-        }
-        /// <summary>
-        /// Handles an incoming connection by sending it the <see cref="TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU"/>
-        /// </summary>
-        /// <param name="ID"></param>
-        /// <param name="PacketProperties"></param>
-        private TSOUpdatePlayerPDU HandleSendClientPlayerOnlinePacket(TSOUpdatePlayerPDU? PacketProperties = default)
-        {
-            if (PacketProperties == default) 
-                PacketProperties = new TSOUpdatePlayerPDU("161", "Bloaty");
-            return PacketProperties;
-        }
+        }        
         #endregion
         /// <summary>
         /// Logs to the debug output stream the packet's information so it can be assessed when debugging.

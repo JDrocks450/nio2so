@@ -18,10 +18,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     {
         public string RegulatorName => "LotProtocol";
 
-        public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets)
+        public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
             List<TSOVoltronPacket> returnPackets = new();
-            ResponsePackets = returnPackets;
+            Response = new(returnPackets, null, null);
 
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
@@ -47,14 +47,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     break;
             }
 
-            ResponsePackets = null;
             return false;
         }
 
-        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets)
+        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
         {
             List<TSOVoltronPacket> returnPackets = new List<TSOVoltronPacket>();
-            ResponsePackets = returnPackets;
+            Response = new(returnPackets,null,null);
 
             bool success = false;
             void defaultSend(TSOVoltronPacket outgoing)

@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+﻿using nio2so.TSOTCP.City.Telemetry;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using QuazarAPI;
 using System;
@@ -18,10 +19,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     {
         public string RegulatorName => "AvatarProtocol";
 
-        public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets)
+        public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
             List<TSOVoltronPacket> returnPackets = new();
-            ResponsePackets = returnPackets;
+            Response = new(returnPackets, null, null);
 
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
@@ -36,19 +37,26 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.GetBookmarksRequest:
                                 returnPackets.Add(new TSOGetBookmarksResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID));
                                 return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request:
+                                ;
+                                return false;
+                            case TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request:
+                                string message = PDU.MessageString;
+                                TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
+                                    "cDBServiceClientD", "[InsertGenericLog_Request] " + message));
+                                return true;
                         }
                     }
                     break;
             }
 
-            ResponsePackets = null;
             return false;
         }
 
-        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out IEnumerable<TSOVoltronPacket> ResponsePackets)
+        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
         {
             List<TSOVoltronPacket> returnPackets = new List<TSOVoltronPacket>();
-            ResponsePackets = returnPackets;
+            Response = new(returnPackets,null,null);
 
             bool success = false;
             void defaultSend(TSOVoltronPacket outgoing)
@@ -57,6 +65,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 success = true;
             }
 
+            return success; 
+            
+            // Disable these for now
             switch (PDU.KnownPacketType)
             {
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:

@@ -10,10 +10,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     {
         public const uint ResponsePDU_DefaultStatusCode = 0;
         public const string ResponsePDU_DefaultReasonText = "OK.";
+        public const uint SplitBufferPDU_DefaultChunkSize = 0xB4;
 
         //****BETA TESTING
         public const uint MyHouseID = 0x053A; //0x053A; // 1338 // can be zero for testing as well
         public const uint MyAvatarID = 0xA1; // 161
+        public const string MyAvatarName = "Bloaty";
         //****
     }
 }
