@@ -8,6 +8,7 @@
         /// </summary>
         private static byte[] niotso_TSOPreAlphaDefaultSimData =
         {
+#region DATA
             0x01,0x00,0x00,0x00,0x0A,0x6E,0x6F,0x74,0x20,0x6E,0x65,0x65,0x64,0x65,0x64,0xA1,
             0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x51,0x00,0x00,0x00,0x00,0x80,0x00,0x00,0x00,
             0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
@@ -58,6 +59,7 @@
             0x6F,0x5F,0x70,0x69,0x6E,0x6B,0x67,0x01,0x74,0x14,0x48,0x6D,0x52,0x4F,0x2C,0x48,
             0x41,0x4E,0x44,0x3D,0x67,0x75,0x61,0x6F,0x5F,0x70,0x69,0x6E,0x6B,0x67,0x01,0x74,
             0x08,0x4A,0x6F,0x6C,0x6C,0x79,0x53,0x69,0x6D,0x01,0x42
+#endregion
         };
         
         private static byte[] ReadDefaultSimData() => File.ReadAllBytes("/packets/const/TSOSimData.dat");
@@ -69,15 +71,15 @@
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint TransactionID, uint avatarID) :
+        public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint avatarID) :
             base(
                     AriesID,
                     MasterID,
                     0x00,
                     TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard,
+                    TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
                     0x21,
-                    TransactionID,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                     TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDResponse,
                     CombineArrays(new byte[]
                     {
@@ -90,9 +92,11 @@
                 )
         {
             AvatarID = avatarID;
-            
+
             MoveBufferPositionToDBMessageBody();
-            EmplaceBody(AvatarID); // <--- overwrite avatarid here for now            
+            EmplaceBody(AvatarID); // <--- overwrite avatarid here for now
+                                   // 
+            ReadAdditionalMetadata();
         }
     }
 }

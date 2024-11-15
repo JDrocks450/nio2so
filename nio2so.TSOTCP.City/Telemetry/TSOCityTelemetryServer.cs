@@ -114,7 +114,7 @@ namespace nio2so.TSOTCP.City.Telemetry
             {
                 NetworkTrafficDirections.INBOUND => ConsoleColor.Green,
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
-                _ => ConsoleColor.DarkBlue
+                _ => ConsoleColor.Cyan
             };
             Console.WriteLine($"{Time.ToLongTimeString()} - *VOLTRON_DATABASE* [{Direction}] {PDU.ToShortString()}");
 

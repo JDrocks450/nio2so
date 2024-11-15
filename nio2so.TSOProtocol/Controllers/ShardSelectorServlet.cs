@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using nio2so.Data.Common.Testing;
 using nio2so.Protocol.Data.Credential;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 
@@ -33,8 +34,8 @@ namespace nio2so.TSOProtocol.Controllers
 
             if (AvatarID == null)
             { // ENTERING CAS!
-                AvatarID = 0x00A2.ToString();
-                _logger.LogInformation($"CitySelector: Generated AvatarID and forwarding Client to CAS.");
+                AvatarID = TestingConstraints.CASAvatarID.ToString();
+                _logger.LogInformation($"CitySelector: Generated AvatarID {AvatarID} and forwarding Client to CAS.");
                 isCasReq = true;                
             }         
             else            

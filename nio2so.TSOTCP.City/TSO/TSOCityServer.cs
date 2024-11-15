@@ -85,9 +85,12 @@ namespace nio2so.TSOTCP.City.TSO
             OnIncomingPacket += OnIncomingAriesFrame;
 
             //**PLAYGROUND            
-            byte[] data = File.ReadAllBytes(@"E:\packets\discoveries\IN [Voltron] DB REQUEST INSERT LOG.dat");
-            var logRequest = TSOTCPPacket.ParseAll<TSOTCPPacket>(ref data);
-            OnIncomingAriesFrame(0, logRequest.First());            
+            using (var fs = File.OpenRead(@"E:\packets\tsotcppackets\OUT [DB_REQUEST_WRAPPER_PDU] PDU 133761155640542021.dat"))
+            {
+                var logRequest = TSOPDUFactory.CreatePacketObjectFromDataBuffer(fs);
+                bool h = false;
+                OnIncomingVoltronPacket(0, logRequest, ref h);
+            }
 
             //START THE SERVER
             BeginListening();
@@ -194,15 +197,15 @@ namespace nio2so.TSOTCP.City.TSO
             {                                
                 Debug_LogSendPDU(ID, packetToSend, NetworkTrafficDirections.CREATED);
                 packets.Add(packetToSend);               
-            }            
-          
+            }
+
             Handled = true;
             switch (Packet.KnownPacketType)
             {                                
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     { // DB Request packets all start with the same Packet Type.
                         TSODBRequestWrapper? dbPacket = Packet as TSODBRequestWrapper;
-                        if (dbPacket == default) break;
+                        if (dbPacket == default) break;                        
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID;
                         //Handle DB request packets here and enqueue the response packets into the return value of this function.
                         if (!TSORegulatorManager.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
@@ -242,7 +245,7 @@ namespace nio2so.TSOTCP.City.TSO
                         if (Response.ResponsePackets != null) // ADD RESPONSE TO SENDQUEUE
                         {
                             foreach (var packet in Response.ResponsePackets)
-                                defaultSend(Packet);
+                                defaultSend(packet);
                         }
                         Handled = true;
                     }

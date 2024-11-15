@@ -18908,9 +18908,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                     MasterID,
                     0x00,
                     0x49D8, //TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard,
+                    TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
                     0x21,
-                    TransactionID,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                     TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByIDResponse,
                     CombineArrays(new byte[]
                     {

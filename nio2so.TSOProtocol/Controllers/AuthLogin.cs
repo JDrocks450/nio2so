@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using nio2so.Data.Common.Testing;
 using nio2so.Protocol.Data.Credential;
 using nio2so.Protocol.Packets;
 
@@ -28,7 +29,7 @@ namespace nio2so.Protocol.Controllers
             AuthReasonPacket.AuthErrors errorCode = AuthReasonPacket.AuthErrors.INV000; // NO ERROR
             if (Version != "2.5")            
                 errorCode = AuthReasonPacket.AuthErrors.INV123; // PLAY RIGHTS EXPIRED
-            if (username != "bloaty") // USERNAME INVALID!
+            if (username != TestingConstraints.LoginUsername) // USERNAME INVALID!
                 errorCode = AuthReasonPacket.AuthErrors.INV110;
             if (username == "") // USERNAME/PASSWORD BLANK!
                 errorCode = AuthReasonPacket.AuthErrors.INV020;  

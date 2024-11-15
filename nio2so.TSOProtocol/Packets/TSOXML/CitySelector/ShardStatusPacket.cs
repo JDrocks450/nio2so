@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.Data.Common.Testing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -26,7 +27,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
         public ShardStatusStructure(ShardLocation Location, string Name,
             ShardStatusReason Status, uint OnlineAvatars) : this(Location.ToString().ToLower(), Name, Status, OnlineAvatars) { }
 
-        public static ShardStatusStructure Default = new(ShardLocation.PUBLIC, "Blazing Falls", ShardStatusReason.Up, 1);
+        public static ShardStatusStructure Default = new(ShardLocation.PUBLIC, TestingConstraints.MyShardName, ShardStatusReason.Up, 1);
     }
 
     public class ShardStatusPacket : TSOXMLPacket

@@ -9,7 +9,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
     internal class TSOSplitBufferPDU : TSOVoltronPacket
     {
-        public const uint STANDARD_CHUNK_SIZE = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
+        public const byte STANDARD_CHUNK_SIZE = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
 
         /// <summary>
         /// True if there are more SPLIT_BUFFER_PDUs after this one
@@ -27,7 +27,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         public byte SplitBufferPayloadSize {  get; set; }
         [TSOVoltronBodyArray] public byte[] DataBuffer { get; set; }
 
-        public TSOSplitBufferPDU() : base() {
+        public TSOSplitBufferPDU() : base() { }
+        
+        public TSOSplitBufferPDU(byte[] DataBuffer, bool DataRemainingHereafter)
+        {
+            if (DataBuffer.Length > byte.MaxValue)
+                throw new InternalBufferOverflowException("SPLIT_BUFFER_PDU cannot have a payload size above 0xFF!!!");
+
+            this.DataBuffer = DataBuffer;
+            DataRemaining = (uint)(DataRemainingHereafter ? 0x0 : 0x01);
+            SplitBufferPayloadSize = (byte)DataBuffer.Length;
+
             MakeBodyFromProperties();
         }
 

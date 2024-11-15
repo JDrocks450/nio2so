@@ -40,7 +40,7 @@
     public enum TSO_PreAlpha_DBStructCLSIDs : uint
     {
         GZCLSID_cCrDMStandardMessage =      0x125194E5,
-        cTSONetMessageStandard =            0x125194E5,
+        //cTSONetMessageStandard =          0x125194E5,
         GZCLSID_cCrDMTestObject =           0x122A94F2,
         cTSONetMessageStream =              0x125194F5,
         cTSOAvatarCreationRequest =         0x3EA44787,
@@ -90,6 +90,12 @@
         InsertNewCharBlob_Request = 0x9BB8EAC4,
         InsertNewCharBlob_Response = 0x1BB8EB44,
 
+    }
+
+    public enum TSO_PreAlpha_kMSGs : uint
+    {
+        kDBServiceRequestMsg  = 0x3BF82D4E,
+        kDBServiceResponseMsg = 0xDBF301A9
     }
 
     public enum TSOVoltronValueTypes

@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.City.Telemetry;
+using nio2so.TSOTCP.City.TSO.Voltron.Collections;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using QuazarAPI;
@@ -21,21 +22,52 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
+            IEnumerable<TSOVoltronPacket> SplitBlob(TSOVoltronPacket DBWrapper)
+            {
+                List<TSOVoltronPacket> packets = new();
+                if (DBWrapper.BodyLength > 10000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+                    packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
+                else packets.Add(DBWrapper);
+                return packets;
+            }
+
             List<TSOVoltronPacket> returnPackets = new();
             Response = new(returnPackets, null, null);
 
+            void EnqueuePacket(TSOVoltronPacket PacketToEnqueue) => returnPackets.AddRange(SplitBlob(PacketToEnqueue));
+
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
-                case TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard:
+                case TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage:
                     { // TSO Net Message Standard type responses (most common)
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID;
                         switch (clsID)
                         {
+                            case TSO_PreAlpha_DBActionCLSIDs.GetCharByIDRequest:
+                                {                                    
+                                    var avatarID = PDU.Data1.Value;
+
+                                    var charid = new TSOGetCharByIDResponse(PDU.AriesID, PDU.MasterID, avatarID);
+                                    EnqueuePacket(charid);
+                                }
+                                return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDRequest:
-                                returnPackets.Add(new TSOGetCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID, TSOVoltronConst.MyAvatarID));
+                                {
+                                    var avatarID = PDU.Data1.Value;
+
+                                    var charBlob = new TSOGetCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, avatarID);
+                                    EnqueuePacket(charBlob);
+                                }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetBookmarksRequest:
-                                returnPackets.Add(new TSOGetBookmarksResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID));
+                                {                                    
+                                    var avatarID = PDU.Data1.Value;
+                                    EnqueuePacket(new TSOGetBookmarksResponse(PDU.AriesID,
+                                                                              PDU.MasterID,
+                                                                              avatarID,
+                                                                              1));
+                                                                              //141,142,145)); // Add more to test Bookmarks
+                                }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request:
                                 ;

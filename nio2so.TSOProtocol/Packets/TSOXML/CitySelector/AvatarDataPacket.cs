@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.Data.Common.Testing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -22,11 +23,11 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
 
         public static AvatarDataPacketStructure Default = new()
         {
-            AvatarID = 0xA1,
-            Name = "Bloaty",
+            AvatarID = TestingConstraints.MyAvatarID,
+            Name = TestingConstraints.MyAvatarName,
             Popularity = 5,
             PopularityDelta = 1,
-            ShardName = "Blazing Falls",
+            ShardName = TestingConstraints.MyShardName,
             SimoleanDelta = 5000,
             Simoleans = 20000
         };
@@ -36,7 +37,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
             Name = "\0",
             Popularity = 0,
             PopularityDelta = 0,
-            ShardName = "Blazing Falls",
+            ShardName = TestingConstraints.MyShardName,
             SimoleanDelta = 0,
             Simoleans = 0
         };

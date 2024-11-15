@@ -78,8 +78,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
                                 "cTSORegulatorManager", $"Mapped {type.Name}!"));
                     }
-                    TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
-                        "cTSORegulatorManager", $"Error when mapping {type.Name}! (Already added?)"));
+                    //TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
+                      //  "cTSORegulatorManager", $"Error when mapping {type.Name}! (Already added?)"));
                 }
             }
         }

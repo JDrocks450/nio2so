@@ -25,21 +25,22 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
-                case TSO_PreAlpha_DBStructCLSIDs.cTSONetMessageStandard:
+                case TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage:
                     { // TSO Net Message Standard type responses (most common)
                         switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
                         {
                             case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDRequest:
                                 {
-                                    uint HouseID = PDU.Data1; // DATA1 is HouseID
-                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID,
-                                        HouseID, TSOVoltronConst.MyAvatarID));
+                                    if (!PDU.HasData1)
+                                        return false;
+                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
+                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(PDU.AriesID, PDU.MasterID,HouseID,161));                                        
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByIDRequest:
                                 {
-                                    uint HouseID = PDU.Data1; // DATA1 is HouseID
-                                    returnPackets.Add(new TSOGetHouseBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.TransactionID,HouseID));                                        
+                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
+                                    returnPackets.Add(new TSOGetHouseBlobByIDResponse(PDU.AriesID, PDU.MasterID, PDU.kMSGID, HouseID));                                        
                                 }
                                 return true;                               
                         }

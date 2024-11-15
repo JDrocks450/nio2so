@@ -14,6 +14,19 @@ using System.Xml.Linq;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron
 {
+    /// <summary>
+    /// Describes how to write the header info of a DBWrapperPDU
+    /// </summary>
+    internal class TSODBWrapperPDUHeader
+    {
+        public uint? Data1 { get; set; }
+        public uint? Data2 { get; set; }
+        public uint? Data3 { get; set; }
+        public uint? Data4 { get; set; }
+        public uint? ExtraCLSID { get; set; }
+        public List<string> Strings { get; } = new();
+    }
+
     internal class TSODBWrapperMessageSize
     {
         public TSODBWrapperMessageSize(uint Size) => this.Size = Size;
@@ -37,19 +50,34 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <summary>
         /// The distance from <see cref="MessageSize"/> -> the start of <see cref="DBMessageBody"/>. Used here: <see cref="TSODBRequestWrapper()"/>
         /// </summary>
-        const uint DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE = (sizeof(uint) * 3) + 1;
+        protected const uint DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE = (sizeof(uint) * 3) + 1;
 
         public TSODBRequestWrapper() : base() 
         {
             MakeBodyFromProperties();
         }
+
+        public TSODBRequestWrapper(TSO_PreAlpha_DBStructCLSIDs tSOPacketFormatCLSID,                                   
+                                   TSO_PreAlpha_kMSGs kMSGID,
+                                   TSO_PreAlpha_DBActionCLSIDs tSOSubMsgCLSID,
+                                   TSODBWrapperPDUHeader Header,
+                                   params uint[] DwordList)
+        {
+
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="TSODBRequestWrapper"/> PDU where all properties must be set manually.
+        /// <para/> Data1,2,3 and 4 plus extra clsid will need to be set manually if applicable by using the 
+        /// <paramref name="body"/> parameter and <paramref name="flags"/> will also need to be set manually.
+        /// </summary>
         public TSODBRequestWrapper(string ariesID,
                                    string masterID,
                                    ushort bitfield_Arg1,
                                    uint messageSize,
                                    TSO_PreAlpha_DBStructCLSIDs tSOPacketFormatCLSID,
                                    byte flags,
-                                   uint transactionID,
+                                   TSO_PreAlpha_kMSGs kMSGID,
                                    TSO_PreAlpha_DBActionCLSIDs tSOSubMsgCLSID,
                                    byte[] body)
             : this(
@@ -59,7 +87,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     messageSize, 
                     (uint)tSOPacketFormatCLSID, 
                     flags, 
-                    transactionID, 
+                    (uint)kMSGID, 
                     (uint)tSOSubMsgCLSID, 
                     body
             )
@@ -67,13 +95,28 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         
         }              
 
+        /// <summary>
+        /// Creates a new <see cref="TSODBRequestWrapper"/> PDU where all properties must be set manually.
+        /// <para/> Data1,2,3 and 4 plus extra clsid will need to be set manually if applicable by using the 
+        /// <paramref name="body"/> parameter and <paramref name="flags"/> will also need to be set manually.
+        /// </summary>
+        /// <param name="ariesID"></param>
+        /// <param name="masterID"></param>
+        /// <param name="bitfield_Arg1"></param>
+        /// <param name="messageSize"></param>
+        /// <param name="tSOPacketFormatCLSID"></param>
+        /// <param name="flags"></param>
+        /// <param name="kMSG"></param>
+        /// <param name="tSOSubMsgCLSID"></param>
+        /// <param name="body"></param>
+        /// <exception cref="OverflowException"></exception>
         public TSODBRequestWrapper(string ariesID,
                                    string masterID,
                                    ushort bitfield_Arg1,
                                    uint messageSize,
                                    uint tSOPacketFormatCLSID,
                                    byte flags,
-                                   uint transactionID,                                   
+                                   uint kMSG,                                   
                                    uint tSOSubMsgCLSID,
                                    byte[] body) : base()
         {
@@ -86,7 +129,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 throw new OverflowException($"DBRequestWrapperPDU::MessageSize ({messageSize}) is way too large. (max: {short.MaxValue})");
             MessageSize = messageSize;
             TSOPacketFormatCLSID = tSOPacketFormatCLSID;
-            TransactionID = transactionID;
+            kMSGID = kMSG;
             Flags = flags;
             TSOSubMsgCLSID = tSOSubMsgCLSID;
             DBMessageBody = body;
@@ -114,8 +157,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <para>This is the identifier for which class should be created to house the data.</para>
         /// </summary>
         public uint TSOPacketFormatCLSID { get; set; }        
-        public uint TransactionID { get; set; }   
-        public byte Flags { get; set; }     
+        public byte Flags { get; set; }  
+        public uint kMSGID { get; set; }             
         /// <summary>
         /// Beneath the overall packet type there is a CLSID for the individual request being made.
         /// </summary>
@@ -127,19 +170,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         [TSOVoltronBodyArray]
         public byte[] DBMessageBody { get; set; }
 
-        [TSOVoltronIgnorable] public bool HasData1 => (Flags & (1 << 1)) != 0;        
-        [TSOVoltronIgnorable] public bool HasData2 => (Flags & (1 << 2)) != 0;        
-        [TSOVoltronIgnorable] public bool HasData3 => (Flags & (1 << 3)) != 0;        
-        [TSOVoltronIgnorable] public bool HasExtraCLSID => (Flags & (1 << 5)) != 0;        
-        [TSOVoltronIgnorable] public bool HasString => (Flags & (1 << 6)) != 0;        
-        [TSOVoltronIgnorable] public bool HasData4 => (Flags & (1 << 4)) != 0;        
+        [TSOVoltronIgnorable] public bool HasData1 => (Flags & (1 << 0)) != 0;        
+        [TSOVoltronIgnorable] public bool HasData2 => (Flags & (1 << 1)) != 0;        
+        [TSOVoltronIgnorable] public bool HasData3 => (Flags & (1 << 2)) != 0;                  
+        [TSOVoltronIgnorable] public bool HasExtraCLSID => (Flags & (1 << 4)) != 0;        
+        [TSOVoltronIgnorable] public bool HasString => (Flags & (1 << 5)) != 0;
+        [TSOVoltronIgnorable] public bool HasData4 => (Flags & (1 << 4)) != 0;                      
 
-        [TSOVoltronIgnorable] public uint Data1 { get; protected set; }        
-        [TSOVoltronIgnorable] public uint Data2 { get; protected set; }        
-        [TSOVoltronIgnorable] public uint Data3 { get; protected set; }
-        [TSOVoltronIgnorable] public uint ExtraCLSID { get; protected set; }
-        [TSOVoltronIgnorable] public string MessageString { get; protected set; }
-        [TSOVoltronIgnorable] public uint Data4 { get; protected set; }
+        [TSOVoltronIgnorable] public uint? Data1 { get; protected set; }        
+        [TSOVoltronIgnorable] public uint? Data2 { get; protected set; }        
+        [TSOVoltronIgnorable] public uint? Data3 { get; protected set; }
+        [TSOVoltronIgnorable] public uint? Data4 { get; protected set; }
+        [TSOVoltronIgnorable] public uint? ExtraCLSID { get; protected set; }
+        [TSOVoltronIgnorable] public string MessageString => (Strings != null && Strings.Any()) ?
+            new StringBuilder().AppendJoin(", ", Strings).ToString() : "";
+        [TSOVoltronIgnorable] public List<string> Strings { get; protected set; } = new();       
 
 #if NewAndImprovedImplementation
         /// <summary>
@@ -175,37 +220,51 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// Uses the <see cref="DBMessageBody"/> combined with <see cref="Flags"/> to get remaining fields in this message.
         /// </summary>
         internal void ReadAdditionalMetadata()
-        {           
+        {
             IEnumerable<string> ReadStrings()
             {
                 List<string> strings = new List<string>();
-                while (true)
+                while (BodyPosition < BodyLength)
                 {
-                    ushort length = ReadBodyUshort();
-                    if (length <= 0 || length > 1024) break;
+                    int length = ReadBodyByte();
+                    if (length <= 0) break;
                     byte[] buffer = ReadBodyByteArray(length);
                     strings.Add(Encoding.UTF8.GetString(buffer, 0, length));
                 }
                 return strings;
             }
+            Strings.Clear();
             MoveBufferPositionToDBMessageBody();
-            uint value = ReadBodyDword();
-            //if (HasData1)
-            Data1 = value;
-            value = ReadBodyDword();
-            //if (HasData2)
-            Data2 = value;
-            value = ReadBodyDword();
-            //if (HasData3)
-            Data3 = value;
-            value = ReadBodyDword();
-            //if (HasExtraCLSID)
-            ExtraCLSID = value;
-            value = ReadBodyDword();
-            //if (HasData4)
-            Data4 = value;
-            _bodyBuffer.Position += 3;
-            MessageString = string.Join(", ", ReadStrings());
+            
+            uint value = 0;
+            if (HasData1)
+            {
+                value = ReadBodyDword();
+                Data1 = value;
+            }
+            if (HasData2)
+            {
+                value = ReadBodyDword();
+                Data2 = value;
+            }
+            if (HasData3)
+            {
+                value = ReadBodyDword();
+                Data3 = value;
+            }
+            if (HasExtraCLSID)
+            {
+                value = ReadBodyDword();
+                ExtraCLSID = value;
+            }
+            if (HasData4)
+            {
+                value = ReadBodyDword();
+                Data4 = value;
+            }
+            _ = ReadBodyDword(); // INVESTIGATE
+            if (HasString) 
+                Strings.AddRange(ReadStrings());
         }
 #endif
         /// <summary>
@@ -238,6 +297,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         public override string ToString()
         {
+            return ToShortString();
             return $"{GetDBWrapperName()}\n " +
                 $"Data1:{(HasData1 ? Data1 : "n/a")}\n " +
                 $"Data2:{(HasData2 ? Data2 : "n/a")}\n " +
@@ -249,7 +309,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         public override string ToShortString(string Arguments = "")
         {
-            return $"{GetDBWrapperName()}({Data1}, {Data2}, {Data3}, {Data4}, {(TSO_PreAlpha_DBStructCLSIDs)ExtraCLSID}, \"{MessageString}\")";
+            return $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}({Data1?.ToString()??"_"}," +
+                $" {Data2?.ToString() ?? "_"}, {Data3?.ToString() ?? "_"}, {Data4?.ToString() ?? "_"}," +
+                $" {((TSO_PreAlpha_DBStructCLSIDs)(ExtraCLSID??0)).ToString()})";//, \"{MessageString ?? "NULL"}\")";
         }
 
         public string GetDBWrapperName() => $"{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}";

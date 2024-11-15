@@ -22,6 +22,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         public TSO_PreAlpha_VoltronPacketTypes Type { get; }
     }
 
+    /// <summary>
+    /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>s
+    /// </summary>
     internal static class TSOPDUFactory
     {
         private static Dictionary<TSO_PreAlpha_VoltronPacketTypes, Type> typeMap = new();
@@ -39,6 +42,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             }
         }
 
+        /// <summary>
+        /// Uses the supplied <see cref="Stream"/> to read the stream contents and will return the first <see cref="TSOVoltronPacket"/> found.
+        /// <para/> Note: This will start reading at the <see cref="Stream.Position"/> of the given stream, and will leave after the packet has been
+        /// read. Please use <see cref="Stream.Seek(long, SeekOrigin)"/> to position the stream where the <see cref="TSOVoltronPacket"/> should be read
+        /// from before calling.
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <returns></returns>
         public static TSOVoltronPacket? CreatePacketObjectFromDataBuffer(Stream Stream)
         {            
             TSOVoltronPacket? cTSOVoltronpacket = null;
@@ -59,6 +70,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             return cTSOVoltronpacket;
         }
 
+        /// <summary>
+        /// Uses the supplied <see cref="TSOTCPPacket"/> (Aries Packet) to read the body and find all enclosed <see cref="TSOVoltronPacket"/>s
+        /// </summary>
+        /// <param name="AriesPacket"></param>
+        /// <param name="ProcessSplitBuffers"></param>
+        /// <returns></returns>
         public static IEnumerable<TSOVoltronPacket> CreatePacketObjectsFromAriesPacket(TSOTCPPacket AriesPacket, bool ProcessSplitBuffers = true)
         {
             List<TSOVoltronPacket> packets = new();
@@ -106,8 +123,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             }
             return getReturnValue();
         }
-
-        public static TSOVoltronPacket CreatePacketObjectFromSplitBuffers(TSOSplitBufferPDUCollection Packets)
+        /// <summary>
+        /// Uses the supplied <paramref name="Packets"/> collection to merge them together into a <see cref="TSOVoltronPacket"/>
+        /// </summary>
+        /// <param name="Packets"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <exception cref="Exception"></exception>
+        public static TSOVoltronPacket? CreatePacketObjectFromSplitBuffers(TSOSplitBufferPDUCollection Packets)
         {
             if (!Packets.Any()) throw new ArgumentOutOfRangeException(nameof(Packets));
             if (Packets.Count < 2) throw new ArgumentOutOfRangeException(nameof(Packets));
@@ -128,10 +151,44 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             }
         }
 
+        /// <summary>
+        /// This will take one very large <see cref="TSOVoltronPacket"/> and create many smaller <see cref="TSOSplitBufferPDU"/>
+        /// to send sequentially to the server over multiple Aries frames
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <returns></returns>
+        public static TSOSplitBufferPDUCollection CreateSplitBufferPacketsFromPDU(TSOVoltronPacket PDU,
+            uint SizeLimit = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+        {
+            if (PDU.BodyLength < SizeLimit) 
+                throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
+            
+            using (MemoryStream ms = new(PDU.Body))
+            {         
+                ms.Seek(0, SeekOrigin.Begin);
+
+                TSOSplitBufferPDUCollection collection = new();
+                while(ms.Position < ms.Length)
+                {
+                    byte[] buffer2 = new byte[SizeLimit];                    
+                    ms.Read(buffer2, 0, (int)SizeLimit);
+                    long dataRemaining = ms.Length - ms.Position;
+                    TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining > 0);
+                    collection.Add(splitBuffer);
+                }
+                return collection;
+            }
+        }
+
+        /// <summary>
+        /// Writes a <see cref="TSOVoltronPacket"/> to the disk in the discoveries folder
+        /// </summary>
+        /// <param name="VoltronPacketType"></param>
+        /// <param name="PacketData"></param>
         public static void LogDiscoveryPacketToDisk(ushort VoltronPacketType, byte[] PacketData)
         {
             string? displayName = Enum.GetName<TSO_PreAlpha_VoltronPacketTypes>((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ??
-                            VoltronPacketType.ToString("X4");
+                            "0x" + VoltronPacketType.ToString("X4");
             Directory.CreateDirectory("/packets/discoveries");
             string fileName = $"/packets/discoveries/cTSOPDU [{displayName}].dat";
             if (!File.Exists(fileName))
