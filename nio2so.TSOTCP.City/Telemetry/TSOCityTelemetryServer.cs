@@ -1,4 +1,6 @@
-﻿using nio2so.TSOTCP.City.TSO;
+﻿using nio2so.Formats.DB;
+using nio2so.TSOTCP.City.Factory;
+using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using QuazarAPI;
@@ -49,16 +51,19 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         public record ConsoleLogEntry(LogSeverity Severity, string Sender, string Content, DateTime? Time = null);
 
-        private readonly TSOCityServer parent;
+        private readonly TSOCityServer _parent;
+        private string? _systemLogPath;
+        public bool IsSysLogging => _systemLogPath != null;
 
         /// <summary>
         /// Global telemetry instance. Really should not let this be permanent
         /// </summary>
         public static TSOCityTelemetryServer Global { get; private set; }
 
-        internal TSOCityTelemetryServer(TSOCityServer Parent)
+        internal TSOCityTelemetryServer(TSOCityServer Parent, string? SysLogPath = null)
         {
-            parent = Parent;
+            _parent = Parent;
+            _systemLogPath = SysLogPath;            
 
             Init();
         }
@@ -71,6 +76,7 @@ namespace nio2so.TSOTCP.City.Telemetry
             };
             QConsole.SetConsoleMode(false);
             QConsole.WriteLine("TelemetryServer", "Init complete.");
+            Log($"****** LOG STARTED {DateTime.Now.ToString()} ******");
 
             Global = this; // ugh
         }
@@ -122,6 +128,20 @@ namespace nio2so.TSOTCP.City.Telemetry
             PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
         }
 
+        internal void OnVoltron_OnDiscoveryPacket(TSOVoltronPacket DiscoveredPacket, uint? ClientID = null)
+        {
+            bool written = TSOPDUFactory.LogDiscoveryPacketToDisk(DiscoveredPacket.VoltronPacketType, DiscoveredPacket.Body);
+            var displayName = "0x" + DiscoveredPacket.VoltronPacketType.ToString("X4");
+
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"TSO PDU Discovery ***********\n");
+            if (written)            
+                Console.WriteLine($"Discovered the {displayName} PDU with: {DiscoveredPacket.BodyLength} bytes. Add it to constants!");            
+            else
+                Console.WriteLine($"Found the {displayName} PDU with: {DiscoveredPacket.BodyLength} bytes. Make a class for it. ");
+            Console.WriteLine($"\n****************************");
+        }
+
         internal void OnConsoleLog(ConsoleLogEntry Entry)
         {
             Console.ForegroundColor = Entry.Severity switch
@@ -146,6 +166,28 @@ namespace nio2so.TSOTCP.City.Telemetry
             //**
 
             Console.WriteLine(nmessage);
+        }
+
+        internal static void LogConsole(ConsoleLogEntry Entry) => Global.OnConsoleLog(Entry);
+
+        internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob houseBlob)
+        {
+            Console.ForegroundColor = Direction switch
+            {
+                NetworkTrafficDirections.INBOUND => ConsoleColor.DarkCyan,
+                NetworkTrafficDirections.OUTBOUND => ConsoleColor.DarkCyan,
+                _ => ConsoleColor.Cyan
+            };
+            Console.WriteLine($"{DateTime.Now.ToLongTimeString()} - *HOUSE_BLOB* [{Direction}] HouseID: {HouseID} Size: {houseBlob.BlobData.Length}");
+
+            TSOHouseFactory.SetHouseBlobByIDToDisk(HouseID, houseBlob);
+        }
+
+        private void Log(string Message)
+        {
+            Console.WriteLine(Message);
+            if (!IsSysLogging) return;
+            File.WriteAllLines(_systemLogPath, new[] { Message });
         }
     }
 }

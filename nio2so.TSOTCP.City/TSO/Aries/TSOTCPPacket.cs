@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.City.Telemetry;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
 using System;
@@ -212,7 +213,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         /// <param name="PacketName">You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.
         /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/></param>
         /// <param name="Directory"></param>
-        public void WritePacketToDisk(bool Incoming = true, string? PacketName = default, string Directory = "/packets/tsotcppackets/")
+        public void WritePacketToDisk(bool Incoming = true, string? PacketName = default, string Directory = TSOVoltronConst.AriesPacketDirectory)
         {
             System.IO.Directory.CreateDirectory(Directory);
             string myName = $"{(Incoming ? "IN" : "OUT")} [{(PacketName ?? ((TSOAriesPacketTypes)PacketType).ToString())}] Packet {DateTime.Now.ToFileTime()}.dat";

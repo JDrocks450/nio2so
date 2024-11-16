@@ -77,10 +77,10 @@
                     MasterID,
                     0x00,
                     TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     0x21,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDResponse,
+                    TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response,
                     CombineArrays(new byte[]
                     {
                         0x00,0x00,0x05,0x39, // <--- AVATARID

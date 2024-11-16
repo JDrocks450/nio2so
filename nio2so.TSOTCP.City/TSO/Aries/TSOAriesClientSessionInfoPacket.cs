@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MiscUtil.Conversion;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,10 +35,10 @@ namespace nio2so.TSOTCP.City.TSO.Aries
                 AriesClientVersion : basePacket.ReadBodyNullTerminatedString(80),
                 Email : basePacket.ReadBodyNullTerminatedString(40),
                 AuthServ : basePacket.ReadBodyNullTerminatedString(84),
-                Product : basePacket.ReadBodyUshort(MiscUtil.Conversion.Endianness.LittleEndian),
+                Product : basePacket.ReadBodyUshort(Endianness.LittleEndian),
                 Unknown : basePacket.ReadBodyByte(),
                 ServiceIdentifier : basePacket.ReadBodyNullTerminatedString(3),
-                ReconnectedPriorFlag : basePacket.ReadBodyUshort(MiscUtil.Conversion.Endianness.BigEndian),
+                ReconnectedPriorFlag : basePacket.ReadBodyUshort(Endianness.BigEndian),
                 Password : basePacket.ReadBodyNullTerminatedString((int)(basePacket.PayloadSize - 331))                
             );
         }

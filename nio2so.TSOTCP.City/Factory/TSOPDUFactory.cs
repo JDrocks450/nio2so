@@ -1,5 +1,8 @@
-﻿using nio2so.TSOTCP.City.TSO.Aries;
+﻿using nio2so.TSOTCP.City.Telemetry;
+using nio2so.TSOTCP.City.TSO.Aries;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -9,19 +12,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.City.Factory
 {
-    [System.AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    sealed class TSOVoltronPDU : Attribute
-    {
-        public TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes Type)
-        {
-            this.Type = Type;
-        }
-
-        public TSO_PreAlpha_VoltronPacketTypes Type { get; }
-    }
-
     /// <summary>
     /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>s
     /// </summary>
@@ -31,7 +23,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 
         static TSOPDUFactory()
         {
-            foreach(var type in typeof(TSOPDUFactory).Assembly.GetTypes())
+            foreach (var type in typeof(TSOPDUFactory).Assembly.GetTypes())
             {
                 var attribute = type.GetCustomAttribute<TSOVoltronPDU>();
                 if (attribute != null)
@@ -51,17 +43,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// <param name="Stream"></param>
         /// <returns></returns>
         public static TSOVoltronPacket? CreatePacketObjectFromDataBuffer(Stream Stream)
-        {            
+        {
             TSOVoltronPacket? cTSOVoltronpacket = null;
             uint currentIndex = 0;
             TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
             currentIndex += Size;
-            cTSOVoltronpacket = TSOPDUFactory.CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType);
+            cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType);
             byte[] temporaryBuffer = new byte[Size];
             Stream.ReadExactly(temporaryBuffer, 0, (int)Size);
             if (cTSOVoltronpacket is TSOBlankPDU)
             {
-                TSOPDUFactory.LogDiscoveryPacketToDisk(VPacketType, temporaryBuffer);
+                TSOCityTelemetryServer.Global.OnVoltron_OnDiscoveryPacket(cTSOVoltronpacket);
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
@@ -110,10 +102,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// <param name="MakeBlankPacketOnFail"></param>
         /// <returns></returns>
         public static TSOVoltronPacket? CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes PacketType, bool MakeBlankPacketOnFail = true)
-        {           
-            TSOVoltronPacket? getReturnValue() => (MakeBlankPacketOnFail ? new TSOBlankPDU(PacketType) : default);
-            if (typeMap.TryGetValue(PacketType,out var type))            
-                return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName) ?? getReturnValue();            
+        {
+            TSOVoltronPacket? getReturnValue() => MakeBlankPacketOnFail ? new TSOBlankPDU(PacketType) : default;
+            if (typeMap.TryGetValue(PacketType, out var type))
+                return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName) ?? getReturnValue();
             switch (PacketType)
             {
                 case TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU:
@@ -138,7 +130,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             int read = 0;
             using (MemoryStream stream = new MemoryStream())
             {
-                foreach(var splitBuffer in Packets)
+                foreach (var splitBuffer in Packets)
                 {
                     read++;
                     stream.Write(splitBuffer.DataBuffer);
@@ -160,17 +152,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         public static TSOSplitBufferPDUCollection CreateSplitBufferPacketsFromPDU(TSOVoltronPacket PDU,
             uint SizeLimit = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
         {
-            if (PDU.BodyLength < SizeLimit) 
+            if (PDU.BodyLength < SizeLimit)
                 throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
-            
+
             using (MemoryStream ms = new(PDU.Body))
-            {         
+            {
                 ms.Seek(0, SeekOrigin.Begin);
 
                 TSOSplitBufferPDUCollection collection = new();
-                while(ms.Position < ms.Length)
+                while (ms.Position < ms.Length)
                 {
-                    byte[] buffer2 = new byte[SizeLimit];                    
+                    byte[] buffer2 = new byte[SizeLimit];
                     ms.Read(buffer2, 0, (int)SizeLimit);
                     long dataRemaining = ms.Length - ms.Position;
                     TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining > 0);
@@ -185,19 +177,18 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// </summary>
         /// <param name="VoltronPacketType"></param>
         /// <param name="PacketData"></param>
-        public static void LogDiscoveryPacketToDisk(ushort VoltronPacketType, byte[] PacketData)
+        public static bool LogDiscoveryPacketToDisk(ushort VoltronPacketType, byte[] PacketData)
         {
-            string? displayName = Enum.GetName<TSO_PreAlpha_VoltronPacketTypes>((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ??
+            string? displayName = Enum.GetName((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ??
                             "0x" + VoltronPacketType.ToString("X4");
-            Directory.CreateDirectory("/packets/discoveries");
-            string fileName = $"/packets/discoveries/cTSOPDU [{displayName}].dat";
+            Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
+            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,$"/cTSOPDU [{displayName}].dat");
             if (!File.Exists(fileName))
             {
                 File.WriteAllBytes(fileName, PacketData);
-                QConsole.WriteLine("TSO PDU Discovery", $"Discovered the {displayName} PDU with: {PacketData.Length} bytes. Add it to constants!");
+                return true;
             }
-            else
-                QConsole.WriteLine("TSO PDU Discovery", $"Found the {displayName} PDU with: {PacketData.Length} bytes. Make a class for it. ");
+            return false;
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using MiscUtil.Conversion;
+using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
 using System;
@@ -13,6 +13,16 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron
 {
+    /// <summary>
+    /// Stores the header information of a <see cref="TSOVoltronPacket"/>
+    /// </summary>
+    /// <param name="TSOPDUID"> The <see cref="TSO_PreAlpha_VoltronPacketTypes"/> PDU Type </param>
+    /// <param name="PDUPayloadSize"> The size of the data, including the header </param>
+    internal record TSOVoltronPacketHeader(ushort TSOPDUID, uint PDUPayloadSize)
+    {
+        public const byte HEADER_SIZE = sizeof(ushort) + sizeof(uint); // <-- Just in case you forget
+    }
+
     internal interface ITSOVoltron
     {
         void MakeBodyFromProperties();
@@ -120,7 +130,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             PayloadSize = BodyLength; // set my payload size
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt32)PayloadSize)); // put it into the packet body at the placeholder
         }
-
+        /// <summary>
+        /// Reads the first <see cref="TSOVoltronPacketHeader.HEADER_SIZE"/> bytes of the <paramref name="bodyStream"/>
+        /// to to determine the Type and Size of the packet.
+        /// </summary>
+        /// <param name="bodyStream"></param>
+        /// <param name="fooVoltronPacketType"></param>
+        /// <param name="fooPayloadSize"></param>
         public static void ReadVoltronHeader(Stream bodyStream, out ushort fooVoltronPacketType, out uint fooPayloadSize)
         {
             long initialPosition = bodyStream.Position;
@@ -129,10 +145,32 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             ReadVoltronHeader(headerBytes, out fooVoltronPacketType, out fooPayloadSize);
             bodyStream.Position = initialPosition;
         }
+        /// <summary>
+        /// Reads the first <see cref="TSOVoltronPacketHeader.HEADER_SIZE"/> bytes of the <paramref name="bodyStream"/>
+        /// to to determine the Type and Size of the packet.
+        /// </summary>
+        public static TSOVoltronPacketHeader ReadVoltronHeader(Stream bodyStream)
+        {
+            ReadVoltronHeader(bodyStream, out ushort type, out uint size);
+            return new(type, size);
+        }
+        /// <summary>
+        /// Reads the first <see cref="TSOVoltronPacketHeader.HEADER_SIZE"/> bytes of the <paramref name="Data"/>
+        /// to to determine the Type and Size of the packet.
+        /// </summary>
         public static void ReadVoltronHeader(byte[] Data, out UInt16 VoltronPacketType, out UInt32 VPacketSize)
         {
             VoltronPacketType = EndianBitConverter.Big.ToUInt16(Data, 0);
             VPacketSize = EndianBitConverter.Big.ToUInt32(Data, 2);
+        }
+        /// <summary>
+        /// Reads the first <see cref="TSOVoltronPacketHeader.HEADER_SIZE"/> bytes of the <paramref name="Data"/>
+        /// to to determine the Type and Size of the packet.
+        /// </summary>
+        public static TSOVoltronPacketHeader ReadVoltronHeader(byte[] Data)
+        {
+            ReadVoltronHeader(Data, out ushort type, out uint size);
+            return new(type, size);
         }
         /// <summary>
         /// Reads body data formatted as a The Sims Online Pre-Alpha Voltron packet into this object's destination type. 
@@ -330,13 +368,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         {
             StringBuilder sb = new StringBuilder();
             foreach (var property in GetPropertiesToCopy())
-                sb.AppendLine($"    {property.Name}: {property.GetValue(this)}");
-            return $"c{FriendlyPDUName} -> {{\n{sb}\n}}";
+                sb.Append($"{property.Name}: {property.GetValue(this)}, ");
+            string text = sb.ToString();
+            text = text.Remove(text.Length - 2);
+            return $"{FriendlyPDUName}({text})";
         }
 
         public virtual string ToShortString(string Arguments = "")
         {
-            return $"{KnownPacketType} ({FriendlyPDUName}.cs) " + Arguments ?? "";
+            return ToString();
         }
 
         /// <summary>
@@ -349,7 +389,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <param name="PacketName">You can use the <paramref name="PacketName"/> parameter to change what Packet Type appears in the brackets in the filename.
         /// By <see langword="default"/>, this would be the <see cref="TSOAriesPacketTypes"/> <see cref="PacketType"/> name of this <see cref="TSOTCPPacket"/></param>
         /// <param name="Directory"></param>
-        public void WritePDUToDisk(bool Incoming = true, string Directory = "/packets/tsotcppackets/")
+        public void WritePDUToDisk(bool Incoming = true, string Directory = TSOVoltronConst.VoltronPacketDirectory)
         {
             System.IO.Directory.CreateDirectory(Directory);
             string myName = $"{(Incoming ? "IN" : "OUT")} [{KnownPacketType}] PDU {DateTime.Now.ToFileTime()}.dat";

@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.Telemetry;
+﻿using nio2so.TSOTCP.City.Factory;
+using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
@@ -11,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
-{   
+{
     /// <summary>
     /// Handles incoming requests related to the Avatars and their DB operations
     /// </summary>
@@ -38,20 +39,23 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
-                case TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage:
+                case TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage:
                     { // TSO Net Message Standard type responses (most common)
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID;
                         switch (clsID)
                         {
-                            case TSO_PreAlpha_DBActionCLSIDs.GetCharByIDRequest:
+                            case TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request:
                                 {                                    
                                     var avatarID = PDU.Data1.Value;
+                                    string AvatarName = avatarID == 1337 ? "JollySim" : "Bisquick";
+                                    string AvatarDescription = "This is a sim description.";
 
-                                    var charid = new TSOGetCharByIDResponse(PDU.AriesID, PDU.MasterID, avatarID);
+                                    var charid = new TSOGetCharByIDResponse(PDU.AriesID, PDU.MasterID, avatarID,
+                                        AvatarName, AvatarDescription);
                                     EnqueuePacket(charid);
                                 }
                                 return true;
-                            case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByIDRequest:
+                            case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Request:
                                 {
                                     var avatarID = PDU.Data1.Value;
 
@@ -59,7 +63,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     EnqueuePacket(charBlob);
                                 }
                                 return true;
-                            case TSO_PreAlpha_DBActionCLSIDs.GetBookmarksRequest:
+                            case TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Request:
                                 {                                    
                                     var avatarID = PDU.Data1.Value;
                                     EnqueuePacket(new TSOGetBookmarksResponse(PDU.AriesID,
@@ -71,7 +75,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request:
                                 ;
-                                return false;
+                                return false;                            
                             case TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request:
                                 string message = PDU.MessageString;
                                 TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
@@ -96,32 +100,52 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 returnPackets.Add(outgoing);
                 success = true;
             }
+            void logme(TSOVoltronPacket statusUpdater)
+            {
+                TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
+                    RegulatorName, $"[STATUS_UPDATED] {statusUpdater}"));
+                success = true;
+            }
 
-            return success; 
-            
-            // Disable these for now
             switch (PDU.KnownPacketType)
             {
-                case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:
+                case TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU:
                     {
-                        var formattedPacket = (TSOSetAcceptAlertsPDU)PDU;
-                        defaultSend(new TSOSetAcceptAlertsResponsePDU(true));
+                        var formattedPacket = (TSOFindPlayerPDU)PDU;
+                        if (uint.TryParse(formattedPacket.AriesID.Substring(
+                            formattedPacket.AriesID.IndexOf("A ") + 2), out uint AvatarID))
+                        {
+                            defaultSend(new TSOFindPlayerResponsePDU());
+                            TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
+                                RegulatorName, $"FIND PLAYER: {AvatarID}"));
+                            break;
+                        }
+                        TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
+                                RegulatorName, $"FIND PLAYER: ERROR! {formattedPacket.AriesID} ???"));
                     }
                     break;
+
+                //**STATUS UPDATERS**
+                //These right now don't qualify a response so they're just logged.
+                case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:
+                    //defaultSend(new TSOSetAcceptAlertsResponsePDU(true));                                        
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU:
-                    defaultSend(new TSOSetAcceptFlashesResponsePDU(true));
-                    break;
+                    //defaultSend(new TSOSetAcceptFlashesResponsePDU(true));                    
                 case TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU:
-                    defaultSend(new TSOSetIgnoreListResponsePDU(true));
-                    break;
+                    //defaultSend(new TSOSetIgnoreListResponsePDU(true));                    
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
-                    defaultSend(new TSOSetInvincibleResponsePDU(true));
-                    break;
+                    //defaultSend(new TSOSetInvincibleResponsePDU(true));                    
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU:
-                    defaultSend(new TSOSetInvisibleResponsePDU(true));
+                    //defaultSend(new TSOSetInvisibleResponsePDU(true));
+
+                    //** below each case is the response value commented out
+                    // if a time comes where these are useful then you can uncomment them
+
+                    logme(PDU); // just log it here for now.
                     break;
             }
-            return success;
+
+            return success; 
         }
     }
 }

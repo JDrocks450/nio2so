@@ -218,6 +218,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         /// <summary>
         /// Uses the <see cref="DBMessageBody"/> combined with <see cref="Flags"/> to get remaining fields in this message.
+        /// <para>This method is guaranteed to set the <see cref="BodyPosition"/> of this packet to the end of this metadata.</para>
         /// </summary>
         internal void ReadAdditionalMetadata()
         {
@@ -235,7 +236,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             }
             Strings.Clear();
             MoveBufferPositionToDBMessageBody();
-            
+
             uint value = 0;
             if (HasData1)
             {
@@ -262,7 +263,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 value = ReadBodyDword();
                 Data4 = value;
             }
-            _ = ReadBodyDword(); // INVESTIGATE
+            Advance(3);//_ = ReadBodyDword(); // INVESTIGATE
             if (HasString) 
                 Strings.AddRange(ReadStrings());
         }
@@ -331,6 +332,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 next.CopyTo(current, index);
             }
             return current;
-        }
+        }        
     }
 }

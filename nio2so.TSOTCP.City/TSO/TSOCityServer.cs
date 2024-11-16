@@ -3,6 +3,7 @@
 
 using nio2so.Formats.BPS;
 using nio2so.Formats.TSOData;
+using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
@@ -53,7 +54,7 @@ namespace nio2so.TSOTCP.City.TSO
     /// </summary>
     internal class TSOCityServer : QuazarServer<TSOTCPPacket>
     {
-        public const UInt16 TSO_Aries_SendRecvLimit = 256;
+        public const UInt16 TSO_Aries_SendRecvLimit = 1024;
 
         private List<TSOVoltronPacket> _VoltronBacklog = new();
 
@@ -85,12 +86,13 @@ namespace nio2so.TSOTCP.City.TSO
             OnIncomingPacket += OnIncomingAriesFrame;
 
             //**PLAYGROUND            
-            using (var fs = File.OpenRead(@"E:\packets\tsotcppackets\OUT [DB_REQUEST_WRAPPER_PDU] PDU 133761155640542021.dat"))
+            /*using (var fs = File.OpenRead(@"E:\packets\tsotcppackets\OUT [DB_REQUEST_WRAPPER_PDU] PDU 133761155640542021.dat"))
             {
                 var logRequest = TSOPDUFactory.CreatePacketObjectFromDataBuffer(fs);
                 bool h = false;
                 OnIncomingVoltronPacket(0, logRequest, ref h);
-            }
+            }*/
+            TSOHouseFactory.SetHouseBlobByIDToDisk(0, TSOHouseFactory.GetNiotsoHouseBlob());
 
             //START THE SERVER
             BeginListening();

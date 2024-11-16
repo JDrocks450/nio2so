@@ -31,17 +31,22 @@
         HOST_OFFLINE_PDU = 0x001C,
         READ_PROFILE_PDU = 0x002D,
         READ_PROFILE_RESPONSE_PDU = 0x2E,
+        FIND_PLAYER_PDU = 0x17,
+        FIND_PLAYER_RESPONSE_PDU = 0x0018,
+        LOAD_HOUSE_PDU = 0x98,
 
-        SPLIT_BUFFER_PDU = 0x0045
+        SPLIT_BUFFER_PDU = 0x0045,        
     }
     /// <summary>
     /// <para>For discovering more CLSIDs, please refer to: http://niotso.org/files/prealpha_constants_table.txt</para>
     /// </summary>
     public enum TSO_PreAlpha_DBStructCLSIDs : uint
     {
-        GZCLSID_cCrDMStandardMessage =      0x125194E5,
-        //cTSONetMessageStandard =          0x125194E5,
-        GZCLSID_cCrDMTestObject =           0x122A94F2,
+        cCrDMStandardMessage =              0x125194E5,        
+        cCrDMTestObject =                   0x122A94F2,
+        GZPROBEID_cEAS =                    0x1D873D36,
+
+        //**REST FROM TSO N&I ... CHANGE LATER
         cTSONetMessageStream =              0x125194F5,
         cTSOAvatarCreationRequest =         0x3EA44787,
         cTSOInterdictor =                   0xAA3ECCB3,
@@ -54,44 +59,55 @@
         cTSODeadStream =                    0x0A9D7E3A,
         cTSOTopicUpdateMessage =            0x09736027,
         cTSODataTransportBuffer =           0x0A2C6585,
-        cTSOTopicUpdateErrorMessage =       0x2A404946,
-        GZPROBEID_cEAS =                    0x1D873D36
+        cTSOTopicUpdateErrorMessage =       0x2A404946,        
     }
     /// <summary>
     /// The Sims Online makes a distinction between Queries, Requests and Responses
     /// <para>Generally, the Query is what the game uses to invoke the DBAppService to make the Request packet.</para>
-    /// <para>You can send the Query ID back to the client, but it appears to be ignored.</para>
-    /// <para>When responding to a Request, you need to find the accompanying Response CLSID.</para>
+    /// <para>When responding to a Request, you need to find the accompanying Response CLSID, if applicable.</para>
     /// 
     /// <para>For discovering more CLSIDs, please refer to: http://niotso.org/files/prealpha_constants_table.txt</para>
     /// </summary>
     public enum TSO_PreAlpha_DBActionCLSIDs : uint
     {
-        GetRoommateInfoByLotIDRequest = 0xFD3338E9,
-        GetRoommateInfoByLotIDResponse = 0xDD3339EE,
-        GetCharBlobByIDRequest = 0x5BB73FAB,
-        GetCharBlobByIDResponse = 0x5BB73FE4,
-        GetCharByIDRequest = 0x7BAE5079,
-        GetRelationshipsByIDRequest = 0x3BF96A6C,
-        GetLotListRequest = 0x5BEEB701,
-        GetLotByIDRequest = 0xFBE96AA3,
-        GetHouseLeaderByLotID = 0xDD909124,
+        GetRoommateInfoByLotID_Request = 0xFD3338E9,
+        GetRoommateInfoByLotID_Response = 0xDD3339EE,
+        GetCharBlobByID_Request = 0x5BB73FAB,
+        GetCharBlobByID_Response = 0x5BB73FE4,
+        GetCharByID_Request = 0x7BAE5079,
+        GetRelationshipsByID_Request = 0x3BF96A6C,
+        GetLotList_Request = 0x5BEEB701,
+        GetLotByID_Request = 0xFBE96AA3,
+        GetHouseLeaderByLotID_Request = 0xDD909124,
+        GetHouseLeaderByLotID_Response = 0xBD90911F,
         /// <summary>
         /// GZCLSID_cDBGetHouseBlobByID_Request
         /// </summary>
-        GetHouseBlobByIDRequest = 0x5BB8D069,
+        GetHouseBlobByID_Request = 0x5BB8D069,
+        SetHouseBlobByID_Request = 0x5BB8DC3C,
         /// <summary>
         /// GZCLSID_cDBGetHouseBlobByID_Response
         /// </summary>
-        GetHouseBlobByIDResponse = 0xBBB8D0A7,
-        GetBookmarksRequest = 0xFD8F9080,
-        GetBookmarksResponse = 0x3D8F9003,
+        GetHouseBlobByID_Response = 0xBBB8D0A7,
+        GetBookmarks_Request = 0xFD8F9080,
+        GetBookmarks_Response = 0x3D8F9003,
         InsertGenericLog_Request = 0x3D03D5F7,
         InsertNewCharBlob_Request = 0x9BB8EAC4,
         InsertNewCharBlob_Response = 0x1BB8EB44,
-
+        /// <summary>
+        /// GZCLSID_cDBUpdateLotValueByID_Request
+        /// </summary>
+        UpdateLotValueByID_Request = 0xDC17FB0E,
+        /// <summary>
+        /// GZCLSID_cDBUpdateTaskStatus_Request
+        /// </summary>
+        UpdateTaskStatus_Request = 0xA92AF562,
     }
-
+    /// <summary>
+    /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.
+    /// <para>For example, the DBServiceClientD will use the <see cref="kDBServiceRequestMsg"/> to send data.
+    /// and uses the <see cref="kDBServiceResponseMsg"/> to be notified when to receive data.</para>
+    /// </summary>
     public enum TSO_PreAlpha_kMSGs : uint
     {
         kDBServiceRequestMsg  = 0x3BF82D4E,
@@ -102,6 +118,9 @@
     {
         Invalid,
         NullTerminated,
+        /// <summary>
+        /// <para>Looks like: <c>{ 0x8000 [WORD LENGTH] [UTF-8 *LENGTH* byte array] }</c></para>
+        /// </summary>
         Pascal,
         LittleEndian,
         BigEndian

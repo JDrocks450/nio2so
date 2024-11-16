@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
-    /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDRequest"/>
+    /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request"/>
     /// </summary>
     internal class TSOGetRoommateInfoByLotIDResponse : TSODBRequestWrapper
     {
@@ -42,10 +42,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 MasterID,
                 0x0000,
                 DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (RoommateAvatarIDs.Length * sizeof(uint))),
-                TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
+                TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 0x21,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotIDResponse,
+                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response,
                 new byte[12])
         {
             this.HouseID = HouseID;

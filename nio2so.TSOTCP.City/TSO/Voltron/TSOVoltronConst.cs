@@ -16,6 +16,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public const string ResponsePDU_DefaultReasonText = "OK.";
         public const byte SplitBufferPDU_DefaultChunkSize = 0xB4;
 
+        //****WORKSPACE
+        public const string WorkspaceDirectory = "/packets";
+        public const string DiscoveriesDirectory = WorkspaceDirectory + "/discoveries";
+        public const string AriesPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
+        public const string VoltronPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
+        public const string HouseDataDirectory = WorkspaceDirectory + "/house";
+        //****
+
         //****BETA TESTING
         public const uint MyHouseID = TestingConstraints.MyHouseID; //0x053A; // 1338 // can be zero for testing as well
         public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 161

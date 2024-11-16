@@ -46,10 +46,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 MasterID,
                 0x0000,
                 DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (ItemIDs.Length * sizeof(uint))),
-                TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
+                TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 0x21,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetBookmarksResponse,
+                TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response,
                 new byte[] { })
         {
             MoveBufferPositionToDBMessageBody();

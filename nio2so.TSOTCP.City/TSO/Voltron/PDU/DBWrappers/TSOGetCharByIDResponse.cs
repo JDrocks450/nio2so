@@ -8,6 +8,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     internal class TSOGetCharByIDResponse : TSODBRequestWrapper
     {
+        static byte[] reference_material = new byte[]
+        {
+            #region DATA
+            0x00,0x00,0x05,0x39, // <-- avatar id?
+            0xBA,0xAD,0xF0,0x0D,
+            0x08,0x4A,0x6F,0x6C,0x6C,0x79,0x53,0x69,0x6D, /* Name: JollySim */
+		    0x01,0x42, /* Description: B */
+            #endregion
+        };
         static byte[] niotso_research_data = new byte[] {
             #region DATA            
 		    0x00,0x01,0x02,0x03,
@@ -50,31 +59,31 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetCharByIDResponse(string AriesID, string MasterID, uint avatarID) :
+        public TSOGetCharByIDResponse(string AriesID, string MasterID, uint avatarID, 
+            string AvatarName, string AvatarDescription) :
             base(
                     AriesID,
                     MasterID,
                     0x00,
-                    TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.GZCLSID_cCrDMStandardMessage,
+                    (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + 8 + 1 + AvatarName.Length
+                    + 1 + AvatarDescription.Length + niotso_research_data.Length),
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     0x21,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetCharByIDRequest,
-                    CombineArrays(new byte[]
-                    {
-                        0x00,0x00,0x05,0x39, // <-- avatar id?
-                        0xBA,0xAD,0xF0,0x0D,
-                        0x08,0x4A,0x6F,0x6C,0x6C,0x79,0x53,0x69,0x6D, /* Name: JollySim */
-		                0x01,0x42, /* Description: B */
-                    },
-                    niotso_research_data)
+                    TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request,
+                    new byte[] { }
                 )
         {
             AvatarID = avatarID;
 
             MoveBufferPositionToDBMessageBody();
             EmplaceBody(AvatarID); // <--- overwrite avatarid here for now
-
+            Advance(4);
+            EmplaceBody((byte)AvatarName.Length); // <-- Length then content
+            EmplaceBody(Encoding.UTF8.GetBytes(AvatarName));
+            EmplaceBody((byte)AvatarDescription.Length);// <-- Length then content
+            EmplaceBody(Encoding.UTF8.GetBytes(AvatarDescription));
+            EmplaceBody(niotso_research_data);
             ReadAdditionalMetadata();                                   
         }
     }
