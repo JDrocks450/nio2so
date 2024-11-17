@@ -74,31 +74,100 @@
     /// </summary>
     public enum TSO_PreAlpha_DBActionCLSIDs : uint
     {
+        /// <summary>
+        /// Asks for a list of Roommates at the given LotID in Data1. <para/>
+        /// Structure implementation does not exist but can be read by nio2so
+        /// </summary>
         GetRoommateInfoByLotID_Request = 0xFD3338E9,
+        /// <summary>
+        /// Responds with a <c>TSOGetRoommateInfoByLotIDResponse</c> packet structure
+        /// Structure implemented -- not fully understood
+        /// </summary>
         GetRoommateInfoByLotID_Response = 0xDD3339EE,
+        /// <summary>
+        /// Used to request what the Avatar looks like. <para/>
+        /// Structure implementation does not exist but can be read by nio2so
+        /// </summary>
         GetCharBlobByID_Request = 0x5BB73FAB,
+        /// <summary>
+        /// Responds with a TSODBCharBlob using the <c>TSOGetCharBlobByIDResponse</c> packet structure.
+        /// Structure implemented -- CharBlob stream not fully understood and packet seems to freeze client
+        /// </summary>
         GetCharBlobByID_Response = 0x5BB73FE4,
+        /// <summary>
+        /// Used to request data about the Avatar? <para/>
+        /// Structure implementation does not exist but can be read by nio2so
+        /// </summary>
         GetCharByID_Request = 0x7BAE5079,
+        /// <summary>
+        /// Used when the Client is updating the Char data on a specific Avatar.
+        /// Payload is the new Char data stream
+        /// </summary>
         SetCharByID_Request = 0xBC02858A,
+        /// <summary>
+        /// Responds with a confirmation code in a <c>TSOSetCharByIDResponse</c> packet.
+        /// </summary>
         SetCharByID_Response = 0x1CF17ECB,
+        /// <summary>
+        /// Used when requesting information on current relationships on a given Avatar.
+        /// <para/> This is on a basis of how THIS Avatar feels about other Avatars, supposedly.
+        /// <para/> There is a reverse of this Request for getting relationships in terms of how others feel about this Avatar
+        /// <para/> Not implemented
+        /// </summary>
         GetRelationshipsByID_Request = 0x3BF96A6C,
+        /// <summary>
+        /// Not implemented
+        /// </summary>
         GetLotList_Request = 0x5BEEB701,
+        /// <summary>
+        /// Not implemented
+        /// </summary>
         GetLotByID_Request = 0xFBE96AA3,
+        /// <summary>
+        /// Requests who is currently the House Leader of a given lot.
+        /// </summary>
         GetHouseLeaderByLotID_Request = 0xDD909124,
+        /// <summary>
+        /// Not implemented
+        /// </summary>
         GetHouseLeaderByLotID_Response = 0xBD90911F,
         /// <summary>
+        /// Gets the house data for a given LotID.
+        /// <para/>
         /// GZCLSID_cDBGetHouseBlobByID_Request
         /// </summary>
         GetHouseBlobByID_Request = 0x5BB8D069,
+        /// <summary>
+        /// Used when the Client wants to update the data in the DB at the given LotID
+        /// </summary>
         SetHouseBlobByID_Request = 0x5BB8DC3C,
         /// <summary>
+        /// Responds with a TSODBHouseBlob in a <c>TSOGetHouseBlobByIDResponse</c> packet.
+        /// <para/>
         /// GZCLSID_cDBGetHouseBlobByID_Response
         /// </summary>
         GetHouseBlobByID_Response = 0xBBB8D0A7,
+        /// <summary>
+        /// Asks for Bookmarks. Data1 is the AvatarID
+        /// </summary>
         GetBookmarks_Request = 0xFD8F9080,
+        /// <summary>
+        /// Responds with a list of Bookmarks. See: <c>TSOGetBookmarksResponse</c>
+        /// </summary>
         GetBookmarks_Response = 0x3D8F9003,
+        /// <summary>
+        /// Logs the remote console
+        /// </summary>
         InsertGenericLog_Request = 0x3D03D5F7,
+        /// <summary>
+        /// The payload of this packet is a new TSODBCharBlob to add to the server
+        /// </summary>
         InsertNewCharBlob_Request = 0x9BB8EAC4,
+        /// <summary>
+        /// A response code. Known to cause issues with parsing if Size is too small.
+        /// Perhaps its StatusCode plus a string message.
+        /// Will raise a Avatar Creation Error message if the size is too small.
+        /// </summary>
         InsertNewCharBlob_Response = 0x1BB8EB44,
         /// <summary>
         /// This is sent when loading into a NoNetworkHouse

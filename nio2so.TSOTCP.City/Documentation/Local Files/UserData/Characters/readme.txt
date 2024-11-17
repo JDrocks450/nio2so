@@ -1,0 +1,2 @@
+netuser00000.iff will increment up one depending on how many of these TemplatePerson instances the game is currently juggling.
+TemplatePerson is used to make a Sim appear in the UI Gizmo in the MapView, on lots, etc.
