@@ -52,7 +52,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request:
                                 {
                                     uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
-                                    TSODBHouseBlob houseBlob = TSOHouseFactory.GetHouseBlobByID(0);
+                                    TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(0);
+                                    if (houseBlob == null)
+                                        throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
                                     returnPackets.Add(new TSOGetHouseBlobByIDResponse(PDU.AriesID, PDU.MasterID, HouseID, houseBlob));                                        
                                 }
@@ -73,7 +75,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     }
                     break;
             }
-
             return false;
         }
 
@@ -90,7 +91,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
 
             switch (PDU.KnownPacketType)
-            {
+            {                
                 case TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU:
                     {
                         defaultSend(new TSOLoadHouseResponsePDU());
@@ -124,7 +125,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                         //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
                         //when that happens
                         if (houseID == 0)
-                            //break;
+                            break;
 
                         defaultSend(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.                        
                     }

@@ -67,7 +67,7 @@ namespace nio2so.TSOTCP.City.TSO
             DisposePacketOnSent = true; // no more memory leaks :)
 
             //**TELEMETRY
-            Telemetry = new(this);
+            Telemetry = new(this, TSOVoltronConst.SysLogPath);
         }
 
         public override void Start()
@@ -79,6 +79,9 @@ namespace nio2so.TSOTCP.City.TSO
                 var file = TSODataImporter.Import(@"E:\Games\TSO Pre-Alpha\TSO\TSOData_DataDefinition.dat");
                 File.WriteAllText(datLocation, file.ToString());
             }
+
+            //Trigger tso factories to map using static constructor
+            TSOFactoryBase.InitializeFactories();
 
             var bps = BPSFileInterpreter.Interpret(@"E:\Games\TSO Pre-Alpha\packetlog.bps");
 
@@ -92,7 +95,6 @@ namespace nio2so.TSOTCP.City.TSO
                 bool h = false;
                 OnIncomingVoltronPacket(0, logRequest, ref h);
             }*/
-            TSOHouseFactory.SetHouseBlobByIDToDisk(0, TSOHouseFactory.GetNiotsoHouseBlob());
 
             //START THE SERVER
             BeginListening();
@@ -138,7 +140,6 @@ namespace nio2so.TSOTCP.City.TSO
                             var packet = _VoltronBacklog[0];
                             _VoltronBacklog.RemoveAt(0);
 
-                            //TSOVoltronPacket.MakeVoltronAriesPacket(packet).WritePacketToDisk(true,packet.KnownPacketType.ToString());
                             Debug_LogSendPDU(ID, packet, NetworkTrafficDirections.INBOUND); // DEBUG LOGGING
 
                             try

@@ -3,6 +3,7 @@ using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +13,8 @@ namespace nio2so.TSOTCP.City.Factory
     /// <summary>
     /// Serves data in relation to House requests
     /// </summary>
-    internal static class TSOHouseFactory
+    [TSOFactory] 
+    internal class TSOHouseFactory : TSOFactoryBase
     {
         /* Following is an RAS stream of the house data generated using Pre-Alpha -NoNetwork mode
 		** (Enter Buy Mode -> Return to Live Mode in order to save to disk; the house data is stored
@@ -18894,41 +18896,36 @@ namespace nio2so.TSOTCP.City.Factory
             #endregion
         };
 
-        public const string HOUSE_DIR = TSOVoltronConst.HouseDataDirectory;
-        public static string GetHouseURI(uint HouseID) {
-            string HouseDirectory = TSOVoltronConst.HouseDataDirectory;
-            string HouseFileName = "house" + HouseID + ".houseblob";
-            return Path.Combine(HouseDirectory, HouseFileName);
+        const string HOUSE_DIR = TSOVoltronConst.HouseDataDirectory;
+        protected override string MY_DIR => HOUSE_DIR;
+        protected override string MY_ITEMNAME => "house";
+        protected override string MY_EXT => ".houseblob";
+
+        public TSOHouseFactory() : base()
+        {
+
         }
 
-        public static TSODBHouseBlob GetNiotsoHouseBlob()
-        {            
+        public string GetHouseURI(uint HouseID) => GetObjectURI(HouseID);
+
+        protected override byte[] OnFileNotFound()
+        {
             using (MemoryStream stream = new MemoryStream())
             {
                 stream.Write(EndianBitConverter.Big.GetBytes((uint)niotso_TSOPreAlphaDefaultHouseData.Length));
                 stream.Write(niotso_TSOPreAlphaDefaultHouseData);
-                return new TSODBHouseBlob(stream.ToArray());
+                return stream.ToArray();
             }
         }
+        public TSODBHouseBlob GetNiotsoHouseBlob() => new(OnFileNotFound());
 
-        public static TSODBHouseBlob GetHouseBlobByID(uint HouseID)
-        {
-            string uri = GetHouseURI(HouseID);
-            if (!File.Exists(uri))
-                return GetNiotsoHouseBlob();
-            byte[] buffer = File.ReadAllBytes(uri);
-            return new(buffer);
-        }
+        public TSODBHouseBlob GetHouseBlobByID(uint HouseID) => new(GetDataByID(HouseID));
 
         /// <summary>
         /// Writes the <see cref="TSODBHouseBlob"/> to the disk at <see cref="HOUSE_DIR"/>
         /// </summary>
         /// <param name="houseID"></param>
         /// <param name="houseBlob"></param>
-        internal static void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob houseBlob)
-        {            
-            Directory.CreateDirectory(HOUSE_DIR);
-            File.WriteAllBytes(GetHouseURI(houseID), houseBlob.BlobData);
-        }
+        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob houseBlob) => SetDataByIDToDisk(houseID, houseBlob.BlobData);    
     }
 }

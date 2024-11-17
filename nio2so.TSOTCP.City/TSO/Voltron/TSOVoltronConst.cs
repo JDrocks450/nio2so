@@ -18,16 +18,18 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         //****WORKSPACE
         public const string WorkspaceDirectory = "/packets";
+        public const string SysLogPath = WorkspaceDirectory + "/nio2so_syslog.txt";
         public const string DiscoveriesDirectory = WorkspaceDirectory + "/discoveries";
         public const string AriesPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
         public const string VoltronPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
         public const string HouseDataDirectory = WorkspaceDirectory + "/house";
+        public const string AvatarDataDirectory = WorkspaceDirectory + "/avatar";
         //****
 
         //****BETA TESTING
         public const uint MyHouseID = TestingConstraints.MyHouseID; //0x053A; // 1338 // can be zero for testing as well
         public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 161
-        public const string MyAvatarName = TestingConstraints.MyAvatarName;
+        public const string MyAvatarName = TestingConstraints.MyAvatarName;        
         //****
     }
 }

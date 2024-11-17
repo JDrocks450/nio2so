@@ -370,7 +370,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             foreach (var property in GetPropertiesToCopy())
                 sb.Append($"{property.Name}: {property.GetValue(this)}, ");
             string text = sb.ToString();
-            text = text.Remove(text.Length - 2);
+            if (text.Length > 1)
+                text = text.Remove(text.Length - 2);
             return $"{FriendlyPDUName}({text})";
         }
 

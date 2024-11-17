@@ -15,15 +15,15 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// What the ID for My House
         /// </summary>
-        public const uint MyHouseID = 0x053A; //0x053A; // 1338 // can be zero for testing as well
+        public const uint MyHouseID = 0x053A; // 1338 // can be zero for testing as well
         /// <summary>
         /// What the ID for my Avatar is
         /// </summary>
-        public const uint MyAvatarID = 0x0539; //0xA1; // 161
+        public const uint MyAvatarID = 0x0539; // 1337 //0xA1; // 161
         /// <summary>
         /// What my avatar's name is
         /// </summary>
-        public const string MyAvatarName = "JollySim"; //"bisuqick";
+        public const string MyAvatarName = "JollySim"; // "Bisquick" //"bisuqick";
         /// <summary>
         /// What shard name to use as the Default Shard
         /// </summary>
@@ -31,11 +31,11 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Set the first Sim to always be blank after logging in
         /// </summary>
-        public const bool CASTestingMode = false;
+        public const bool CASTestingMode = true;
         /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
         /// </summary>
-        public const uint CASAvatarID = 0x0;
+        public const uint CASAvatarID = MyAvatarID;
         /// <summary>
         /// Set the UserAuth servlet to mark you as a CSR
         /// </summary>

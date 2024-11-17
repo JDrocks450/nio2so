@@ -34,6 +34,10 @@
         FIND_PLAYER_PDU = 0x17,
         FIND_PLAYER_RESPONSE_PDU = 0x0018,
         LOAD_HOUSE_PDU = 0x98,
+        /// <summary>
+        /// May be for editing Sim while in a lot? Not really necessary as of right now
+        /// </summary>
+        TRANSMIT_CREATEAVATARNOTIFICATION_PDU = 0x83,
 
         SPLIT_BUFFER_PDU = 0x0045,        
     }
@@ -75,6 +79,8 @@
         GetCharBlobByID_Request = 0x5BB73FAB,
         GetCharBlobByID_Response = 0x5BB73FE4,
         GetCharByID_Request = 0x7BAE5079,
+        SetCharByID_Request = 0xBC02858A,
+        SetCharByID_Response = 0x1CF17ECB,
         GetRelationshipsByID_Request = 0x3BF96A6C,
         GetLotList_Request = 0x5BEEB701,
         GetLotByID_Request = 0xFBE96AA3,
@@ -95,13 +101,25 @@
         InsertNewCharBlob_Request = 0x9BB8EAC4,
         InsertNewCharBlob_Response = 0x1BB8EB44,
         /// <summary>
-        /// GZCLSID_cDBUpdateLotValueByID_Request
+        /// This is sent when loading into a NoNetworkHouse
+        /// <code>GZCLSID_cDBUpdateLotValueByID_Request</code>        
         /// </summary>
         UpdateLotValueByID_Request = 0xDC17FB0E,
         /// <summary>
-        /// GZCLSID_cDBUpdateTaskStatus_Request
+        /// This is sent when loading into a NoNetworkHouse
+        /// <code>GZCLSID_cDBUpdateTaskStatus_Request</code>
         /// </summary>
         UpdateTaskStatus_Request = 0xA92AF562,
+        /// <summary>
+        /// This is sent when clicking the Top 100 List in the UI Gizmo
+        /// </summary>
+        GetTopList_Request = 0x3D8787DA,
+        GetTopList_Response = 0xA928455B,
+        /// <summary>
+        /// This is sent when you click "Most Popular Places" in the UI Gizmo
+        /// GZCLSID_cDBGetTopResultSetByID_Request
+        /// </summary>
+        GetTopResultSetByID_Request = 0xBCD038AC
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.

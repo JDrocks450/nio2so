@@ -51,6 +51,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// The distance from <see cref="MessageSize"/> -> the start of <see cref="DBMessageBody"/>. Used here: <see cref="TSODBRequestWrapper()"/>
         /// </summary>
         protected const uint DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE = (sizeof(uint) * 3) + 1;
+        /// <summary>
+        /// The smallest size of a DBWrapper PDU to make space for all possible header configurations
+        /// </summary>
+        protected const uint DBWRAPPER_MINIMUMSIZE = 0x29;
 
         public TSODBRequestWrapper() : base() 
         {
@@ -127,6 +131,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 messageSize = (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + body.Length);
             if (messageSize > short.MaxValue)
                 throw new OverflowException($"DBRequestWrapperPDU::MessageSize ({messageSize}) is way too large. (max: {short.MaxValue})");
+            if (messageSize < DBWRAPPER_MINIMUMSIZE)
+                messageSize = DBWRAPPER_MINIMUMSIZE;
             MessageSize = messageSize;
             TSOPacketFormatCLSID = tSOPacketFormatCLSID;
             kMSGID = kMSG;
@@ -266,6 +272,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             Advance(3);//_ = ReadBodyDword(); // INVESTIGATE
             if (HasString) 
                 Strings.AddRange(ReadStrings());
+
+            // this method guarantees the Position is moved to this address
+            SetPosition((int)DBWRAPPER_MINIMUMSIZE); // end of metadata
         }
 #endif
         /// <summary>
