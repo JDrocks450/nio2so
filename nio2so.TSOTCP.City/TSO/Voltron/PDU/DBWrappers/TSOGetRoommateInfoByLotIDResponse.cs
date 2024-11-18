@@ -30,35 +30,29 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public uint NumberOfRoommates { get; set; } = 0x01;
-        [TSOVoltronDBWrapperField] public uint[] RoommateAvatarIDs { get; set; }
+        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] RoommateAvatarIDs { get; set; }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetRoommateInfoByLotIDResponse(string AriesID, string MasterID, uint HouseID, params uint[] RoommateAvatarIDs) :
-            base(AriesID,
-                MasterID,
-                0x0000,
-                DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (RoommateAvatarIDs.Length * sizeof(uint))),
+        public TSOGetRoommateInfoByLotIDResponse(uint HouseID, params uint[] RoommateAvatarIDs) :
+            base(                
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                0x21,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response,
-                new byte[12])
+                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response)
+                //DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (RoommateAvatarIDs.Length * sizeof(uint)))
         {
             this.HouseID = HouseID;
-            this.RoommateAvatarIDs = RoommateAvatarIDs;
+            this.RoommateAvatarIDs = new byte[RoommateAvatarIDs.Length * sizeof(uint)];
             NumberOfRoommates = (uint)RoommateAvatarIDs.Length;
 
-            FillPacketToAvailableSpace();
-            MoveBufferPositionToDBMessageBody();
-            EmplaceBody(HouseID);
-            EmplaceBody(NumberOfRoommates);
+            MakeBodyFromProperties();
+            MoveBufferPositionToDBMessageHeader();
+            Advance(8);
             foreach(var id in RoommateAvatarIDs)
                 EmplaceBody(id);
-            ReadAdditionalMetadata();
         }
     }
 }

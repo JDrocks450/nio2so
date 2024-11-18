@@ -36,29 +36,30 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 #endregion
         };
 
+        [TSOVoltronDBWrapperField] public uint AvatarID { get; }
+        [TSOVoltronDBWrapperField] public uint Type { get; }
+
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
         public TSOGetBookmarksResponse(string AriesID, string MasterID, uint AvatarID, uint Type, params uint[] ItemIDs) :
-            base(AriesID,
-                MasterID,
-                0x0000,
-                DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (ItemIDs.Length * sizeof(uint))),
-                TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                0x21,
+            base(TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response,
-                new byte[] { })
+                DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (ItemIDs.Length * sizeof(uint))))
         {
-            MoveBufferPositionToDBMessageBody();
+            this.AvatarID = AvatarID;
+            this.Type = Type;
+            MakeBodyFromProperties();
+
+            MoveBufferPositionToDBMessageHeader();
             EmplaceBody(AvatarID);              // AvatarID
             EmplaceBody((uint)0x01);                  // Type?
             EmplaceBody((uint)ItemIDs.Length);  // Num Items
             foreach (var id in ItemIDs)
-                EmplaceBody(id); // bookmark item ID
-            ReadAdditionalMetadata();
-        }
+                EmplaceBody(id); // bookmark item ID            
+        }        
     }
 }

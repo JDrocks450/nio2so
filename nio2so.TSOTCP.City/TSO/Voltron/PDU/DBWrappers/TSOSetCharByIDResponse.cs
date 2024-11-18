@@ -11,24 +11,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// </summary>
     internal class TSOSetCharByIDResponse : TSODBRequestWrapper
     {
-        public TSOSetCharByIDResponse(string ariesID,
-                                             string masterID,
-                                             uint AvatarID) : 
-            base(ariesID,
-                 masterID,
-                 0x00,
-                 TSODBWrapperMessageSize.AutoSize,
+        public TSOSetCharByIDResponse(uint AvatarID) : 
+                                             
+            base(
                  TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                 0x21,
                  TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                 TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Response,
-                 new byte[] { })
-        {
-            MoveBufferPositionToDBMessageBody();
-
-            EmplaceBody(AvatarID);
-            EmplaceBody(0x01);
-            ReadAdditionalMetadata();
+                 TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Response
+                )
+        {     
+            this.AvatarID = AvatarID;       
+            MakeBodyFromProperties();            
         }
+
+        [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x01;
     }
 }

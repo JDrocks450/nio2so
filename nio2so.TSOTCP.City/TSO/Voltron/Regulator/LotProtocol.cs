@@ -35,11 +35,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             // Gets information about the roommates on a given lot
                             case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request:
                                 {
-                                    if (!PDU.HasData1)
+                                    //if (!PDU.HasData1)
                                         return false;
                                     uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
                                     if (HouseID == 0) return false; // Seems to be mistaken to send in this scenario
-                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(PDU.AriesID, PDU.MasterID,HouseID,161));                                        
+                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(HouseID,161));                                        
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
@@ -63,7 +63,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request:
                                 { // client is giving us house blob data
                                     uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
-                                    PDU.ReadAdditionalMetadata(); // move packet position to end of metadata
+                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata
                                     PDU.SetPosition(0x29); // end of metadata
                                     var blob = PDU.ReadToEnd();
                                     TSODBHouseBlob houseBlob = new(blob);

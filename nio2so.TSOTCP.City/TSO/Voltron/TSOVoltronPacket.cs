@@ -56,7 +56,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <para>Even if your packet has no properties, you need to call this before it can be
         /// sent to the Server as this writes the Voltron header to the packet body.</para>
         /// </summary>
-        public void MakeBodyFromProperties()
+        public virtual void MakeBodyFromProperties()
         {
             AllocateBody(2);  //clear old data...!         
 
@@ -84,11 +84,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 }
 
                 //---NUMERICS
-                if (property.PropertyType == typeof(UInt16))
+                if (property.PropertyType.IsAssignableTo(typeof(UInt16)))
                     EmplaceBody(endianConverter.GetBytes((UInt16)myValue));
                 else if (property.PropertyType == typeof(Int16))
                     EmplaceBody(endianConverter.GetBytes((Int16)myValue));
-                else if (property.PropertyType == typeof(UInt32))
+                else if (property.PropertyType.IsAssignableTo(typeof(UInt32)))
                     EmplaceBody(endianConverter.GetBytes((UInt32)myValue));
                 else if (property.PropertyType == typeof(Int32))
                     EmplaceBody(endianConverter.GetBytes((Int32)myValue));
@@ -110,6 +110,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     }
                     else Text += '\0';
                     EmplaceBody(Encoding.UTF8.GetBytes(Text));
+                    wroteValue = true;
                 }
 
                 if (property.PropertyType == typeof(string[]))
@@ -119,6 +120,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 }
                 else if (myValue is String myStringValue)
                     WriteString(myStringValue);
+
+                if (wroteValue) continue;
+                throw new Exception("VOLTRON PDU -- When writing, I couldn't find a matching type!");
             }
 
             ReevaluateSize();
@@ -191,7 +195,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <para>For split packets, you will need to call this function multiple times -- it will only read one packet at a time.</para>
         /// </summary>
         /// <param name="BodyStream">A Stream containing a The Sims Online Pre Alpha Voltron packet (header included)</param>
-        public int ReflectFromBody(Stream BodyStream)
+        public virtual int ReflectFromBody(Stream BodyStream)
         {
             ReadVoltronHeader(BodyStream, out ushort fooVoltronPacketType, out uint fooPayloadSize);
 
@@ -266,17 +270,30 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
                 //---STRING
                 string destValue = "Error.";
-                if (type == TSOVoltronValueTypes.Pascal)
+                switch (type)
                 {
-                    ushort strHeader = ReadBodyUshort(Endianness.LittleEndian);
-                    if (strHeader != 0x80)
-                        throw new Exception("This is supposed to be a string but I don't think it is one...");
-                    ushort len = ReadBodyUshort(Endianness.BigEndian);
-                    byte[] strBytes = ReadBodyByteArray((int)len);
-                    destValue = Encoding.UTF8.GetString(strBytes);
+                    case TSOVoltronValueTypes.Pascal:
+                        {
+                            ushort strHeader = ReadBodyUshort(Endianness.LittleEndian);
+                            if (strHeader != 0x80)
+                                throw new Exception("This is supposed to be a string but I don't think it is one...");
+                            ushort len = ReadBodyUshort(Endianness.BigEndian);
+                            byte[] strBytes = ReadBodyByteArray((int)len);
+                            destValue = Encoding.UTF8.GetString(strBytes);
+                        }
+                        break;
+                    case TSOVoltronValueTypes.NullTerminated:
+                        destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
+                        break;
+                    case TSOVoltronValueTypes.SlimPascal:
+                        {
+                            int len = ReadBodyByte();
+                            byte[] strBytes = ReadBodyByteArray((int)len);
+                            destValue = Encoding.UTF8.GetString(strBytes);
+                        }
+                        break;
                 }
-                else
-                    destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
+                    
                 property.SetValue(this, destValue);
             }
 
@@ -354,7 +371,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// </summary>
         /// <returns></returns>
         protected virtual IEnumerable<PropertyInfo> GetPropertiesToCopy() =>
-            GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
+            GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(
                 //Hard-Coded absolutely avoided names
                 x => x.Name != "VoltronPacketType" && x.Name != "FriendlyPDUName" && 

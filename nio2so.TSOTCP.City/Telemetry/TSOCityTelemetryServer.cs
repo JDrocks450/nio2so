@@ -194,7 +194,7 @@ namespace nio2so.TSOTCP.City.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.DarkCyan,
                 _ => ConsoleColor.Cyan
             };
-            Log($"{DateTime.Now.ToLongTimeString()} - *{Blob.GetType().Name}* [{Direction}] HouseID: {ID} Size: {Blob.BlobData.Length}");
+            Log($"{DateTime.Now.ToLongTimeString()} - *{Blob.GetType().Name}* [{Direction}] ObjectID: {ID} Size: {Blob.BlobData.Length}");
         }
         internal void OnCharData(NetworkTrafficDirections Direction, uint AvatarID, TSODBChar CharData)
         {

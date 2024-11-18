@@ -31,7 +31,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Set the first Sim to always be blank after logging in
         /// </summary>
-        public const bool CASTestingMode = true;
+        public const bool CASTestingMode = false;
         /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
         /// </summary>

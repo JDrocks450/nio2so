@@ -23,10 +23,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                     MasterID,
                     0x00,
                     0x49D8, //TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    (uint)TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     0x21,
-                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response,
+                    (uint)TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    (uint)TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response,
                     CombineArrays(new byte[]
                     {
                         0x00,0x00,0x05,0x3A, // <--- HOUSEID
@@ -42,7 +42,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         {
             HouseID = houseID;            
 
-            MoveBufferPositionToDBMessageBody();
+            MoveBufferPositionToDBMessageHeader();
             EmplaceBody(HouseID); // <--- overwrite houseid here for now            
         }
     }

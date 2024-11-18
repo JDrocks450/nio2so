@@ -49,6 +49,7 @@
         cCrDMStandardMessage =              0x125194E5,        
         cCrDMTestObject =                   0x122A94F2,
         GZPROBEID_cEAS =                    0x1D873D36,
+        cTSOSerializableStream =            0xDBB9126C,
 
         //**REST FROM TSO N&I ... CHANGE LATER
         cTSONetMessageStream =              0x125194F5,
@@ -94,6 +95,8 @@
         /// Structure implemented -- CharBlob stream not fully understood and packet seems to freeze client
         /// </summary>
         GetCharBlobByID_Response = 0x5BB73FE4,
+        SetCharBlobByID_Request = 0xDBB75B67,
+        SetCharBlobByID_Response = 0xDCF17EED,
         /// <summary>
         /// Used to request data about the Avatar? <para/>
         /// Structure implementation does not exist but can be read by nio2so
@@ -209,6 +212,11 @@
         /// <para>Looks like: <c>{ 0x8000 [WORD LENGTH] [UTF-8 *LENGTH* byte array] }</c></para>
         /// </summary>
         Pascal,
+        /// <summary>
+        /// One-Byte length followed by the string in UTF-8 format
+        /// <code>[byte Length][byte[] UTF-8]</code>
+        /// </summary>
+        SlimPascal,
         LittleEndian,
         BigEndian
     }

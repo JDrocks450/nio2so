@@ -10,4 +10,13 @@
 
         public TSO_PreAlpha_VoltronPacketTypes Type { get; }
     }
+    class TSOVoltronDBRequestWrapperPDU : Attribute
+    {
+        public TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs ActionCLSID)
+        {
+            this.Type = ActionCLSID;
+        }
+
+        public TSO_PreAlpha_DBActionCLSIDs Type { get; }
+    }
 }

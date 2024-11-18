@@ -86,7 +86,12 @@ namespace nio2so.TSOTCP.City.Factory
 
         protected override byte[] OnFileNotFound() => niotso_TSOPreAlphaDefaultSimData;
 
-        public TSODBCharBlob GetCharBlobByID(uint AvatarID) => new(GetDataByID(AvatarID));
+        public TSODBCharBlob GetCharBlobByID(uint AvatarID)
+        {
+            TSODBCharBlob charblob = new(GetDataByID(AvatarID));
+            //charblob.EnsureNoErrors();
+            return charblob;
+        }
         public void SetCharBlobByIDToDisk(uint AvatarID, TSODBCharBlob CharBlob) => SetDataByIDToDisk(AvatarID, CharBlob.BlobData);
         public TSODBChar GetCharByID(uint AvatarID) => new(GetDataByID(AvatarID, CharExt));        
         public void SetCharByIDToDisk(uint AvatarID, TSODBChar CharBlob) => SetDataByIDToDisk(AvatarID, CharBlob.BlobData, true, CharExt);

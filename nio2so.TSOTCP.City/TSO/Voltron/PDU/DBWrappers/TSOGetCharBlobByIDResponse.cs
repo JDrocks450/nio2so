@@ -15,32 +15,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
         public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint avatarID, TSODBCharBlob AvatarBlob) :
-            base(
-                    AriesID,
-                    MasterID,
-                    0x00,
-                    TSODBWrapperMessageSize.AutoSize,
-                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    0x21,
-                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response,
-                    CombineArrays(new byte[]
-                    {
-                        0x00,0x00,0x05,0x39, // <--- AVATARID
-                        0x01,
-                        0x00,0x00,0x03,0x20,
-                        0x00,0x1B,0x03,0x00,0x00,
-                    },
-                    AvatarBlob.BlobData)
-                )
+            base(TSO_PreAlpha_DBStructCLSIDs.cTSOSerializableStream,
+                TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response,
+                (uint)(0x21 + 8 + AvatarBlob.BlobData.Length)
+            )
         {
             AvatarID = avatarID;
             CharBlob = AvatarBlob;
+            MakeBodyFromProperties();
 
-            MoveBufferPositionToDBMessageBody();
+            MoveBufferPositionToDBMessageHeader();
             EmplaceBody(AvatarID); // <--- overwrite avatarid here for now
-                                   
-            ReadAdditionalMetadata();
+            EmplaceBody((uint)0x01); // <-- Parameter here, usually zero                     
+            EmplaceBody(AvatarBlob.BlobData); // <-- write the blob data here
         }
     }
 }

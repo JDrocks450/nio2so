@@ -52,7 +52,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             #endregion
         };
 
-        [TSOVoltronDBWrapperField] public uint AvatarID { get; private set; }
+        [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0xBAADF00D;
+        [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.SlimPascal)] public string AvatarName { get; set; }
+        [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.SlimPascal)] public string AvatarDescription { get; set; }
+        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharData { get; set; }                
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
@@ -62,29 +66,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         public TSOGetCharByIDResponse(string AriesID, string MasterID, uint avatarID, 
             string AvatarName, string AvatarDescription) :
             base(
-                    AriesID,
-                    MasterID,
-                    0x00,
-                    (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + 8 + 1 + AvatarName.Length
-                    + 1 + AvatarDescription.Length + niotso_research_data.Length),
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    0x21,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                     TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request,
-                    new byte[] { }
+                    (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + 8 + 1 + AvatarName.Length
+                    + 1 + AvatarDescription.Length + niotso_research_data.Length)
                 )
         {
             AvatarID = avatarID;
-
-            MoveBufferPositionToDBMessageBody();
-            EmplaceBody(AvatarID); // <--- overwrite avatarid here for now
-            Advance(4);
-            EmplaceBody((byte)AvatarName.Length); // <-- Length then content
-            EmplaceBody(Encoding.UTF8.GetBytes(AvatarName));
-            EmplaceBody((byte)AvatarDescription.Length);// <-- Length then content
-            EmplaceBody(Encoding.UTF8.GetBytes(AvatarDescription));
-            EmplaceBody(niotso_research_data);
-            ReadAdditionalMetadata();                                   
+            this.AvatarName = AvatarName;
+            this.AvatarDescription = AvatarDescription;
+            MakeBodyFromProperties();                                           
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.Telemetry;
+﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
@@ -20,6 +21,7 @@ namespace nio2so.TSOTCP.City.Factory
     internal static class TSOPDUFactory
     {
         private static Dictionary<TSO_PreAlpha_VoltronPacketTypes, Type> typeMap = new();
+        private static Dictionary<TSO_PreAlpha_DBActionCLSIDs, Type> _dbtypeMap = new();
 
         static TSOPDUFactory()
         {
@@ -30,6 +32,13 @@ namespace nio2so.TSOTCP.City.Factory
                 {
                     bool value = typeMap.TryAdd(attribute.Type, type);
                     QConsole.WriteLine("cTSOPDUFactory", $"Mapped {attribute.Type} to {type.Name}");
+                    continue;
+                }
+                var dbattribute = type.GetCustomAttribute<TSOVoltronDBRequestWrapperPDU>();
+                if (dbattribute != null)
+                {
+                    bool value = _dbtypeMap.TryAdd(dbattribute.Type, type);
+                    QConsole.WriteLine("cTSOPDUFactory", $"Mapped *DB* {dbattribute.Type} to {type.Name}");
                 }
             }
         }
@@ -48,7 +57,7 @@ namespace nio2so.TSOTCP.City.Factory
             uint currentIndex = 0;
             TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
             currentIndex += Size;
-            cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType);
+            cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType, Stream);
             byte[] temporaryBuffer = new byte[Size];
             Stream.ReadExactly(temporaryBuffer, 0, (int)Size);
             if (cTSOVoltronpacket is TSOBlankPDU)
@@ -57,8 +66,8 @@ namespace nio2so.TSOTCP.City.Factory
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
-            if (cTSOVoltronpacket is TSODBRequestWrapper dbPacket)
-                dbPacket.ReadAdditionalMetadata(); // make sure the metadata is read!
+            //if (cTSOVoltronpacket is TSODBRequestWrapper dbPacket)
+              //  dbPacket.ReadAdditionalMetadata(); // make sure the metadata is read!
             return cTSOVoltronpacket;
         }
 
@@ -101,18 +110,39 @@ namespace nio2so.TSOTCP.City.Factory
         /// <param name="PacketType"></param>
         /// <param name="MakeBlankPacketOnFail"></param>
         /// <returns></returns>
-        public static TSOVoltronPacket? CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes PacketType, bool MakeBlankPacketOnFail = true)
+        public static TSOVoltronPacket? CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes PacketType, Stream PDUData, bool MakeBlankPacketOnFail = true)
         {
             TSOVoltronPacket? getReturnValue() => MakeBlankPacketOnFail ? new TSOBlankPDU(PacketType) : default;
-            if (typeMap.TryGetValue(PacketType, out var type))
-                return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName) ?? getReturnValue();
+            
             switch (PacketType)
             {
+                case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
+                    {
+                        long streamPosition = PDUData.Position;
+                        PDUData.Seek(TSODBRequestWrapper.DB_WRAPPER_ACTIONCLSID_INDEX, SeekOrigin.Begin);
+                        byte[] clsIDbytes = new byte[sizeof(uint)];
+                        PDUData.Read(clsIDbytes, 0, sizeof(uint));
+                        uint clsIDint32 = EndianBitConverter.Big.ToUInt32(clsIDbytes,0);
+                        PDUData.Seek(streamPosition, SeekOrigin.Begin);
+
+                        TSO_PreAlpha_DBActionCLSIDs clsID = (TSO_PreAlpha_DBActionCLSIDs)clsIDint32;
+                        //Use reflection to make corresponding type of DBWrapper packet format
+                        if (_dbtypeMap.TryGetValue(clsID, out var dbtype))
+                        {
+                            var retValue = (TSODBRequestWrapper)dbtype?.Assembly?.CreateInstance(dbtype.FullName);
+                            if (retValue != null) return retValue;
+                            //Let case fall through to default Type map implementation below
+                        }
+                    }
+                    break;
                 case TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU:
                     return new TSOHostOnlinePDU();
                 case TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU:
-                    return new TSOClientOnlinePDU();
+                    return new TSOClientOnlinePDU();                                        
             }
+            //Use the cTSOFactory Type map to reflect the packet type
+            if (typeMap.TryGetValue(PacketType, out var type))
+                return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName) ?? getReturnValue();
             return getReturnValue();
         }
         /// <summary>
@@ -159,12 +189,14 @@ namespace nio2so.TSOTCP.City.Factory
             {
                 ms.Seek(0, SeekOrigin.Begin);
 
+                long dataRemaining = ms.Length - ms.Position;
+
                 TSOSplitBufferPDUCollection collection = new();
                 while (ms.Position < ms.Length)
                 {
-                    byte[] buffer2 = new byte[SizeLimit];
-                    ms.Read(buffer2, 0, (int)SizeLimit);
-                    long dataRemaining = ms.Length - ms.Position;
+                    byte[] buffer2 = new byte[Math.Min(SizeLimit,dataRemaining)];
+                    ms.Read(buffer2, 0, buffer2.Length);
+                    dataRemaining = ms.Length - ms.Position;
                     TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining > 0);
                     collection.Add(splitBuffer);
                 }

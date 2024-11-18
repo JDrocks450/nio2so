@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             IEnumerable<TSOVoltronPacket> SplitBlob(TSOVoltronPacket DBWrapper)
             {
                 List<TSOVoltronPacket> packets = new();
-                if (DBWrapper.BodyLength > 10000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+                if (DBWrapper.BodyLength > TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
                     packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
                 else packets.Add(DBWrapper);
                 return packets;
@@ -86,20 +86,37 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request:
                                 {
                                     //Data1 is the avatarID -- this is given by the Shard-Selector servlet
-                                    var avatarID = PDU.Data1.Value;
+                                    var avatarID = ((TSOInsertCharBlobByIDRequest)PDU).AvatarID;
                                     if (avatarID == 0)
                                         throw new InvalidDataException("You cannot provide zero as an AvatarID when sending a Client to CAS. " +
                                             "Give the Client an actual AvatarID. Ignoring this PDU.");
 
-                                    PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
+                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
                                     var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
                                     TSODBCharBlob charBlob = new(blob);
+                                    charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
 
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
-                                    EnqueuePacket(new TSOInsertCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, avatarID));
+                                    EnqueuePacket(new TSOInsertCharBlobByIDResponse(avatarID));
                                 }
                                 return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Request:
+                                {
+                                    var avatarID = PDU.Data1.Value;
+                                    if (avatarID == 0)
+                                        throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignored.");
+
+                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
+                                    var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
+                                    TSODBCharBlob charBlob = new(blob);
+                                    //charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
+
+                                    //log this to disk
+                                    TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
+                                    EnqueuePacket(new TSOInsertCharBlobByIDResponse(avatarID));
+                                }
+                                break;
                             // The client is attempting to set the data at a specific avatarID to be the payload of the packet
                             case TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request:
                                 {
@@ -107,13 +124,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     if (avatarID == 0)
                                         throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
-                                    PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
+                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
                                     var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
                                     TSODBChar charData = new(blob);
 
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);
-                                    EnqueuePacket(new TSOSetCharByIDResponse(PDU.AriesID, PDU.MasterID, avatarID));
+                                    EnqueuePacket(new TSOSetCharByIDResponse(avatarID));
                                 }
                                 return true;
                             // Logs a new line to the remote console on the server

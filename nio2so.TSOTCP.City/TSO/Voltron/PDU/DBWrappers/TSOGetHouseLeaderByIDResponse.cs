@@ -10,31 +10,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// Nothing is known about this PDU... this is a placeholder file
     /// </summary>
     internal class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
-    {        
+    {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
-        
-        public TSOGetHouseLeaderByIDResponse(string AriesID, string MasterID, uint HouseID, uint LeaderID) : 
-            base(AriesID,
-                MasterID,
-                    0x00,
-                    TSODBWrapperMessageSize.AutoSize,
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x0;
+        [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
+
+        public TSOGetHouseLeaderByIDResponse(string AriesID, string MasterID, uint HouseID, uint LeaderID) :
+            base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    0x21,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response,
-                    new byte[]
-                    {
-                        0x00,0x00,0x05,0x3A, // <--- HOUSEID
-                        0x01,
-                        0x00,0x00,0x00,0x00,
-                    }
+                    TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response
                 )
-        {            
-            MoveBufferPositionToDBMessageBody();
-            EmplaceBody(HouseID);
-            Advance(4);
-            EmplaceBody(LeaderID);
-            ReadAdditionalMetadata();
+        {
+            MakeBodyFromProperties();
         }
     }
 }

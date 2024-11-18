@@ -36,7 +36,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
                 throw new InternalBufferOverflowException("SPLIT_BUFFER_PDU cannot have a payload size above 0xFF!!!");
 
             this.DataBuffer = DataBuffer;
-            DataRemaining = (uint)(DataRemainingHereafter ? 0x0 : 0x01);
+            DataRemaining = (uint)(DataRemainingHereafter ? 0x0 : 0x01000000);
             SplitBufferPayloadSize = (byte)DataBuffer.Length;
 
             MakeBodyFromProperties();
