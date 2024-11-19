@@ -46,32 +46,30 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                         switch (clsID)
                         {
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request:
-                                {                                    
-                                    var avatarID = PDU.Data1.Value;
-                                    string AvatarName = avatarID == 1337 ? "JollySim" : "Bisquick";
-                                    string AvatarDescription = "This is a sim description.";
-
-                                    var charid = new TSOGetCharByIDResponse(PDU.AriesID, PDU.MasterID, avatarID,
-                                        AvatarName, AvatarDescription);
-                                    EnqueuePacket(charid);
+                                {
+                                    uint avatarID = 1337;
+                                    var charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharByID(avatarID);
+                                    EnqueuePacket(new TSOGetCharByIDResponse(charBlob));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Request:
                                 {
-                                    var avatarID = PDU.Data1.Value;
+                                    var charBlobReqPDU = (TSOGetCharBlobByIDRequest)PDU;
+                                    var avatarID = charBlobReqPDU.AvatarID;
                                     var charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharBlobByID(avatarID);
                                     if (charBlob == null)
                                         throw new NullReferenceException($"CharBlob {avatarID} is null and unhandled.");
 
                                     TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.OUTBOUND,avatarID, charBlob);
-                                    var response = new TSOGetCharBlobByIDResponse(PDU.AriesID, PDU.MasterID, avatarID,charBlob);
+                                    var response = new TSOGetCharBlobByIDResponse(avatarID, charBlob);
                                     EnqueuePacket(response);
                                 }
                                 return true;
                             //The client is asking for bookmarks for the given avatar from the remote server
                             case TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Request:
-                                {                                    
-                                    var avatarID = PDU.Data1.Value;
+                                {
+                                    var bookmarkPDU = (TSOGetBookmarksRequest)PDU;
+                                    var avatarID = bookmarkPDU.AvatarID;
                                     if (avatarID == 0) return false;
 
                                     EnqueuePacket(new TSOGetBookmarksResponse(PDU.AriesID,
@@ -92,7 +90,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                             "Give the Client an actual AvatarID. Ignoring this PDU.");
 
                                     //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
-                                    var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
+                                    var blob = ((TSOInsertCharBlobByIDRequest)PDU).CharBlobStream; // read from metadata to EOF (or packet, in this case?)
                                     TSODBCharBlob charBlob = new(blob);
                                     charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
 
@@ -114,17 +112,18 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
-                                    EnqueuePacket(new TSOInsertCharBlobByIDResponse(avatarID));
+                                    EnqueuePacket(new TSOSetCharBlobByIDResponse(avatarID, charBlob));
                                 }
                                 break;
                             // The client is attempting to set the data at a specific avatarID to be the payload of the packet
                             case TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request:
                                 {
-                                    var avatarID = PDU.Data1.Value;
+                                    var charPacket = ((TSOSetCharByIDRequest)PDU);
+                                    var avatarID = charPacket.AvatarID;
                                     if (avatarID == 0)
                                         throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
-                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
+                                    PDU.SetPosition(charPacket.HeaderLength + (4*sizeof(uint))); // move packet position to end of metadata                                    
                                     var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
                                     TSODBChar charData = new(blob);
 
@@ -133,12 +132,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     EnqueuePacket(new TSOSetCharByIDResponse(avatarID));
                                 }
                                 return true;
-                            // Logs a new line to the remote console on the server
-                            case TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request:
-                                string message = PDU.MessageString;
-                                TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
-                                    "cDBServiceClientD", "[InsertGenericLog_Request] " + message));
-                                return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request:
+                                {
+                                    var moneyPacket = ((TSOSetMoneyFieldsRequest)PDU);
+                                    var avatarID = moneyPacket.AvatarID;
+                                    if (avatarID == 0)
+                                        throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");                                    
+
+                                    //log this to disk
+                                    TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
+                                        RegulatorName, $"AvatarID: {moneyPacket.AvatarID} has ${moneyPacket.Arg1}"));
+                                    EnqueuePacket(new TSOSetMoneyFieldsResponse(avatarID));
+                                }
+                                return true;                            
                         }
                     }
                     break;

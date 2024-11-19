@@ -10,6 +10,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// <summary>
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request"/>
     /// </summary>
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response)]
     internal class TSOGetRoommateInfoByLotIDResponse : TSODBRequestWrapper
     {
         /// <summary>
@@ -41,7 +42,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             base(                
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response)
+                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
+                )
                 //DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (RoommateAvatarIDs.Length * sizeof(uint)))
         {
             this.HouseID = HouseID;

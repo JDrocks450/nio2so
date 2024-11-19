@@ -89,12 +89,12 @@ namespace nio2so.TSOTCP.City.TSO
             OnIncomingPacket += OnIncomingAriesFrame;
 
             //**PLAYGROUND            
-            using (var fs = File.OpenRead(@"E:\packets\discoveries\IN [DB_REQUEST_WRAPPER_PDU] PDU INSERT CHAR BLOB.dat"))
+            /*using (var fs = File.OpenRead(@"E:\packets\discoveries\IN [DB_REQUEST_WRAPPER_PDU] PDU INSERT CHAR BLOB.dat"))
             {
                 var logRequest = TSOPDUFactory.CreatePacketObjectFromDataBuffer(fs);
                 bool h = false;
                 OnIncomingVoltronPacket(0, logRequest, ref h);
-            }
+            }*/
 
             //START THE SERVER
             BeginListening();

@@ -94,6 +94,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     EmplaceBody(endianConverter.GetBytes((Int32)myValue));
                 else if (property.PropertyType == typeof(byte))
                     EmplaceBody((byte)myValue);
+                else if (property.PropertyType == typeof(DateTime))
+                    EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
                 else wroteValue = false;
 
                 if (wroteValue) continue;
@@ -285,7 +287,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     case TSOVoltronValueTypes.NullTerminated:
                         destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
                         break;
-                    case TSOVoltronValueTypes.SlimPascal:
+                    case TSOVoltronValueTypes.Length_Prefixed_Byte:
                         {
                             int len = ReadBodyByte();
                             byte[] strBytes = ReadBodyByteArray((int)len);
@@ -316,12 +318,28 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             return attribute;
         }
 
+        /// <summary>
+        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps this packet into a 
+        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// </summary>
+        /// <param name="VoltronPacket"></param>
+        /// <returns></returns>
         public static TSOTCPPacket MakeVoltronAriesPacket(TSOVoltronPacket VoltronPacket)
         {
+            //Call this once more to ensure all properties are properly saved before being sent
+            //to the remote party
+            VoltronPacket.MakeBodyFromProperties();
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, VoltronPacket.Body);
-        }      
-            
-        public static TSOTCPPacket MakeVoltronAriesPacket(params TSOVoltronPacket[] VoltronPackets) => MakeVoltronAriesPacket(VoltronPackets);            
+        }
+        /// <summary>
+        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps this packet into a 
+        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// </summary>
+        public static TSOTCPPacket MakeVoltronAriesPacket(params TSOVoltronPacket[] VoltronPackets) => MakeVoltronAriesPacket(VoltronPackets);
+        /// <summary>
+        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps these packets into a 
+        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// </summary>
         public static TSOTCPPacket MakeVoltronAriesPacket(IEnumerable<TSOVoltronPacket> VoltronPackets)
         {
             long totalSize = VoltronPackets.Sum(x => x.PayloadSize) + 2;
@@ -330,6 +348,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
             foreach (var p in VoltronPackets)
             {
+                //Call this once more to ensure all properties are properly saved before being sent
+                //to the remote party
+                p.MakeBodyFromProperties();
+
                 p.Body.CopyTo(bodyBuffer, currentIndex);
                 currentIndex += (int)p.BodyLength;
             }

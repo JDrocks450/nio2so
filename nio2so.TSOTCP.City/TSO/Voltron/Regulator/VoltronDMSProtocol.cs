@@ -1,5 +1,6 @@
 ﻿using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
             Response = default;
+            
+            switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
+            {
+                // Logs a new line to the remote console on the server
+                case TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request:
+                    {
+                        var logPDU = (TSOInsertGenericLogRequest)PDU;
+                        string message = logPDU.ConsoleLog;
+                        TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Warnings,
+                            "cDBServiceClientD", $"ServerLog: Type: {(TSO_PreAlpha_GZPROBE)logPDU.ProbeCLSID} {message}"));
+                    }
+                    return true;
+            }
+            
             return false;
         }
 

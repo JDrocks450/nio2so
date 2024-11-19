@@ -11,6 +11,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// </summary>
     internal class TSOInsertCharBlobByIDResponse : TSODBRequestWrapper
     {
+        [TSOVoltronDBWrapperField]
+        public uint NewAvatarID { get; set; }
+        [TSOVoltronDBWrapperField] 
+        public uint StatusCode { get; set; } = 0x01;
+
         public TSOInsertCharBlobByIDResponse(uint NewAvatarID) : 
                                              
             base(
@@ -22,10 +27,5 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             this.NewAvatarID = NewAvatarID;
             MakeBodyFromProperties();
         }
-
-        [TSOVoltronDBWrapperField]
-        public uint NewAvatarID { get; set; }
-        [TSOVoltronDBWrapperField] 
-        public uint Filler { get; set; } = 0x01;
     }
 }

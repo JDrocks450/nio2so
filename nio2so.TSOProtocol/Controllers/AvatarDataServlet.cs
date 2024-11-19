@@ -36,6 +36,7 @@ namespace nio2so.TSOProtocol.Controllers
             var avatarData = AvatarDataPacket.Default;
             bool CASActivated = TestingConstraints.CASTestingMode;
             var packetStr = new AvatarDataPacket(avatarData).ToString();
+            if (!System.IO.File.Exists(@"E:\packets\avatar\avatar1337.charblob")) packetStr = new AvatarDataPacket().ToString();
             if (CASActivated) packetStr = new AvatarDataPacket().ToString();
             _logger.LogInformation($"CitySelector: AvatarData() === \n {packetStr} \n===");
             return Ok(packetStr);

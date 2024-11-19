@@ -35,10 +35,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             // Gets information about the roommates on a given lot
                             case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request:
                                 {
-                                    //if (!PDU.HasData1)
-                                        return false;
-                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
-                                    if (HouseID == 0) return false; // Seems to be mistaken to send in this scenario
+                                    var roommatePDU = (TSOGetRoommateInfoByLotIDRequest)PDU;
+                                    uint HouseID = roommatePDU.HouseID;
+                                    if (HouseID == 0) 
+                                        return false; // Seems to be mistaken to send in this scenario
                                     returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(HouseID,161));                                        
                                 }
                                 return true;

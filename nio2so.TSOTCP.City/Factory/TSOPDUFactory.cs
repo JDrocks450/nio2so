@@ -119,7 +119,7 @@ namespace nio2so.TSOTCP.City.Factory
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     {
                         long streamPosition = PDUData.Position;
-                        PDUData.Seek(TSODBRequestWrapper.DB_WRAPPER_ACTIONCLSID_INDEX, SeekOrigin.Begin);
+                        PDUData.Seek(streamPosition + TSODBRequestWrapper.DB_WRAPPER_ACTIONCLSID_INDEX, SeekOrigin.Begin);
                         byte[] clsIDbytes = new byte[sizeof(uint)];
                         PDUData.Read(clsIDbytes, 0, sizeof(uint));
                         uint clsIDint32 = EndianBitConverter.Big.ToUInt32(clsIDbytes,0);

@@ -2,33 +2,32 @@
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response)]
     internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper
     {                
         private static byte[] ReadDefaultSimData() => File.ReadAllBytes("/packets/const/TSOSimData.dat");
 
-        [TSOVoltronDBWrapperField] public uint AvatarID { get; }
-        [TSOVoltronDBWrapperField] public TSODBCharBlob CharBlob { get; }
+        [TSOVoltronDBWrapperField]
+        public uint AvatarID { get; set; }
+        [TSOVoltronDBWrapperField]
+        public uint BlobSize { get; set; } = 0x00;
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronBodyArray]
+        public byte[] BlobDataStream { get; set; } = new byte[0];
 
-        /// <summary>
-        /// Makes a default response packet using the supplied parameters.
-        /// </summary>
-        /// <param name="AriesID"></param>
-        /// <param name="MasterID"></param>
-        public TSOGetCharBlobByIDResponse(string AriesID, string MasterID, uint avatarID, TSODBCharBlob AvatarBlob) :
-            base(TSO_PreAlpha_DBStructCLSIDs.cTSOSerializableStream,
-                TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response,
-                (uint)(0x21 + 8 + AvatarBlob.BlobData.Length)
-            )
+        public TSOGetCharBlobByIDResponse(uint AvatarID, TSODBCharBlob BlobData) :
+
+            base(
+                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                 TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response
+                )
         {
-            AvatarID = avatarID;
-            CharBlob = AvatarBlob;
-            MakeBodyFromProperties();
+            this.AvatarID = AvatarID;
+            BlobSize = BlobData.BlobSize;
+            BlobDataStream = BlobData.BlobData;
 
-            MoveBufferPositionToDBMessageHeader();
-            EmplaceBody(AvatarID); // <--- overwrite avatarid here for now
-            EmplaceBody((uint)0x01); // <-- Parameter here, usually zero                     
-            EmplaceBody(AvatarBlob.BlobData); // <-- write the blob data here
+            MakeBodyFromProperties();
         }
     }
 }

@@ -48,8 +48,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 { // all packets received. dispose and reset
                     var enclosedPDU = TSOPDUFactory.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);
                     Insertionpackets.Add(enclosedPDU);
+
                     _SplitBufferPDUs.Dispose();
                     _SplitBufferPDUs = new();
+                    _VoltronPacketHeader = null;
+                    _recvBytes = 0;
+
                     TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message,
                         RegulatorName, $"Inserted the {enclosedPDU}"));
                 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.Formats.DB;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response)]
     internal class TSOGetCharByIDResponse : TSODBRequestWrapper
     {
         static byte[] reference_material = new byte[]
@@ -54,28 +56,22 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0xBAADF00D;
-        [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.SlimPascal)] public string AvatarName { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.SlimPascal)] public string AvatarDescription { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharData { get; set; }                
+        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharDataBytes { get; set; }                
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetCharByIDResponse(string AriesID, string MasterID, uint avatarID, 
-            string AvatarName, string AvatarDescription) :
+        public TSOGetCharByIDResponse(TSODBChar CharData) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request,
-                    (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + 8 + 1 + AvatarName.Length
-                    + 1 + AvatarDescription.Length + niotso_research_data.Length)
+                    TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response
                 )
         {
-            AvatarID = avatarID;
-            this.AvatarName = AvatarName;
-            this.AvatarDescription = AvatarDescription;
+            CharDataBytes = CharData.BlobData;
+
             MakeBodyFromProperties();                                           
         }
     }

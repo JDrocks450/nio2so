@@ -10,12 +10,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// <summary>
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetBookmarksQuery"/>
     /// </summary>
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response)] 
     internal class TSOGetBookmarksResponse : TSODBRequestWrapper
     {
         //use this in case you forget the formatting
         byte[] reference_material = new byte[]
         {
-#region DATA
+            #region DATA
                     // ** Emplace this data **
                     0x00,0x00,0x05,0x30, // <-- My AvatarID? will not proceed unless matches request
                     0x00,0x00,0x00,0x01, // <-- type? not sure what this is yet

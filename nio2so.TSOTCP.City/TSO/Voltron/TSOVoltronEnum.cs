@@ -46,26 +46,73 @@
     /// </summary>
     public enum TSO_PreAlpha_DBStructCLSIDs : uint
     {
-        cCrDMStandardMessage =              0x125194E5,        
-        cCrDMTestObject =                   0x122A94F2,
-        GZPROBEID_cEAS =                    0x1D873D36,
-        cTSOSerializableStream =            0xDBB9126C,
+        cCrDMStandardMessage = 0x125194E5,
+        cCrDMTestObject = 0x122A94F2,
+        cTSOSerializableStream = 0xDBB9126C,
 
-        //**REST FROM TSO N&I ... CHANGE LATER
-        cTSONetMessageStream =              0x125194F5,
-        cTSOAvatarCreationRequest =         0x3EA44787,
-        cTSOInterdictor =                   0xAA3ECCB3,
-        cTSOInterdictionPass =              0xAA5FA4D8,
-        cTSOInterdictionPassAndLog =        0xCA5FA4E0,
-        cTSOInterdictionDrop =              0xCA5FA4E3,
-        cTSOInterdictionDropAndLog =        0xCA5FA4EB,
-        cTSONetMessageEnvelope =            0xAA7B191E,
-        cTSOChannelMessageEnvelope =        0x2A7B4E6A,
-        cTSODeadStream =                    0x0A9D7E3A,
-        cTSOTopicUpdateMessage =            0x09736027,
-        cTSODataTransportBuffer =           0x0A2C6585,
-        cTSOTopicUpdateErrorMessage =       0x2A404946,        
+        //*PROBES
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cEAS"/>
+        /// </summary>
+        GZPROBEID_cEAS = 0x1D873D36,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cMV"/>
+        /// </summary>
+        GZPROBEID_cMV = 0x1A873D38,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cObjectShopping"/>
+        /// </summary>
+        GZPROBEID_cObjectShopping = 0xC990F66B,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.kGZPROBEID_TWOWAYINTERACTIONOUTCOME"/>
+        /// </summary>
+        kGZPROBEID_TWOWAYINTERACTIONOUTCOME = 0xE9B547F8,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cSAS"/>
+        /// </summary>
+        GZPROBEID_cSAS = 0xFD864D0E,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cMoneyInteraction"/>
+        /// </summary>
+        GZPROBEID_cMoneyInteraction = 0x09944F96,
+        /// <summary>
+        /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cSimLetters"/>
+        /// </summary>
+        GZPROBEID_cSimLetters = 0x09944F97
     }
+
+    public enum TSO_PreAlpha_GZPROBE : uint
+    {
+        /// <summary>
+        /// This is the Probe for Edit-A-Sim
+        /// </summary>
+        GZPROBEID_cEAS = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cEAS,
+        /// <summary>
+        /// This is the Probe for MapView?
+        /// </summary>
+        GZPROBEID_cMV = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cMV,
+        /// <summary>
+        /// This is the Probe for shopping for objects?
+        /// </summary>
+        GZPROBEID_cObjectShopping = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cObjectShopping,
+        /// <summary>
+        /// This is the Probe for two way interactions
+        /// </summary>
+        kGZPROBEID_TWOWAYINTERACTIONOUTCOME = TSO_PreAlpha_DBStructCLSIDs.kGZPROBEID_TWOWAYINTERACTIONOUTCOME,
+        /// <summary>
+        /// This is the Probe for Select-A-Sim
+        /// </summary>
+        GZPROBEID_cSAS = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cSAS,
+        /// <summary>
+        /// This is the Probe for money interactions
+        /// </summary>
+        GZPROBEID_cMoneyInteraction = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cMoneyInteraction,
+        /// <summary>
+        /// This is the Probe for sending letters to sims (Persistent IM?)
+        /// </summary>
+        GZPROBEID_cSimLetters = TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cSimLetters
+    }
+
     /// <summary>
     /// The Sims Online makes a distinction between Queries, Requests and Responses
     /// <para>Generally, the Query is what the game uses to invoke the DBAppService to make the Request packet.</para>
@@ -102,6 +149,7 @@
         /// Structure implementation does not exist but can be read by nio2so
         /// </summary>
         GetCharByID_Request = 0x7BAE5079,
+        GetCharByID_Response = 0x1BAE532A,
         /// <summary>
         /// Used when the Client is updating the Char data on a specific Avatar.
         /// Payload is the new Char data stream
@@ -191,7 +239,18 @@
         /// This is sent when you click "Most Popular Places" in the UI Gizmo
         /// GZCLSID_cDBGetTopResultSetByID_Request
         /// </summary>
-        GetTopResultSetByID_Request = 0xBCD038AC
+        GetTopResultSetByID_Request = 0xBCD038AC,
+        /// <summary>
+        /// This is sent after closing Edit A Sim and after the SetCharByID_Request PDU.
+        /// <para/>This seems to set the money fields of the Avatar (Total Money, Passive Money, etc.)
+        /// <para/> Seems very dangerous for the Client to be setting the money field -- especially since Money
+        /// shouldn't change in CAS.
+        /// </summary>
+        SetMoneyFields_Request = 0x5CF147E8,
+        /// <summary>
+        /// Confirms with the Client what the money fields for the Avatar should be.
+        /// </summary>
+        SetMoneyFields_Response = 0xFCF14801
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.
@@ -200,15 +259,28 @@
     /// </summary>
     public enum TSO_PreAlpha_kMSGs : uint
     {
+        /// <summary>
+        /// <see cref="TSODBRequestWrapper"/> pdus that are intended as Requests
+        /// </summary>
         kDBServiceRequestMsg  = 0x3BF82D4E,
+        /// <summary>
+        /// <see cref="TSODBRequestWrapper"/> pdus that are intended as Responses
+        /// </summary>
         kDBServiceResponseMsg = 0xDBF301A9
     }
 
     public enum TSOVoltronValueTypes
     {
+        /// <summary>
+        /// Default value.
+        /// </summary>
         Invalid,
+        /// <summary>
+        /// A string that ends with a null-terminator
+        /// </summary>
         NullTerminated,
         /// <summary>
+        /// A length-prefixed string plus a <see cref="UInt16"/> indicating data type (0x8000)
         /// <para>Looks like: <c>{ 0x8000 [WORD LENGTH] [UTF-8 *LENGTH* byte array] }</c></para>
         /// </summary>
         Pascal,
@@ -216,8 +288,14 @@
         /// One-Byte length followed by the string in UTF-8 format
         /// <code>[byte Length][byte[] UTF-8]</code>
         /// </summary>
-        SlimPascal,
+        Length_Prefixed_Byte,
+        /// <summary>
+        /// A little-endian numeric type
+        /// </summary>
         LittleEndian,
+        /// <summary>
+        /// A big-endian numeric type
+        /// </summary>
         BigEndian
     }
 }
