@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.Data.Common.Testing;
+using nio2so.TSOHTTPS.Protocol.Data;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,8 @@ namespace nio2so.TSOProtocol.Controllers
             var avatarData = AvatarDataPacket.Default;
             bool CASActivated = TestingConstraints.CASTestingMode;
             var packetStr = new AvatarDataPacket(avatarData).ToString();
-            if (!System.IO.File.Exists(@"E:\packets\avatar\avatar1337.charblob")) packetStr = new AvatarDataPacket().ToString();
+            if (!System.IO.File.Exists(@$"E:\packets\avatar\avatar1337.charblob"))
+                packetStr = new AvatarDataPacket().ToString();
             if (CASActivated) packetStr = new AvatarDataPacket().ToString();
             _logger.LogInformation($"CitySelector: AvatarData() === \n {packetStr} \n===");
             return Ok(packetStr);

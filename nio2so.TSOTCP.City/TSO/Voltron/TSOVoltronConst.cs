@@ -17,7 +17,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public const byte SplitBufferPDU_DefaultChunkSize = 0xB4;
 
         //****WORKSPACE
-        public const string WorkspaceDirectory = "/packets";
+        public const string WorkspaceDirectory = TestingConstraints.WorkspaceDirectory;
         public const string SysLogPath = WorkspaceDirectory + "/nio2so_syslog.txt";
         public const string DiscoveriesDirectory = WorkspaceDirectory + "/discoveries";
         public const string AriesPacketDirectory = WorkspaceDirectory + "/tsotcppackets";

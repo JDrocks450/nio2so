@@ -63,13 +63,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetCharByIDResponse(TSODBChar CharData) :
+        public TSOGetCharByIDResponse(uint AvatarID, TSODBChar CharData) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                     TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response
                 )
         {
+            this.AvatarID = AvatarID;
             CharDataBytes = CharData.BlobData;
 
             MakeBodyFromProperties();                                           

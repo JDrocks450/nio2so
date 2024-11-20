@@ -34,6 +34,8 @@
         FIND_PLAYER_PDU = 0x17,
         FIND_PLAYER_RESPONSE_PDU = 0x0018,
         LOAD_HOUSE_PDU = 0x98,
+        LIST_ROOMS_PDU = 0x0026,
+        LIST_ROOMS_RESPONSE_PDU = 0x0027,
         /// <summary>
         /// May be for editing Sim while in a lot? Not really necessary as of right now
         /// </summary>
@@ -166,10 +168,15 @@
         /// <para/> Not implemented
         /// </summary>
         GetRelationshipsByID_Request = 0x3BF96A6C,
+        GetRelationshipsByID_Response = 0x9BF972CB,
         /// <summary>
-        /// Not implemented
+        /// Gets the list of lot IDs that are added to the World Map
         /// </summary>
         GetLotList_Request = 0x5BEEB701,
+        /// <summary>
+        /// Returns the list of lot IDs that are added to the World Map
+        /// </summary>
+        GetLotList_Response = 0xDBEECD65,
         /// <summary>
         /// Not implemented
         /// </summary>

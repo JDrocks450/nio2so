@@ -47,9 +47,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                         {
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request:
                                 {
-                                    uint avatarID = 1337;
-                                    var charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharByID(avatarID);
-                                    EnqueuePacket(new TSOGetCharByIDResponse(charBlob));
+                                    var charPacket = ((TSOGetCharByIDRequest)PDU);
+                                    var avatarID = charPacket.AvatarID;
+                                    if (avatarID == 0)
+                                        throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
+
+                                    var charData = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharByID(avatarID);
+                                    EnqueuePacket(new TSOGetCharByIDResponse(avatarID,charData));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Request:
@@ -72,11 +76,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     var avatarID = bookmarkPDU.AvatarID;
                                     if (avatarID == 0) return false;
 
-                                    EnqueuePacket(new TSOGetBookmarksResponse(PDU.AriesID,
-                                                                              PDU.MasterID,
-                                                                              avatarID,
-                                                                              0,
-                                                                              161));//,142,145)); // Add more to test Bookmarks
+                                    EnqueuePacket(new TSOGetBookmarksResponse(avatarID,
+                                                                              1,
+                                                                              161)); // Add more to test Bookmarks
                                 }
                                 return true;
                             // The client is attempting to send us a newly created Avatar blob
@@ -101,7 +103,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Request:
                                 {
-                                    var avatarID = PDU.Data1.Value;
+                                    var avatarID = ((TSOSetCharBlobByIDRequest)PDU).AvatarID;
                                     if (avatarID == 0)
                                         throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignored.");
 
@@ -115,6 +117,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     EnqueuePacket(new TSOSetCharBlobByIDResponse(avatarID, charBlob));
                                 }
                                 break;
+
                             // The client is attempting to set the data at a specific avatarID to be the payload of the packet
                             case TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request:
                                 {
@@ -144,7 +147,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                         RegulatorName, $"AvatarID: {moneyPacket.AvatarID} has ${moneyPacket.Arg1}"));
                                     EnqueuePacket(new TSOSetMoneyFieldsResponse(avatarID));
                                 }
-                                return true;                            
+                                return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.GetRelationshipsByID_Request:
+                                {
+                                    var relPDU = (TSOGetRelationshipsByIDRequest)PDU;
+                                    uint avatarID = relPDU.AvatarID;
+                                    EnqueuePacket(new TSOGetRelationshipsByIDResponse(avatarID, avatarID));
+                                }
+                                return true;
                         }
                     }
                     break;

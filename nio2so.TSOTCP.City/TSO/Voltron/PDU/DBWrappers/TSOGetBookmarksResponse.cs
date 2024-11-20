@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron.Util;
+﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,29 +39,38 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         };
 
         [TSOVoltronDBWrapperField] public uint AvatarID { get; }
-        [TSOVoltronDBWrapperField] public uint Type { get; }
+        [TSOVoltronDBWrapperField] public uint ListType { get; }
+        [TSOVoltronDBWrapperField] public uint ItemCount { get; }
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronBodyArray] public byte[] ItemList { get; }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetBookmarksResponse(string AriesID, string MasterID, uint AvatarID, uint Type, params uint[] ItemIDs) :
-            base(TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response,
-                DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (ItemIDs.Length * sizeof(uint))))
+        public TSOGetBookmarksResponse(uint AvatarID, uint ListType, params uint[] ItemIDs) :
+            base(
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response
+                )
         {
             this.AvatarID = AvatarID;
-            this.Type = Type;
+            this.ListType = ListType;
+            ItemCount = (uint)ItemIDs.Length;
+            ItemList = new byte[sizeof(uint) * ItemCount];
+            int index = -1;
+            foreach (uint ItemID in ItemIDs)
+            {
+                index++;
+                byte[] lotIdBytes = EndianBitConverter.Big.GetBytes(ItemID);
+                ItemList[index * sizeof(uint)] = lotIdBytes[0];
+                ItemList[index * sizeof(uint) + 1] = lotIdBytes[1];
+                ItemList[index * sizeof(uint) + 2] = lotIdBytes[2];
+                ItemList[index * sizeof(uint) + 3] = lotIdBytes[3];
+            }
             MakeBodyFromProperties();
-
-            MoveBufferPositionToDBMessageHeader();
-            EmplaceBody(AvatarID);              // AvatarID
-            EmplaceBody((uint)0x01);                  // Type?
-            EmplaceBody((uint)ItemIDs.Length);  // Num Items
-            foreach (var id in ItemIDs)
-                EmplaceBody(id); // bookmark item ID            
         }        
     }
 }

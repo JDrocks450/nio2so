@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.Formats.DB;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
@@ -42,16 +43,27 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(HouseID,161));                                        
                                 }
                                 return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request:
+                                {
+                                    returnPackets.Add(new TSOGetLotListResponse(TestingConstraints.MyHouseID));
+                                }
+                                return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request:
+                                // Gets a TSODataDefinition Lot struct with the LotID provided
+                                {
+
+                                }
+                                return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
                                 {
-                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
+                                    uint HouseID = 0;// PDU.Data1.Value; // DATA1 is HouseID
                                     returnPackets.Add(new TSOGetHouseLeaderByIDResponse(PDU.AriesID,PDU.MasterID,HouseID,161));
                                 }
                                 return true;
                             // Requests a HouseBlob for the given HouseID
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request:
                                 {
-                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
+                                    uint HouseID = 0; //PDU.Data1.Value; // DATA1 is HouseID
                                     TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(0);
                                     if (houseBlob == null)
                                         throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
@@ -62,7 +74,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             // The Client is requesting to set the house data for this HouseID in the Database
                             case TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request:
                                 { // client is giving us house blob data
-                                    uint HouseID = PDU.Data1.Value; // DATA1 is HouseID
+                                    uint HouseID = 0;// PDU.Data1.Value; // DATA1 is HouseID
                                     //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata
                                     PDU.SetPosition(0x29); // end of metadata
                                     var blob = PDU.ReadToEnd();
@@ -128,6 +140,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             break;
 
                         defaultSend(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.                        
+                    }
+                    break;
+                case TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU:
+                    {
+                        defaultSend(new TSOListRoomsResponsePDU());
                     }
                     break;
             }

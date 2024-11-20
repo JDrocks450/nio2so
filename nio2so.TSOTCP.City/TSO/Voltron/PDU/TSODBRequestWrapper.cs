@@ -125,17 +125,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             set => Header.ActionType = (TSO_PreAlpha_DBActionCLSIDs)value;
         }
 
-        [TSOVoltronIgnorable] public uint? Data1 { get; protected set; }
-        [TSOVoltronIgnorable] public uint? Data2 { get; protected set; }
-        [TSOVoltronIgnorable] public uint? Data3 { get; protected set; }
-        [TSOVoltronIgnorable] public uint? Data4 { get; protected set; }
-        [TSOVoltronIgnorable] public uint? ExtraCLSID { get; protected set; }
-
-        [TSOVoltronIgnorable]        
-        public string MessageString => (Strings != null && Strings.Any()) ?
-            new StringBuilder().AppendJoin(", ", Strings).ToString() : "";
-        [TSOVoltronIgnorable] public List<string> Strings { get; protected set; } = new();
-
         /// <summary>
         /// This is the default, parameterless constuctor.
         /// <para/>You should use this in two scenarios: Using reflection to instantiate an instance of a type of 

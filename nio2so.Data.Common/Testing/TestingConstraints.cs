@@ -9,8 +9,11 @@ namespace nio2so.Data.Common.Testing
     public static class TestingConstraints
     {
         //****BETA TESTING
+
+        //**Default Account
         public const string LoginUsername = "bloaty";
         public const string LoginPassword = "asdf";
+        //**
 
         /// <summary>
         /// What the ID for My House
@@ -41,5 +44,10 @@ namespace nio2so.Data.Common.Testing
         /// </summary>
         public const bool CSRUserAuth = false;
         //****
+
+        //**PATHS
+        public const string WorkspaceDirectory = "/packets";
+        public const string AvatarDataDictionaryFileName = WorkspaceDirectory + "/db/avatardataservlet.json";
+        public const string UserAccountDictionaryFileName = WorkspaceDirectory + "/db/useraccounts.json";
     }
 }

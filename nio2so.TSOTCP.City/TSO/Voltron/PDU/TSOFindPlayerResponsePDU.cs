@@ -11,7 +11,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU;
 
-        public uint StatusCode { get; set; } = 0x0;
+        public uint StatusCode { get; set; } = 21;
         [TSOVoltronString] public string ReasonString { get; set; } = "";
 
         public TSOFindPlayerResponsePDU() : base() {

@@ -319,26 +319,26 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         }
 
         /// <summary>
-        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps this packet into a 
-        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// <para/> You must ensure <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> was called as needed to ensure your
+        /// packet is ready to leave.
         /// </summary>
         /// <param name="VoltronPacket"></param>
         /// <returns></returns>
         public static TSOTCPPacket MakeVoltronAriesPacket(TSOVoltronPacket VoltronPacket)
         {
-            //Call this once more to ensure all properties are properly saved before being sent
-            //to the remote party
-            VoltronPacket.MakeBodyFromProperties();
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, VoltronPacket.Body);
         }
         /// <summary>
-        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps this packet into a 
-        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// <para/> You must ensure <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> was called as needed to ensure your
+        /// packet is ready to leave.
         /// </summary>
         public static TSOTCPPacket MakeVoltronAriesPacket(params TSOVoltronPacket[] VoltronPackets) => MakeVoltronAriesPacket(VoltronPackets);
         /// <summary>
-        /// Calls <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> once more then wraps these packets into a 
-        /// <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
+        /// <para/> You must ensure <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> was called as needed to ensure your
+        /// packet is ready to leave.
         /// </summary>
         public static TSOTCPPacket MakeVoltronAriesPacket(IEnumerable<TSOVoltronPacket> VoltronPackets)
         {
@@ -348,10 +348,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
             foreach (var p in VoltronPackets)
             {
-                //Call this once more to ensure all properties are properly saved before being sent
-                //to the remote party
-                p.MakeBodyFromProperties();
-
                 p.Body.CopyTo(bodyBuffer, currentIndex);
                 currentIndex += (int)p.BodyLength;
             }
