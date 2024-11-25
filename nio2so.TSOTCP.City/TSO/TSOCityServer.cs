@@ -2,7 +2,10 @@
 #undef MAKEMANY
 
 using nio2so.Formats.BPS;
+using nio2so.Formats.FAR3;
+using nio2so.Formats.Streams;
 using nio2so.Formats.TSOData;
+using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
@@ -95,6 +98,37 @@ namespace nio2so.TSOTCP.City.TSO
                 bool h = false;
                 OnIncomingVoltronPacket(0, logRequest, ref h);
             }*/
+
+            if (File.Exists(@"E:\packets\avatar\charblob.charblob"))
+            {
+                if (!File.Exists(@"E:\packets\avatar\charblob_decompressed.charblob"))
+                {
+                    using (var fs = File.OpenRead(@"E:\packets\avatar\charblob.charblob"))
+                    {
+                        var stream = TSOSerializableStream.FromStream(fs);
+                        byte[] fileData = stream.DecompressRefPack();
+                        File.WriteAllBytes(@"E:\packets\avatar\charblob_decompressed.charblob", fileData);
+                    }
+                }
+                if (!File.Exists(@"E:\packets\avatar\charblob_recompressed.charblob"))
+                {
+                    byte[] fileData = File.ReadAllBytes(@"E:\packets\avatar\charblob_decompressed.charblob");
+                    byte[] avatarIDbytes = EndianBitConverter.Little.GetBytes(1337u);
+                    uint offset = 0xF;
+                    fileData[offset] = avatarIDbytes[0];
+                    fileData[offset + 1] = avatarIDbytes[1];
+                    fileData[offset + 2] = avatarIDbytes[2];
+                    fileData[offset + 3] = avatarIDbytes[3];
+                    byte[] compressedBytes = new Decompresser().Compress(fileData);
+                    File.WriteAllBytes(@"E:\packets\avatar\charblob_precompressed.charblob", fileData);
+                    File.WriteAllBytes(@"E:\packets\avatar\charblob_recompressed.charblob", compressedBytes);
+                    //*decompress the compressed data to test for accuracy
+                    fileData = File.ReadAllBytes(@"E:\packets\avatar\charblob_recompressed.charblob");
+                    uint decompressedSize = EndianBitConverter.Little.ToUInt32(fileData, 0);
+                    fileData = new Decompresser().Decompress(fileData.Skip(4).ToArray());
+                    File.WriteAllBytes(@"E:\packets\avatar\charblob_derecompressed.charblob", fileData);
+                }
+            }
 
             //START THE SERVER
             BeginListening();

@@ -26,7 +26,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// What my avatar's name is
         /// </summary>
-        public const string MyAvatarName = "JollySim"; // "Bisquick" //"bisuqick";
+        public const string MyAvatarName = "bisuqick"; // "Bisquick" //"JollySim";
         /// <summary>
         /// What shard name to use as the Default Shard
         /// </summary>

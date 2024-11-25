@@ -9,6 +9,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.IO;
+using System.Xml.Linq;
+using nio2so.Formats.Util.Endian;
 /*
  * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
  * https://github.com/riperiperi/FreeSO
@@ -137,7 +139,7 @@ namespace nio2so.Formats.FAR3
                         int mapindex = Data[index] + (Data[index + 1] << 8)
                                 + (Data[index + 2] << 16);
 
-                        indexList = cmpmap2[mapindex];
+                        _ = cmpmap2.TryGetValue(mapindex, out indexList);
                         if (indexList == null)
                         {
                             indexList = new ArrayList();
@@ -282,8 +284,13 @@ namespace nio2so.Formats.FAR3
                 // set the MAGICNUMBER
                 Writer.Write((ushort)0xFB10);
                 // set the decompressed size
-                byte[] revData = BitConverter.GetBytes(Data.Length);
-                Writer.Write(revData[2] << 16 | revData[1] << 8 | revData[0]);
+
+                //little endian
+                //byte[] revData = BitConverter.GetBytes(Data.Length);
+                //Big endian
+                byte[] revData = EndianBitConverter.Big.GetBytes(Data.Length);
+                Writer.Write(revData[1] | revData[2] << 8 | revData[3] << 16);
+
                 Writer.Write(cData);
 
                 //Avoid nasty swearing here!
@@ -305,9 +312,41 @@ namespace nio2so.Formats.FAR3
         /// <returns>An uncompressed array of bytes.</returns>
         public byte[] Decompress(byte[] Data)
         {
+            //** MODIFIED BY BISQUICK
+            // Add signature processing: Read 0x10 0xFB **u24 m_DecompressedSize** before reading RefPack bitstream
+
+            uint read_u24(in BinaryReader _reader)
+            {
+                byte[] u24bytes = new byte[4];
+                _reader.Read(u24bytes, 1, 3);
+                return EndianBitConverter.Big.ToUInt32(u24bytes, 0);
+            }
+
+            ushort signature;
+            uint compressed_size, decompressed_size;
+            byte byte_0, byte_1, byte_2, byte_3;
+            uint proc_len, ref_dis, ref_len;
 
             MemoryStream MemData = new MemoryStream(Data);
             BinaryReader Reader = new BinaryReader(MemData);
+
+            signature = Reader.ReadUInt16();
+            compressed_size = ((signature & 0x0100) == 0) ? read_u24(Reader) : 0;
+            //compressed size is not used.
+
+            decompressed_size = read_u24(Reader);
+            if (m_DecompressedSize == 0)
+                m_DecompressedSize = decompressed_size;
+
+            byte[] ndata = new byte[Data.Length - 5];
+            MemData = new MemoryStream(Data);
+            MemData.Seek(5, SeekOrigin.Begin);
+            MemData.Read(ndata,0,ndata.Length);
+            MemData.Dispose();
+            Data = ndata;
+
+            MemData = new MemoryStream(Data);
+            Reader = new BinaryReader(MemData);
 
             if (Data.Length > 6)
             {

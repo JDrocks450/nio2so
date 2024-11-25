@@ -10,21 +10,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField]
         public uint AvatarID { get; set; }
-
         /// <summary>
         /// Unknown
         /// </summary>
-        [TSOVoltronDBWrapperField]
-        public byte Filler { get; set; } = 0x01;
+        //[TSOVoltronDBWrapperField]
+        //public byte Filler { get; set; } = 0x01;
         /// <summary>
         /// The size of the Blob data being received
         /// </summary>
-        [TSOVoltronDBWrapperField]        
-        public uint BlobSize { get; set; } = 0x00;
-        [TSOVoltronDBWrapperField]
-        public uint Arg2 { get; set; } = 0x001B0300; // 1770240
-        [TSOVoltronDBWrapperField]
-        public byte Filler2 { get; set; } = 0x00;
+        //[TSOVoltronDBWrapperField]        
+        //public uint BlobSize { get; set; } = 0x00;
+        //[TSOVoltronDBWrapperField]
+        //public uint Arg2 { get; set; } = 0x001B0300; // 1770240
+        //[TSOVoltronDBWrapperField]
+        //public byte Filler2 { get; set; } = 0x00;
 
         [TSOVoltronDBWrapperField]
         [TSOVoltronBodyArray]
@@ -35,11 +34,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             base(
                  TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                  TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                 TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response
+                 TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response
                 )
         {
             this.AvatarID = AvatarID;
-            BlobSize = (uint)BlobData.BlobData.Length;
+            //BlobSize = (uint)BlobData.BlobData.Length;
             BlobDataStream = BlobData.BlobData;
 
             MakeBodyFromProperties();

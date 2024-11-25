@@ -214,7 +214,7 @@ namespace nio2so.TSOTCP.City.Factory
             string? displayName = Enum.GetName((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ??
                             "0x" + VoltronPacketType.ToString("X4");
             Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
-            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,$"/cTSOPDU [{displayName}].dat");
+            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,$"cTSOPDU [{displayName}].dat");
             if (!File.Exists(fileName))
             {
                 File.WriteAllBytes(fileName, PacketData);

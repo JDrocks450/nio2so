@@ -216,7 +216,8 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         public void WritePacketToDisk(bool Incoming = true, string? PacketName = default, string Directory = TSOVoltronConst.AriesPacketDirectory)
         {
             System.IO.Directory.CreateDirectory(Directory);
-            string myName = $"{(Incoming ? "IN" : "OUT")} [{(PacketName ?? ((TSOAriesPacketTypes)PacketType).ToString())}] Packet {DateTime.Now.ToFileTime()}.dat";
+            var now = DateTime.Now;
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] Packet {now.Hour%12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
             File.WriteAllBytes(Path.Combine(Directory, myName), GetBytes());
         }
     }

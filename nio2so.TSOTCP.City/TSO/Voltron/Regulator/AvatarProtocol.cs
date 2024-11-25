@@ -208,23 +208,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     }
                     return true;
                 //**STATUS UPDATERS**
-                //These right now don't qualify a response so they're just logged.
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:
-                    //defaultSend(new TSOSetAcceptAlertsResponsePDU(true));                                        
+                    logme(new TSOSetAcceptAlertsResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU:
-                    //defaultSend(new TSOSetAcceptFlashesResponsePDU(true));                    
+                    logme(new TSOSetAcceptFlashesResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU:
-                    //defaultSend(new TSOSetIgnoreListResponsePDU(true));                    
+                    logme(new TSOSetIgnoreListResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
-                    //defaultSend(new TSOSetInvincibleResponsePDU(true));                    
+                    logme(new TSOSetInvincibleResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU:
-                    //defaultSend(new TSOSetInvisibleResponsePDU(true));
-
-                    //** below each case is the response value commented out
-                    // if a time comes where these are useful then you can uncomment them
-
-                    logme(PDU); // just log it here for now.
-                    break;
+                    logme(new TSOSetInvisibleResponsePDU(false)); break;
             }
 
             return success; 

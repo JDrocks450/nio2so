@@ -428,7 +428,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public void WritePDUToDisk(bool Incoming = true, string Directory = TSOVoltronConst.VoltronPacketDirectory)
         {
             System.IO.Directory.CreateDirectory(Directory);
-            string myName = $"{(Incoming ? "IN" : "OUT")} [{KnownPacketType}] PDU {DateTime.Now.ToFileTime()}.dat";
+            var now = DateTime.Now;
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{FriendlyPDUName}] VoltronPDU {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
+            myName = myName.Replace(':', '=');
             File.WriteAllBytes(Path.Combine(Directory, myName), Body);
         }
     }
