@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
+    /// <summary>
+    /// The response PDU to a <see cref="TSOGetCharByIDRequest"/> PDU
+    /// <para/>It contains extremely surface-level info about an Avatar, like their Name and Description
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response)]
     internal class TSOGetCharByIDResponse : TSODBRequestWrapper
     {
@@ -53,13 +57,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             0x68,0x69,0x6A,0x6B
             #endregion
         };
-
+        /// <summary>
+        /// The Avatar this packet is in reference to
+        /// </summary>
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
+        /// <summary>
+        /// Not sure what this is used for yet, probably 0x00000000 most of the time?
+        /// </summary>
         [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0xBAADF00D;
+        /// <summary>
+        /// The <see cref="TSODBChar"/> data to send, in bytes
+        /// </summary>
         [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharDataBytes { get; set; }                
 
         /// <summary>
-        /// Makes a default response packet using the supplied parameters.
+        /// Creates a new <see cref="TSOGetCharByIDResponse"/> packet with the provided <see cref="TSODBChar"/>
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>

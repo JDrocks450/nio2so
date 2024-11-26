@@ -36,13 +36,22 @@ namespace nio2so.Data.Common.Testing
         /// </summary>
         public const bool CASTestingMode = false;
         /// <summary>
+        /// Will always set the server to redirect a client into a seemingly offline testing lot
+        /// </summary>
+        public const bool LOTTestingMode = false;
+        /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
         /// </summary>
-        public const uint CASAvatarID = MyAvatarID;
+        public const uint CASAvatarID = 161;
         /// <summary>
         /// Set the UserAuth servlet to mark you as a CSR
         /// </summary>
         public const bool CSRUserAuth = false;
+
+        /// <summary>
+        /// For testing, this is the AvatarID of "MyFriend" as in-your first bookmark, your friend in the relationship web, etc.
+        /// </summary>
+        public const uint MyFriendAvatarID = 161;
         //****
 
         //**PATHS

@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.Formats.DB;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
@@ -78,7 +79,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
                                     EnqueuePacket(new TSOGetBookmarksResponse(avatarID,
                                                                               1,
-                                                                              161)); // Add more to test Bookmarks
+                                                                              TestingConstraints.MyFriendAvatarID)); // Add more to test Bookmarks
                                 }
                                 return true;
                             // The client is attempting to send us a newly created Avatar blob
@@ -90,8 +91,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     if (avatarID == 0)
                                         throw new InvalidDataException("You cannot provide zero as an AvatarID when sending a Client to CAS. " +
                                             "Give the Client an actual AvatarID. Ignoring this PDU.");
-
-                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
+                                   
                                     var blob = ((TSOInsertCharBlobByIDRequest)PDU).CharBlobStream; // read from metadata to EOF (or packet, in this case?)
                                     TSODBCharBlob charBlob = new(blob);
                                     charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
@@ -106,11 +106,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     var avatarID = ((TSOSetCharBlobByIDRequest)PDU).AvatarID;
                                     if (avatarID == 0)
                                         throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignored.");
-
-                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata                                    
-                                    var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
+                                  
+                                    var blob = ((TSOSetCharBlobByIDRequest)PDU).CharBlobStream; // read from metadata to EOF (or packet, in this case?)
                                     TSODBCharBlob charBlob = new(blob);
-                                    //charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
+                                    charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
 
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
@@ -126,6 +125,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     if (avatarID == 0)
                                         throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
+                                    //legacy code here -- it works so I will leave it for now
                                     PDU.SetPosition(charPacket.HeaderLength + (4*sizeof(uint))); // move packet position to end of metadata                                    
                                     var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
                                     TSODBChar charData = new(blob);
@@ -152,7 +152,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 {
                                     var relPDU = (TSOGetRelationshipsByIDRequest)PDU;
                                     uint avatarID = relPDU.AvatarID;
-                                    EnqueuePacket(new TSOGetRelationshipsByIDResponse(avatarID, avatarID));
+                                    EnqueuePacket(new TSOGetRelationshipsByIDResponse(avatarID, TestingConstraints.MyFriendAvatarID));
                                 }
                                 return true;
                         }

@@ -11,28 +11,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// Sends a confirmation to the Client that the <c>TSODBCharBlob</c> was received successfully
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response)]
-    internal class TSOSetCharBlobByIDResponse : TSODBRequestWrapper
+    internal class TSOSetCharBlobByIDResponse : TSOGetCharBlobByIDResponse
     {
-        [TSOVoltronDBWrapperField]
-        public uint AvatarID { get; set; }
-        [TSOVoltronDBWrapperField]
-        public uint BlobSize { get; set; } = 0x00;
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronBodyArray]
-        public byte[] BlobDataStream { get; set; } = new byte[0];
-
-        public TSOSetCharBlobByIDResponse(uint AvatarID, TSODBCharBlob BlobData) :
-
-            base(
-                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                 TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response
-                )
+        /// <summary>
+        /// Creates a new <see cref="TSOSetCharBlobByIDResponse"/> packet with the provided <see cref="TSODBCharBlob"/> payload
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <param name="BlobData"></param>
+        public TSOSetCharBlobByIDResponse(uint AvatarID, TSODBCharBlob BlobData) : base(AvatarID, BlobData)
         {
-            this.AvatarID = AvatarID;
-            BlobSize = BlobData.BlobSize;
-            BlobDataStream = BlobData.BlobData;
-
+            TSOSubMsgCLSID = (uint)TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response;
             MakeBodyFromProperties();
         }
     }

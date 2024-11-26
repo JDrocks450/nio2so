@@ -50,9 +50,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         /// <summary>
         /// Uses reflection to create a packet body from the properties you implement. 
-        /// <para>You should be using the <see cref="TSOVoltronString"/> attribute to control this feature.</para>
+        /// <para>You can use the <see cref="TSOVoltronString"/> and <see cref="TSOVoltronValue"/> attributes to get granular with this feature.</para>
         /// <para>ONLY super-class PUBLIC PROPERTIES are included! No properties from 
         /// <see cref="TSOVoltronPacket"/> or <see cref="ExtendedBufferOperations"/> will be included.</para>
+        /// <para/>For <see cref="TSODBRequestWrapper"/> packets, all public properties you wish to include in the packet should be marked with 
+        /// <see cref="TSOVoltronDBWrapperField"/> and any you wish to omit should be adorned with <see cref="TSOVoltronIgnorable"/>
         /// <para>Even if your packet has no properties, you need to call this before it can be
         /// sent to the Server as this writes the Voltron header to the packet body.</para>
         /// </summary>
@@ -67,7 +69,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt32)00)); // followed by placeholder data as we have no clue how big it is. 
 
             foreach (var property in GetPropertiesToCopy()) {                
-                bool hasAttrib = getPropertyAttribute(property, out TSOVoltronValueTypes type) != default;
+                bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
                 object? myValue = property.GetValue(this);
                 if (myValue == default) continue;
                 var endianConverter = (EndianBitConverter)(
@@ -214,7 +216,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             SetPosition(6);
             if (BodyPosition == PayloadSize) return (int)PayloadSize;
 
-            foreach (var property in GetPropertiesToCopy()) {                
+            foreach (var property in GetPropertiesToCopy())
+            {
                 //check if this property is the body array property
                 if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
                 { // it is.
@@ -226,91 +229,98 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     property.SetValue(this, destBuffer);
                     break; // halt execution
                 }
-
-                var attribute = getPropertyAttribute(property, out TSOVoltronValueTypes type);
-                bool hasAttrib = attribute != default;
-                //BigEndian by default!
-                Endianness dataEndianMode = type == TSOVoltronValueTypes.BigEndian ? Endianness.BigEndian : Endianness.LittleEndian;
-                bool readValue = true;                
-
-                //---NUMBERS
-                if (property.PropertyType == typeof(byte))
+                //Numbers
                 {
-                    property.SetValue(this, (byte)ReadBodyByte());
-                    continue;
-                }
-                else if (property.PropertyType == typeof(UInt16) || property.PropertyType == typeof(Int16))
-                {
-                    ushort fromPacket = ReadBodyUshort(); // read an unsigned short
-                    if (property.PropertyType == typeof(UInt16)) // is it even an unsigned short?
-                        property.SetValue(this, fromPacket); // yeah
-                    else property.SetValue(this, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                    continue;
-                }
-                else if (property.PropertyType == typeof(UInt32) || property.PropertyType == typeof(Int32))
-                {
-                    uint fromPacket = ReadBodyDword(); // read an unsigned int
-                    if (property.PropertyType == typeof(UInt32)) // is it even an unsigned int?
-                        property.SetValue(this, fromPacket); // yeah
-                    else property.SetValue(this, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                    continue;
-                }
-                else readValue = false;
+                    TSOVoltronValue? attribute = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type);
+                    bool hasAttrib = attribute != default;
+                    //BigEndian by default!
+                    Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
+                    bool readValue = true;
 
-                if (readValue) continue;
+                    //---NUMBERS
+                    if (property.PropertyType == typeof(byte))
+                    {
+                        property.SetValue(this, (byte)ReadBodyByte());
+                        continue;
+                    }
+                    else if (property.PropertyType == typeof(UInt16) || property.PropertyType == typeof(Int16))
+                    {
+                        ushort fromPacket = ReadBodyUshort(); // read an unsigned short
+                        if (property.PropertyType == typeof(UInt16)) // is it even an unsigned short?
+                            property.SetValue(this, fromPacket); // yeah
+                        else property.SetValue(this, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
+                        continue;
+                    }
+                    else if (property.PropertyType == typeof(UInt32) || property.PropertyType == typeof(Int32))
+                    {
+                        uint fromPacket = ReadBodyDword(); // read an unsigned int
+                        if (property.PropertyType == typeof(UInt32)) // is it even an unsigned int?
+                            property.SetValue(this, fromPacket); // yeah
+                        else property.SetValue(this, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
+                        continue;
+                    }
+                    else readValue = false;
 
-                if (property.PropertyType == typeof(DateTime))
-                {
-                    uint fromPacket = ReadBodyDword();
-                    var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
-                    property.SetValue(this, value);
-                    continue;
+                    if (readValue) continue;
+
+                    if (property.PropertyType == typeof(DateTime))
+                    {
+                        uint fromPacket = ReadBodyDword();
+                        var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
+                        property.SetValue(this, value);
+                        continue;
+                    }
                 }
-
-                if (!hasAttrib) // AUTOSELECT
-                    type = TSOVoltronValueTypes.Pascal;
-
-                //---STRING
-                string destValue = "Error.";
-                switch (type)
+                //Strings
                 {
-                    case TSOVoltronValueTypes.Pascal:
-                        {
-                            ushort strHeader = ReadBodyUshort(Endianness.LittleEndian);
-                            if (strHeader != 0x80)
-                                throw new Exception("This is supposed to be a string but I don't think it is one...");
-                            ushort len = ReadBodyUshort(Endianness.BigEndian);
-                            byte[] strBytes = ReadBodyByteArray((int)len);
-                            destValue = Encoding.UTF8.GetString(strBytes);
-                        }
-                        break;
-                    case TSOVoltronValueTypes.NullTerminated:
-                        destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
-                        break;
-                    case TSOVoltronValueTypes.Length_Prefixed_Byte:
-                        {
-                            int len = ReadBodyByte();
-                            byte[] strBytes = ReadBodyByteArray((int)len);
-                            destValue = Encoding.UTF8.GetString(strBytes);
-                        }
-                        break;
+                    TSOVoltronString? attribute = getPropertyAttribute<TSOVoltronString>(property, out TSOVoltronValueTypes type);
+                    bool hasAttrib = attribute != null;
+                    if (!hasAttrib) // AUTOSELECT
+                        type = TSOVoltronValueTypes.Pascal;
+
+                    //---STRING
+                    string destValue = "Error.";
+                    switch (type)
+                    {
+                        case TSOVoltronValueTypes.Pascal:
+                            {
+                                ushort strHeader = ReadBodyUshort(Endianness.LittleEndian);
+                                if (strHeader != 0x80)
+                                    throw new Exception("This is supposed to be a string but I don't think it is one...");
+                                ushort len = ReadBodyUshort(Endianness.BigEndian);
+                                byte[] strBytes = ReadBodyByteArray((int)len);
+                                destValue = Encoding.UTF8.GetString(strBytes);
+                            }
+                            break;
+                        case TSOVoltronValueTypes.NullTerminated:
+                            destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
+                            break;
+                        case TSOVoltronValueTypes.Length_Prefixed_Byte:
+                            {
+                                int len = ReadBodyByte();
+                                byte[] strBytes = ReadBodyByteArray((int)len);
+                                destValue = Encoding.UTF8.GetString(strBytes);
+                            }
+                            break;
+                    }
+
+                    property.SetValue(this, destValue);
                 }
-                    
-                property.SetValue(this, destValue);
             }
-
             return (int)PayloadSize;
         }
 
-        private TSOVoltronString? getPropertyAttribute(PropertyInfo property, out TSOVoltronValueTypes ValueType)
+        private T? getPropertyAttribute<T>(PropertyInfo property, out TSOVoltronValueTypes ValueType) where T : TSOVoltronValue
         {
-            var attribute = property.GetCustomAttribute<TSOVoltronString>();
+            ValueType = TSOVoltronValueTypes.BigEndian;
+            var attribute = property.GetCustomAttribute<T>();
             TSOVoltronValueTypes type = TSOVoltronValueTypes.BigEndian;
             int pascalLength = 0;
             if (attribute == null)
             {
                 if (property.PropertyType == typeof(string))
                     type = TSOVoltronValueTypes.Pascal;
+                else type = TSOVoltronValueTypes.BigEndian;
             }
             else
                 type = attribute.Type;

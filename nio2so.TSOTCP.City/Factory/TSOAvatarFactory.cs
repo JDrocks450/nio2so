@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.Factory
 {
     /// <summary>
-    /// Serves the <see cref="TSODBCharBlob"/> data type
+    /// Creates <see cref="TSODBCharBlob"/> and <see cref="TSODBChar"/> data types and saves them to disk
     /// </summary>
     [TSOFactory]
     internal class TSOAvatarFactory : TSOFactoryBase
@@ -89,7 +89,7 @@ namespace nio2so.TSOTCP.City.Factory
         public TSODBCharBlob GetCharBlobByID(uint AvatarID)
         {
             TSODBCharBlob charblob = new(GetDataByID(AvatarID));
-            //charblob.EnsureNoErrors();
+            charblob.EnsureNoErrors();
             return charblob;
         }
         public void SetCharBlobByIDToDisk(uint AvatarID, TSODBCharBlob CharBlob) => SetDataByIDToDisk(AvatarID, CharBlob.BlobData);

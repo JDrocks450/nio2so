@@ -180,11 +180,7 @@ namespace nio2so.TSOTCP.City.Telemetry
         {
             OnBlobBase(Direction, AvatarID, charBlob);
             if (Direction == NetworkTrafficDirections.INBOUND)
-            {
-                Log($"Welcome to the world, {charBlob.AvatarName}!");
                 TSOFactoryBase.Get<TSOAvatarFactory>().SetCharBlobByIDToDisk(AvatarID, charBlob);
-            }
-            else Log($"Welcome back, {charBlob.AvatarName}!");
         }
         private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, TSODBBlob Blob)
         {

@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
         //****BETA TESTING
         public const uint MyHouseID = TestingConstraints.MyHouseID; //0x053A; // 1338 // can be zero for testing as well
-        public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 161
+        public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 0x0539
         public const string MyAvatarName = TestingConstraints.MyAvatarName;        
         //****
     }

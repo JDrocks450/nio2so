@@ -5,69 +5,45 @@ namespace nio2so.Formats.DB
 {
     /// <summary>
     /// The body of a DBRequestWrapper PDU in Voltron sent in request/response to a (Get/Set)CharBlobByID command
+    /// <para/>This is a RefPack bitstream and should start with 0x10FB
     /// </summary>
     public class TSODBCharBlob : TSODBBlob
     {
         /// <summary>
-        /// The encoded name of the Avatar this blob corresponds with
+        /// Since a <see cref="TSODBCharBlob"/> is a RefPack bitstream, this is the DecompressedSize of the RefPack located
+        /// after the MagicNumber.
         /// </summary>
-        public string AvatarName
+        public uint DecompressedSize
         {
             get
             {
-                try
+                byte[] uintChars = BlobData.Skip(2).Take(3).ToArray();
+                byte[] u32chars = new byte[sizeof(uint)]
                 {
-                    byte length = BlobData[0];
-                    return Encoding.UTF8.GetString(BlobData,1,length);
-                }
-                catch(Exception e)
-                {
-
-                }
-                return "";
-            }
-        }
-        /// <summary>
-        /// Gets the index of where the <see cref="BlobSize"/> property should be in the <see cref="TSODBBlob.BlobData"/> array.
-        /// <para/> This is found right after the <see cref="AvatarName"/> property
-        /// </summary>
-        public int BlobSizeIndex
-        {
-            get
-            {
-                //GET STRING LENGTH
-                byte length = BlobData[0];
-                int position = sizeof(byte) + length;
-                return position;
+                    0x00,
+                    uintChars[0],
+                    uintChars[1],
+                    uintChars[2]
+                };
+                return EndianBitConverter.Big.ToUInt32(u32chars,0);
             }
         }
 
-        /// <summary>
-        /// The size that is encoded into the buffer data reporting how large the CharBlob size is.
-        /// <para>This is <see cref="UInt32"/> right after the <see cref="AvatarName"/></para>
-        /// <para>See: <see cref="BlobSizeIndex"/></para>
-        /// </summary>
-        public uint BlobSize
-        {
-            get
-            {                
-                return EndianBitConverter.Big.ToUInt32(BlobData,BlobSizeIndex);
-            }
-        }
+        public uint Length => (uint)BlobData.Length;
 
         public TSODBCharBlob(byte[] blobData) : base(blobData)
         {
 
         }
+
         /// <summary>
         /// This will run a simple test procedure to ensure the data in this blob is safe and formatted correctly.
         /// </summary>
         public void EnsureNoErrors()
         {
-            return;
-            if (BlobSize > BlobData.Length)
-                throw new InvalidDataException($"The BlobSize property in this packet at position: {BlobSizeIndex}" +
-                    $" is {BlobSize}, which is larger than the data provided: {BlobData.Length} bytes.");
+            if (BlobData.Length < 6) throw new InvalidDataException("BlobData is too small (less than 6 bytes)");
+            if (BlobData[0] != 0x10 || BlobData[1] != 0xFB)
+                throw new InvalidDataException("The provided BlobData stream doesn't start with 0x10FB which will cause issues.");
         }
     }
 }

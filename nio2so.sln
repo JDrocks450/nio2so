@@ -29,7 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.Data.Common", "nio2s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.SimsLib", "nio2so.SimsLib\nio2so.SimsLib.csproj", "{900A8160-3788-48F5-B92C-CDED1133EE6F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{5DD7446B-91EC-4BE7-B0FD-20D9F166DD67}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.Online.Debug", "nio2so.Online.Debug", "{2DFE9B84-042E-49D7-895B-D2472D3F7B5B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.TSOTCP.Debug.Frontend", "nio2so.TSOTCP.Debug.Frontend\nio2so.TSOTCP.Debug.Frontend.csproj", "{30E792E2-C22E-4732-87EE-ED3149DE4D46}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -77,6 +79,10 @@ Global
 		{900A8160-3788-48F5-B92C-CDED1133EE6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{900A8160-3788-48F5-B92C-CDED1133EE6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{900A8160-3788-48F5-B92C-CDED1133EE6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{30E792E2-C22E-4732-87EE-ED3149DE4D46}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30E792E2-C22E-4732-87EE-ED3149DE4D46}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30E792E2-C22E-4732-87EE-ED3149DE4D46}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30E792E2-C22E-4732-87EE-ED3149DE4D46}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -92,6 +98,7 @@ Global
 		{23EEB70A-5924-4A70-98D1-86D9B61AAA9A} = {51053E14-1A9D-42DF-B6D2-300565E59797}
 		{25D905FD-4585-4BC3-8E4D-9AB354E79A6C} = {66AC1B39-99F4-44C0-8F10-4A1C23D777DD}
 		{900A8160-3788-48F5-B92C-CDED1133EE6F} = {66AC1B39-99F4-44C0-8F10-4A1C23D777DD}
+		{30E792E2-C22E-4732-87EE-ED3149DE4D46} = {2DFE9B84-042E-49D7-895B-D2472D3F7B5B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}

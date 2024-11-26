@@ -1,12 +1,65 @@
-﻿namespace nio2so.TSOTCP.City.TSO.Voltron
+﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.Factory;
+
+namespace nio2so.TSOTCP.City.TSO.Voltron
 {
+    //**** CLASS LEVEL****
+
+    /// <summary>
+    /// Allows this <see cref="TSOVoltronPacket"/> to be mapped to a <see cref="TSO_PreAlpha_VoltronPacketTypes"/> to be
+    /// created using Reflection when it is sent/received.
+    /// <para/>See <see cref="TSOPDUFactory.CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes, Stream, bool)"/> for implementation.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    class TSOVoltronPDU : Attribute
+    {
+        public TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes Type)
+        {            
+            this.Type = Type;
+        }
+
+        public TSO_PreAlpha_VoltronPacketTypes Type { get; }
+    }
+    /// <summary>
+    /// Similar to <see cref="TSOVoltronPDU"/>. When a packet is created using Reflection using a mapped <see cref="TSOVoltronPDU"/> - if it
+    /// is a <see cref="TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU"/> it will have its header tested against this <see cref="TSO_PreAlpha_DBActionCLSIDs"/>
+    /// provided to match this <see cref="TSODBRequestWrapper"/> implementation to the incoming/outgoing data.
+    /// <para>See <see cref="TSOPDUFactory.CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes, Stream, bool)"/> for implementation</para>
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    class TSOVoltronDBRequestWrapperPDU : Attribute
+    {
+        public TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs ActionCLSID)
+        {
+            this.Type = ActionCLSID;
+        }
+
+        public TSO_PreAlpha_DBActionCLSIDs Type { get; }
+    }
+
+    //***PROPERTY LEVEL
+
+    /// <summary>
+    /// Dictates how this general value should be handled by the parser/decoder logic in <see cref="TSOVoltronPacket"/>
+    /// <para/>For strings specifically, you can get a bit more granular with <see cref="TSOVoltronString"/> but this attribute will also
+    /// work for changing between Pascal and NullTerminated
+    /// </summary>
+    [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    class TSOVoltronValue : Attribute
+    {
+        public TSOVoltronValueTypes Type { get; protected set; }
+
+        public TSOVoltronValue(TSOVoltronValueTypes type)
+        {
+            Type = type;
+        }
+    }
     /// <summary>
     /// Dictates how this string should be handled by the parser/decoder logic in <see cref="TSOVoltronPacket"/>
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
-    sealed class TSOVoltronString : Attribute
-    {
-        public TSOVoltronValueTypes Type { get; }
+    sealed class TSOVoltronString : TSOVoltronValue
+    {        
         public int PascalLengthValueLengthBytes { get; set; }
         public int NullTerminatedMaxLength { get; set; }
 
@@ -14,10 +67,9 @@
         /// Sets this string to be a <see cref="TSOVoltronValueTypes.Pascal"/> string
         /// <para>Looks like: <c>{ 0x8000 [WORD LENGTH] [UTF-8 *LENGTH* byte array] }</c></para>
         /// </summary>
-        public TSOVoltronString() : this(TSOVoltronValueTypes.Pascal) { }
-        public TSOVoltronString(TSOVoltronValueTypes Type, int PascalLengthValueLengthBytes = 4)
+        public TSOVoltronString() : base(TSOVoltronValueTypes.Pascal) { }
+        public TSOVoltronString(TSOVoltronValueTypes Type, int PascalLengthValueLengthBytes = 4) : base(Type)
         {
-            this.Type = Type;
             this.PascalLengthValueLengthBytes = PascalLengthValueLengthBytes;
         }
     }

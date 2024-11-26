@@ -135,22 +135,35 @@
         /// </summary>
         GetRoommateInfoByLotID_Response = 0xDD3339EE,
         /// <summary>
-        /// Used to request what the Avatar looks like. <para/>
-        /// Structure implementation does not exist but can be read by nio2so
+        /// Used to request the full Avatar File. It contains the appearance, name, description, personality, skills, etc. of an avatar. <para/>
+        /// Implemented and working: <see cref="GetCharBlobByID_Request"/>, <see cref="GetCharBlobByID_Response"/>, <see cref="InsertNewCharBlob_Request"/>
+        /// <para/>Structured: <see cref="SetCharBlobByID_Request"/>, <see cref="SetCharBlobByID_Response"/>, <see cref="InsertNewCharBlob_Response"/>
         /// </summary>
         GetCharBlobByID_Request = 0x5BB73FAB,
         /// <summary>
-        /// Responds with a TSODBCharBlob using the <c>TSOGetCharBlobByIDResponse</c> packet structure.
-        /// Structure implemented -- CharBlob stream not fully understood and packet seems to freeze client
+        /// Used to serve the full Avatar File. It contains the appearance, name, description, personality, skills, etc. of an avatar. <para/>
+        /// Implemented and working: <see cref="GetCharBlobByID_Request"/>, <see cref="GetCharBlobByID_Response"/>, <see cref="InsertNewCharBlob_Request"/>
+        /// <para/>Structured: <see cref="SetCharBlobByID_Request"/>, <see cref="SetCharBlobByID_Response"/>, <see cref="InsertNewCharBlob_Response"/>
         /// </summary>
         GetCharBlobByID_Response = 0x5BB73FE4,
+        /// <summary>
+        /// Requests to update the database's Avatar File with the new one created.
+        /// <para/>Sent from Edit-A-Sim: Complete and working in nio2so
+        /// </summary>
         SetCharBlobByID_Request = 0xDBB75B67,
+        /// <summary>
+        /// Not tested
+        /// </summary>
         SetCharBlobByID_Response = 0xDCF17EED,
         /// <summary>
-        /// Used to request data about the Avatar? <para/>
-        /// Structure implementation does not exist but can be read by nio2so
+        /// Used to get very sparse info about an Avatar like name and description. <para/>
+        /// Complete and working.
         /// </summary>
         GetCharByID_Request = 0x7BAE5079,
+        /// <summary>
+        /// Used to get very sparse info about an Avatar like name and description. <para/>
+        /// Complete and working.
+        /// </summary>
         GetCharByID_Response = 0x1BAE532A,
         /// <summary>
         /// Used when the Client is updating the Char data on a specific Avatar.
@@ -168,6 +181,12 @@
         /// <para/> Not implemented
         /// </summary>
         GetRelationshipsByID_Request = 0x3BF96A6C,
+        /// <summary>
+        /// Used when requesting information on current relationships on a given Avatar.
+        /// <para/> This is on a basis of how THIS Avatar feels about other Avatars, supposedly.
+        /// <para/> There is a reverse of this Request for getting relationships in terms of how others feel about this Avatar
+        /// <para/> Not implemented
+        /// </summary>
         GetRelationshipsByID_Response = 0x9BF972CB,
         /// <summary>
         /// Gets the list of lot IDs that are added to the World Map
@@ -257,7 +276,23 @@
         /// <summary>
         /// Confirms with the Client what the money fields for the Avatar should be.
         /// </summary>
-        SetMoneyFields_Response = 0xFCF14801
+        SetMoneyFields_Response = 0xFCF14801,
+        /// <summary>
+        /// An exact-match search function for Sims and Houses
+        /// </summary>
+        SearchExactMatch_Request = 0xA952742D,
+        /// <summary>
+        /// The response packet to an exact-search
+        /// </summary>
+        SearchExactMatch_Response =  0x89527401,
+        /// <summary>
+        /// A general search, not exactly matching the resource requested
+        /// </summary>
+        Search_Request = 0x89483786,
+        /// <summary>
+        /// The response to a <see cref="Search_Request"/>
+        /// </summary>
+        Search_Response = 0xC94837CC
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.
@@ -267,15 +302,35 @@
     public enum TSO_PreAlpha_kMSGs : uint
     {
         /// <summary>
-        /// <see cref="TSODBRequestWrapper"/> pdus that are intended as Requests
+        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
         /// </summary>
         kDBServiceRequestMsg  = 0x3BF82D4E,
         /// <summary>
-        /// <see cref="TSODBRequestWrapper"/> pdus that are intended as Responses
+        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
         /// </summary>
         kDBServiceResponseMsg = 0xDBF301A9
     }
 
+    /// <summary>
+    /// Search categories in TSO: Pre-Alpha sent from <see cref="TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request"/>
+    /// or <see cref="TSO_PreAlpha_DBActionCLSIDs.Search_Request"/> PDUs
+    /// </summary>
+    public enum TSO_PreAlpha_SearchCategories : uint
+    {
+        None = 0x0,
+        /// <summary>
+        /// An Avatar search
+        /// </summary>
+        Avatar = 0x1,
+        /// <summary>
+        /// A House search
+        /// </summary>
+        House = 0x2,
+    }
+
+    /// <summary>
+    /// Value types that are commonly found in PDUs from TSO: Pre-Alpha
+    /// </summary>
     public enum TSOVoltronValueTypes
     {
         /// <summary>

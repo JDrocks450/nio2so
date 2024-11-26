@@ -8,42 +8,33 @@ using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
     internal class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper
     {        
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
+        [TSOVoltronDBWrapperField] public byte CompressionType { get; set; } = 0x01;
+        [TSOVoltronDBWrapperField] public uint DecompressedSize { get; set; }
+        [TSOVoltronDBWrapperField] public uint CompressedSize { get; set; }
+        [TSOVoltronDBWrapperField] public uint BlobSize { get; set; }
+        [TSOVoltronDBWrapperField] public byte[] HouseBlobData { get; set; }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetHouseBlobByIDResponse(string AriesID, string MasterID, uint houseID, TSODBHouseBlob Blob) :
+        public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob Blob) :
             base(
-                    AriesID,
-                    MasterID,
-                    0x00,
-                    0x49D8, //TSODBWrapperMessageSize.AutoSize,
-                    (uint)TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    0x21,
-                    (uint)TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    (uint)TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response,
-                    CombineArrays(new byte[]
-                    {
-                        0x00,0x00,0x05,0x3A, // <--- HOUSEID
-                        0x01,
-                        0x00,0x01,0x02,0x03, // <--- FROM NIOTSO ... SEEMS RANDOM
-                        0x04,0x05,0x06,0x07,
-                        0x08,0x09,0x0A,0x0B,
-                    },
-                        //Next is the RAS stream (uint Size, byte[] RAS)
-                        Blob.BlobData // <-- Stream here
-                    )
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response
                 )
         {
-            HouseID = houseID;            
+            HouseID = houseID;
+            DecompressedSize = CompressedSize = BlobSize = (uint)Blob.BlobData.Length;
+            HouseBlobData = Blob.BlobData;
 
-            MoveBufferPositionToDBMessageHeader();
-            EmplaceBody(HouseID); // <--- overwrite houseid here for now            
+            MakeBodyFromProperties();
         }
     }
 }
