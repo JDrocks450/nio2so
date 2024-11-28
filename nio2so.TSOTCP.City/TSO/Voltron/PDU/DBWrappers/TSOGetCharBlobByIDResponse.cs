@@ -3,6 +3,45 @@
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
+    /// This <see cref="TSOVoltronDBRequestWrapperPDU"/> contains a <c>TSOSerializableStream</c>
+    /// </summary>
+    interface ITSOSerializableStreamPDU
+    {
+        /// <summary>
+        /// 0x00 - None? 0x01 - little endian? 0x03 - Big endian?
+        /// <para/>For context, only 0x01 has ever been seen from/to the client in this version
+        /// <see cref="TSOSerializableStream"/>
+        /// </summary>
+        [TSOVoltronDBWrapperField]
+        byte CompressionMode { get; set; }
+        /// <summary>
+        /// The decompressed size of this TSOSerializableStream object
+        /// </summary>
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
+        uint DecompressedSize { get; set; }
+        /// <summary>
+        /// The compressed size of the TSOSerializableStream -- basically just the distance from the end of this DWORD to 
+        /// the end of the payload
+        /// </summary>
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
+        uint CompressedSize { get; set; }
+        /// <summary>
+        /// The size of the proceeding stream including these 4 bytes.
+        /// </summary>
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
+        uint StreamBytesSize { get; set; }
+        /// <summary>
+        /// The payload of this <see cref="ITSOSerializableStreamPDU"/>
+        /// </summary>
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronBodyArray]
+        byte[] StreamBytes { get; set; }
+    }
+
+    /// <summary>
     /// Contains a <see cref="TSODBCharBlob"/> object in a cTSOSerializable Stream, which contains a RefPack 
     /// of the char data. 
     /// <para/>RefPack is used to compress data for sending over the airwaves, as well as other usages.
@@ -10,7 +49,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// <para/>See also: <seealso href="http://wiki.niotso.org/Stream"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response)]
-    internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper
+    internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         const uint HEADERLEN = 0xD;
 
@@ -29,6 +68,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField]        
         public uint PayloadSize { get; set; }
+
+        //***ITSOSerializableStream
+
         /// <summary>
         /// 0x00 - None? 0x01 - little endian? 0x03 - Big endian?
         /// <para/>For context, only 0x01 has ever been seen from/to the client in this version
@@ -54,13 +96,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField]
         [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        public uint BlobSize {  get; set; }
+        public uint StreamBytesSize {  get; set; }
         /// <summary>
         /// The RefPack stream containing the CharBlob
         /// </summary>
         [TSOVoltronDBWrapperField]
         [TSOVoltronBodyArray]
-        public byte[] BlobDataStream { get; set; } = new byte[0];
+        public byte[] StreamBytes { get; set; } = new byte[0];
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharBlobByIDResponse"/> packet with the provided <paramref name="BlobData"/>
@@ -81,8 +123,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             PayloadSize = BlobData.Length + HEADERLEN;
             CompressionMode = 0x01;
             DecompressedSize = BlobData.DecompressedSize;
-            CompressedSize = BlobSize = BlobData.Length + sizeof(uint);
-            BlobDataStream = BlobData.BlobData;
+            CompressedSize = StreamBytesSize = BlobData.Length + sizeof(uint);
+            StreamBytes = BlobData.BlobData;
 
             MakeBodyFromProperties();
         }

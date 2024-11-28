@@ -78,7 +78,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     if (avatarID == 0) return false;
 
                                     EnqueuePacket(new TSOGetBookmarksResponse(avatarID,
-                                                                              1,
+                                                                              TSO_PreAlpha_SearchCategories.Avatar,
                                                                               TestingConstraints.MyFriendAvatarID)); // Add more to test Bookmarks
                                 }
                                 return true;
@@ -116,7 +116,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     EnqueuePacket(new TSOSetCharBlobByIDResponse(avatarID, charBlob));
                                 }
                                 break;
-
                             // The client is attempting to set the data at a specific avatarID to be the payload of the packet
                             case TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request:
                                 {

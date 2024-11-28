@@ -21,8 +21,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             )
         {
             Arg1 = 0x10111213;
-            LotCount = (uint)LotIDs.Length;
-            LotIDList = new byte[sizeof(uint) * LotCount];
+            LotCount = 0x01u;//(uint)LotIDs.Length;
+            LotIDList = new byte[sizeof(uint) * LotIDs.Length];
             int index = -1;
             foreach (uint LotID in LotIDs)
             {

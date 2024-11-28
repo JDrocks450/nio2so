@@ -13,7 +13,7 @@ namespace nio2so.Formats.Streams
     {
         private MemoryStream _stream;
 
-        public uint BodyType { get; set; }
+        public byte CompressionEndian { get; set; }
         public uint DecompressedSize { get; set; }
         public uint CompressedSize { get; set; }
 
@@ -23,9 +23,9 @@ namespace nio2so.Formats.Streams
         public override long Length => _stream.Length;
         public override long Position { get => _stream.Position; set => _stream.Position = value; }
 
-        public TSOSerializableStream(byte BodyType, byte[] Payload)
+        public TSOSerializableStream(byte Endian, byte[] Payload)
         {
-            this.BodyType = BodyType;
+            this.CompressionEndian = Endian;
             _stream = new MemoryStream();
             Write(Payload);
         }

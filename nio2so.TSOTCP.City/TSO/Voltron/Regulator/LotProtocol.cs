@@ -24,8 +24,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
+            IEnumerable<TSOVoltronPacket> SplitBlob(TSOVoltronPacket DBWrapper)
+            {
+                List<TSOVoltronPacket> packets = new();
+                if (DBWrapper.BodyLength > 10000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+                    packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
+                else packets.Add(DBWrapper);
+                return packets;
+            }
+
             List<TSOVoltronPacket> returnPackets = new();
             Response = new(returnPackets, null, null);
+
+            void EnqueuePacket(TSOVoltronPacket PacketToEnqueue) => returnPackets.AddRange(SplitBlob(PacketToEnqueue));
 
             switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
             {
@@ -40,7 +51,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     uint HouseID = roommatePDU.HouseID;
                                     if (HouseID == 0) 
                                         return false; // Seems to be mistaken to send in this scenario
-                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(HouseID, TestingConstraints.MyFriendAvatarID));                                        
+                                    returnPackets.Add(new TSOGetRoommateInfoByLotIDResponse(HouseID,
+                                        TestingConstraints.MyAvatarID, TestingConstraints.MyFriendAvatarID));                                        
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request:
@@ -56,8 +68,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
                                 {
-                                    uint HouseID = 0;// PDU.Data1.Value; // DATA1 is HouseID
-                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(PDU.AriesID,PDU.MasterID,HouseID, TestingConstraints.MyFriendAvatarID));
+                                    uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
+                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
                                 }
                                 return true;
                             // Requests a HouseBlob for the given HouseID
@@ -65,21 +77,22 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 {
                                     var housePacket = (TSOGetHouseBlobByIDRequest)PDU;
                                     uint HouseID = housePacket.HouseID; 
-                                    TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(0);
+                                    TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(HouseID);
                                     if (houseBlob == null)
                                         throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
-                                    returnPackets.Add(new TSOGetHouseBlobByIDResponse(HouseID, houseBlob));                                        
+                                    EnqueuePacket(new TSOGetHouseBlobByIDResponse(HouseID, houseBlob));                                        
                                 }
                                 return true;
                             // The Client is requesting to set the house data for this HouseID in the Database
                             case TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request:
                                 { // client is giving us house blob data
-                                    uint HouseID = 0;// PDU.Data1.Value; // DATA1 is HouseID
-                                    //PDU.ReadAdditionalMetadata(); // move packet position to end of metadata
-                                    PDU.SetPosition(0x29); // end of metadata
-                                    var blob = PDU.ReadToEnd();
+                                    TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
+
+                                    uint HouseID = housePDU.HouseID;
+                                    var blob = housePDU.StreamBytes;
                                     TSODBHouseBlob houseBlob = new(blob);
+
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, houseBlob);
                                 }

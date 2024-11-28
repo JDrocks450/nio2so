@@ -53,6 +53,7 @@
         cTSOSerializableStream = 0xDBB9126C,
 
         //*PROBES
+
         /// <summary>
         /// <see cref="TSO_PreAlpha_GZPROBE.GZPROBEID_cEAS"/>
         /// </summary>
@@ -292,7 +293,9 @@
         /// <summary>
         /// The response to a <see cref="Search_Request"/>
         /// </summary>
-        Search_Response = 0xC94837CC
+        Search_Response = 0xC94837CC,
+        BuyLotByAvatarID_Request = 0x1D8DD55A,
+        BuyLotByAvatarID_Response = 0xBD8DDB9B
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.

@@ -38,7 +38,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Will always set the server to redirect a client into a seemingly offline testing lot
         /// </summary>
-        public const bool LOTTestingMode = false;
+        public const bool LOTTestingMode = true;
         /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
         /// </summary>

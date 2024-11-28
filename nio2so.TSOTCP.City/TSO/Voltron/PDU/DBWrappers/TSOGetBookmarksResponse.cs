@@ -45,11 +45,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronBodyArray] public byte[] ItemList { get; }
 
         /// <summary>
-        /// Makes a default response packet using the supplied parameters.
+        /// Creates a new <see cref="TSOGetBookmarksResponse"/> PDU with the provided parameters
         /// </summary>
-        /// <param name="AriesID"></param>
-        /// <param name="MasterID"></param>
-        public TSOGetBookmarksResponse(uint AvatarID, uint ListType, params uint[] ItemIDs) :
+        /// <param name="AvatarID">The AvatarID we're supplying bookmarks for</param>
+        /// <param name="ListType">Not functional in this version? Always gets added to Avatar List</param>
+        /// <param name="ItemIDs">The IDs of the items to add to the Bookmarks list</param>
+        public TSOGetBookmarksResponse(uint AvatarID, TSO_PreAlpha_SearchCategories ListType, params uint[] ItemIDs) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -57,7 +58,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 )
         {
             this.AvatarID = AvatarID;
-            this.ListType = ListType;
+            this.ListType = (uint)ListType;
             ItemCount = (uint)ItemIDs.Length;
             ItemList = new byte[sizeof(uint) * ItemCount];
             int index = -1;

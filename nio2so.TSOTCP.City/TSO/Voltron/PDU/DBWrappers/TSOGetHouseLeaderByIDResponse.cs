@@ -15,7 +15,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x0;
         [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
 
-        public TSOGetHouseLeaderByIDResponse(string AriesID, string MasterID, uint HouseID, uint LeaderID) :
+        public TSOGetHouseLeaderByIDResponse(uint HouseID, uint LeaderID) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
