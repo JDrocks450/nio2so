@@ -21,7 +21,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 
         public uint Value { get; set; }
     }
-    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_RESPONSE)]
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_RESPONSE_PDU)]
     internal class TSOSetAcceptAlertsResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;

@@ -10,6 +10,8 @@ namespace nio2so.Data.Common.Testing
     {
         //****BETA TESTING
 
+        public const int ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
+
         //**Default Account
         public const string LoginUsername = "bloaty";
         public const string LoginPassword = "asdf";
@@ -36,7 +38,7 @@ namespace nio2so.Data.Common.Testing
         /// </summary>
         public const bool CASTestingMode = false;
         /// <summary>
-        /// Will always set the server to redirect a client into a seemingly offline testing lot
+        /// Will set the server to always redirect a client into a seemingly offline testing lot
         /// </summary>
         public const bool LOTTestingMode = true;
         /// <summary>
@@ -58,5 +60,11 @@ namespace nio2so.Data.Common.Testing
         public const string WorkspaceDirectory = "/packets";
         public const string AvatarDataDictionaryFileName = WorkspaceDirectory + "/db/avatardataservlet.json";
         public const string UserAccountDictionaryFileName = WorkspaceDirectory + "/db/useraccounts.json";
+
+        //**VERY TEMPORARY
+        /// <summary>
+        /// Sends a GetHouseBlobByID_Response blob that, while wrongly formatted, strangely works to at least get onto a lot, right now.
+        /// </summary>
+        public const bool JustGetMeToLotView = true;
     }
 }

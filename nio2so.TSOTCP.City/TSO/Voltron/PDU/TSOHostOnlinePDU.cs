@@ -30,13 +30,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 #else
         public uint HostVersion { get; } 
         public ushort SizeLimit { get; }               
-        public uint Arg3 { get; }
+        //public uint Arg3 { get; }
         public TSOHostOnlinePDU(uint hostVersion = 0x0C, ushort packetSize = PACKET_SIZE_LIMIT, uint arg3 = 0x7FFF7FFF)
 #endif        
         {
             HostVersion = hostVersion;
             SizeLimit = packetSize;
-            Arg3 = arg3;
+            //Arg3 = arg3;
             MakeBodyFromProperties();
         }
     }

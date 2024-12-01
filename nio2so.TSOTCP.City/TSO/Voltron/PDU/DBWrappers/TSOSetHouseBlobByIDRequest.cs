@@ -20,7 +20,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint SARLength { get; set; }
         [TSOVoltronDBWrapperField] public uint SARHeader { get; set; } = 0x5F534152; // "_SAR"
         /// <summary>
-        /// This is the <see cref="DecompressedSize"/> + 20 bytes?
+        /// This is the <see cref="DecompressedSize"/> + the length of all bytes from HouseID (inclusive) to this field (inclusive) (20 bytes)
         /// </summary>
         [TSOVoltronDBWrapperField] [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint TotalSize { get; set; }
         /// <summary>

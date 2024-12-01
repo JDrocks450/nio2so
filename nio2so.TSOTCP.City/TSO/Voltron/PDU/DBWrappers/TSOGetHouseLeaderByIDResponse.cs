@@ -8,7 +8,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Nothing is known about this PDU... this is a placeholder file
-    /// </summary>
+    /// </summary>    
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response)] 
     internal class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
@@ -19,9 +20,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response
+                    TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response
                 )
         {
+            this.HouseID = HouseID;
+            this.LeaderID = LeaderID;
+
             MakeBodyFromProperties();
         }
     }

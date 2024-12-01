@@ -134,6 +134,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     EnqueuePacket(new TSOSetCharByIDResponse(avatarID));
                                 }
                                 return true;
+                            case TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Request:
+                                {
+                                    var debitcreditPDU = (TSODebitCreditRequestPDU)PDU;
+                                    EnqueuePacket(new TSODebitCreditResponsePDU(
+                                        debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount + 12345));
+                                }
+                                return true;
                             case TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request:
                                 {
                                     var moneyPacket = ((TSOSetMoneyFieldsRequest)PDU);
@@ -144,7 +151,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     //log this to disk
                                     TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
                                         RegulatorName, $"AvatarID: {moneyPacket.AvatarID} has ${moneyPacket.Arg1}"));
-                                    EnqueuePacket(new TSOSetMoneyFieldsResponse(avatarID));
+                                    EnqueuePacket(new TSOSetMoneyFieldsResponse(avatarID,1,2,3));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetRelationshipsByID_Request:

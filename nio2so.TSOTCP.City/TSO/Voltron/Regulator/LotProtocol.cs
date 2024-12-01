@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             IEnumerable<TSOVoltronPacket> SplitBlob(TSOVoltronPacket DBWrapper)
             {
                 List<TSOVoltronPacket> packets = new();
-                if (DBWrapper.BodyLength > 10000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+                if (DBWrapper.BodyLength > 100000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
                     packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
                 else packets.Add(DBWrapper);
                 return packets;
@@ -61,7 +61,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request:
-                                // Gets a TSODataDefinition Lot struct with the LotID provided
+                            // Gets a TSODataDefinition Lot struct with the LotID provided
                                 {
 
                                 }
@@ -70,18 +70,32 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 {
                                     uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
                                     returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
+                                    //TESTING
+                                    returnPackets.Add(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID.ToString(), TestingConstraints.MyAvatarName));
                                 }
                                 return true;
                             // Requests a HouseBlob for the given HouseID
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request:
                                 {
+                                    //log debug mode
+                                    TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Warnings,
+                                        RegulatorName, nameof(TestingConstraints.JustGetMeToLotView) + " is " +
+                                        TestingConstraints.JustGetMeToLotView));
+
                                     var housePacket = (TSOGetHouseBlobByIDRequest)PDU;
-                                    uint HouseID = housePacket.HouseID; 
-                                    TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(HouseID);
+                                    uint HouseID = housePacket.HouseID;
+                                    //__TESTING MODE__
+                                    uint loadHouseID = TestingConstraints.JustGetMeToLotView ? 1 : 0;
+                                    //**
+                                    TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
                                     if (houseBlob == null)
                                         throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
-
-                                    EnqueuePacket(new TSOGetHouseBlobByIDResponse(HouseID, houseBlob));                                        
+                                    //**TESTING MODE**
+                                    TSOVoltronPacket response = TestingConstraints.JustGetMeToLotView ?
+                                        new TSOGetHouseBlobByIDResponseDEBUG(HouseID, houseBlob) :
+                                        new TSOGetHouseBlobByIDResponseTEST(HouseID, houseBlob);
+                                    //***
+                                    EnqueuePacket(response);                                        
                                 }
                                 return true;
                             // The Client is requesting to set the house data for this HouseID in the Database
