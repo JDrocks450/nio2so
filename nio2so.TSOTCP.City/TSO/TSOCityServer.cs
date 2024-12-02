@@ -113,20 +113,8 @@ namespace nio2so.TSOTCP.City.TSO
                 if (!File.Exists(@"E:\packets\avatar\charblob_recompressed.charblob"))
                 {
                     byte[] fileData = File.ReadAllBytes(@"E:\packets\avatar\charblob_decompressed.charblob");
-                    byte[] avatarIDbytes = EndianBitConverter.Little.GetBytes(1337u);
-                    uint offset = 0xF;
-                    fileData[offset] = avatarIDbytes[0];
-                    fileData[offset + 1] = avatarIDbytes[1];
-                    fileData[offset + 2] = avatarIDbytes[2];
-                    fileData[offset + 3] = avatarIDbytes[3];
                     byte[] compressedBytes = new Decompresser().Compress(fileData);
-                    File.WriteAllBytes(@"E:\packets\avatar\charblob_precompressed.charblob", fileData);
                     File.WriteAllBytes(@"E:\packets\avatar\charblob_recompressed.charblob", compressedBytes);
-                    //*decompress the compressed data to test for accuracy
-                    fileData = File.ReadAllBytes(@"E:\packets\avatar\charblob_recompressed.charblob");
-                    uint decompressedSize = EndianBitConverter.Little.ToUInt32(fileData, 0);
-                    fileData = new Decompresser().Decompress(fileData.Skip(4).ToArray());
-                    File.WriteAllBytes(@"E:\packets\avatar\charblob_derecompressed.charblob", fileData);
                 }
             }
 

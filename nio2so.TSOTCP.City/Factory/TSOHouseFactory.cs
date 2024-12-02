@@ -18926,6 +18926,6 @@ namespace nio2so.TSOTCP.City.Factory
         /// </summary>
         /// <param name="houseID"></param>
         /// <param name="houseBlob"></param>
-        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob houseBlob) => SetDataByIDToDisk(houseID, houseBlob.BlobData);    
+        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob houseBlob) => SetDataByIDToDisk(houseID, houseBlob.BlobData, false);    
     }
 }

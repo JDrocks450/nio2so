@@ -12,9 +12,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response)] 
     internal class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
     {
-        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
-        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x0;
+        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }        
         [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x1;
 
         public TSOGetHouseLeaderByIDResponse(uint HouseID, uint LeaderID) :
             base(

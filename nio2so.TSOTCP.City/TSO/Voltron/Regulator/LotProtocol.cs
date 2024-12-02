@@ -69,9 +69,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
                                 {
                                     uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
-                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
-                                    //TESTING
-                                    returnPackets.Add(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID.ToString(), TestingConstraints.MyAvatarName));
+                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));                                    
                                 }
                                 return true;
                             // Requests a HouseBlob for the given HouseID
@@ -85,7 +83,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     var housePacket = (TSOGetHouseBlobByIDRequest)PDU;
                                     uint HouseID = housePacket.HouseID;
                                     //__TESTING MODE__
-                                    uint loadHouseID = TestingConstraints.JustGetMeToLotView ? 1 : 0;
+                                    uint loadHouseID = TestingConstraints.JustGetMeToLotView ? 1 : HouseID;
                                     //**
                                     TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
                                     if (houseBlob == null)

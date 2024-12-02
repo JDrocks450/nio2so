@@ -65,6 +65,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Sends a GetHouseBlobByID_Response blob that, while wrongly formatted, strangely works to at least get onto a lot, right now.
         /// </summary>
-        public const bool JustGetMeToLotView = true;
+        public const bool JustGetMeToLotView = false;
+        public const string MyFriendAvatarName = "FriendlyBuddy";
     }
 }
