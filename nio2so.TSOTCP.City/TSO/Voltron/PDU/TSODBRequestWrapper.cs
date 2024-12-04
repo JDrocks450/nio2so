@@ -158,39 +158,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             MakeBodyFromProperties();                                 
         }
 
-        /// <summary>
-        /// Creates a new <see cref="TSODBRequestWrapper"/> PDU where all properties must be set manually.
-        /// <para/> Data1,2,3 and 4 plus extra clsid will need to be set manually if applicable by using the 
-        /// <paramref name="body"/> parameter and <paramref name="flags"/> will also need to be set manually.
-        /// </summary>
-        [Obsolete] 
-        public TSODBRequestWrapper(string ariesID,
-                                   string masterID,
-                                   ushort bitfield_Arg1,
-                                   uint messageSize,
-                                   uint tSOPacketFormatCLSID,
-                                   byte headerLength,
-                                   uint kMSGID,
-                                   uint tSOSubMsgCLSID,
-                                   byte[] body)
-            : this()
-        {
-            AriesID = ariesID;
-            MasterID = masterID;
-            Bitfield_Arg1 = bitfield_Arg1;
-            if (((TSODBWrapperMessageSize)messageSize).IsAutoSize)
-                messageSize = (uint)(DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + body.Length);
-            if (messageSize > short.MaxValue)
-                throw new OverflowException($"DBRequestWrapperPDU::MessageSize ({messageSize}) is way too large. (max: {short.MaxValue})");
-            MessageLength = messageSize;
-            TSOPacketFormatCLSID = (uint)tSOPacketFormatCLSID;
-            this.kMSGID = (uint)kMSGID;
-            HeaderLength = headerLength;
-            TSOSubMsgCLSID = (uint)tSOSubMsgCLSID;
-            FillPacketToAvailableSpace();
-            MakeBodyFromProperties();
-        }
-
         public override void MakeBodyFromProperties()
         {
             base.MakeBodyFromProperties();

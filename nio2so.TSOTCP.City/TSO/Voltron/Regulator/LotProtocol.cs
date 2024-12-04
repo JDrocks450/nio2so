@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             IEnumerable<TSOVoltronPacket> SplitBlob(TSOVoltronPacket DBWrapper)
             {
                 List<TSOVoltronPacket> packets = new();
-                if (DBWrapper.BodyLength > 100000)//TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
+                if (DBWrapper.BodyLength > TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
                     packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
                 else packets.Add(DBWrapper);
                 return packets;
@@ -44,6 +44,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     { // TSO Net Message Standard type responses (most common)
                         switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
                         {
+                            //Avatar wants to buy a cool new lot, you know?
+                            case TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request:
+                                {
+                                    TSOBuyLotByAvatarIDRequest lotPurchasePDU = (TSOBuyLotByAvatarIDRequest)PDU;
+                                    uint? NewID = TSOFactoryBase.Get<TSOHouseFactory>()?.Create();
+                                    if (!NewID.HasValue) throw new NullReferenceException("Factory could not be mapped or there was an error creating a house.");
+                                    TSOVoltronPacket buyPDU = new TSOBuyLotByAvatarIDResponse(NewID.Value, 5199, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y);                                    
+                                    returnPackets.Add(buyPDU);
+                                }
+                                return true;
                             // Gets information about the roommates on a given lot
                             case TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request:
                                 {
@@ -57,7 +67,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request:
                                 {
-                                    returnPackets.Add(new TSOGetLotListResponse(TestingConstraints.MyHouseID));
+                                    returnPackets.Add(TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotList.dat", TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response));
+                                    //returnPackets.Add(new TSOGetLotListResponse(TestingConstraints.MyHouseID));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request:
@@ -69,7 +80,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
                                 {
                                     uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
-                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));                                    
+                                    returnPackets.Add(new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
                                 }
                                 return true;
                             // Requests a HouseBlob for the given HouseID
@@ -105,6 +116,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     var blob = housePDU.StreamBytes;
                                     TSODBHouseBlob houseBlob = new(blob);
 
+                                    HouseID = 6057;
+
                                     //log this to disk
                                     TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, houseBlob);
                                 }
@@ -132,7 +145,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             {                
                 case TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU:
                     {
-                        defaultSend(new TSOLoadHouseResponsePDU());
+                        defaultSend(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
                     }
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU:
@@ -171,6 +184,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 case TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU:
                     {
                         defaultSend(new TSOListRoomsResponsePDU());
+                    }
+                    break;
+                case TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU:
+                    {
+                        var msg = (TSOChatMessagePDU)PDU;
+                        defaultSend(new TSOChatMessageFailedPDU(msg.Message));
                     }
                     break;
             }

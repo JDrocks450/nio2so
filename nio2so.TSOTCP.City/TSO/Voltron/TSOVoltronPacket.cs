@@ -98,6 +98,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     EmplaceBody((byte)myValue);
                 else if (property.PropertyType == typeof(DateTime))
                     EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
+                else if (property.PropertyType == typeof(Boolean))
+                    EmplaceBody((byte)((bool)myValue ? 1 : 0));
                 else wroteValue = false;
 
                 if (wroteValue) continue;
@@ -241,6 +243,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     if (property.PropertyType == typeof(byte))
                     {
                         property.SetValue(this, (byte)ReadBodyByte());
+                        continue;
+                    }
+                    else if (property.PropertyType == typeof(bool))
+                    {
+                        byte value = (byte)ReadBodyByte();
+                        property.SetValue(this, value != 0);
                         continue;
                     }
                     else if (property.PropertyType == typeof(UInt16) || property.PropertyType == typeof(Int16))

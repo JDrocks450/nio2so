@@ -1,0 +1,35 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+{
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
+    internal class TSOChatMessagePDU : TSOVoltronPacket
+    {
+        public byte Arg1 { get; set; }
+        public string Str1 { get; set; }
+        public string Str2 { get; set; }
+        public ushort Arg2 { get; set; }
+        public string Message {  get; set; }
+
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU;
+
+        public TSOChatMessagePDU() : base() {
+            MakeBodyFromProperties();
+        }
+
+        public TSOChatMessagePDU(string ChatMessage) : this()
+        {
+            Arg1 = 0x01;
+            Str1 = "A 1337";
+            Str2 = "bsiquikc";
+            Arg2 = 0x00;
+            Message = ChatMessage;
+
+            MakeBodyFromProperties();
+        }
+    }
+}

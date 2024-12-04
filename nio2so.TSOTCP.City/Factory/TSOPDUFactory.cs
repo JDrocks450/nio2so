@@ -60,14 +60,18 @@ namespace nio2so.TSOTCP.City.Factory
             cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType, Stream);
             byte[] temporaryBuffer = new byte[Size];
             Stream.ReadExactly(temporaryBuffer, 0, (int)Size);
+            if (cTSOVoltronpacket == null)
+            {
+                TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Errors,
+                    nameof(TSOPDUFactory), $"Reflected packet was null. T: {VPacketType} S: {Size}. Continuing..."));
+                return null;
+            }
             if (cTSOVoltronpacket is TSOBlankPDU)
             {
-                TSOCityTelemetryServer.Global.OnVoltron_OnDiscoveryPacket(cTSOVoltronpacket);
+                TSOCityTelemetryServer.Global.OnVoltron_OnDiscoveryPacket(VPacketType, temporaryBuffer);
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
-            //if (cTSOVoltronpacket is TSODBRequestWrapper dbPacket)
-              //  dbPacket.ReadAdditionalMetadata(); // make sure the metadata is read!
             return cTSOVoltronpacket;
         }
 
@@ -215,12 +219,9 @@ namespace nio2so.TSOTCP.City.Factory
                             "0x" + VoltronPacketType.ToString("X4");
             Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
             string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,$"cTSOPDU [{displayName}].dat");
-            if (!File.Exists(fileName))
-            {
-                File.WriteAllBytes(fileName, PacketData);
-                return true;
-            }
-            return false;
+            bool existing = File.Exists(fileName);
+            File.WriteAllBytes(fileName, PacketData);
+            return !existing;
         }
     }
 }

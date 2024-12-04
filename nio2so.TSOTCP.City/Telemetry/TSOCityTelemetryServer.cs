@@ -6,6 +6,7 @@ using nio2so.TSOTCP.City.TSO.Voltron;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Channels;
@@ -51,6 +52,7 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         public record ConsoleLogEntry(LogSeverity Severity, string Sender, string Content, DateTime? Time = null);
 
+        private Stopwatch _groupWatch;
         private readonly TSOCityServer _parent;
         private string? _systemLogPath;
         public bool IsSysLogging => _systemLogPath != null;
@@ -78,7 +80,7 @@ namespace nio2so.TSOTCP.City.Telemetry
             QConsole.WriteLine("TelemetryServer", "Init complete.");
             Log($"\n****** LOG STARTED {DateTime.Now.ToString()} ******\n");
 
-            Global = this; // ugh
+            Global = this; // ugh            
         }
 
         internal void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket Packet, TSOVoltronPacket? PDUEnclosed = default)
@@ -128,17 +130,19 @@ namespace nio2so.TSOTCP.City.Telemetry
             PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
         }
 
-        internal void OnVoltron_OnDiscoveryPacket(TSOVoltronPacket DiscoveredPacket, uint? ClientID = null)
+        internal void OnVoltron_OnDiscoveryPacket(ushort PacketType, byte[] PacketData, uint? ClientID = null)
         {
-            bool written = TSOPDUFactory.LogDiscoveryPacketToDisk(DiscoveredPacket.VoltronPacketType, DiscoveredPacket.Body);
-            var displayName = "0x" + DiscoveredPacket.VoltronPacketType.ToString("X4");
+            bool written = TSOPDUFactory.LogDiscoveryPacketToDisk(PacketType, PacketData);
+            var displayName = Enum.IsDefined((TSO_PreAlpha_VoltronPacketTypes)PacketType) ?
+                ((TSO_PreAlpha_VoltronPacketTypes)PacketType).ToString() :
+                "0x" + PacketType.ToString("X4");
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.ForegroundColor = ConsoleColor.DarkMagenta;
             Log($"TSO PDU Discovery ***********\n");
             if (written)            
-                Log($"Discovered the {displayName} PDU with: {DiscoveredPacket.BodyLength} bytes. Add it to constants!");            
+                Log($"Discovered the {displayName} PDU with: {PacketData.Length} bytes. Dumped to Discoveries.");            
             else
-                Log($"Found the {displayName} PDU with: {DiscoveredPacket.BodyLength} bytes. Make a class for it. ");
+                Log($"Found the {displayName} PDU with: {PacketData.Length} bytes. You already have a copy of that one.");
             Log($"\n****************************");
         }
 
