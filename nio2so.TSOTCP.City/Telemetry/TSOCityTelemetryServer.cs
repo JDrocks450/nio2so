@@ -65,7 +65,7 @@ namespace nio2so.TSOTCP.City.Telemetry
         internal TSOCityTelemetryServer(TSOCityServer Parent, string? SysLogPath = null)
         {
             _parent = Parent;
-            _systemLogPath = SysLogPath;            
+            _systemLogPath = SysLogPath;
 
             Init();
         }
@@ -107,7 +107,7 @@ namespace nio2so.TSOTCP.City.Telemetry
             Console.ForegroundColor = Direction switch
             {
                 NetworkTrafficDirections.INBOUND => ConsoleColor.Green,
-                NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan  ,
+                NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
                 _ => ConsoleColor.Blue
             };
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
@@ -139,8 +139,8 @@ namespace nio2so.TSOTCP.City.Telemetry
 
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
             Log($"TSO PDU Discovery ***********\n");
-            if (written)            
-                Log($"Discovered the {displayName} PDU with: {PacketData.Length} bytes. Dumped to Discoveries.");            
+            if (written)
+                Log($"Discovered the {displayName} PDU with: {PacketData.Length} bytes. Dumped to Discoveries.");
             else
                 Log($"Found the {displayName} PDU with: {PacketData.Length} bytes. You already have a copy of that one.");
             Log($"\n****************************");
@@ -176,7 +176,7 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob houseBlob)
         {
-            OnBlobBase(Direction,HouseID,houseBlob);
+            OnBlobBase(Direction, HouseID, houseBlob);
             if (Direction == NetworkTrafficDirections.INBOUND)
                 TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, houseBlob);
         }
@@ -207,7 +207,17 @@ namespace nio2so.TSOTCP.City.Telemetry
         {
             Console.WriteLine(Message);
             if (!IsSysLogging) return;
-            //File.WriteAllLines(_systemLogPath, new[] { Message });
-        }        
+            lock (this)
+            {
+                using (FileStream fs = File.OpenWrite(_systemLogPath))
+                {
+                    fs.Seek(0, SeekOrigin.End);
+                    using (StreamWriter sw = new StreamWriter(fs))
+                    {                        
+                        sw.WriteLine(Message);
+                    }
+                }
+            }
+        }
     }
 }

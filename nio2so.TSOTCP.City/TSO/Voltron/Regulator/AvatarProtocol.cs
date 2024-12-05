@@ -79,7 +79,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
                                     EnqueuePacket(new TSOGetBookmarksResponse(avatarID,
                                                                               TSO_PreAlpha_SearchCategories.Avatar,
-                                                                              TestingConstraints.MyFriendAvatarID)); // Add more to test Bookmarks
+                                                                              TestingConstraints.MyFriendAvatarID,
+                                                                              2027,
+                                                                              TestingConstraints.MyAvatarID)); // Add more to test Bookmarks
                                 }
                                 return true;
                             // The client is attempting to send us a newly created Avatar blob

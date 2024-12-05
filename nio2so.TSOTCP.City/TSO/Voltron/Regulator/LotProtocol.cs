@@ -20,6 +20,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [TSORegulator("LotProtocol")]
     internal class LotProtocol : ITSOProtocolRegulator
     {
+        private uint _houseCreateX = 83, _houseCreateY = 157; // ocean island
+
         public string RegulatorName => "LotProtocol";
 
         public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
@@ -50,7 +52,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                     TSOBuyLotByAvatarIDRequest lotPurchasePDU = (TSOBuyLotByAvatarIDRequest)PDU;
                                     uint? NewID = TSOFactoryBase.Get<TSOHouseFactory>()?.Create();
                                     if (!NewID.HasValue) throw new NullReferenceException("Factory could not be mapped or there was an error creating a house.");
-                                    TSOVoltronPacket buyPDU = new TSOBuyLotByAvatarIDResponse(NewID.Value, 5199, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y);                                    
+                                    TSOVoltronPacket buyPDU = new TSOBuyLotByAvatarIDResponse(NewID.Value,
+                                                                                              TestingConstraints.BuyLotEndingFunds,
+                                                                                              lotPurchasePDU.Lot_X,
+                                                                                              lotPurchasePDU.Lot_Y);
+                                    TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message, RegulatorName,
+                                        "Congrats on the new property. Your GetLotList_Response has been updated to include your new place."));
+                                    _houseCreateX = lotPurchasePDU.Lot_X;
+                                    _houseCreateY = lotPurchasePDU.Lot_Y;
+
                                     returnPackets.Add(buyPDU);
                                 }
                                 return true;
@@ -67,14 +77,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request:
                                 {
-                                    returnPackets.Add(TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotList.dat", TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response));
-                                    //returnPackets.Add(new TSOGetLotListResponse(TestingConstraints.MyHouseID));
+                                    returnPackets.Add(new TSOGetLotListResponse(TestingConstraints.BuyLotID, _houseCreateX, _houseCreateY));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request:
                             // Gets a TSODataDefinition Lot struct with the LotID provided
                                 {
-
+                                    returnPackets.Add(TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotByID_Response.dat",
+                                        TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response));
                                 }
                                 return true;
                             case TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request:
@@ -184,6 +194,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 case TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU:
                     {
                         defaultSend(new TSOListRoomsResponsePDU());
+                    }
+                    break;
+                // Sent when the client would like to enter into a Room Server
+                case TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU:
+                    {
+                        var roomPDU = (TSOLotEntryRequestPDU)PDU;
+                        byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
+                        defaultSend(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_ROOM_PDU, body));
                     }
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU:

@@ -44,7 +44,8 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Whenever you buy a lot, this is the ID for the lot.
         /// </summary>
-        public const uint BuyLotID = 2147;
+        public const uint BuyLotID = 0x2121;
+        public const uint BuyLotEndingFunds = 0xB00B;
         /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
         /// </summary>

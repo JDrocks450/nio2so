@@ -294,6 +294,7 @@
         /// Not implemented
         /// </summary>
         GetLotByID_Request = 0xFBE96AA3,
+        GetLotByID_Response = 0x9BE96AF0,
         /// <summary>
         /// Requests who is currently the House Leader of a given lot.
         /// </summary>
@@ -318,6 +319,9 @@
         /// GZCLSID_cDBGetHouseBlobByID_Response
         /// </summary>
         GetHouseBlobByID_Response = 0xBBB8D0A7,
+        GetHouseThumbByID_Request = 0x9BF18F10,
+        GetHouseThumbByID_Response = 0x9BF19573,
+        SetLotByID_Request = 0xBBF04F19,
         /// <summary>
         /// Asks for Bookmarks. Data1 is the AvatarID
         /// </summary>

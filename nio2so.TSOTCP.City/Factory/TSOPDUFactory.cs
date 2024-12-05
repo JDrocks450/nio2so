@@ -133,8 +133,10 @@ namespace nio2so.TSOTCP.City.Factory
                         //Use reflection to make corresponding type of DBWrapper packet format
                         if (_dbtypeMap.TryGetValue(clsID, out var dbtype))
                         {
-                            var retValue = (TSODBRequestWrapper)dbtype?.Assembly?.CreateInstance(dbtype.FullName);
+                            var retValue = dbtype?.Assembly?.CreateInstance(dbtype.FullName) as TSODBRequestWrapper;
                             if (retValue != null) return retValue;
+                            throw new InvalidDataException($"Your type: {dbtype.Name} is not a {nameof(TSODBRequestWrapper)}! " +
+                                $"You must fix this and recompile.");
                             //Let case fall through to default Type map implementation below
                         }
                     }
