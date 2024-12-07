@@ -26,6 +26,10 @@
                         <MenuItem Header="View TGA..." Name="ViewTGAItem"/>
                         <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
                     </MenuItem>
+                    <MenuItem Header="Plugin...">
+                        <MenuItem Header="Format Constants Table to Enum" Name="EnumPluginItem"/>
+                        <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
+                    </MenuItem>
                     <MenuItem Header="Help...">
 
                     </MenuItem>

@@ -1,6 +1,9 @@
 ﻿using MiscUtil.Conversion;
+using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.Factory;
+using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
+using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
 using System;
@@ -147,13 +150,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <param name="bodyStream"></param>
         /// <param name="fooVoltronPacketType"></param>
         /// <param name="fooPayloadSize"></param>
-        public static void ReadVoltronHeader(Stream bodyStream, out ushort fooVoltronPacketType, out uint fooPayloadSize)
+        public static int ReadVoltronHeader(Stream bodyStream, out ushort fooVoltronPacketType, out uint fooPayloadSize)
         {
             long initialPosition = bodyStream.Position;
             byte[] headerBytes = new byte[6];
             bodyStream.ReadExactly(headerBytes, 0, 6);
             ReadVoltronHeader(headerBytes, out fooVoltronPacketType, out fooPayloadSize);
             bodyStream.Position = initialPosition;
+            return 6;
         }
         /// <summary>
         /// Reads the first <see cref="TSOVoltronPacketHeader.HEADER_SIZE"/> bytes of the <paramref name="bodyStream"/>
@@ -239,30 +243,34 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                     Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
                     bool readValue = true;
 
+                    Type PropertyType = property.PropertyType;
+                    while (PropertyType.IsEnum)
+                        PropertyType = Enum.GetUnderlyingType(PropertyType);
+
                     //---NUMBERS
-                    if (property.PropertyType == typeof(byte))
+                    if (PropertyType == typeof(byte))
                     {
                         property.SetValue(this, (byte)ReadBodyByte());
                         continue;
                     }
-                    else if (property.PropertyType == typeof(bool))
+                    else if (PropertyType == typeof(bool))
                     {
                         byte value = (byte)ReadBodyByte();
                         property.SetValue(this, value != 0);
                         continue;
                     }
-                    else if (property.PropertyType == typeof(UInt16) || property.PropertyType == typeof(Int16))
+                    else if (PropertyType == typeof(UInt16) || PropertyType == typeof(Int16))
                     {
                         ushort fromPacket = ReadBodyUshort(); // read an unsigned short
-                        if (property.PropertyType == typeof(UInt16)) // is it even an unsigned short?
+                        if (PropertyType == typeof(UInt16)) // is it even an unsigned short?
                             property.SetValue(this, fromPacket); // yeah
                         else property.SetValue(this, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
                         continue;
                     }
-                    else if (property.PropertyType == typeof(UInt32) || property.PropertyType == typeof(Int32))
+                    else if (PropertyType == typeof(UInt32) || PropertyType == typeof(Int32))
                     {
                         uint fromPacket = ReadBodyDword(); // read an unsigned int
-                        if (property.PropertyType == typeof(UInt32)) // is it even an unsigned int?
+                        if (PropertyType == typeof(UInt32)) // is it even an unsigned int?
                             property.SetValue(this, fromPacket); // yeah
                         else property.SetValue(this, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
                         continue;
@@ -271,7 +279,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
                     if (readValue) continue;
 
-                    if (property.PropertyType == typeof(DateTime))
+                    if (PropertyType == typeof(DateTime))
                     {
                         uint fromPacket = ReadBodyDword();
                         var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
@@ -287,32 +295,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                         type = TSOVoltronValueTypes.Pascal;
 
                     //---STRING
-                    string destValue = "Error.";
-                    switch (type)
+                    try
                     {
-                        case TSOVoltronValueTypes.Pascal:
-                            {
-                                ushort strHeader = ReadBodyUshort(Endianness.LittleEndian);
-                                if (strHeader != 0x80)
-                                    throw new Exception("This is supposed to be a string but I don't think it is one...");
-                                ushort len = ReadBodyUshort(Endianness.BigEndian);
-                                byte[] strBytes = ReadBodyByteArray((int)len);
-                                destValue = Encoding.UTF8.GetString(strBytes);
-                            }
-                            break;
-                        case TSOVoltronValueTypes.NullTerminated:
-                            destValue = ReadBodyNullTerminatedString(attribute.NullTerminatedMaxLength);
-                            break;
-                        case TSOVoltronValueTypes.Length_Prefixed_Byte:
-                            {
-                                int len = ReadBodyByte();
-                                byte[] strBytes = ReadBodyByteArray((int)len);
-                                destValue = Encoding.UTF8.GetString(strBytes);
-                            }
-                            break;
+                        string destValue = TSOVoltronBinaryReader.ReadString(type, _bodyBuffer, attribute?.NullTerminatedMaxLength ?? 255);
+                        property.SetValue(this, destValue);
                     }
-
-                    property.SetValue(this, destValue);
+                    catch (Exception ex)
+                    {
+                        TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Errors,
+                            "TSOVoltronPDU_Serializer", ex.Message + " Skipping property: " + property));
+                    }
                 }
             }
             return (int)PayloadSize;
@@ -445,6 +437,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <param name="Directory"></param>
         public void WritePDUToDisk(bool Incoming = true, string Directory = TSOVoltronConst.VoltronPacketDirectory)
         {
+            if (!TestingConstraints.LogPackets) return;
             System.IO.Directory.CreateDirectory(Directory);
             var now = DateTime.Now;
             string myName = $"{(Incoming ? "IN" : "OUT")} [{FriendlyPDUName}] VoltronPDU {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";

@@ -60,6 +60,7 @@ namespace nio2so.TSOTCP.City.TSO
         public const UInt16 TSO_Aries_SendRecvLimit = 1024;
 
         private List<TSOVoltronPacket> _VoltronBacklog = new();
+        private TSORegulatorManager _regulatorManager;
 
         public TSOCityTelemetryServer Telemetry { get; }
 
@@ -71,6 +72,9 @@ namespace nio2so.TSOTCP.City.TSO
 
             //**TELEMETRY
             Telemetry = new(this, TSOVoltronConst.SysLogPath);
+
+            //**REGULATOR
+            _regulatorManager = new(this);
         }
 
         public override void Start()
@@ -233,7 +237,7 @@ namespace nio2so.TSOTCP.City.TSO
                         if (dbPacket == default) break;                        
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID;
                         //Handle DB request packets here and enqueue the response packets into the return value of this function.
-                        if (!TSORegulatorManager.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
+                        if (!_regulatorManager.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
                             returnValue == null)
                         { // handle failed!
                             Telemetry.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Discoveries,  "TSODBRequestWrapper Handler",
@@ -253,7 +257,7 @@ namespace nio2so.TSOTCP.City.TSO
             // TRY USING THE REGULATOR MANAGER TO HANDLE THIS PACKET
             if (!Handled)
             { // INVOKE THE SERVER-SIDE REGULATOR MANAGER
-                if (TSORegulatorManager.HandleIncomingPDU(Packet, out TSOProtocolRegulatorResponse Response))
+                if (_regulatorManager.HandleIncomingPDU(Packet, out TSOProtocolRegulatorResponse Response))
                 { // REGULATOR HANDLED
                     if (Response != null)
                     {

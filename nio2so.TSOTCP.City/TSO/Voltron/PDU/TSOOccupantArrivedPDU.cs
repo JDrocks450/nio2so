@@ -9,9 +9,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU)]
     internal class TSOOccupantArrivedPDU : TSOVoltronPacket
     {
-        public TSOOccupantArrivedPDU(string avatarID, string avatarName)
+        public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
         {
-            AvatarID = avatarID;
+            AvatarID = $"A {avatarID}";
             AvatarName = avatarName;
         }
 
@@ -19,6 +19,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         [TSOVoltronString] public string AvatarName { get; set; }
         public byte Arg1 { get; set; } = 0x41;
         public byte Arg2 { get; set; } = 0x01;
+        public byte[] Garbage { get; set; } = new byte[48];
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU;
     }

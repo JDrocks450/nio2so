@@ -30,7 +30,7 @@ namespace nio2so.TSOTCP.City.Factory
         public string GetHouseURI(uint HouseID) => GetObjectURI(HouseID);
 
         protected override byte[] OnFileNotFound() => File.ReadAllBytes(Path.Combine(TSOVoltronConst.WorkspaceDirectory,
-            "const", "default_house.dat"));
+            "const", "default_house.dat")).Skip(0xD).ToArray();
 
         public uint Create()
         {

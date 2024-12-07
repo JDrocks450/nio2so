@@ -1,8 +1,10 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.Formats.DB;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -85,6 +87,7 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         internal void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket Packet, TSOVoltronPacket? PDUEnclosed = default)
         {
+            if (!TestingConstraints.VerboseLogging) return;
             Console.ForegroundColor = ConsoleColor.Magenta;
 
             string? PDUName = PDUEnclosed?.KnownPacketType.ToString();
@@ -110,6 +113,12 @@ namespace nio2so.TSOTCP.City.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
                 _ => ConsoleColor.Blue
             };
+            if (!TestingConstraints.VerboseLogging)
+            {                
+                if ((PDU is TSOBroadcastDatablobPDU broad) &&
+                broad.kMSG == TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg) return;
+            }
+                
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
 
             //**LOG PDU TO DISK
@@ -156,6 +165,9 @@ namespace nio2so.TSOTCP.City.Telemetry
                 LogSeverity.Errors => ConsoleColor.Red,
                 _ => ConsoleColor.White,
             };
+
+            if (Entry.Severity == LogSeverity.TCPLayer)
+                if (!TestingConstraints.VerboseLogging) return;
 
             //**PRETTY PRINT FOR MULTILINE
             var time = (Entry.Time ?? DateTime.Now);

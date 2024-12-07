@@ -61,7 +61,9 @@ namespace nio2so.TSOView2
                 { ViewTGAItem, ResourceToolWindow.SpawnWithPrompt },
                 { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
                 { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin },
-                { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(CityTerrainHandler.TSOVersion.NewImproved) }
+                { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(CityTerrainHandler.TSOVersion.NewImproved) },
+                { EnumPluginItem, Plugins.EnumFixerUpperPlugin.Do },
+                { CityPluginItem, Plugins.TSOCityTransmogrifier.Do },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

@@ -24,6 +24,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     /// </summary>
     internal interface ITSOProtocolRegulator
     {
+        TSOCityServer Server { set; }
         string RegulatorName { get; }
         /// <summary>
         /// Handles an incoming PDU.
@@ -46,8 +47,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     internal sealed class TSORegulator : Attribute
     {
-        public string Name { get; set; }
-        public TSORegulator(string name)
+        public string Name { get; set; } = "";
+        public TSORegulator() { }
+        public TSORegulator(string name) : this()
         {
             Name = name;
         }
@@ -59,12 +61,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     /// <para>Incoming packets will be tested against any of these regulators, and if any of them can handle 
     /// the supplied packet, the response packets will be given back to the caller. </para>
     /// </summary>
-    internal static class TSORegulatorManager
+    internal class TSORegulatorManager
     {
         private static HashSet<ITSOProtocolRegulator> typeMap = new();
 
-        static TSORegulatorManager()
+        internal TSORegulatorManager(TSOCityServer Server)
         {
+            typeMap.Clear();
             foreach (var type in typeof(TSOPDUFactory).Assembly.GetTypes())
             {
                 var attribute = type.GetCustomAttribute<TSORegulator>();
@@ -75,23 +78,25 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     {
                         bool value = typeMap.Add((ITSOProtocolRegulator)instance);
                         if (value)
-                            TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message, 
+                        {
+                            TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Message,
                                 "cTSORegulatorManager", $"Mapped {type.Name}!"));
+                            ((ITSOProtocolRegulator)instance).Server = Server;
+                        }
                     }
-                    //TSOCityTelemetryServer.Global.OnConsoleLog(new(TSOCityTelemetryServer.LogSeverity.Errors, 
-                      //  "cTSORegulatorManager", $"Error when mapping {type.Name}! (Already added?)"));
                 }
             }
         }
 
-        public static bool HandleIncomingPDU(TSOVoltronPacket Incoming, out TSOProtocolRegulatorResponse Outgoing)
+        public bool HandleIncomingPDU(TSOVoltronPacket Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {
             foreach(var regulator in  typeMap)            
                 if (regulator.HandleIncomingPDU(Incoming, out Outgoing)) return true;
             Outgoing = null;
             return false;
         }
-        public static bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
+
+        public bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {            
             foreach (var regulator in typeMap)
                 if (regulator.HandleIncomingDBRequest(Incoming, out Outgoing)) return true;

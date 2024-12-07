@@ -158,6 +158,42 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             MakeBodyFromProperties();                                 
         }
 
+        /// <summary>
+        /// Will read from the point just after the Size of the <see cref="TSOVoltronPacket"/> (0x80...) 2 strings, then a ushort, then read the size.
+        /// </summary>
+        /// <param name="BodyStream"></param>
+        /// <returns></returns>
+        public static uint ReadDBPDUBodyLengthFromHeader(Stream BodyStream) => ReadDBPDUHeader(BodyStream).MessageLength;
+        /// <summary>
+        /// Will read from the point just after the Size of the <see cref="TSOVoltronPacket"/> (0x80...) the <see cref="TSODBWrapperPDUHeader"/>
+        /// </summary>
+        /// <param name="BodyStream"></param>
+        /// <returns></returns>
+        public static TSODBWrapperPDUHeader ReadDBPDUHeader(Stream BodyStream)
+        {
+            var startPosition = BodyStream.Position;
+            var avatarID = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            var avatarName = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            ushort arg1 = BodyStream.ReadBodyUshort(Endianness.BigEndian);
+            uint msgSize = BodyStream.ReadBodyDword(Endianness.BigEndian);
+            uint struc = BodyStream.ReadBodyDword();
+            byte headLen = (byte)BodyStream.ReadBodyByte();
+            uint kMSG = (uint)BodyStream.ReadBodyDword();
+            uint actionCLSID = BodyStream.ReadBodyDword();
+            BodyStream.Seek(startPosition, SeekOrigin.Begin);
+            return new()
+            {
+                AriesID = avatarID,
+                MasterID = avatarName,
+                Arg1 = arg1,
+                MessageLength = msgSize,
+                StructType = (TSO_PreAlpha_DBStructCLSIDs)struc,
+                HeaderLength = headLen,
+                kMSGID = (TSO_PreAlpha_kMSGs)kMSG,
+                ActionType = (TSO_PreAlpha_DBActionCLSIDs)actionCLSID
+            };
+        }
+
         public override void MakeBodyFromProperties()
         {
             base.MakeBodyFromProperties();
@@ -177,19 +213,23 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             //btw, if the header size isn't 0x21, this function is liable to cause major issues.
             //so... should check that.
 
+            //yeah btw this comment above was foreshadowing.. it's not 0x21 is a lot of scenarios, dummy
+            goto skip;
+
             //Read message size property from message body
-            BodyStream.Seek(DBWRAPPER_MESSAGESIZE_INDEX, SeekOrigin.Begin);
-            byte[] sizeBytes = new byte[sizeof(uint)];
-            BodyStream.Read(sizeBytes, 0, sizeBytes.Length);
-            uint msgSize = EndianBitConverter.Big.ToUInt32(sizeBytes,0);
-            BodyStream.Seek(0, SeekOrigin.Begin);
+            long startPosition = BodyStream.Position;
+            BodyStream.Position = 6;
+            uint msgSize = ReadDBPDUBodyLengthFromHeader(BodyStream);
+            BodyStream.Position = startPosition;
 
             //read body bytes
             byte[] bodyBytes = new byte[DBWRAPPER_MESSAGESIZE_INDEX + sizeof(uint) + msgSize];
-            BodyStream.Read(bodyBytes);
+            BodyStream.Read(bodyBytes);            
             using (MemoryStream ms = new MemoryStream(bodyBytes)) {
                 return base.ReflectFromBody(ms);
             }
+            skip:
+            return base.ReflectFromBody(BodyStream);
         }
 
         private IEnumerable<PropertyInfo> GetDBWrapperProperties()

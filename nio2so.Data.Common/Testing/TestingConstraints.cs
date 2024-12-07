@@ -10,7 +10,18 @@ namespace nio2so.Data.Common.Testing
     {
         //****BETA TESTING
 
+        public const bool LogPackets = false;
+
         public const int ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
+        /// <summary>
+        /// Dictates whether the api will automagically split large PDUs to smaller ones.
+        /// </summary>
+        public static bool SplitBuffersPDUEnabled = true;
+        /// <summary>
+        /// Transport layer and ServerTickConfirmation messages are logged
+        /// </summary>
+
+        public const bool VerboseLogging = false;
 
         //**Default Account
         public const string LoginUsername = "bloaty";
@@ -44,7 +55,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Whenever you buy a lot, this is the ID for the lot.
         /// </summary>
-        public const uint BuyLotID = 0x2121;
+        public const uint BuyLotID = MyHouseID; // 8481
         public const uint BuyLotEndingFunds = 0xB00B;
         /// <summary>
         /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here

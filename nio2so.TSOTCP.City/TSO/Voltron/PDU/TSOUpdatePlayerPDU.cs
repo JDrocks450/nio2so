@@ -14,17 +14,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     internal class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU;
-        public uint Arg1 { get; set;  }
         public string AriesID { get; set; }
         public string MasterID { get; set; }
         public byte Arg2 { get; set; } = 0x41;
         public byte Arg3 { get; set; } = 0x01;
 
-        public TSOUpdatePlayerPDU(string ariesID, string masterID, uint arg1 = 0x1C)
+        public TSOUpdatePlayerPDU(uint AvatarID, string AvatarName)
         {
-            Arg1 = arg1;
-            AriesID = ariesID;
-            MasterID = masterID;
+            AriesID = $"A {AvatarID}";
+            MasterID = AvatarName;
             MakeBodyFromProperties();
         }
     }

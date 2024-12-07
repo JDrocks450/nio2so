@@ -55,9 +55,12 @@ namespace nio2so.TSOTCP.City.Factory
         {
             TSOVoltronPacket? cTSOVoltronpacket = null;
             uint currentIndex = 0;
-            TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
-            currentIndex += Size;
+            long startPosition = Stream.Position;
+
+            int readBytes = TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
+            currentIndex += Size;            
             cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType, Stream);
+            Stream.Seek(startPosition, SeekOrigin.Begin);
             byte[] temporaryBuffer = new byte[Size];
             Stream.ReadExactly(temporaryBuffer, 0, (int)Size);
             if (cTSOVoltronpacket == null)
@@ -122,14 +125,8 @@ namespace nio2so.TSOTCP.City.Factory
             {
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     {
-                        long streamPosition = PDUData.Position;
-                        PDUData.Seek(streamPosition + TSODBRequestWrapper.DB_WRAPPER_ACTIONCLSID_INDEX, SeekOrigin.Begin);
-                        byte[] clsIDbytes = new byte[sizeof(uint)];
-                        PDUData.Read(clsIDbytes, 0, sizeof(uint));
-                        uint clsIDint32 = EndianBitConverter.Big.ToUInt32(clsIDbytes,0);
-                        PDUData.Seek(streamPosition, SeekOrigin.Begin);
-
-                        TSO_PreAlpha_DBActionCLSIDs clsID = (TSO_PreAlpha_DBActionCLSIDs)clsIDint32;
+                        PDUData.Position += 6; // advance past voltron header
+                        TSO_PreAlpha_DBActionCLSIDs clsID = TSODBRequestWrapper.ReadDBPDUHeader(PDUData).ActionType;
                         //Use reflection to make corresponding type of DBWrapper packet format
                         if (_dbtypeMap.TryGetValue(clsID, out var dbtype))
                         {

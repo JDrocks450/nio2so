@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.Telemetry;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
@@ -215,6 +216,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         /// <param name="Directory"></param>
         public void WritePacketToDisk(bool Incoming = true, string? PacketName = default, string Directory = TSOVoltronConst.AriesPacketDirectory)
         {
+            if (!TestingConstraints.LogPackets) return;
             System.IO.Directory.CreateDirectory(Directory);
             var now = DateTime.Now;
             string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] Packet {now.Hour%12},{now.Minute},{now.Second},{now.Nanosecond}.dat";

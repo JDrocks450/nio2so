@@ -11,42 +11,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     /// Handles incoming requests related to the Avatars and their DB operations
     /// </summary>
     [TSORegulator(nameof(SearchProtocol))]
-    internal class SearchProtocol : ITSOProtocolRegulator
+    internal class SearchProtocol : TSOProtocol
     {
-        public string RegulatorName => nameof(SearchProtocol);
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request)]
+        public void SearchExactMatch_Request(TSODBRequestWrapper PDU)
+        { // Exact search
+            TSOExactSearchRequest searchPDU = (TSOExactSearchRequest)PDU;
+            string searchTerm = searchPDU.SearchTerm;
+            TSO_PreAlpha_SearchCategories category = searchPDU.SearchResourceType;
 
-        public bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
-        {
-            Response = null;
-
-            switch ((TSO_PreAlpha_DBStructCLSIDs)PDU.TSOPacketFormatCLSID)
-            {
-                case TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage:
-                    switch ((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID)
-                    {
-                        case TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request:
-                            { // Exact search
-                                TSOExactSearchRequest searchPDU = (TSOExactSearchRequest)PDU;
-                                string searchTerm = searchPDU.SearchTerm;
-                                TSO_PreAlpha_SearchCategories category = searchPDU.SearchResourceType;
-
-                                Response = new(new[] { new TSOExactSearchResponse(category, TSOVoltronConst.MyAvatarID) }, null, null);
-                            }
-                            return true;
-                    }
-                    break;
-            }
-
-            return false;
-        }
-
-        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
-        {
-            Response = null;
-
-            //There are no PDUs related to search.
-
-            return false; 
+            RespondTo(PDU, new TSOExactSearchResponse(category, TSOVoltronConst.MyAvatarID));
         }
     }
 }
