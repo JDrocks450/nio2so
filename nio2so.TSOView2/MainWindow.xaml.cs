@@ -96,7 +96,7 @@ namespace nio2so.TSOView2
         {
             //If this named MenuItem has an attached handler, it will be invoked here
             if (uiInvokableActionMap.TryGetValue((MenuItem)sender, out Action? member))
-#if DEBUG
+#if !DEBUG
                 try
                 {
                     member(); // run while catching unhandled exceptions
