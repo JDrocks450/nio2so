@@ -59,6 +59,7 @@ namespace nio2so.Formats
         /// <returns></returns>
         public T ImportFromFile(string FilePath)
         {
+            if (!File.Exists(FilePath)) return default;
             using (FileStream fs = File.OpenRead(FilePath))
                 return Import(fs);
         }

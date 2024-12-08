@@ -37,12 +37,15 @@ namespace nio2so.TSOView2
 
         public MainWindow()
         {
-            InitializeComponent();
+            InitializeComponent();            
             Loaded += MainWindow_Loaded;
         }
 
         private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {            
+        {           
+            //Setup the UIsHandler
+            if (UIsHandler.Current == null)
+                new UIsHandler().Initialize();
             //HOOK Click Event for all MenuItems with a Name property
             UIWireUp_HookEvents();
         }

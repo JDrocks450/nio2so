@@ -14,7 +14,7 @@ namespace nio2so.TSOView2.Formats.UIs
 {
     internal class UIsHandler
     {
-        internal static UIsHandler Current { get; private set; } = new();
+        internal static UIsHandler Current { get; private set; }
 
         /// <summary>
         /// The <see cref="UIScriptFile"/> the User opened
@@ -27,7 +27,7 @@ namespace nio2so.TSOView2.Formats.UIs
         /// <summary>
         /// The current theme -- the map of AssetIDs to images stored in the game directory
         /// </summary>
-        public TSOThemeFile CurrentTheme { get; private set; } = new();
+        public TSOThemeFile CurrentTheme { get; private set; }
         /// <summary>
         /// The imported UIText directory
         /// </summary>
@@ -35,7 +35,12 @@ namespace nio2so.TSOView2.Formats.UIs
 
         private TSOUIScriptImporter defaultImporter = new();
 
-        private UIsHandler()
+        public UIsHandler()
+        {
+            Current = this;
+        }
+
+        public void Initialize()
         {
             TSOViewConfigHandler.LoadFromFile();
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
@@ -47,9 +52,12 @@ namespace nio2so.TSOView2.Formats.UIs
                 if (file != null)
                     CurrentTheme = file;
             }
-            catch (FileNotFoundException e) {
-                CurrentTheme = new TSOThemeFile(TSOThemeFile.ThemeVersionNames.NotSet); 
+            catch (FileNotFoundException e)
+            {
+
             }
+            if (CurrentTheme == null)
+                CurrentTheme = new TSOThemeFile(TSOThemeFile.ThemeVersionNames.NotSet);
             ChangeGameDirectory();
         }
 

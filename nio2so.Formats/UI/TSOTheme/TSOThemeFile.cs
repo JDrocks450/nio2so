@@ -92,7 +92,7 @@ namespace nio2so.Formats.UI.TSOTheme
         private List<string> Ensure(int Index)
         {
             var list = ((List<string>)ReferencedBy);
-            while (list.Count < Index) list.Add("NULL");
+            while (list.Count <= Index) list.Add("NULL");
             return list;
         }
     }
@@ -318,6 +318,7 @@ namespace nio2so.Formats.UI.TSOTheme
         public override TSOThemeFile Import(Stream stream) => LogConsoleBeforeLeaving(JsonSerializer.Deserialize<TSOThemeFile>(stream));
         private static TSOThemeFile LogConsoleBeforeLeaving(TSOThemeFile File)
         {
+            if (File == null) return null;
             Debug.WriteLine($"[TSOThemes] NOTICE! ThemeFile opened from disk. Version: {File.GetVersionName()}");
             return File;
         }
