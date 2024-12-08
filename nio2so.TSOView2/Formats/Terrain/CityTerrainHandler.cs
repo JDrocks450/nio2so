@@ -27,10 +27,11 @@ namespace nio2so.TSOView2.Formats.Terrain
         public static async Task<CityTerrainHandler?> PromptLoadCity(TSOVersion Version)
         {
             //IS THE DIRECTORY SELECTED? 
-            if (!UIsHandler.Current.EnsureSetGameDirectoryFirstRun()) return null; // idk anymore
+            if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return null; // idk anymore
 
             //TSO CONFIG FILE
-            string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
+            string? gamePath = TSOViewConfigHandler.CurrentConfiguration.GetDirectoryByVersion(Version);
+            if (gamePath == default) throw new NullReferenceException("Game directory not set.");
 
             //PROMPT FOR CITY DIRECTORY
             OpenFileDialog dlg = new()
@@ -48,18 +49,13 @@ namespace nio2so.TSOView2.Formats.Terrain
                 return default; // user dismissed the dialog away
                                 // 
             return await LoadCity(Path.GetDirectoryName(dlg.FileName), Version);
-        }
-
-        public enum TSOVersion
-        {
-            PreAlpha,
-            NewImproved
-        }
+        }        
 
         public static async Task<CityTerrainHandler?> LoadCity(string FolderName, TSOVersion Version)
         {
             //TSO CONFIG FILE
-            string gamePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
+            string? gamePath = TSOViewConfigHandler.CurrentConfiguration.GetDirectoryByVersion(Version);
+            if (gamePath == default) throw new NullReferenceException("Game directory is not selected.");
 
             string verb = "parsing";
             try

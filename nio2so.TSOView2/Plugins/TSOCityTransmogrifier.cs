@@ -27,7 +27,8 @@ namespace nio2so.TSOView2.Plugins
             "the original GameData/FarZoom folder.";
         public static void Do()
         {
-            //Bitmap bmp = new Bitmap(@"E:\Games\TSO Pre-Alpha\TSO - Patched HouseSimServer\GameData\FarZoom\Elevation00.bmp");
+            if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
+
             MessageBox.Show(WELCOMEWAGON);
 
             //PROMPT FOR CITY DIRECTORY
@@ -57,7 +58,7 @@ namespace nio2so.TSOView2.Plugins
                 goto error;
             }
             //all files present
-            string output = "E:\\packets\\cityoutput";
+            string output = Path.Combine(Environment.CurrentDirectory, "cityoutput");
             try
             {
                 ResizeAndSave(sourceDirectory, output);
@@ -69,7 +70,10 @@ namespace nio2so.TSOView2.Plugins
             }
             if (MessageBox.Show("Your city has been converted. Prepare for transport?", "Add city to The Sims Online: Pre-Alpha?", MessageBoxButton.YesNo)
                 != MessageBoxResult.Yes)
+            {
+                Process.Start("explorer", output);
                 return;
+            }
             //**TRANSPORT NOW
             string destination = Path.Combine(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "FarZoom");
             try

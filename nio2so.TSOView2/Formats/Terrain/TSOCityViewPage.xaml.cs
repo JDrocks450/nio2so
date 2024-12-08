@@ -154,13 +154,17 @@ namespace nio2so.TSOView2.Formats.Terrain
         }
         private void ORTHO_HandleKeyboard(KeyEventArgs e, ref bool Handled)
         {
-            Handled = false;
-            ; // placeholder
+            Handled = false;            
         }
 
         private void TSOViewButton_Click(object sender, RoutedEventArgs e)
         {
-            OrthoSetCam(CameraPresets[0]);
+            int Width = 1024;
+            Vector3D pos = new(4 * (Width / 4), -(Width / 2), 0);
+            Vector3D lookAt = new(256, 0, 256);
+            var dir = (lookAt - pos);
+            dir.Normalize();
+            OrthoSetCam(new(new Point3D(pos.X, pos.Y, pos.Z), dir, Width));
         }
 
         private void TrainsetViewButton_Click(object sender, RoutedEventArgs e)

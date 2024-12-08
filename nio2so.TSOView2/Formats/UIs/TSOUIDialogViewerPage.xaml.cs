@@ -60,8 +60,13 @@ namespace nio2so.TSOView2.Formats.UIs
         retry:
             var theme = UIsHandler.Current.CurrentTheme;
             //CHECK IF GAME PATH IS SET
-            if (!UIsHandler.Current.EnsureSetGameDirectoryFirstRun()) return;
-            string? basePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;            
+            if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun())
+            {
+                IsEnabled = false;
+                return;
+            }
+            string? basePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory; 
+            if (basePath == null) return;
             // BASE PATH IS NOT NULL
             // THE SIMS ONLINE DIRECTORY ISN'T THE SAME AS THE UI SCRIPT
             // -- could be wrong, allow the user to bypass if false positive, obviously.

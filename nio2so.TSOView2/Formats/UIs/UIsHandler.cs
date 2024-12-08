@@ -38,7 +38,8 @@ namespace nio2so.TSOView2.Formats.UIs
         private UIsHandler()
         {
             TSOViewConfigHandler.LoadFromFile();
-            EnsureSetGameDirectoryFirstRun();
+            if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
+            //game directory not set!!
 
             try
             { // LOAD THEME FILE
@@ -50,39 +51,17 @@ namespace nio2so.TSOView2.Formats.UIs
                 CurrentTheme = new TSOThemeFile(TSOThemeFile.ThemeVersionNames.NotSet); 
             }
             ChangeGameDirectory();
-        } 
-
-        /// <summary>
-        /// Ensures the Game Directory is set, if not, will prompt the user to do so now. 
-        /// True if Game Directory has a value at the end of the function's lifetime
-        /// </summary>
-        public bool EnsureSetGameDirectoryFirstRun()
-        {
-            string? basePath = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory;
-            //NO CHOSEN THE SIMS ONLINE DIRECTORY ERROR
-            if (basePath == null)
-            {
-                if (MessageBox.Show("You haven't selected a The Sims Online directory yet. Would you like to do so now?",
-                    "Warning", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
-                    return false;
-                TSOViewConfigHandler.Directory_PromptAndSaveResult("Select any file in your The Sims Online Directory",
-                    ref basePath);
-                if (basePath == null) return false;
-                TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory = basePath;
-                TSOViewConfigHandler.SaveConfiguration();
-            }
-            return TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory != null;
         }
 
         public void ChangeGameDirectory(string NewGameDirectoryPath = default)
         {
             //WHEN GAME DIRECTORY CHANGES MID-SESSION, RUN THESE
             ;
-            
+
             if (TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory != NewGameDirectoryPath)
             {
                 //ONLY RUN THESE WHEN THE PATH CHANGES
-                
+
                 // (RE)LOAD CST FILE
                 var directory = CSTImporter.ImportDirectory(
                     System.IO.Path.Combine(
@@ -97,7 +76,7 @@ namespace nio2so.TSOView2.Formats.UIs
                     TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory = NewGameDirectoryPath;
                     TSOViewConfigHandler.SaveConfiguration();
                 }
-            }            
+            }
         }
 
         /// <summary>

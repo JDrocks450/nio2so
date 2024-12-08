@@ -31,7 +31,12 @@
                         <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
                     </MenuItem>
                     <MenuItem Header="Help...">
-
+                        <MenuItem Header="About" Name="AboutItem"/>
+                        <Separator/>
+                        <MenuItem Header="Check for Updates" Name="UpdatesItem"/>
+                        <MenuItem Header="Check me out!" Name="MyselfItem"/>
+                        <MenuItem Header="nio2so Github" Name="GithubItem"/>
+                        <MenuItem Header="nio2so Wiki" Name="WikiItem"/>
                     </MenuItem>
                 </Menu>
             </ToolBar>

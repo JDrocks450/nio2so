@@ -4,6 +4,7 @@ using nio2so.TSOView2.Formats.UIs;
 using nio2so.TSOView2.Formats.UIs.Subpages;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,9 +62,14 @@ namespace nio2so.TSOView2
                 { ViewTGAItem, ResourceToolWindow.SpawnWithPrompt },
                 { OpenUIsItem, UIsHandler.Current.PromptUserOpenFile },
                 { OpenTSOPreAlphaWorldItem, CityTerrainHandler.PromptUserShowCityPlugin },
-                { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(CityTerrainHandler.TSOVersion.NewImproved) },
+                { OpenNIWorldItem, async () => await CityTerrainHandler.PromptUserShowCityPlugin(TSOVersion.NewImproved) },
                 { EnumPluginItem, Plugins.EnumFixerUpperPlugin.Do },
                 { CityPluginItem, Plugins.TSOCityTransmogrifier.Do },
+                { AboutItem, AboutWindow.ShowAboutBox },
+                { UpdatesItem, CheckForUpdates },
+                { WikiItem, () => OpenWebsite(@"https://github.com/JDrocks450/nio2so/wiki/TSOView2") },
+                { MyselfItem, () => OpenWebsite(@"https://github.com/JDrocks450/") },
+                { GithubItem, () => OpenWebsite(@"https://github.com/JDrocks450/nio2so") }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)
@@ -83,11 +89,25 @@ namespace nio2so.TSOView2
             }
         }
 
+        private void OpenWebsite(string Website) => Process.Start("explorer", Website);
+        private void CheckForUpdates() => OpenWebsite(@"https://github.com/JDrocks450/nio2so/releases");
+
         private void UIDefaultMenuStrip_InvokeAction(object sender, RoutedEventArgs e)
         {
             //If this named MenuItem has an attached handler, it will be invoked here
             if (uiInvokableActionMap.TryGetValue((MenuItem)sender, out Action? member))
-                member();
+#if DEBUG
+                try
+                {
+                    member(); // run while catching unhandled exceptions
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show($"An error occured in the plugin: {member.Method.DeclaringType.Name}.\r\n{ex.Message}");
+                }
+#else
+                member(); // run without exception catching
+#endif
         }
     }
 }

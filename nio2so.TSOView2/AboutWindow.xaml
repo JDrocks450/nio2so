@@ -1,0 +1,19 @@
+﻿<Window x:Class="nio2so.TSOView2.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:nio2so.TSOView2"
+        mc:Ignorable="d"
+        Title="About TSOView2" SizeToContent="Height" Width="350">
+    <StackPanel Margin="10">
+        <TextBlock  VerticalAlignment="Top" FontWeight="Bold" FontSize="18">TSOView2 (part of nio2so)</TextBlock>
+        <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" FontSize="11" Text="This program was created as part of the project nio2so to reverse-engineer The Sims Online: Pre-Alpha"/>
+        <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" FontSize="11" Text="You can use this program to view assets that shipped with The Sims Online!"/>
+        <Separator/>
+        <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" FontWeight="Bold" FontSize="11" Text="Special thanks &amp; Credits"/>
+        <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" FontSize="11"><Hyperlink Click="Hyperlink_Click" NavigateUri="https://github.com/JDrocks450/nio2so">nio2so</Hyperlink> <Run> was created by Jeremy Glazebrook (bisquick)</Run></TextBlock>
+        <TextBlock TextWrapping="Wrap" VerticalAlignment="Top" FontSize="11"><Run>Special thanks to </Run> <Hyperlink Click="Hyperlink_Click" NavigateUri="https://github.com/daddesio/Niotso">niotso</Hyperlink> (FatBag/daddesio)</TextBlock>
+        <Button Margin="5" Click="Button_Click">Thank you!</Button>
+    </StackPanel>
+</Window>

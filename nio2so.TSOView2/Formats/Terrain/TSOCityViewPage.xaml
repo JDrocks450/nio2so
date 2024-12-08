@@ -14,7 +14,7 @@
                 <OrthographicCamera x:Name="Camera" 
                         FarPlaneDistance="10000" 
                         UpDirection="0,1,0" 
-                        LookDirection=".5,.5,.5" 
+                        LookDirection=".0,.6,.6" 
                         NearPlaneDistance="100" 
                         Position="0,-247,0"
                         Width="140" />
