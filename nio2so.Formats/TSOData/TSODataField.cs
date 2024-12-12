@@ -17,6 +17,6 @@ namespace nio2so.Formats.TSOData
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public TSODataFieldClassification Classification { get; set; }
         [JsonIgnore]
-        public uint TypeID { get;set; }             
+        protected uint TypeID { get;set; }             
     }
 }

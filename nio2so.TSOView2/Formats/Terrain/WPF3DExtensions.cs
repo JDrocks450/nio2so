@@ -4,6 +4,7 @@ using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
@@ -42,47 +43,47 @@ namespace nio2so.TSOView2.Formats.Terrain
         /// <returns></returns>
         private static Vector3D GetNormalAt(TSOCity City, int x, int y)
         {
-            var sum = new Microsoft.Xna.Framework.Vector3();
-            var rotToNormalXY = Microsoft.Xna.Framework.Matrix.CreateRotationZ((float)(Math.PI / 2));
-            var rotToNormalZY = Microsoft.Xna.Framework.Matrix.CreateRotationX(-(float)(Math.PI / 2));
+            var sum = new Vector3();
+            var rotToNormalXY = Matrix4x4.CreateRotationZ((float)(Math.PI / 2));
+            var rotToNormalZY = Matrix4x4.CreateRotationX(-(float)(Math.PI / 2));
             var reso = City.CityDataResolution;
 
             if (x < reso.X-1)
             {
-                var vec = new Microsoft.Xna.Framework.Vector3();
+                var vec = new Vector3();
                 vec.X = 1;
                 vec.Y = City.GetElevationPoint(x + 1, y) - City.GetElevationPoint(x, y);
-                vec = Microsoft.Xna.Framework.Vector3.Transform(vec, rotToNormalXY);
+                vec = Vector3.Transform(vec, rotToNormalXY);
                 sum += vec;
             }
 
             if (x > 1)
             {
-                var vec = new Microsoft.Xna.Framework.Vector3();
+                var vec = new Vector3();
                 vec.X = 1;
                 vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x - 1, y);
-                vec = Microsoft.Xna.Framework.Vector3.Transform(vec, rotToNormalXY);
+                vec = Vector3.Transform(vec, rotToNormalXY);
                 sum += vec;
             }
 
             if (y < reso.Y-1)
             {
-                var vec = new Microsoft.Xna.Framework.Vector3();
+                var vec = new Vector3();
                 vec.Z = 1;
                 vec.Y = City.GetElevationPoint(x, y + 1) - City.GetElevationPoint(x, y);
-                vec = Microsoft.Xna.Framework.Vector3.Transform(vec, rotToNormalZY);
+                vec = Vector3.Transform(vec, rotToNormalZY);
                 sum += vec;
             }
 
             if (y > 1)
             {
-                var vec = new Microsoft.Xna.Framework.Vector3();
+                var vec = new Vector3();
                 vec.Z = 1;
                 vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x, y - 1);
-                vec = Microsoft.Xna.Framework.Vector3.Transform(vec, rotToNormalZY);
+                vec = Vector3.Transform(vec, rotToNormalZY);
                 sum += vec;
             }
-            if (sum != Microsoft.Xna.Framework.Vector3.Zero) sum.Normalize();
+            if (sum != Vector3.Zero) sum = Vector3.Normalize(sum);
             return new Vector3D(sum.X, -sum.Y, sum.Z);
         }
         /// <summary>

@@ -95,8 +95,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 new TSOGetHouseBlobByIDResponseTEST(HouseID, houseBlob);
             //***
             RespondWith(response);           
-            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));                        
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
+            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            byte[] fileData = File.ReadAllBytes(@"E:\packets\const\JoinAndCreateRoomPDU.dat");
+            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.CREATE_AND_JOIN_ROOM_FAILED_PDU,fileData));
             //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName));
         }
 

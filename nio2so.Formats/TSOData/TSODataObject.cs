@@ -6,7 +6,7 @@ namespace nio2so.Formats.TSOData
     {
         protected TSODataFile ParentFile { get; set; }
         [JsonIgnore]
-        public uint NameID { get; set; }
+        protected uint NameID { get; set; }
         public string NameString => ParentFile.Strings[NameID].Value;
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using nio2so.TSOTCP.Debug.Frontend.Windows;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -27,7 +28,13 @@ namespace nio2so.TSOTCP.Debug.Frontend
             switch (button.Name)
             {
                 case "ButtonPacketLog":
-
+                    PacketLogWindow wnd = new();
+                    wnd.Closed += delegate
+                    {
+                        Show();    
+                    };
+                    wnd.Show();
+                    Hide();
                     break;
                 default:
                     Close();

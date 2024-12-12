@@ -26,6 +26,7 @@ namespace nio2so.Formats.TSOData
         Field,
         FirstLevel,
         SecondLevel,
-        Derived
+        Derived,
+        Unspecified
     }
 }

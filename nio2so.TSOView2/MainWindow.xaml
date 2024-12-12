@@ -15,6 +15,7 @@
                             <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
                             <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
                             <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
+                            <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>

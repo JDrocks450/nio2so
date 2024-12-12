@@ -7,6 +7,7 @@
     <UseWPF>true</UseWPF>
     <Configurations>Debug;Release</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,7 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
-    <ProjectReference Include="..\nio2so.TSOView2.TSOWorld\nio2so.TSOView2.TSOWorld.csproj" />
   </ItemGroup>
 
   <ItemGroup>

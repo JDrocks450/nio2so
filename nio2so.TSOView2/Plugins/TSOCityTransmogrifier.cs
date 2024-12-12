@@ -1,7 +1,6 @@
 ﻿using Microsoft.Win32;
 using nio2so.TSOView2.Formats;
 using nio2so.TSOView2.Util;
-using SharpDX.DXGI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -52,7 +52,7 @@ namespace nio2so.TSOView2
             TheSimsOnline_GameDataDirectory != default ? Path.Combine(TheSimsOnline_GameDataDirectory, "UIScripts") : default;
 
 
-        public string? GetDirectoryByVersion(TSOVersion version) => version == TSOVersion.PreAlpha ? TheSimsOnline_BaseDirectory : TheSimsOnline_NI_BaseDirectory;
+        public string? GetDirectoryByVersion(TSOVersion version) => version == TSOVersion.PreAlpha ? TheSimsOnline_BaseDirectory : TheSimsOnline_BaseDirectory;
     }
 
     public enum TSOVersion
