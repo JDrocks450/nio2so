@@ -2,6 +2,7 @@
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +34,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
     }
 
+    /// <summary>
+    /// A base class for <see cref="ITSOProtocolRegulator"/> objects that provides functionality for mapping 
+    /// an incoming PDU type to a method that will handle the incoming PDU.
+    /// </summary>
     internal abstract class TSOProtocol : ITSOProtocolRegulator
     {
         public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);
@@ -118,7 +123,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             uint splitSize = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE;
             if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
                 packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
-            else packets.Add(DBWrapper);
+            else 
+                packets.Add(DBWrapper);
             return packets;
         }
 
@@ -133,10 +139,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// <para/>This will take the AriesID, MasterID fields from the packet given to the response
         /// </summary>
         /// <param name="ResponsePacket"></param>
-        protected void RespondTo(TSODBRequestWrapper DBPacket, TSODBRequestWrapper ResponsePacket)
+        protected void RespondTo<T>(ITSOVoltronAriesMasterIDStructure DBPacket, T ResponsePacket) where T : TSOVoltronPacket, ITSOVoltronAriesMasterIDStructure
         {
             ResponsePacket.AriesID = DBPacket.AriesID;
             ResponsePacket.MasterID = DBPacket.MasterID;
+            ResponsePacket.MakeBodyFromProperties();
             RespondWith(ResponsePacket);
         }
         /// <summary>

@@ -71,70 +71,100 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)VoltronPacketType)); // voltron packet type emplaced
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt32)00)); // followed by placeholder data as we have no clue how big it is. 
 
-            foreach (var property in GetPropertiesToCopy()) {                
-                bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
-                object? myValue = property.GetValue(this);
-                if (myValue == default) continue;
-                var endianConverter = (EndianBitConverter)(
-                        type == TSOVoltronValueTypes.BigEndian ?
-                            EndianBitConverter.Big :
-                            EndianBitConverter.Little);
+            //**Distance to end property attribute map is here**
+            //Index, PropertyInfo
+            Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
-                bool wroteValue = true;
-
-                if (property.PropertyType == typeof(Byte[]))
-                {
-                    EmplaceBody((byte[])myValue);
+            foreach (var property in GetPropertiesToCopy()) 
+            {
+                if (property.GetCustomAttribute<TSOVoltronDistanceToEnd>() != default)
+                {                    
+                    distanceToEnds.Add((uint)BodyPosition,property);
+                    EmplaceBody(new byte[sizeof(uint)]); // fill with blank for now
                     continue;
                 }
-
-                //---NUMERICS
-                if (property.PropertyType.IsAssignableTo(typeof(UInt16)))
-                    EmplaceBody(endianConverter.GetBytes((UInt16)myValue));
-                else if (property.PropertyType == typeof(Int16))
-                    EmplaceBody(endianConverter.GetBytes((Int16)myValue));
-                else if (property.PropertyType.IsAssignableTo(typeof(UInt32)))
-                    EmplaceBody(endianConverter.GetBytes((UInt32)myValue));
-                else if (property.PropertyType == typeof(Int32))
-                    EmplaceBody(endianConverter.GetBytes((Int32)myValue));
-                else if (property.PropertyType == typeof(byte))
-                    EmplaceBody((byte)myValue);
-                else if (property.PropertyType == typeof(DateTime))
-                    EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
-                else if (property.PropertyType == typeof(Boolean))
-                    EmplaceBody((byte)((bool)myValue ? 1 : 0));
-                else wroteValue = false;
-
-                if (wroteValue) continue;
-                if (!hasAttrib) // AUTOSELECT
-                    type = TSOVoltronValueTypes.Pascal;
-
-                //---STRINGS
-                void WriteString(string Text)
-                {
-                    if (type == TSOVoltronValueTypes.Pascal)
-                    {
-                        EmplaceBody(0x80, 0x00);
-                        EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)Text.Length));
-                    }
-                    else Text += '\0';
-                    EmplaceBody(Encoding.UTF8.GetBytes(Text));
-                    wroteValue = true;
-                }
-
-                if (property.PropertyType == typeof(string[]))
-                {
-                    foreach (var str in (string[])myValue)
-                        WriteString(str);
-                }
-                else if (myValue is String myStringValue)
-                    WriteString(myStringValue);
-
-                if (wroteValue) continue;
-                throw new Exception("VOLTRON PDU -- When writing, I couldn't find a matching type!");
+                if (!EmbedProperty(property))
+                    throw new Exception($"VOLTRON PDU -- Cannot serialize {property.PropertyType}! Property: {property}");
+            }
+            //Calculate size from index of the field to the end of the file plus size of property
+            foreach (var distanceToEnd in distanceToEnds)
+            {
+                uint Size = BodyLength - distanceToEnd.Key;
+                Size -= sizeof(uint);
+                distanceToEnd.Value.SetValue(this, Size);
+                SetPosition((int)distanceToEnd.Key);
+                EmbedProperty(distanceToEnd.Value);
             }
 
             ReevaluateSize();
+        }
+
+        private bool EmbedProperty(PropertyInfo property)
+        {
+            bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
+            object? myValue = property.GetValue(this);
+            if (myValue == default) return true;
+            var endianConverter = (EndianBitConverter)(
+                    type == TSOVoltronValueTypes.BigEndian ?
+                        EndianBitConverter.Big :
+                        EndianBitConverter.Little);
+
+            bool wroteValue = true;
+
+            if (property.PropertyType == typeof(Byte[]))
+            {
+                EmplaceBody((byte[])myValue);
+                return true;
+            }
+
+            Type PropertyType = property.PropertyType;
+            while (PropertyType.IsEnum)
+                PropertyType = Enum.GetUnderlyingType(PropertyType);
+
+            //---NUMERICS
+            if (PropertyType.IsAssignableTo(typeof(UInt16)))
+                EmplaceBody(endianConverter.GetBytes((UInt16)myValue));
+            else if (PropertyType == typeof(Int16))
+                EmplaceBody(endianConverter.GetBytes((Int16)myValue));
+            else if (PropertyType.IsAssignableTo(typeof(UInt32)))
+                EmplaceBody(endianConverter.GetBytes((UInt32)myValue));
+            else if (PropertyType == typeof(Int32))
+                EmplaceBody(endianConverter.GetBytes((Int32)myValue));
+            else if (PropertyType == typeof(byte))
+                EmplaceBody((byte)myValue);
+            else if (PropertyType == typeof(DateTime))
+                EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
+            else if (PropertyType == typeof(Boolean))
+                EmplaceBody((byte)((bool)myValue ? 1 : 0));
+            else wroteValue = false;
+
+            if (wroteValue) return true;
+            if (!hasAttrib) // AUTOSELECT
+                type = TSOVoltronValueTypes.Pascal;
+
+            //---STRINGS
+            void WriteString(string Text)
+            {
+                if (type == TSOVoltronValueTypes.Pascal)
+                {
+                    EmplaceBody(0x80, 0x00);
+                    EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)Text.Length));
+                }
+                else Text += '\0';
+                EmplaceBody(Encoding.UTF8.GetBytes(Text));
+                wroteValue = true;
+            }
+
+            if (PropertyType == typeof(string[]))
+            {
+                foreach (var str in (string[])myValue)
+                    WriteString(str);
+            }
+            else if (myValue is String myStringValue)
+                WriteString(myStringValue);
+
+            if (wroteValue) return true;
+            return false;
         }
 
         public void ReevaluateSize()
@@ -310,24 +340,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             return (int)PayloadSize;
         }
 
-        private T? getPropertyAttribute<T>(PropertyInfo property, out TSOVoltronValueTypes ValueType) where T : TSOVoltronValue
-        {
-            ValueType = TSOVoltronValueTypes.BigEndian;
-            var attribute = property.GetCustomAttribute<T>();
-            TSOVoltronValueTypes type = TSOVoltronValueTypes.BigEndian;
-            int pascalLength = 0;
-            if (attribute == null)
-            {
-                if (property.PropertyType == typeof(string))
-                    type = TSOVoltronValueTypes.Pascal;
-                else type = TSOVoltronValueTypes.BigEndian;
-            }
-            else
-                type = attribute.Type;
-            ValueType = type;
-            return attribute;
-        }
-
         /// <summary>
         /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
         /// <para/> You must ensure <see cref="TSOVoltronPacket.MakeBodyFromProperties"/> was called as needed to ensure your
@@ -438,6 +450,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public void WritePDUToDisk(bool Incoming = true, string Directory = TSOVoltronConst.VoltronPacketDirectory)
         {
             if (!TestingConstraints.LogPackets) return;
+            if (!TestingConstraints.LogVoltronPackets) return;
             System.IO.Directory.CreateDirectory(Directory);
             var now = DateTime.Now;
             string myName = $"{(Incoming ? "IN" : "OUT")} [{FriendlyPDUName}] VoltronPDU {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";

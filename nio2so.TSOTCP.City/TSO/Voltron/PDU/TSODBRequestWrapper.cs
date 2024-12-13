@@ -1,35 +1,27 @@
 ﻿using MiscUtil.Conversion;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using QuazarAPI.Networking.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron
 {
     /// <summary>
     /// Describes how to write the header info of a DBWrapperPDU
     /// </summary>
-    internal class TSODBWrapperPDUHeader
+    internal class TSODBWrapperPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
         public string AriesID { get; set; } = "";
         public string MasterID { get; set; } = "";
         public ushort Arg1 { get; set; } = 0x00;
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_DBStructCLSIDs StructType { get; set; } = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage;
-        public byte HeaderLength { get; set; } = 0x21;
+        public byte HeaderByte { get; set; } = 0x21;
         public TSO_PreAlpha_kMSGs kMSGID { get; set; } = TSO_PreAlpha_kMSGs.kDBServiceResponseMsg;
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
     }
 
-    internal class TSODBWrapperMessageSize
+    [Obsolete] internal class TSODBWrapperMessageSize
     {
         public TSODBWrapperMessageSize(uint Size) => this.Size = Size;
         /// <summary>
@@ -48,24 +40,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// A class for cTSONetMessageStandard structs wrapped inside a <see cref="TSODBRequestWrapper"/> PDU
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU)]
-    internal class TSODBRequestWrapper : TSOVoltronPacket
+    internal abstract class TSODBRequestWrapper : TSOVoltronSpecializedPacket<TSOVoltronDBWrapperField,TSODBWrapperPDUHeader>, ITSOVoltronAriesMasterIDStructure
     {
         /// <summary>
         /// The distance from <see cref="MessageLength"/> -> the start of <see cref="DBMessageBody"/>. Used here: <see cref="TSODBRequestWrapper()"/>
         /// </summary>
         protected const uint DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE = (sizeof(uint) * 3) + 1;
-        /// <summary>
-        /// This is only true if AriesID and MasterID are blank.
-        /// </summary>
-        protected const uint DBWRAPPER_MESSAGESIZE_INDEX = 0x10;
-        /// <summary>
-        /// This is only true if AriesID and MasterID are blank.
-        /// </summary>
-        public const uint DB_WRAPPER_ACTIONCLSID_INDEX = 0x1D;
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU;
 
-        protected TSODBWrapperPDUHeader Header { get; } = new();
+        protected override TSODBWrapperPDUHeader Header { get; } = new();
 
         [TSOVoltronString]
         public string AriesID {
@@ -89,7 +73,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <para>For clarity and usability, values stored in the Body have been pulled-up to the class level,
         /// such as <see cref="TSOPacketFormatCLSID"/></para>
         /// </summary>
-        public uint MessageLength
+        [TSOVoltronDistanceToEnd] public uint MessageLength
         {
             get => Header.MessageLength;
             set => Header.MessageLength = value;
@@ -106,10 +90,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <summary>
         /// The length of the header, is usually <c>0x21</c>
         /// </summary>
-        public byte HeaderLength
+        public byte HeaderByte
         {
-            get => Header.HeaderLength;
-            set => Header.HeaderLength = value; 
+            get => Header.HeaderByte;
+            set => Header.HeaderByte = value; 
         }
         public uint kMSGID
         {
@@ -148,13 +132,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <param name="Payload"></param>
         public TSODBRequestWrapper(TSO_PreAlpha_DBStructCLSIDs StructCLSID,                                   
                                    TSO_PreAlpha_kMSGs kMSG_ID,
-                                   TSO_PreAlpha_DBActionCLSIDs DBAction, uint MessageLength = 0xFFFFFFFF)
+                                   TSO_PreAlpha_DBActionCLSIDs DBAction)
         {
             TSOPacketFormatCLSID = (uint)StructCLSID;
             kMSGID = (uint)kMSG_ID;
             TSOSubMsgCLSID = (uint)DBAction;
 
-            this.MessageLength = MessageLength;
             MakeBodyFromProperties();                                 
         }
 
@@ -164,6 +147,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <param name="BodyStream"></param>
         /// <returns></returns>
         public static uint ReadDBPDUBodyLengthFromHeader(Stream BodyStream) => ReadDBPDUHeader(BodyStream).MessageLength;
+
         /// <summary>
         /// Will read from the point just after the Size of the <see cref="TSOVoltronPacket"/> (0x80...) the <see cref="TSODBWrapperPDUHeader"/>
         /// </summary>
@@ -188,75 +172,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 Arg1 = arg1,
                 MessageLength = msgSize,
                 StructType = (TSO_PreAlpha_DBStructCLSIDs)struc,
-                HeaderLength = headLen,
+                HeaderByte = headLen,
                 kMSGID = (TSO_PreAlpha_kMSGs)kMSG,
                 ActionType = (TSO_PreAlpha_DBActionCLSIDs)actionCLSID
             };
-        }
-
-        public override void MakeBodyFromProperties()
-        {
-            base.MakeBodyFromProperties();
-            //**RE-EVALUATE SIZE
-            if (MessageLength == TSODBWrapperMessageSize.AutoSize || MessageLength < BodyLength)
-                MessageLength = BodyLength - (HeaderLength - DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE);
-            FillPacketToAvailableSpace();
-            SetPosition((int)DBWRAPPER_MESSAGESIZE_INDEX);
-            EmplaceBody(MessageLength);
-        }
-
-        public override int ReflectFromBody(Stream BodyStream)
-        {
-            //**these packets can have a lot of junk at the end of them
-            //this function will trim the excess of the end of the packet by using the 
-            //message length property.
-            //btw, if the header size isn't 0x21, this function is liable to cause major issues.
-            //so... should check that.
-
-            //yeah btw this comment above was foreshadowing.. it's not 0x21 is a lot of scenarios, dummy
-            goto skip;
-
-            //Read message size property from message body
-            long startPosition = BodyStream.Position;
-            BodyStream.Position = 6;
-            uint msgSize = ReadDBPDUBodyLengthFromHeader(BodyStream);
-            BodyStream.Position = startPosition;
-
-            //read body bytes
-            byte[] bodyBytes = new byte[DBWRAPPER_MESSAGESIZE_INDEX + sizeof(uint) + msgSize];
-            BodyStream.Read(bodyBytes);            
-            using (MemoryStream ms = new MemoryStream(bodyBytes)) {
-                return base.ReflectFromBody(ms);
-            }
-            skip:
-            return base.ReflectFromBody(BodyStream);
-        }
-
-        private IEnumerable<PropertyInfo> GetDBWrapperProperties()
-        {
-            return GetType().GetProperties(BindingFlags.DeclaredOnly | BindingFlags.Public | BindingFlags.Instance)
-            .Where(
-                //Hard-Coded absolutely avoided names
-                x => x.Name != "VoltronPacketType" && x.Name != "FriendlyPDUName" &&
-                //Get only DBWrapperField attributed properties
-                x.GetCustomAttribute<TSOVoltronDBWrapperField>() != default
-            );
-        }
-
-        protected override IEnumerable<PropertyInfo> GetPropertiesToCopy()
-        {
-            List<PropertyInfo> properties = new List<PropertyInfo>();
-            properties.AddRange(base.GetPropertiesToCopy());
-            properties.AddRange(GetDBWrapperProperties());
-            return properties;
-        }
-
-        /// <summary>
-        /// For writing into the DBMessageHeader property of this <see cref="TSODBRequestWrapper"/> packet,
-        /// you can use this function to move the position of the buffer to right after the <see cref="TSOSubMsgCLSID"/> property
-        /// <para/> This is where <see cref="Data1"/> is located.
-        /// </summary>
-        protected void MoveBufferPositionToDBMessageHeader() => SetPosition(HeaderLength);
+        }        
 
         /// <summary>
         /// Use this function to extend the Body property to the <see cref="MessageLength"/> parameter.
@@ -277,8 +197,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 throw new Exception("This should never happen.");
         }
 
-
-
         public override string ToString()
         {
             return ToShortString();
@@ -287,7 +205,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public override string ToShortString(string Arguments = "")
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var property in GetDBWrapperProperties())
+            foreach (var property in GetSpecializedWrapperProperties())
                 sb.Append($"{property.Name}: {property.GetValue(this)}, ");
             string text = sb.ToString();
             if (text.Length > 1)

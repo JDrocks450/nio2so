@@ -112,7 +112,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
             //legacy code here -- it works so I will leave it for now
-            PDU.SetPosition(charPacket.HeaderLength + (4 * sizeof(uint))); // move packet position to end of metadata                                    
+            PDU.SetPosition(charPacket.HeaderByte + (4 * sizeof(uint))); // move packet position to end of metadata                                    
             var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
             TSODBChar charData = new(blob);
 

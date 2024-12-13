@@ -8,9 +8,10 @@ using System.Threading.Tasks;
 namespace nio2so.Formats.TSOData
 {   
     /// <summary>
-    /// Imports a <see cref="TSODataFile"/> such as TSODataDefinition.dat in the root directory of The Sims Online.
+    /// Imports a <see cref="TSODataFile"/> such as TSODataDefinition.dat in the root directory of The Sims Online (New and Improved or Pre-Alpha)
     /// <para>These files map out the data structures used by The Sims Online in its networked calls.</para>
     /// <para>In TSO Pre-Alpha, it is pretty desolate with only a few structures actually mapped out.</para>
+    /// <para/>Furthermore, it is unclear if it even used at this time in Pre-Alpha.
     /// </summary>
     public class TSODataImporter : TSOFileImporterBase<TSODataFile>
     {

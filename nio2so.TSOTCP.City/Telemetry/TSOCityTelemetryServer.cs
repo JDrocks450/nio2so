@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
+using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
@@ -49,7 +50,8 @@ namespace nio2so.TSOTCP.City.Telemetry
             /// A log from the <see cref="QuazarAPI.Networking.Standard.QuazarServer{T}"/> TCP transport layer
             /// <para>The severity for these is not known</para>
             /// </summary>
-            TCPLayer
+            TCPLayer,
+            TCPLayer_Errors
         }
 
         public record ConsoleLogEntry(LogSeverity Severity, string Sender, string Content, DateTime? Time = null);
@@ -88,6 +90,7 @@ namespace nio2so.TSOTCP.City.Telemetry
         internal void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket Packet, TSOVoltronPacket? PDUEnclosed = default)
         {
             if (!TestingConstraints.VerboseLogging) return;
+
             Console.ForegroundColor = ConsoleColor.Magenta;
 
             string? PDUName = PDUEnclosed?.KnownPacketType.ToString();
@@ -114,9 +117,10 @@ namespace nio2so.TSOTCP.City.Telemetry
                 _ => ConsoleColor.Blue
             };
             if (!TestingConstraints.VerboseLogging)
-            {                
-                if ((PDU is TSOBroadcastDatablobPDU broad) &&
-                broad.kMSG == TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg) return;
+            {
+                if (PDU is TSOStandardMessageBroadcastPDU standardMsg &&
+                    standardMsg.Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
+                    return; // this is a server confirmation message, they spam. Do not log these.
             }
                 
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
@@ -161,13 +165,13 @@ namespace nio2so.TSOTCP.City.Telemetry
             {
                 LogSeverity.Message => ConsoleColor.Yellow,
                 LogSeverity.TCPLayer => ConsoleColor.White,
+                LogSeverity.TCPLayer_Errors => ConsoleColor.Red,
                 LogSeverity.Warnings => ConsoleColor.DarkYellow,
                 LogSeverity.Errors => ConsoleColor.Red,
                 _ => ConsoleColor.White,
             };
 
-            if (Entry.Severity == LogSeverity.TCPLayer)
-                if (!TestingConstraints.VerboseLogging) return;
+            if (!TestingConstraints.VerboseLogging && Entry.Severity == LogSeverity.TCPLayer) return;                
 
             //**PRETTY PRINT FOR MULTILINE
             var time = (Entry.Time ?? DateTime.Now);

@@ -12,6 +12,7 @@ using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.City.TSO.Voltron.Regulator;
 using QuazarAPI;
@@ -200,6 +201,7 @@ namespace nio2so.TSOTCP.City.TSO
                             var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(voltronPacket);
                             Send(ID, ariesPacket);
                             Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING
+                            Telemetry.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING
                         }
 #endif
                         if (disconnecting)

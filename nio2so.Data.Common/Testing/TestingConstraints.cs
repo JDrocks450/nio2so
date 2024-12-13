@@ -10,7 +10,9 @@ namespace nio2so.Data.Common.Testing
     {
         //****BETA TESTING
 
-        public const bool LogPackets = false;
+        public const bool LogPackets = true;
+        public const bool LogAriesPackets = false;
+        public const bool LogVoltronPackets = true;
 
         public const int ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
         /// <summary>

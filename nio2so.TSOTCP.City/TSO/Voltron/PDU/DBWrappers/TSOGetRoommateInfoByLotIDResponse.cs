@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.City.TSO.Voltron.Util;
+using QuazarAPI.Networking.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,21 +41,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <param name="MasterID"></param>
         public TSOGetRoommateInfoByLotIDResponse(uint HouseID, params uint[] RoommateAvatarIDs) :
             base(                
-                TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
                 )
-                //DBWRAPPER_MESSAGESIZE_TO_BODY_DISTANCE + (uint)(12 + (RoommateAvatarIDs.Length * sizeof(uint)))
         {
             this.HouseID = HouseID;
-            this.RoommateAvatarIDs = new byte[RoommateAvatarIDs.Length * sizeof(uint)];
+            using (var ms = new MemoryStream())
+            {
+                foreach (uint id in RoommateAvatarIDs)
+                    ms.EmplaceBody(id);
+                this.RoommateAvatarIDs = ms.ToArray();
+            }
             NumberOfRoommates = (uint)RoommateAvatarIDs.Length;
 
-            MakeBodyFromProperties();
-            MoveBufferPositionToDBMessageHeader();
-            Advance(8);
-            foreach(var id in RoommateAvatarIDs)
-                EmplaceBody(id);
+            MakeBodyFromProperties();            
         }
     }
 }
