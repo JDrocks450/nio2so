@@ -24,7 +24,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint DecompressedSize { get; set; }
         [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint CompressedSize { get; set; }
         [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint StreamBytesSize { get; set; }
-
         [TSOVoltronDBWrapperField] public byte[] StreamBytes { get; set; }
         //**FOOTER
 

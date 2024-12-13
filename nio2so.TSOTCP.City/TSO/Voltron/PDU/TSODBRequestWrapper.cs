@@ -38,8 +38,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
     /// <summary>
     /// A class for cTSONetMessageStandard structs wrapped inside a <see cref="TSODBRequestWrapper"/> PDU
-    /// </summary>
-    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU)]
+    /// </summary>    
     internal abstract class TSODBRequestWrapper : TSOVoltronSpecializedPacket<TSOVoltronDBWrapperField,TSODBWrapperPDUHeader>, ITSOVoltronAriesMasterIDStructure
     {
         /// <summary>
@@ -156,8 +155,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public static TSODBWrapperPDUHeader ReadDBPDUHeader(Stream BodyStream)
         {
             var startPosition = BodyStream.Position;
-            var avatarID = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
-            var avatarName = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            var avatarID = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            var avatarName = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
             ushort arg1 = BodyStream.ReadBodyUshort(Endianness.BigEndian);
             uint msgSize = BodyStream.ReadBodyDword(Endianness.BigEndian);
             uint struc = BodyStream.ReadBodyDword();

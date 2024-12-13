@@ -18,4 +18,8 @@
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="TSO\Voltron\Serialization\Struct\" />
+  </ItemGroup>
+
 </Project>

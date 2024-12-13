@@ -3,6 +3,7 @@ using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Aries;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -99,73 +101,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             ReevaluateSize();
         }
 
-        private bool EmbedProperty(PropertyInfo property)
-        {
-            bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
-            object? myValue = property.GetValue(this);
-            if (myValue == default) return true;
-            var endianConverter = (EndianBitConverter)(
-                    type == TSOVoltronValueTypes.BigEndian ?
-                        EndianBitConverter.Big :
-                        EndianBitConverter.Little);
-
-            bool wroteValue = true;
-
-            if (property.PropertyType == typeof(Byte[]))
-            {
-                EmplaceBody((byte[])myValue);
-                return true;
-            }
-
-            Type PropertyType = property.PropertyType;
-            while (PropertyType.IsEnum)
-                PropertyType = Enum.GetUnderlyingType(PropertyType);
-
-            //---NUMERICS
-            if (PropertyType.IsAssignableTo(typeof(UInt16)))
-                EmplaceBody(endianConverter.GetBytes((UInt16)myValue));
-            else if (PropertyType == typeof(Int16))
-                EmplaceBody(endianConverter.GetBytes((Int16)myValue));
-            else if (PropertyType.IsAssignableTo(typeof(UInt32)))
-                EmplaceBody(endianConverter.GetBytes((UInt32)myValue));
-            else if (PropertyType == typeof(Int32))
-                EmplaceBody(endianConverter.GetBytes((Int32)myValue));
-            else if (PropertyType == typeof(byte))
-                EmplaceBody((byte)myValue);
-            else if (PropertyType == typeof(DateTime))
-                EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
-            else if (PropertyType == typeof(Boolean))
-                EmplaceBody((byte)((bool)myValue ? 1 : 0));
-            else wroteValue = false;
-
-            if (wroteValue) return true;
-            if (!hasAttrib) // AUTOSELECT
-                type = TSOVoltronValueTypes.Pascal;
-
-            //---STRINGS
-            void WriteString(string Text)
-            {
-                if (type == TSOVoltronValueTypes.Pascal)
-                {
-                    EmplaceBody(0x80, 0x00);
-                    EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)Text.Length));
-                }
-                else Text += '\0';
-                EmplaceBody(Encoding.UTF8.GetBytes(Text));
-                wroteValue = true;
-            }
-
-            if (PropertyType == typeof(string[]))
-            {
-                foreach (var str in (string[])myValue)
-                    WriteString(str);
-            }
-            else if (myValue is String myStringValue)
-                WriteString(myStringValue);
-
-            if (wroteValue) return true;
-            return false;
-        }
+        private bool EmbedProperty(PropertyInfo property) => TSOVoltronSerializerCore.WriteProperty(_bodyBuffer, property, this);
 
         public void ReevaluateSize()
         {
@@ -254,88 +190,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
 
             foreach (var property in GetPropertiesToCopy())
             {
-                //check if this property is the body array property
-                if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
-                { // it is.
-                    if (property.PropertyType != typeof(Byte[]))
-                        throw new CustomAttributeFormatException("You applied the TSOVoltronBodyArray attribute to ... not a byte[]! Are you testing me?");
-                    int remainingData = (int)(PayloadSize - BodyPosition);
-                    byte[] destBuffer = new byte[remainingData];
-                    _bodyBuffer.Read(destBuffer, 0, remainingData);
-                    property.SetValue(this, destBuffer);
-                    break; // halt execution
-                }
-                //Numbers
-                {
-                    TSOVoltronValue? attribute = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type);
-                    bool hasAttrib = attribute != default;
-                    //BigEndian by default!
-                    Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
-                    bool readValue = true;
-
-                    Type PropertyType = property.PropertyType;
-                    while (PropertyType.IsEnum)
-                        PropertyType = Enum.GetUnderlyingType(PropertyType);
-
-                    //---NUMBERS
-                    if (PropertyType == typeof(byte))
-                    {
-                        property.SetValue(this, (byte)ReadBodyByte());
-                        continue;
-                    }
-                    else if (PropertyType == typeof(bool))
-                    {
-                        byte value = (byte)ReadBodyByte();
-                        property.SetValue(this, value != 0);
-                        continue;
-                    }
-                    else if (PropertyType == typeof(UInt16) || PropertyType == typeof(Int16))
-                    {
-                        ushort fromPacket = ReadBodyUshort(); // read an unsigned short
-                        if (PropertyType == typeof(UInt16)) // is it even an unsigned short?
-                            property.SetValue(this, fromPacket); // yeah
-                        else property.SetValue(this, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                        continue;
-                    }
-                    else if (PropertyType == typeof(UInt32) || PropertyType == typeof(Int32))
-                    {
-                        uint fromPacket = ReadBodyDword(); // read an unsigned int
-                        if (PropertyType == typeof(UInt32)) // is it even an unsigned int?
-                            property.SetValue(this, fromPacket); // yeah
-                        else property.SetValue(this, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                        continue;
-                    }
-                    else readValue = false;
-
-                    if (readValue) continue;
-
-                    if (PropertyType == typeof(DateTime))
-                    {
-                        uint fromPacket = ReadBodyDword();
-                        var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
-                        property.SetValue(this, value);
-                        continue;
-                    }
-                }
-                //Strings
-                {
-                    TSOVoltronString? attribute = getPropertyAttribute<TSOVoltronString>(property, out TSOVoltronValueTypes type);
-                    bool hasAttrib = attribute != null;
-                    if (!hasAttrib) // AUTOSELECT
-                        type = TSOVoltronValueTypes.Pascal;
-
-                    //---STRING
-                    try
-                    {
-                        string destValue = TSOVoltronBinaryReader.ReadString(type, _bodyBuffer, attribute?.NullTerminatedMaxLength ?? 255);
-                        property.SetValue(this, destValue);
-                    }
-                    catch (Exception ex)
-                    {
-                        TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Errors,
-                            "TSOVoltronPDU_Serializer", ex.Message + " Skipping property: " + property));
-                    }
-                }
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) continue;
+                //**serializable property
+                if (!TSOVoltronSerializerCore.ReflectProperty(_bodyBuffer, property, this))
+                    throw new ArgumentException($"Could not deserialize: {property}");
+                if (IsBodyEOF) break;
             }
             return (int)PayloadSize;
         }

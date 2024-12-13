@@ -4,11 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace nio2so.Formats.Streams
 {
+    /// <summary>
+    /// A TSOSerializableStream that contains a RefPack bitstream
+    /// <para/>Sample Header: <c>01 000000AE 000000A9 ...</c>
+    /// <para/>Which is Endian (0x01), Decompressed Size, Compressed Size
+    /// <para/>This is usually immediately followed by Compressed Size again in a different
+    /// Endian then 10 FB for the RefPack magic number.
+    /// </summary>
     public class TSOSerializableStream : Stream
     {
         private MemoryStream _stream;
@@ -16,11 +24,26 @@ namespace nio2so.Formats.Streams
         public byte CompressionEndian { get; set; }
         public uint DecompressedSize { get; set; }
         public uint CompressedSize { get; set; }
+        public byte[] StreamContents
+        {
+            get => ToArray();
+            set
+            {
+                _stream.Dispose();
+                _stream = new MemoryStream();
+                _stream.Write(value);
+            }
+        }
 
+        [IgnoreDataMember]
         public override bool CanRead => _stream.CanRead;
+        [IgnoreDataMember]
         public override bool CanSeek => _stream.CanSeek;
+        [IgnoreDataMember]
         public override bool CanWrite => _stream.CanWrite;
+        [IgnoreDataMember]
         public override long Length => _stream.Length;
+        [IgnoreDataMember]
         public override long Position { get => _stream.Position; set => _stream.Position = value; }
 
         public TSOSerializableStream(byte Endian, byte[] Payload)
