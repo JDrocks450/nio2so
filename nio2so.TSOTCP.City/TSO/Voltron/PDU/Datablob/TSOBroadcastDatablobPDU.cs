@@ -24,8 +24,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
     /// in the Room Server
     /// <para/>As a sidenote (not like anyone reads these but me any way) why is everything called a blob? idk me, why don't you ask them?
     /// well i tried but this was made 20 years ago. why am i even doing this?
-    /// </summary>
-    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU)]
+    /// </summary>    
     internal abstract class TSOBroadcastDatablobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOBroadcastDatablobPDUHeader>, 
         ITSOVoltronAriesMasterIDStructure
     {
@@ -105,8 +104,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         public static TSOBroadcastDatablobPDUHeader ReadSpecializedPDUHeader(Stream BodyStream)
         {
             var startPosition = BodyStream.Position;
-            var avatarID = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
-            var avatarName = TSOVoltronBinaryReader.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            var avatarID = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
+            var avatarName = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
             ushort arg1 = BodyStream.ReadBodyUshort(Endianness.BigEndian);
             uint msgSize = BodyStream.ReadBodyDword(Endianness.BigEndian);
             uint actionCLSID = BodyStream.ReadBodyDword();

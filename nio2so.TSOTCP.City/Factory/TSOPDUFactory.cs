@@ -103,14 +103,7 @@ namespace nio2so.TSOTCP.City.Factory
             do
             {
                 TSOVoltronPacket? cTSOVoltronpacket = default;
-                try
-                {
-                    cTSOVoltronpacket = CreatePacketObjectFromDataBuffer(AriesPacket.BodyStream);
-                }
-                catch (Exception ex)
-                {
-                    QConsole.WriteLine("TSOVoltronPacket_Warnings", $"An error occured in the ParsePackets function. {ex.Message}");
-                }
+                cTSOVoltronpacket = CreatePacketObjectFromDataBuffer(AriesPacket.BodyStream);
                 if (cTSOVoltronpacket != default)
                 {
                     cTSOVoltronpacket.EnsureNoErrors();// check for errors in PDU

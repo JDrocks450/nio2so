@@ -9,6 +9,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
     /// <summary>
     /// A <see cref="TSOBroadcastDatablobPacket"/> that dumps the packet data to the MessageContent property. 
     /// </summary>
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU)]
     internal class TSODefaultBroadcastDatablobPDU : TSOBroadcastDatablobPacket
     {
         /// <summary>
