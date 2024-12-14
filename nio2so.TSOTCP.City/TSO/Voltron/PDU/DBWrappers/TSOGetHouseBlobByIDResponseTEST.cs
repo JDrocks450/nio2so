@@ -1,5 +1,7 @@
 ﻿#define ATTEMPT_2
 
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers

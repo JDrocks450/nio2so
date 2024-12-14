@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Formats.Streams
 {
@@ -22,14 +23,17 @@ namespace nio2so.Formats.Streams
         private MemoryStream _stream;
 
         public byte CompressionEndian { get; set; }
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.BigEndian)]
         public uint DecompressedSize { get; set; }
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.BigEndian)]
         public uint CompressedSize { get; set; }
+        [TSOVoltronBodyArray]
         public byte[] StreamContents
         {
             get => ToArray();
             set
             {
-                _stream.Dispose();
+                _stream?.Dispose();
                 _stream = new MemoryStream();
                 _stream.Write(value);
             }
@@ -46,10 +50,13 @@ namespace nio2so.Formats.Streams
         [IgnoreDataMember]
         public override long Position { get => _stream.Position; set => _stream.Position = value; }
 
-        public TSOSerializableStream(byte Endian, byte[] Payload)
+        public TSOSerializableStream() : base()
         {
-            this.CompressionEndian = Endian;
             _stream = new MemoryStream();
+        }
+        public TSOSerializableStream(byte Endian, byte[] Payload) : this()
+        {
+            this.CompressionEndian = Endian;            
             Write(Payload);
         }
 

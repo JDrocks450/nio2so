@@ -63,7 +63,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
 
         public static object? Deserialize(Stream Stream, Type ObjectType)
         {
-            object? instance = ObjectType.GetType().Assembly.CreateInstance(ObjectType.GetType().FullName);
+            object? instance = Activator.CreateInstance(ObjectType);
             if (instance == null) return instance;
             defaultDeserialize(Stream, instance);
             return instance;

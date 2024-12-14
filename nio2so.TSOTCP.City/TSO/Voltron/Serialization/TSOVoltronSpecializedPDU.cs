@@ -39,6 +39,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             properties.AddRange(base.GetPropertiesToCopy());
             properties.AddRange(GetSpecializedWrapperProperties());
             return properties;
-        }        
+        }   
+        
+        protected string GetParameterListString()
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (var property in GetSpecializedWrapperProperties())
+                sb.Append($"{property.Name}: {property.GetValue(this)}, ");
+            string text = sb.ToString();
+            if (text.Length > 1)
+                text = text.Remove(text.Length - 2);
+            return text;
+        }
     }
 }

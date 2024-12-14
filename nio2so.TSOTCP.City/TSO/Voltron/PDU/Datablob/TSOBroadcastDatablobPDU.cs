@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MiscUtil.Conversion;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.Data.Common.Serialization.Voltron;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
 {
@@ -142,7 +144,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         public override string ToShortString(string Arguments = "") => ToString();
         public override string ToString()
         {
-            return $"{GetType().Name}({SubMsgCLSID}, byte[{MessageLength}])";
+            return $"{GetType().Name}<{SubMsgCLSID}>({GetParameterListString()})";
         }
     }
 }

@@ -16,6 +16,7 @@
                             <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
                             <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
                             <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
+                            <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>

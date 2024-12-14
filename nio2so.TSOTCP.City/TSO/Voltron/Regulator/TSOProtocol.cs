@@ -2,6 +2,7 @@
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
@@ -33,6 +34,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
     }
+    [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+    sealed class TSOProtocolBroadcastDatablobHandler : Attribute
+    {
+        public TSOProtocolBroadcastDatablobHandler(TSO_PreAlpha_MasterConstantsTable CLS_ID)
+        {
+            ActionType = CLS_ID;
+        }
+
+        public TSO_PreAlpha_MasterConstantsTable ActionType { get; set; }
+    }
 
     /// <summary>
     /// A base class for <see cref="ITSOProtocolRegulator"/> objects that provides functionality for mapping 
@@ -42,8 +53,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     {
         public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);
         private Dictionary<TSO_PreAlpha_VoltronPacketTypes, VoltronInvokationDelegate> voltronMap = new();
+
         public delegate void VoltronDatabaseInvokationDelegate(TSODBRequestWrapper PDU);
         private Dictionary<TSO_PreAlpha_DBActionCLSIDs, VoltronDatabaseInvokationDelegate> databaseMap = new();
+
+        public delegate void VoltronBroadcastInvokationDelegate(TSOBroadcastDatablobPacket PDU);
+        private Dictionary<TSO_PreAlpha_MasterConstantsTable, VoltronBroadcastInvokationDelegate> broadcastMap = new();
 
         protected TSOProtocolRegulatorResponse? CurrentResponse = null;
         private TSOCityServer? _server;
@@ -89,6 +104,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 if (result) TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
                     nameof(TSOProtocol), $"MAPPED {packetType} to DB handler {function.Name}"));
             }
+
+            broadcastMap.Clear();
+            foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolBroadcastDatablobHandler>() != null))
+            {
+                var attribute = function.GetCustomAttribute<TSOProtocolBroadcastDatablobHandler>();
+                var packetType = attribute.ActionType;
+                VoltronBroadcastInvokationDelegate action = function.CreateDelegate<VoltronBroadcastInvokationDelegate>(this);
+                bool result = broadcastMap.TryAdd(packetType, action);
+                if (result) TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
+                    nameof(TSOProtocol), $"MAPPED {packetType} to BROADCAST handler {function.Name}"));
+            }
         }        
 
         public virtual bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
@@ -108,13 +134,31 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         {
             if (_server == null) throw new NullReferenceException("No server instance!!!");
 
-            Response = null;
-            if (!voltronMap.TryGetValue(PDU.KnownPacketType, out var action))
-                return false;
-
             Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>());
-            action.Invoke(PDU);
-            return true;
+            switch (PDU.KnownPacketType)
+            {
+                case TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU:
+                    {
+                        var broadcastPDU = (TSOBroadcastDatablobPacket)PDU;
+                        if (broadcastMap.TryGetValue(broadcastPDU.SubMsgCLSID, out var action))
+                        {
+                            action(broadcastPDU);
+                            return true;
+                        }
+                    }
+                    break;
+                default:
+                    {
+                        if (voltronMap.TryGetValue(PDU.KnownPacketType, out var action))
+                        {
+                            action(PDU);
+                            return true;
+                        }
+                    }
+                    break;
+            }
+            Response = null;
+            return false;
         }
 
         protected IEnumerable<TSOVoltronPacket> SplitLargePDU(TSOVoltronPacket DBWrapper)

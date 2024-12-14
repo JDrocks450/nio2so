@@ -1,4 +1,7 @@
-﻿namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.Data.Common.Serialization.Voltron;
+
+namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU)]
     internal class TSOSetIgnoreListPDU : TSOVoltronPacket

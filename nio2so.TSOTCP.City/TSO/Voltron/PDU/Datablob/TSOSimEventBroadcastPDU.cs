@@ -11,7 +11,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
     /// This is sent when the SimEvent kMSG is raised to the server
     /// </summary>
     [TSOVoltronBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSimEvent)]
-    internal class TSOSimEventBroadcastPDU
+    internal class TSOSimEventBroadcastPDU : TSOBroadcastDatablobPacket
     {
         [TSOVoltronBroadcastDatablobPDUField] public uint SimEvent_Arg1 { get; set; } = 0x00034D45;
         [TSOVoltronBroadcastDatablobPDUField] public uint RefPack_Header_Size { get; set; }

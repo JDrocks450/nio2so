@@ -2,6 +2,8 @@
 using System.Reflection;
 using System.Text;
 using QuazarAPI.Networking.Data;
+using nio2so.Data.Common.Serialization.Voltron;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
 {
@@ -148,7 +150,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             {
                 object? value = TSOVoltronSerializer.Deserialize(Stream, property.PropertyType);
                 if (value != default)
+                {
                     property.SetValue(Instance, value);
+                    return true;
+                }
             }
             return false;
         }

@@ -1,4 +1,6 @@
 ﻿using nio2so.Formats.Util.Endian;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.Data.Common.Serialization.Voltron;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {

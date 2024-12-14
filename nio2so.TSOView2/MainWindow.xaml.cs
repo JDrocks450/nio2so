@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.UI.UIScript;
+using nio2so.TSOView2.Formats.Compressor;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.TSOData;
 using nio2so.TSOView2.Formats.UIs;
@@ -75,6 +76,7 @@ namespace nio2so.TSOView2
                 { MyselfItem, () => OpenWebsite(@"https://github.com/JDrocks450/") },
                 { GithubItem, () => OpenWebsite(@"https://github.com/JDrocks450/nio2so") },
                 { OpenTSODataFileItem, TSODataDefinitionExplorerWindow.ShowExplorer },
+                { RefPackItem, DecompressorWindow.ShowDecompressor },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

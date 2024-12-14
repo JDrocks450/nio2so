@@ -1,8 +1,10 @@
 ﻿using MiscUtil.Conversion;
+using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using QuazarAPI.Networking.Data;
 using System.Text;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron
 {
@@ -196,21 +198,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
                 throw new Exception("This should never happen.");
         }
 
-        public override string ToString()
-        {
-            return ToShortString();
-        }
+        public override string ToString() => ToShortString();
 
-        public override string ToShortString(string Arguments = "")
-        {
-            StringBuilder sb = new StringBuilder();
-            foreach (var property in GetSpecializedWrapperProperties())
-                sb.Append($"{property.Name}: {property.GetValue(this)}, ");
-            string text = sb.ToString();
-            if (text.Length > 1)
-                text = text.Remove(text.Length - 2);
-            return $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}({text})";
-        }
+        public override string ToShortString(string Arguments = "") => $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}({GetParameterListString()})";
 
         public string GetDBWrapperName() => $"{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}";
 

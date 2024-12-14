@@ -171,16 +171,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_ROOM_PDU, body));
         }
 
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU)]
-        public void BROADCAST_DATABLOB_PDU(TSOVoltronPacket PDU)
-        {
-            var broadcastPDU = (TSOBroadcastDatablobPacket)PDU;
-            if (broadcastPDU.SubMsgCLSID == TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSimEvent)
-                RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU,
-                    File.ReadAllBytes(@"E:\packets\discoveries\BroadcastDataBlob(SimEvent).dat")));
-            else RespondWith(broadcastPDU);
-        }
-
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
         public void CHAT_MSG_PDU(TSOVoltronPacket PDU)
         {
