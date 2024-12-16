@@ -32,10 +32,10 @@ namespace nio2so.TSOView2.Formats.Compressor
         string? InputFileName;
 
         const string HELPMETEXT = "Quick Tip: \n" +
-            "Your RefPack file (if decompressing) MUST start with uint32 Size then 0x10FB as the RefPack magic " +
-            "number. If this is not the case, then you must use a Hex Editor to make your input file match this requirement.\n\n" +
-            "This tool does use a simple algorithm to try to find this somewhere in the file, but it is highly recommended to get " +
-            "the format to match this requirement for the best results.";
+            "Your RefPack file (if decompressing) MUST start with the RefPack header (0x__FB). " +
+            "If this is not the case, then you should use a Hex Editor to make your input file match this format.\n\n" +
+            "Note: This tool does use an algorithm to look for this somewhere else in the file, but it is highly recommended to get " +
+            "the format to match this requirement for the best results. Decompression will begin after the header has been successfully located.";
 
         public DecompressorWindow()
         {
@@ -96,18 +96,30 @@ namespace nio2so.TSOView2.Formats.Compressor
             byte[] inputBytes = File.ReadAllBytes(FileName);
             byte[] outputBytes = null;
             string suggestedFileName = null;
+            string filetype_desc = "Compressed RefPack Data|*.dat";
 
             switch (CompressAction)
             {
                 default: return;
                 case DIRECTION.COMPRESSING:
                     {
-                        //DecompressedDataRect.Visibility = Visibility.Visible;
+                        //Helpful user sanity check to see if they're submitting an already compressed file                        
+                        for(int i = 0; i < Math.Min(inputBytes.Length,20); i++)
+                            if (inputBytes[i] == 0xFB)
+                            {
+                                var result = MessageBox.Show("Please double-check that the file you submitted isn't already compressed.\n\n" +
+                                    $"Note: This can be a false-positive of course, I found 0xFB within the first {i} bytes. Continue?",
+                                    "Question", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                                if (result == MessageBoxResult.Yes)
+                                    break;
+                                else goto exit;
+                            }
+
                         DecompressedLabel.Text = System.IO.Path.GetFileName(FileName);
                         DecompressedDataRect.IsEnabled = false;
                         suggestedFileName = System.IO.Path.Combine(
                             System.IO.Path.GetDirectoryName(FileName),
-                            System.IO.Path.GetFileNameWithoutExtension(FileName) + "_compressed.dat");
+                            System.IO.Path.GetFileNameWithoutExtension(FileName).Replace("_decompressed", "") + "_compressed.dat");
                         outputBytes = new Decompresser().Compress(inputBytes);
                         CompressedDataRect.Visibility = Visibility.Visible;
                         CompressedLabel.Text = System.IO.Path.GetFileName(suggestedFileName);
@@ -116,12 +128,13 @@ namespace nio2so.TSOView2.Formats.Compressor
                     break;
                 case DIRECTION.DECOMPRESSING:
                     {
+                        filetype_desc = "Decompressed RefPack Data|*.dat";
                         //CompressedDataRect.Visibility = Visibility.Visible;
                         CompressedLabel.Text = System.IO.Path.GetFileName(FileName);
                         CompressedDataRect.IsEnabled = false;
                         suggestedFileName = System.IO.Path.Combine(
                             System.IO.Path.GetDirectoryName(FileName),
-                            System.IO.Path.GetFileNameWithoutExtension(FileName) + "_decompressed.dat");
+                            System.IO.Path.GetFileNameWithoutExtension(FileName).Replace("_compressed","") + "_decompressed.dat");
                         outputBytes = new Decompresser().Decompress(inputBytes);
                         DecompressedDataRect.Visibility = Visibility.Visible;
                         DecompressedLabel.Text = System.IO.Path.GetFileName(suggestedFileName);
@@ -133,10 +146,12 @@ namespace nio2so.TSOView2.Formats.Compressor
             SaveFileDialog sdlg = new SaveFileDialog()
             {
                 InitialDirectory = System.IO.Path.GetDirectoryName(suggestedFileName),
-                FileName = System.IO.Path.GetFileName(suggestedFileName)
+                FileName = System.IO.Path.GetFileName(suggestedFileName),
+                Filter = filetype_desc
             };
             if (!(!sdlg.ShowDialog() ?? true))            
-                File.WriteAllBytes(sdlg.FileName, outputBytes);                                       
+                File.WriteAllBytes(sdlg.FileName, outputBytes);    
+        exit:
             ResetUI();
         }
 

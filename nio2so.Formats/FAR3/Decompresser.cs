@@ -117,7 +117,7 @@ namespace nio2so.Formats.FAR3
                 // init some vars
                 int writeIndex = 9; // leave 9 bytes for the header
                 int lastReadIndex = 0;
-                ArrayList indexList = null;
+                ArrayList? indexList = null;
                 int copyOffset = 0;
                 int copyCount = 0;
                 int index = -1;
@@ -305,6 +305,40 @@ namespace nio2so.Formats.FAR3
         }
 
         /// <summary>
+        /// This will assess the incoming data stream to see if it is in a valid format to be decompressed.
+        /// <para/>Valid format means: starting with 0x10FB and having the <see cref="m_DecompressedSize"/> field
+        /// set before decompression can begin.
+        /// <para/>Warning: this will ensure that a magic number is present at the beginning of the datastream. If it is not,
+        /// it will advance the <paramref name="Reader"/> until the magic number is found or the end of file is reached.
+        /// </summary>
+        private void PreprocessDecompress(BinaryReader Reader)
+        {
+            uint read_u24(in BinaryReader _reader)
+            {
+                byte[] u24bytes = new byte[4];
+                _reader.Read(u24bytes, 1, 3);
+                return EndianBitConverter.Big.ToUInt32(u24bytes, 0);
+            }
+
+            Reader.BaseStream.Seek(0, SeekOrigin.Begin);
+            while (Reader.ReadByte() != 0xFB) ;
+            if (Reader.BaseStream.Position < 2) throw new InvalidDataException("Header must start with <byte> 0xFB.");
+            if (Reader.BaseStream.Position == Reader.BaseStream.Length)
+                throw new InvalidDataException("Read through entire stream, cannot find the RefPack header anywhere.");
+            Reader.BaseStream.Seek(-2, SeekOrigin.Current);
+
+            ushort signature;
+            uint compressed_size, decompressed_size;
+            signature = Reader.ReadUInt16();
+            compressed_size = ((signature & 0x0100) == 0) ? read_u24(Reader) : 0;
+            //compressed size is not used.
+
+            decompressed_size = read_u24(Reader);
+            if (m_DecompressedSize == 0)
+                m_DecompressedSize = decompressed_size;            
+        }
+
+        /// <summary>
         /// Decompresses data and returns it as an
         /// uncompressed array of bytes.
         /// </summary>
@@ -313,36 +347,23 @@ namespace nio2so.Formats.FAR3
         public byte[] Decompress(byte[] Data)
         {
             //** MODIFIED BY BISQUICK
-            // Add signature processing: Read 0x10 0xFB **u24 m_DecompressedSize** before reading RefPack bitstream
-
-            uint read_u24(in BinaryReader _reader)
-            {
-                byte[] u24bytes = new byte[4];
-                _reader.Read(u24bytes, 1, 3);
-                return EndianBitConverter.Big.ToUInt32(u24bytes, 0);
-            }
-
-            ushort signature;
-            uint compressed_size, decompressed_size;
+            // Add signature processing: Read 0x10 0xFB **u24 m_DecompressedSize** before reading RefPack bitstream            
+            
             byte byte_0, byte_1, byte_2, byte_3;
             uint proc_len, ref_dis, ref_len;
 
             MemoryStream MemData = new MemoryStream(Data);
             BinaryReader Reader = new BinaryReader(MemData);
 
-            signature = Reader.ReadUInt16();
-            compressed_size = ((signature & 0x0100) == 0) ? read_u24(Reader) : 0;
-            //compressed size is not used.
+            PreprocessDecompress(Reader);
+            if(m_DecompressedSize == 0)
+                throw new InvalidDataException("Decompressed Size is zero. This file may be corrupt.");
 
-            decompressed_size = read_u24(Reader);
-            if (m_DecompressedSize == 0)
-                m_DecompressedSize = decompressed_size;
-
-            byte[] ndata = new byte[Data.Length - 5];
-            MemData = new MemoryStream(Data);
-            MemData.Seek(5, SeekOrigin.Begin);
+            byte[] ndata = new byte[Data.Length - MemData.Position];
+            //**The preprocess decompress function will ensure MemData is at the correct position.
             MemData.Read(ndata,0,ndata.Length);
             MemData.Dispose();
+            Reader.Dispose();
             Data = ndata;
 
             MemData = new MemoryStream(Data);
