@@ -94,7 +94,7 @@ namespace nio2so.Formats.FAR3
         /// </summary>
         /// <param name="Data">The data to be compressed.</param>
         /// <returns>An array of bytes with compressed data.</returns>
-        public byte[] Compress(byte[] Data)
+        public byte[] Compress(byte[] Data, bool WriteCompressedSizeBeforeMagicNumber = true)
         {
             // if data is big enough for compress
             if (Data.Length > 6)
@@ -277,9 +277,19 @@ namespace nio2so.Formats.FAR3
                 MemoryStream DataStream = new MemoryStream();
                 BinaryWriter Writer = new BinaryWriter(DataStream);
 
+                int writeStart = 0;
+                for (int i = 0; i < cData.Length; i++)
+                {
+                    writeStart = i;
+                    if (cData[i] != 0) break;                    
+                }
+                writeIndex -= writeStart;
+                cData = cData.Skip(writeStart).Take(writeIndex).ToArray();
+
                 // write the header for the compressed data
                 // set the compressed size
-                Writer.Write((uint)writeIndex);
+                if (WriteCompressedSizeBeforeMagicNumber)
+                    Writer.Write(EndianBitConverter.Big.GetBytes((uint)writeIndex + 9));
                 m_CompressedSize = writeIndex;
                 // set the MAGICNUMBER
                 Writer.Write((ushort)0xFB10);
@@ -289,7 +299,7 @@ namespace nio2so.Formats.FAR3
                 //byte[] revData = BitConverter.GetBytes(Data.Length);
                 //Big endian
                 byte[] revData = EndianBitConverter.Big.GetBytes(Data.Length);
-                Writer.Write(revData[1] | revData[2] << 8 | revData[3] << 16);
+                Writer.Write(revData,1,3);                
 
                 Writer.Write(cData);
 

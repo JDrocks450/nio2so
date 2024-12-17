@@ -1,5 +1,6 @@
 ﻿using nio2so.Formats.DB;
 using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,12 +30,12 @@ namespace nio2so.TSOTCP.City.Factory
 
         public TSODBCharBlob GetCharBlobByID(uint AvatarID)
         {
-            TSODBCharBlob charblob = new(GetDataByID(AvatarID));
+            TSODBCharBlob charblob = TSOVoltronSerializer.Deserialize<TSODBCharBlob>(GetDataByID(AvatarID));
             charblob.EnsureNoErrors();
             return charblob;
         }
-        public void SetCharBlobByIDToDisk(uint AvatarID, TSODBCharBlob CharBlob) => SetDataByIDToDisk(AvatarID, CharBlob.BlobData);
-        public TSODBChar GetCharByID(uint AvatarID) => new(GetDataByID(AvatarID, CharExt));        
-        public void SetCharByIDToDisk(uint AvatarID, TSODBChar CharBlob) => SetDataByIDToDisk(AvatarID, CharBlob.BlobData, true, CharExt);
+        public void SetCharBlobByIDToDisk(uint AvatarID, TSODBCharBlob CharBlob) => SetDataByIDToDisk(AvatarID, TSOVoltronSerializer.Serialize(CharBlob));
+        public TSODBChar GetCharByID(uint AvatarID) => TSOVoltronSerializer.Deserialize<TSODBChar>(GetDataByID(AvatarID, CharExt));        
+        public void SetCharByIDToDisk(uint AvatarID, TSODBChar CharBlob) => SetDataByIDToDisk(AvatarID, TSOVoltronSerializer.Serialize(CharBlob), true, CharExt);
     }
 }

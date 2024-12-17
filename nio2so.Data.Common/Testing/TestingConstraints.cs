@@ -18,7 +18,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = true;
+        public static bool SplitBuffersPDUEnabled = false;
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
@@ -79,11 +79,6 @@ namespace nio2so.Data.Common.Testing
         public const string AvatarDataDictionaryFileName = WorkspaceDirectory + "/db/avatardataservlet.json";
         public const string UserAccountDictionaryFileName = WorkspaceDirectory + "/db/useraccounts.json";
 
-        //**VERY TEMPORARY
-        /// <summary>
-        /// Sends a GetHouseBlobByID_Response blob that, while wrongly formatted, strangely works to at least get onto a lot, right now.
-        /// </summary>
-        public const bool JustGetMeToLotView = false;
         public const string MyFriendAvatarName = "FriendlyBuddy";
     }
 }

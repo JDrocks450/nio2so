@@ -34,8 +34,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
                 Stream.EmplaceBody(0x80, 0x00);
                 Stream.EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)Text.Length));
             }
-            else Text += '\0';
-            Stream.EmplaceBody(Encoding.UTF8.GetBytes(Text));
+            else if (type == TSOVoltronValueTypes.Length_Prefixed_Byte)
+                Stream.EmplaceBody((byte)Text.Length);
+            else if (type == TSOVoltronValueTypes.NullTerminated) Text += '\0';
+            else throw new InvalidCastException($"{nameof(TSOVoltronSerializerCore)}::WriteString() non-exhaustive string type switch! {type} not found!");
+                Stream.EmplaceBody(Encoding.UTF8.GetBytes(Text));
         }
         public static string ReadString(TSOVoltronValueTypes StringType, Stream Stream, int NullTerminatedMaxLength = 255)
         {
@@ -106,7 +109,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
                 }
                 else if (PropertyType == typeof(UInt16) || PropertyType == typeof(Int16))
                 {
-                    ushort fromPacket = Stream.ReadBodyUshort(); // read an unsigned short
+                    ushort fromPacket = Stream.ReadBodyUshort(dataEndianMode); // read an unsigned short
                     if (PropertyType == typeof(UInt16)) // is it even an unsigned short?
                         property.SetValue(Instance, fromPacket); // yeah
                     else property.SetValue(Instance, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
@@ -114,7 +117,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
                 }
                 else if (PropertyType == typeof(UInt32) || PropertyType == typeof(Int32))
                 {
-                    uint fromPacket = Stream.ReadBodyDword(); // read an unsigned int
+                    uint fromPacket = Stream.ReadBodyDword(dataEndianMode); // read an unsigned int
                     if (PropertyType == typeof(UInt32)) // is it even an unsigned int?
                         property.SetValue(Instance, fromPacket); // yeah
                     else property.SetValue(Instance, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
@@ -215,8 +218,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             }
 
             //--SERIALIZABLES
-            if (PropertyType.IsClass)            
-                TSOVoltronSerializer.Serialize(Stream, myValue);            
+            if (PropertyType.IsClass)
+            {
+                TSOVoltronSerializer.Serialize(Stream, myValue);
+                return true;
+            }         
 
             return wroteValue;
         }

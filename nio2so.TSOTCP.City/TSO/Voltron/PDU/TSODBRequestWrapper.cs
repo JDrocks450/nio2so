@@ -13,6 +13,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// </summary>
     internal class TSODBWrapperPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
+        internal uint headerLength;
+
         public string AriesID { get; set; } = "";
         public string MasterID { get; set; } = "";
         public ushort Arg1 { get; set; } = 0x00;
@@ -51,6 +53,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU;
 
         protected override TSODBWrapperPDUHeader Header { get; } = new();
+        public uint GetHeaderLength() => Header.headerLength;
 
         [TSOVoltronString]
         public string AriesID {
@@ -165,9 +168,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             byte headLen = (byte)BodyStream.ReadBodyByte();
             uint kMSG = (uint)BodyStream.ReadBodyDword();
             uint actionCLSID = BodyStream.ReadBodyDword();
+            uint headerlength = (uint)(BodyStream.Position - startPosition);
             BodyStream.Seek(startPosition, SeekOrigin.Begin);
             return new()
             {
+                headerLength = headerlength,
                 AriesID = avatarID,
                 MasterID = avatarName,
                 Arg1 = arg1,

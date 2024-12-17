@@ -18,14 +18,16 @@ namespace nio2so.Formats.Streams
     /// <para/>This is usually immediately followed by Compressed Size again in a different
     /// Endian then 10 FB for the RefPack magic number.
     /// </summary>
-    public class TSOSerializableStream : Stream
+    public class TSOSerializableStream
     {
-        private MemoryStream _stream;
+        const uint TSOSERIALIZABLESTREAM_HEAD_LEN = sizeof(uint) * 2 + 1;
 
+        private MemoryStream _stream;
+        
         public byte CompressionEndian { get; set; }
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.BigEndian)]
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
         public uint DecompressedSize { get; set; }
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.BigEndian)]
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
         public uint CompressedSize { get; set; }
         [TSOVoltronBodyArray]
         public byte[] StreamContents
@@ -40,24 +42,26 @@ namespace nio2so.Formats.Streams
         }
 
         [IgnoreDataMember]
-        public override bool CanRead => _stream.CanRead;
+        public bool CanRead => _stream.CanRead;
         [IgnoreDataMember]
-        public override bool CanSeek => _stream.CanSeek;
+        public bool CanSeek => _stream.CanSeek;
         [IgnoreDataMember]
-        public override bool CanWrite => _stream.CanWrite;
+        public bool CanWrite => _stream.CanWrite;
         [IgnoreDataMember]
-        public override long Length => _stream.Length;
+        public long Length => _stream.Length;
         [IgnoreDataMember]
-        public override long Position { get => _stream.Position; set => _stream.Position = value; }
+        public long Position { get => _stream.Position; set => _stream.Position = value; }
 
         public TSOSerializableStream() : base()
         {
             _stream = new MemoryStream();
         }
-        public TSOSerializableStream(byte Endian, byte[] Payload) : this()
+        public TSOSerializableStream(byte Endian, byte[] CompressedRefPack, uint DecompressedSize) : this()
         {
-            this.CompressionEndian = Endian;            
-            Write(Payload);
+            this.DecompressedSize = DecompressedSize;
+            CompressedSize = (uint)CompressedRefPack.Length;
+            CompressionEndian = Endian;            
+            _stream.Write(CompressedRefPack);
         }
 
         public byte[] ToArray() => _stream.ToArray();
@@ -73,11 +77,20 @@ namespace nio2so.Formats.Streams
             Seek(startOffset, SeekOrigin.Begin);
             byte[] datastream = new byte[Length - startOffset];
             Read(datastream, 0, datastream.Length);
-            byte[] fileData = new Decompresser()
-            {
-                DecompressedSize = DecompressedSize
-            }.Decompress(datastream);
+            byte[] fileData = new Decompresser().Decompress(datastream);
             return fileData;
+        }
+
+        /// <summary>
+        /// Compresses the incoming <paramref name="DecompressedBytes"/> to a RefPack stream
+        /// and creates a new <see cref="TSOSerializableStream"/> from the compressed bytes.
+        /// </summary>
+        /// <returns></returns>
+        public static TSOSerializableStream ToCompressedStream(byte[] DecompressedBytes)
+        {
+            Decompresser compresser = new();
+            byte[] compressedBytes = compresser.Compress(DecompressedBytes, true); // ensure the data length is wrote before magic number
+            return new TSOSerializableStream(0x01, compressedBytes, (uint)DecompressedBytes.Length);
         }
 
         /// <summary>
@@ -111,9 +124,8 @@ namespace nio2so.Formats.Streams
             }
             byte[] payload = new byte[read_length];
             Data.ReadExactly(payload, 0, payload.Length);
-            return new TSOSerializableStream(bodyType, payload)
+            return new TSOSerializableStream(bodyType, payload, size)
             {
-                DecompressedSize = size,
                 CompressedSize = hasCompression ? read_length : 0
             };
         }        
@@ -136,29 +148,31 @@ namespace nio2so.Formats.Streams
             return EndianBitConverter.Little.ToUInt32(dataBytes, 0);
         }
 
-        public override void Flush()
+        public void Flush()
         {
             _stream.Flush();
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
+        public int Read(byte[] buffer, int offset, int count)
         {
             return _stream.Read(buffer, offset, count);
         }
 
-        public override long Seek(long offset, SeekOrigin origin)
+        public long Seek(long offset, SeekOrigin origin)
         {
             return _stream.Seek(offset, origin);
         }
 
-        public override void SetLength(long value)
+        public void SetLength(long value)
         {
             _stream.SetLength(value);
         }
 
-        public override void Write(byte[] buffer, int offset, int count)
+        public void Write(byte[] buffer, int offset, int count)
         {
             _stream.Write(buffer, offset, count);
         }
+
+        public uint GetTotalLength() => (uint)(TSOSERIALIZABLESTREAM_HEAD_LEN + Length);
     }
 }

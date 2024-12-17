@@ -4493,4 +4493,10 @@
         /// </summary>
         House = 0x2,
     }    
+
+    public enum TSO_PreAlpha_HouseStreamChunkHeaders
+    {
+        flag = 0x67616C66,
+        hous = 0x73756F68
+    }
 }

@@ -7,6 +7,7 @@ using QuazarAPI.Networking.Data;
 using System.Threading.Tasks;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
+using nio2so.Data.Common.Serialization.Voltron;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
 {
@@ -17,13 +18,23 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
     {                
         public static void Serialize<T>(Stream Stream, T Object)
         {
+            //Does this object type implement custom serialization behavior?
+            //as in-- does it define how it should deserialized itself?
+            if (Object is ITSOCustomSerialize serializable)
+            {
+                Stream.Write(serializable.OnSerialize());
+                return;
+            }
+            // no-- proceed with default serialize    
+
             //**Distance to end property attribute map is here**
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
             foreach (var property in Object.GetType().GetProperties())
             {
-                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) continue;
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) 
+                    continue;
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
@@ -49,8 +60,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             }
         }
 
-        private static void defaultDeserialize(Stream Stream, object instance)
+        private static void doDeserialize(Stream Stream, object instance)
         {
+            //Does this object type implement custom serialization behavior?
+            //as in-- does it define how it should deserialized itself?
+            if (instance is ITSOCustomDeserialize serializable)
+            {
+                serializable.OnDeserialize(Stream);
+                return;
+            }
+            // no-- proceed with default deserialize            
             foreach (var property in instance.GetType().GetProperties())
             {
                 if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) continue;
@@ -64,15 +83,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
         public static object? Deserialize(Stream Stream, Type ObjectType)
         {
             object? instance = Activator.CreateInstance(ObjectType);
-            if (instance == null) return instance;
-            defaultDeserialize(Stream, instance);
+            if (instance == null) return null;
+            doDeserialize(Stream, instance);
             return instance;
         }
         public static T Deserialize<T>(Stream Stream) where T : new()
         {
             T newObject = new T();
-            defaultDeserialize(Stream, newObject);
+            doDeserialize(Stream, newObject);
             return newObject;
+        }
+
+        internal static T Deserialize<T>(byte[] streamBytes) where T : new()
+        {
+            using (MemoryStream stream = new MemoryStream(streamBytes))
+                return Deserialize<T>(stream);
         }
     }
 }

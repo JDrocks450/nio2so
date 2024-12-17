@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
+using nio2so.Formats.Streams;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
@@ -12,21 +13,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// <para/>See also: <seealso href="http://wiki.niotso.org/Stream"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request)]
-    internal class TSOInsertCharBlobByIDRequest : TSODBRequestWrapper
+    internal class TSOInsertCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU1
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint StatusCode { get; set; }
         [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string AvatarName { get; set; } = "NotSet";
         [TSOVoltronDBWrapperField] public uint RefPackLength { get; set; }
-        [TSOVoltronDBWrapperField] public byte CompressionMode { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint DecompressedSize { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint CompressedSize { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint BlobLength { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharBlobStream { get; set; } = new byte[0];
+        [TSOVoltronDBWrapperField] public TSOSerializableStream CharBlobStream { get; set; }
+        TSOSerializableStream ITSOSerializableStreamPDU1.GetStream() => CharBlobStream;
 
         public TSOInsertCharBlobByIDRequest() : base()
         {
             
         }
+
+        public bool TryUnpack(out TSODBCharBlob? Blob) => ((ITSOSerializableStreamPDU1)this).TryUnpackStream(out Blob);
     }
 }
