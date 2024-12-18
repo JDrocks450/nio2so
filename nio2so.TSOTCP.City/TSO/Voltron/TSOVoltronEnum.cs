@@ -4474,7 +4474,15 @@
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
         /// </summary>
-        kDBServiceResponseMsg = 0xDBF301A9
+        kDBServiceResponseMsg = 0xDBF301A9,
+        /// <summary>
+        /// <see cref="TSOVoltronBroadcastDatablobPDU"/> PDUs that are intended as Responses
+        /// </summary>
+        kSimResponseMsg = TSO_PreAlpha_MasterConstantsTable.kSimResponseMsg,
+        /// <summary>
+        /// <see cref="TSOVoltronBroadcastDatablobPDU"/> PDUs that are intended as Requests
+        /// </summary>
+        kSimRequestMsg = TSO_PreAlpha_MasterConstantsTable.kSimRequestMsg,
     }
 
     /// <summary>
@@ -4493,4 +4501,10 @@
         /// </summary>
         House = 0x2,
     }    
+
+    public enum TSO_PreAlpha_HouseStreamChunkHeaders
+    {
+        flag = 0x67616C66,
+        hous = 0x73756F68
+    }
 }

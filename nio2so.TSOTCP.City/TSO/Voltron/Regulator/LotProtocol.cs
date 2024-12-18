@@ -1,5 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
+using nio2so.Formats.FAR3;
+using nio2so.Formats.Streams;
 using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
@@ -76,30 +78,23 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request)]
         public void GetHouseBlobByID_Request(TSODBRequestWrapper PDU)
         {
-            //log debug mode
-            TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Warnings,
-                RegulatorName, nameof(TestingConstraints.JustGetMeToLotView) + " is " +
-                TestingConstraints.JustGetMeToLotView));
-
             var housePacket = (TSOGetHouseBlobByIDRequest)PDU;
             uint HouseID = housePacket.HouseID;
             //__TESTING MODE__
-            uint loadHouseID = TestingConstraints.JustGetMeToLotView ? 1 : HouseID;
+            uint loadHouseID = HouseID;
             //**
+            //Read decompressed House Blob from disk
             TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
             if (houseBlob == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
-            //**TESTING MODE**
-            TSOVoltronPacket response = TestingConstraints.JustGetMeToLotView ?
-                new TSOGetHouseBlobByIDResponseDEBUG(HouseID, houseBlob) :
-                new TSOGetHouseBlobByIDResponseTEST(HouseID, houseBlob);
-            //***
+
+            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob);            
+
             RespondWith(response);           
             RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
-            byte[] fileData = File.ReadAllBytes(@"E:\packets\const\DoVisitorBonus.dat");
-            RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
-            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU, fileData));
+            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.JOIN_ROOM_PDU, File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat")));
+            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
         }
 
         // The Client is requesting to set the house data for this HouseID in the Database
@@ -109,13 +104,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
 
             uint HouseID = housePDU.HouseID;
-            var blob = housePDU.StreamBytes;
-            TSODBHouseBlob houseBlob = new(blob);
+            if (!housePDU.TryUnpack(out Struct.SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
+                throw new InvalidDataException("Unable to read incoming HouseBlob data!");
+            var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
 
-            HouseID = 6057;
-
-            //log this to disk
-            TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, houseBlob);
+            // write decompressed to the hard drive
+            TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(blob.Content));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]

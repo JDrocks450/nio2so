@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.Formats.DB;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
@@ -20,24 +21,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField]
         public uint Arg2 { get; set; } = 0x0;
-        /// <summary>
-        /// The name of the avatar
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-        public string AvatarName { get; set; } = "";
-        /// <summary>
-        /// The avatar's description
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-        public string AvatarDescription { get; set; } = "";
+
         /// <summary>
         /// The char data payload
         /// </summary>
         [TSOVoltronDBWrapperField]
-        [TSOVoltronBodyArray]
-        public byte[] CharData { get; set; }
+        public TSODBChar CharProfile { get; set; }
 
         public TSOSetCharByIDRequest() : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,

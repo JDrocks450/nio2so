@@ -1,27 +1,31 @@
-﻿using nio2so.Formats.Util.Endian;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.Formats.Util.Endian;
 using System.Text;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Formats.DB
 {
     /// <summary>
-    /// The body of a DBRequestWrapper PDU in Voltron sent in request/response to a (Get/Set)CharBlobByID command
-    /// <para/>This is a RefPack bitstream and should start with 0x10FB
+    /// The decompressed payload of a <see cref="TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request"/> or a 
+    /// <see cref="TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response"/> follows this structure
     /// </summary>
-    public class TSODBCharBlob : TSODBBlob
+    public class TSODBCharBlob
     {
-        public TSODBCharBlob(byte[] blobData) : base(blobData)
-        {
-
-        }
-
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint HeaderByte { get; set; } = 0x01;
         /// <summary>
-        /// This will run a simple test procedure to ensure the data in this blob is safe and formatted correctly.
+        /// A string that always reads, "not needed".
         /// </summary>
-        public void EnsureNoErrors()
+        [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string NotNeeded { get; set; } = "not needed";
+        public uint AvatarID { get; set; }
+        /// <summary>
+        /// Personality, Skills, Appearance, and smashed "[name]$[description] are included in this stream
+        /// </summary>
+        [TSOVoltronBodyArray] public byte[] CharBlobStream { get; set; }
+
+        public TSODBCharBlob() : base() { }
+        public TSODBCharBlob(uint AvatarID, byte[] DecompressedCharBlobData) : this()
         {
-            if (BlobData.Length < 6) throw new InvalidDataException("BlobData is too small (less than 6 bytes)");
-            if (BlobData[0] != 0x10 || BlobData[1] != 0xFB)
-                throw new InvalidDataException("The provided BlobData stream doesn't start with 0x10FB which will cause issues.");
+            CharBlobStream = DecompressedCharBlobData;
         }
     }
 }

@@ -6,6 +6,7 @@ using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -190,19 +191,19 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         internal static void LogConsole(ConsoleLogEntry Entry) => Global.OnConsoleLog(Entry);
 
-        internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob houseBlob)
+        internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob HouseBlob)
         {
-            OnBlobBase(Direction, HouseID, houseBlob);
+            OnBlobBase(Direction, HouseID, "House File Stream");
             if (Direction == NetworkTrafficDirections.INBOUND)
-                TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, houseBlob);
+                TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, HouseBlob);
         }
         internal void OnCharBlob(NetworkTrafficDirections Direction, uint AvatarID, TSODBCharBlob charBlob)
         {
-            OnBlobBase(Direction, AvatarID, charBlob);
+            OnBlobBase(Direction, AvatarID, "Character File Stream");
             if (Direction == NetworkTrafficDirections.INBOUND)
                 TSOFactoryBase.Get<TSOAvatarFactory>().SetCharBlobByIDToDisk(AvatarID, charBlob);
         }
-        private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, TSODBBlob Blob)
+        private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, string Type)
         {
             Console.ForegroundColor = Direction switch
             {
@@ -210,11 +211,11 @@ namespace nio2so.TSOTCP.City.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.DarkCyan,
                 _ => ConsoleColor.Cyan
             };
-            Log($"{DateTime.Now.ToLongTimeString()} - *{Blob.GetType().Name}* [{Direction}] ObjectID: {ID} Size: {Blob.BlobData.Length}");
+            Log($"{DateTime.Now.ToLongTimeString()} - *{Type}* [{Direction}] ObjectID: {ID}");
         }
         internal void OnCharData(NetworkTrafficDirections Direction, uint AvatarID, TSODBChar CharData)
         {
-            OnBlobBase(Direction, AvatarID, CharData);
+            OnBlobBase(Direction, AvatarID, "Character Profile");
             if (Direction == NetworkTrafficDirections.INBOUND)
                 TSOFactoryBase.Get<TSOAvatarFactory>().SetCharByIDToDisk(AvatarID, CharData);
         }

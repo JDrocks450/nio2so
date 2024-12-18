@@ -35,18 +35,18 @@ namespace nio2so.TSOTCP.City.Factory
         public uint Create()
         {
             uint NewHouseID = TestingConstraints.BuyLotID;
-            TSODBHouseBlob data = new TSODBHouseBlob(OnFileNotFound());
-            SetHouseBlobByIDToDisk(NewHouseID, data);
+            byte[] data = OnFileNotFound();
+            SetHouseBlobByIDToDisk(NewHouseID, new(data));
             return NewHouseID;
         }
 
-        public TSODBHouseBlob GetHouseBlobByID(uint HouseID) => new(GetDataByID(HouseID));
+        public TSODBHouseBlob GetHouseBlobByID(uint HouseID) => GetDataObjectByID<TSODBHouseBlob>(HouseID);
 
         /// <summary>
         /// Writes the <see cref="TSODBHouseBlob"/> to the disk at <see cref="HOUSE_DIR"/>
         /// </summary>
         /// <param name="houseID"></param>
         /// <param name="houseBlob"></param>
-        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob houseBlob) => SetDataByIDToDisk(houseID, houseBlob.BlobData, false);    
+        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob HouseBlob) => SetDataObjectByIDToDisk(houseID, HouseBlob, false);    
     }
 }

@@ -1,4 +1,7 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.Formats.Streams;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron.Struct;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
@@ -26,26 +29,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint CompressionType2 { get; set; }
 
         //TSO Serializable Stream
-
-        [TSOVoltronDBWrapperField]
-        public byte CompressionMode { get; set; }
-
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        public uint DecompressedSize { get; set; }
-
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        public uint CompressedSize { get; set; }
-
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        public uint StreamBytesSize { get; set; }
-
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronBodyArray]
-        public byte[] StreamBytes { get; set; }
+        /// <summary>
+        /// A <see cref="TSOSerializableStream"/> containing a <see cref="SetHouseBlobByIDRequestStreamStructure"/> object
+        /// <para/>See: <see cref="TryUnpack(out SetHouseBlobByIDRequestStreamStructure?)"/>
+        /// </summary>
+        [TSOVoltronDBWrapperField] public TSOSerializableStream? HouseFileStream { get; set; }
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream;
 
         public TSOSetHouseBlobByIDRequest() : base() { }
+
+        public bool TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out Structure);
     }
 }

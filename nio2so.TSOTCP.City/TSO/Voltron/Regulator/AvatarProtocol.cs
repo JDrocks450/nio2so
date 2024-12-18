@@ -41,7 +41,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharBlobByID(avatarID);
             if (charBlob == null)
                 throw new NullReferenceException($"CharBlob {avatarID} is null and unhandled.");
-
+            if (charBlob.AvatarID != avatarID) // oh no that's not good.
+            {
+                if (charBlob.AvatarID == 0x1111FFFF) // oh phew this character never got a ID bestowed upon it
+                    charBlob.AvatarID = avatarID;
+                else throw new InvalidDataException($"AvatarID: {avatarID} requested, got {charBlob.AvatarID}'s data.");
+            }
             TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.OUTBOUND, avatarID, charBlob);
             var response = new TSOGetCharBlobByIDResponse(avatarID, charBlob);
             RespondTo(PDU, response);            
@@ -76,13 +81,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 throw new InvalidDataException("You cannot provide zero as an AvatarID when sending a Client to CAS. " +
                     "Give the Client an actual AvatarID. Ignoring this PDU.");
 
-
-            var blob = ((TSOInsertCharBlobByIDRequest)PDU).CharBlobStream; // read from metadata to EOF (or packet, in this case?)
-            TSODBCharBlob charBlob = new(blob);
-            charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
+            //decompress enclosed stream into a TSODBCharBlob
+            if (!((TSOInsertCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
+                throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
+            if (Blob.AvatarID != avatarID)
+                Blob.AvatarID = avatarID;
 
             //log this to disk
-            TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
+            TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
             RespondTo(PDU, new TSOInsertCharBlobByIDResponse(avatarID));
         }
 
@@ -93,14 +99,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             if (avatarID == 0)
                 throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignored.");
 
-
-            var blob = ((TSOSetCharBlobByIDRequest)PDU).CharBlobStream; // read from metadata to EOF (or packet, in this case?)
-            TSODBCharBlob charBlob = new(blob);
-            charBlob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
+            //decompress enclosed stream into a TSODBCharBlob
+            if (!((TSOSetCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
+                throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
 
             //log this to disk
-            TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, charBlob);
-            RespondTo(PDU, new TSOSetCharBlobByIDResponse(avatarID, charBlob));
+            TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
+            RespondTo(PDU, new TSOSetCharBlobByIDResponse(avatarID, Blob));
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
@@ -111,10 +116,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
-            //legacy code here -- it works so I will leave it for now
-            PDU.SetPosition(charPacket.HeaderByte + (4 * sizeof(uint))); // move packet position to end of metadata                                    
-            var blob = PDU.ReadToEnd(); // read from metadata to EOF (or packet, in this case?)
-            TSODBChar charData = new(blob);
+            TSODBChar charData = charPacket.CharProfile;
 
             //log this to disk
             TSOCityTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);

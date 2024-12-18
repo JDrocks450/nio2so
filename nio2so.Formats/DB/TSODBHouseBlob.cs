@@ -1,21 +1,32 @@
-﻿using nio2so.Formats.Util.Endian;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Formats.DB
 {
     /// <summary>
-    /// The body of a DBRequestWrapper PDU in Voltron sent in request/response to a (Get/Set)HouseBlobByID command
+    /// A wrapper for the House Blob stream that is sent to the client for HouseBlob PDUs
     /// </summary>
-    public class TSODBHouseBlob : TSODBBlob
+    public class TSODBHouseBlob
     {
-        public uint RASSize => EndianBitConverter.Big.ToUInt32(BlobData,0);
-        public TSODBHouseBlob(byte[] blobData) : base(blobData)
+        /// <summary>
+        /// The house blob data stream
+        /// </summary>
+        [TSOVoltronBodyArray] public byte[] HouseBlobStream { get; set; }
+        /// <summary>
+        /// Default parameterless constructor for serialization
+        /// </summary>
+        public TSODBHouseBlob() { }
+        /// <summary>
+        /// Creates a new <see cref="TSODBHouseBlob"/> and sets the <see cref="HouseBlobStream"/> property
+        /// </summary>
+        /// <param name="houseBlobStream"></param>
+        public TSODBHouseBlob(byte[] houseBlobStream) : this()
         {
-
+            HouseBlobStream = houseBlobStream;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.Streams;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,19 +9,35 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
 {
     /// <summary>
-    /// This is sent when the SimEvent kMSG is raised to the server
+    /// This is found when the <see cref="TSO_PreAlpha_MasterConstantsTable.GZIID_cITSOSimEvent"/> is received by the server
+    /// <para/>Seems to be a wrapper for Simulator Events
     /// </summary>
     [TSOVoltronBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSimEvent)]
-    internal class TSOSimEventBroadcastPDU : TSOBroadcastDatablobPacket
+    internal class TSOSimEventBroadcastPDU : TSOBroadcastDatablobPacket, ITSOSerializableStreamPDU
     {
-        [TSOVoltronBroadcastDatablobPDUField] public uint SimEvent_Arg1 { get; set; } = 0x00034D45;
-        [TSOVoltronBroadcastDatablobPDUField] public uint RefPack_Header_Size { get; set; }
-        [TSOVoltronBroadcastDatablobPDUField] public uint SimEvent_RefPack_Header_Arg1 { get; set; } = 0xE980EE20;
-        [TSOVoltronBroadcastDatablobPDUField] public uint SimEvent_RefPack_Header_Arg2 { get; set; } = 0x7B6F2221;
+        /// <summary>
+        /// The first parameter of the time struct, still unknown
+        /// </summary>
+        [TSOVoltronBroadcastDatablobPDUField] public uint Time_Ticks { get; set; } = 0x00034D45;
+        /// <summary>
+        /// The second parameter to the time struct, still unknown ((COULD ALSO BE SIZE)))
+        /// </summary>
+        [TSOVoltronBroadcastDatablobPDUField] public uint Time_Index { get; set; }
+        /// <summary>
+        /// The kMSG corresponding to what the simulator is notifying the room about
+        /// </summary>
+        [TSOVoltronBroadcastDatablobPDUField] public TSO_PreAlpha_MasterConstantsTable Simulator_kMSG { get; set; }
+        /// <summary>
+        /// Generally, if this is seen as a Response or a Request
+        /// </summary>
+        [TSOVoltronBroadcastDatablobPDUField] public TSO_PreAlpha_kMSGs Simulator_RequestType { get; set; }
         [TSOVoltronBroadcastDatablobPDUField] public uint SimEvent_RefPack_Header_Arg3 { get; set; } = 0x00000000;
 
-        //**Start TSOSerializableStream**
+        //**TSOSerializableStream**
 
         [TSOVoltronBroadcastDatablobPDUField] public TSOSerializableStream RefPackDataStream { get; set; }
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => RefPackDataStream;
+
+        public TSOSimEventBroadcastPDU() : base(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSimEvent) { }
     }
 }

@@ -70,7 +70,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The <see cref="TSODBChar"/> data to send, in bytes
         /// </summary>
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] CharDataBytes { get; set; }                
+        [TSOVoltronDBWrapperField] public TSODBChar CharProfile { get; set; }                
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharByIDResponse"/> packet with the provided <see cref="TSODBChar"/>
@@ -85,7 +85,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 )
         {
             this.AvatarID = AvatarID;
-            CharDataBytes = CharData.BlobData;
+            CharProfile = CharData;
 
             MakeBodyFromProperties();                                           
         }

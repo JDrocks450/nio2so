@@ -1,4 +1,7 @@
 ﻿#define ATTEMPT_4
+//#define NIO2SO_ALPHA_COMPAT
+
+#if NIO2SO_ALPHA_COMPAT
 
 using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
@@ -67,3 +70,5 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         }
     }
 }
+
+#endif

@@ -3,30 +3,31 @@
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
+using nio2so.Formats.Streams;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
-    internal class TSOGetHouseBlobByIDResponseTEST : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    internal class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     { 
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public byte Filler1 { get; set; } = 0x01;
 
         //**
 
-        [TSOVoltronDBWrapperField] public uint Filler4 => (uint)(0x1D + (StreamBytes?.Length ?? 0) + FOOTERLEN);
+        [TSOVoltronDBWrapperField] public uint Filler4 => (uint)(0x1D + (HouseBlobStream?.Length ?? 0) + FOOTERLEN);
         [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] public uint Filler5 => 0x5F534152;
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint Filler6 => DecompressedSize + 0x11;
-        [TSOVoltronDBWrapperField] public uint HB_Payload_Size { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint Filler6 => HouseBlobStream?.DecompressedSize ?? 0 + 0x11;
+        [TSOVoltronDBWrapperField] public uint HB_Payload_Size => HouseBlobStream?.GetTotalLength() ?? 0;
 
         //**TSOSERIALIZABLE
+        /// <summary>
+        /// This is documented in HOUS_SMASH but it is the Hous chunk from a saved property file that can be found in UserData/Houses
+        /// </summary>
+        [TSOVoltronDBWrapperField] public TSOSerializableStream HouseBlobStream { get; set; }
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseBlobStream;
 
-        const uint TSOSERIALIZABLESTREAM_HEAD_LEN = sizeof(uint) * 3 + 1;
-        [TSOVoltronDBWrapperField] public byte CompressionMode { get; set; } = 0x01;
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint DecompressedSize { get; set; }
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint CompressedSize { get; set; }
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint StreamBytesSize { get; set; }
-        [TSOVoltronDBWrapperField] public byte[] StreamBytes { get; set; }
         //**FOOTER
 
         const uint FOOTERLEN = sizeof(uint) * 3;
@@ -48,7 +49,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetHouseBlobByIDResponseTEST(uint houseID, TSODBHouseBlob BlobData) :
+        public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -56,13 +57,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 )
         {
             this.HouseID = houseID;
-            HB_Payload_Size = BlobData.Length + TSOSERIALIZABLESTREAM_HEAD_LEN;
-            CompressionMode = 0x01;
-            DecompressedSize = BlobData.DecompressedSize;
-            CompressedSize = StreamBytesSize = BlobData.Length;
-            StreamBytes = BlobData.BlobData;
+
+            var decompressedBytes = TSOVoltronSerializer.Serialize(HouseBlob);
+            HouseBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
 
             MakeBodyFromProperties();
-        }
+        }        
     }    
 }
