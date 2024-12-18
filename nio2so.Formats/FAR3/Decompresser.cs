@@ -489,6 +489,9 @@ namespace nio2so.Formats.FAR3
                     }
                 }
 
+                if(DecompressedData.Length != m_DecompressedSize)
+                    throw new InvalidDataException("After decompressing this RefPack, the amount of data decompressed " +
+                        $"is not what the stream says it should be.\n Should be: {m_DecompressedSize} is: {DecompressedData.Length}");
                 return DecompressedData;
             }
 

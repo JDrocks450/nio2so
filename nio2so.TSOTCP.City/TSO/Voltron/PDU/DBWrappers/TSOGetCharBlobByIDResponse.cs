@@ -6,60 +6,6 @@ using nio2so.Formats.Streams;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
-    interface ITSOSerializableStreamPDU1
-    {
-        public TSOSerializableStream GetStream();
-
-        public bool TryUnpackStream<T>(out T? Structure) where T : new()
-        {
-            Structure = default;
-            if (GetStream == null) return false;
-
-            byte[] streamBytes = GetStream().DecompressRefPack();
-            Structure = TSOVoltronSerializer.Deserialize<T>(streamBytes);
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// This <see cref="TSOVoltronDBRequestWrapperPDU"/> contains a <c>TSOSerializableStream</c>
-    /// </summary>
-    interface ITSOSerializableStreamPDU
-    {
-        /// <summary>
-        /// 0x00 - None? 0x01 - little endian? 0x03 - Big endian?
-        /// <para/>For context, only 0x01 has ever been seen from/to the client in this version
-        /// <see cref="TSOSerializableStream"/>
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        byte CompressionMode { get; set; }
-        /// <summary>
-        /// The decompressed size of this TSOSerializableStream object
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        uint DecompressedSize { get; set; }
-        /// <summary>
-        /// The compressed size of the TSOSerializableStream -- basically just the distance from the end of this DWORD to 
-        /// the end of the payload
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        uint CompressedSize { get; set; }
-        /// <summary>
-        /// The size of the proceeding stream including these 4 bytes.
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        uint StreamBytesSize { get; set; }
-        /// <summary>
-        /// The payload of this <see cref="ITSOSerializableStreamPDU"/>
-        /// </summary>
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronBodyArray]
-        byte[] StreamBytes { get; set; }
-    }
-
     /// <summary>
     /// Contains a <see cref="TSODBCharBlob"/> object in a cTSOSerializable Stream, which contains a RefPack 
     /// of the char data. 
@@ -68,7 +14,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// <para/>See also: <seealso href="http://wiki.niotso.org/Stream"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response)]
-    internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU1
+    internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         const uint HEADERLEN = 0xD;
 
@@ -91,7 +37,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         //***ITSOSerializableStream
 
         [TSOVoltronDBWrapperField] public TSOSerializableStream CharBlobStream { get; set; }
-        TSOSerializableStream ITSOSerializableStreamPDU1.GetStream() => CharBlobStream;
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => CharBlobStream;
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharBlobByIDResponse"/> packet with the provided <paramref name="BlobData"/>

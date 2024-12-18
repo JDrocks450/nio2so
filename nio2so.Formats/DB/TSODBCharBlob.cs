@@ -9,7 +9,7 @@ namespace nio2so.Formats.DB
     /// The decompressed payload of a <see cref="TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request"/> or a 
     /// <see cref="TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response"/> follows this structure
     /// </summary>
-    public class TSODBCharBlob : TSODBBlob
+    public class TSODBCharBlob
     {
         [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint HeaderByte { get; set; } = 0x01;
         /// <summary>
@@ -26,14 +26,6 @@ namespace nio2so.Formats.DB
         public TSODBCharBlob(uint AvatarID, byte[] DecompressedCharBlobData) : this()
         {
             CharBlobStream = DecompressedCharBlobData;
-        }
-
-        /// <summary>
-        /// This will run a simple test procedure to ensure the data in this blob is safe and formatted correctly.
-        /// </summary>
-        public void EnsureNoErrors()
-        {
-            return;
         }
     }
 }

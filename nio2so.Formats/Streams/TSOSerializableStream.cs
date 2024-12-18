@@ -25,7 +25,13 @@ namespace nio2so.Formats.Streams
         private MemoryStream _stream;
         
         public byte CompressionEndian { get; set; }
+        /// <summary>
+        /// Do not trust this number, it's Endian can be literally either one for seemingly no reason
+        /// </summary>
         [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
+        /// <summary>
+        /// Do not trust this number, it's Endian can be literally either one for seemingly no reason
+        /// </summary>
         public uint DecompressedSize { get; set; }
         [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
         public uint CompressedSize { get; set; }
@@ -77,7 +83,7 @@ namespace nio2so.Formats.Streams
             Seek(startOffset, SeekOrigin.Begin);
             byte[] datastream = new byte[Length - startOffset];
             Read(datastream, 0, datastream.Length);
-            byte[] fileData = new Decompresser().Decompress(datastream);
+            byte[] fileData = new Decompresser().Decompress(datastream);            
             return fileData;
         }
 
@@ -174,5 +180,16 @@ namespace nio2so.Formats.Streams
         }
 
         public uint GetTotalLength() => (uint)(TSOSERIALIZABLESTREAM_HEAD_LEN + Length);
+
+        public void FlipEndian()
+        {
+            uint flip(uint number)
+            {
+                byte[] array = EndianBitConverter.Little.GetBytes(number);
+                return EndianBitConverter.Big.ToUInt32(array, 0);
+            }
+            CompressedSize = flip(CompressedSize);
+            DecompressedSize = flip(DecompressedSize);
+        }
     }
 }

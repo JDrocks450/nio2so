@@ -1,10 +1,13 @@
 ﻿using nio2so.Formats.DB;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -112,6 +115,24 @@ namespace nio2so.TSOTCP.City.Factory
             return Path.Combine(HouseDirectory, HouseFileName);
         }
 
+        /// <summary>
+        /// Uses the <see cref="TSOVoltronSerializer"/> to deserialize the data stored on the disk at the given
+        /// <paramref name="ObjectID"/> and extension provided
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ObjectID"></param>
+        /// <param name="OverrideExtension"></param>
+        /// <returns></returns>
+        protected T GetDataObjectByID<T>(uint ObjectID, string? OverrideExtension = default) where T : new() =>
+            TSOVoltronSerializer.Deserialize<T>(GetDataByID(ObjectID, OverrideExtension));
+
+        /// <summary>
+        /// Returns a <see langword="byte"/> array containing the file data at the <see cref="MY_DIR"/> with the given
+        /// extension and ObjectID.
+        /// </summary>
+        /// <param name="ObjectID"></param>
+        /// <param name="OverrideExtension"></param>
+        /// <returns></returns>
         protected byte[] GetDataByID(uint ObjectID, string? OverrideExtension = default)
         {
             string uri = GetObjectURI(ObjectID,OverrideExtension);
@@ -128,6 +149,20 @@ namespace nio2so.TSOTCP.City.Factory
         }
 
         /// <summary>
+        /// Sets the given <paramref name="ObjectData"/> to the disk by the <paramref name="ObjectID"/> provided.
+        /// <para/>Uses the <see cref="TSOVoltronSerializer"/> to write bytes to the disk.
+        /// <para/>If you notice issues with serialization, please refer to <see cref="TSOVoltronSerializerCore"/>
+        /// to see where issues may be arising with your data.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="ObjectID">The ID of the <paramref name="ObjectData"/> to set</param>
+        /// <param name="ObjectData">The Object which you want to save to the disk</param>
+        /// <param name="Overwrite">Can we overwrite pre-existing data?</param>
+        /// <param name="OverrideExtension">What extension you would like to save it with. Default: <see cref="MY_EXT"/></param>
+        protected void SetDataObjectByIDToDisk<T>(uint ObjectID, T ObjectData, bool Overwrite = true, string? OverrideExtension = default) where T : new() =>
+            SetDataByIDToDisk(ObjectID, TSOVoltronSerializer.Serialize<T>(ObjectData), Overwrite, OverrideExtension);
+
+        /// <summary>
         /// Writes the <see cref="TSODBHouseBlob"/> to the disk at <see cref="HOUSE_DIR"/>
         /// </summary>
         /// <param name="ObjectID"></param>
@@ -139,5 +174,13 @@ namespace nio2so.TSOTCP.City.Factory
             TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
                 GetType().Name, $"Set {MY_ITEMNAME} ID: {ObjectID} successfully. Size: {Buffer.Length} (Can Overwrite: {Overwrite})"));
         }
+#if DEBUG
+        public void Debug_SetCustomDataToDisk(uint DebugObjectID, string DataTypeName, byte[] WriteBytes, bool Overwrite = true) =>
+            SetDataByIDToDisk(DebugObjectID, WriteBytes, Overwrite, DataTypeName);
+        public void Debug_SetCustomDataToDisk<T>(uint DebugObjectID, string DataTypeName, T WriteObject, bool Overwrite = true)
+            where T : new() => SetDataObjectByIDToDisk<T>(DebugObjectID, WriteObject, Overwrite, DataTypeName);
+        public byte[] Debug_GetDataByID(uint ObjectID, string DataTypeName) => GetDataByID(ObjectID, DataTypeName);
+        public T Debug_GetDataByID<T>(uint ObjectID, string DataTypeName) where T : new() => GetDataObjectByID<T>(ObjectID, DataTypeName);
+#endif
     }
 }

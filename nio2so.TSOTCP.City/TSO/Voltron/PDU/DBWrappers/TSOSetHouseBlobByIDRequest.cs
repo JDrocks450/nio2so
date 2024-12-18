@@ -7,7 +7,7 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request)]
-    internal class TSOSetHouseBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU1
+    internal class TSOSetHouseBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         /// <summary>
@@ -34,10 +34,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <para/>See: <see cref="TryUnpack(out SetHouseBlobByIDRequestStreamStructure?)"/>
         /// </summary>
         [TSOVoltronDBWrapperField] public TSOSerializableStream? HouseFileStream { get; set; }
-        TSOSerializableStream ITSOSerializableStreamPDU1.GetStream() => HouseFileStream;
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream;
 
         public TSOSetHouseBlobByIDRequest() : base() { }
 
-        public bool TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure) => ((ITSOSerializableStreamPDU1)this).TryUnpackStream(out Structure);
+        public bool TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out Structure);
     }
 }

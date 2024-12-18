@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using System;
@@ -24,11 +25,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public void OnSimEvent(TSOBroadcastDatablobPacket PDU)
         {
             var simEventPDU = (TSOSimEventBroadcastPDU)PDU;
-            ;
-            return;
-            File.WriteAllBytes(TestingConstraints.WorkspaceDirectory + "\\decompressed_simevent.dat", simEventPDU.RefPackDataStream.DecompressRefPack());
-            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU,
-                    File.ReadAllBytes(@"E:\packets\discoveries\BroadcastDataBlob(SimEvent).dat")));
+            simEventPDU.RefPackDataStream.FlipEndian();
+            RespondTo(PDU,PDU); // forces PDU to be reserialized with flipped endian numbers
+            TSOFactoryBase.Get<TSOAvatarFactory>().Debug_SetCustomDataToDisk((uint)simEventPDU.Simulator_kMSG, "simevent", 
+                simEventPDU.RefPackDataStream.DecompressRefPack());
+            
         }
     }
 }

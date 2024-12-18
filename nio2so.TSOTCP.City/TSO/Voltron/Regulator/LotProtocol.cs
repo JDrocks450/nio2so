@@ -84,20 +84,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             uint loadHouseID = HouseID;
             //**
             //Read decompressed House Blob from disk
-            byte[]? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
+            TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
             if (houseBlob == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
-            //COMPRESS HOUSE BLOB            
-            TSOSerializableStream compressedStream = TSOSerializableStream.ToCompressedStream(houseBlob);
 
-            var response = new TSOGetHouseBlobByIDResponse(HouseID, compressedStream);            
+            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob);            
 
             RespondWith(response);           
             RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
-            byte[] fileData = File.ReadAllBytes(@"E:\packets\const\DoVisitorBonus.dat");
-            RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
-            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU, fileData));
+            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.JOIN_ROOM_PDU, File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat")));
+            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
         }
 
         // The Client is requesting to set the house data for this HouseID in the Database
@@ -112,7 +109,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
 
             // write decompressed to the hard drive
-            TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, blob.Content);
+            TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(blob.Content));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]

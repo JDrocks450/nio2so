@@ -1,3 +1,5 @@
 -w -debug_objects -nosound -hsb_mode -playerid:1337 -vport:49 -vhost:localhost -city:1
 OR
 -w -debug_objects -nosound -hsb_mode -playerid:1220 -vport:49 -vhost:localhost -city:1
+OR
+-w -debug_objects

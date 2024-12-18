@@ -191,20 +191,19 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         internal static void LogConsole(ConsoleLogEntry Entry) => Global.OnConsoleLog(Entry);
 
-        internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, byte[] HouseBlobBytes)
+        internal void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob HouseBlob)
         {
-            OnBlobBase(Direction, HouseID, HouseBlobBytes);
+            OnBlobBase(Direction, HouseID, "House File Stream");
             if (Direction == NetworkTrafficDirections.INBOUND)
-                TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, HouseBlobBytes);
+                TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, HouseBlob);
         }
         internal void OnCharBlob(NetworkTrafficDirections Direction, uint AvatarID, TSODBCharBlob charBlob)
         {
-            byte[] blobBytes = TSOVoltronSerializer.Serialize(charBlob);
-            OnBlobBase(Direction, AvatarID, blobBytes);
+            OnBlobBase(Direction, AvatarID, "Character File Stream");
             if (Direction == NetworkTrafficDirections.INBOUND)
                 TSOFactoryBase.Get<TSOAvatarFactory>().SetCharBlobByIDToDisk(AvatarID, charBlob);
         }
-        private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, byte[] BlobDataBytes)
+        private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, string Type)
         {
             Console.ForegroundColor = Direction switch
             {
@@ -212,12 +211,11 @@ namespace nio2so.TSOTCP.City.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.DarkCyan,
                 _ => ConsoleColor.Cyan
             };
-            Log($"{DateTime.Now.ToLongTimeString()} - *{BlobDataBytes.GetType().Name}* [{Direction}] ObjectID: {ID} Size: {BlobDataBytes.Length}");
+            Log($"{DateTime.Now.ToLongTimeString()} - *{Type}* [{Direction}] ObjectID: {ID}");
         }
         internal void OnCharData(NetworkTrafficDirections Direction, uint AvatarID, TSODBChar CharData)
         {
-            byte[] blobBytes = TSOVoltronSerializer.Serialize(CharData);
-            OnBlobBase(Direction, AvatarID, blobBytes);
+            OnBlobBase(Direction, AvatarID, "Character Profile");
             if (Direction == NetworkTrafficDirections.INBOUND)
                 TSOFactoryBase.Get<TSOAvatarFactory>().SetCharByIDToDisk(AvatarID, CharData);
         }

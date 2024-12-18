@@ -86,7 +86,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
             if (Blob.AvatarID != avatarID)
                 Blob.AvatarID = avatarID;
-            Blob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
 
             //log this to disk
             TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
@@ -103,7 +102,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             //decompress enclosed stream into a TSODBCharBlob
             if (!((TSOSetCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
                 throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
-            Blob.EnsureNoErrors(); // runs simple test routine for errors (size, etc.)
 
             //log this to disk
             TSOCityTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
