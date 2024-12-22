@@ -52,7 +52,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 return; // Seems to be mistaken to send in this scenario
 
             RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID,
-                TestingConstraints.MyAvatarID, TestingConstraints.MyFriendAvatarID));
+                TestingConstraints.MyAvatarID,
+                TestingConstraints.MyFriendAvatarID));
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request)]
@@ -88,12 +89,18 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             if (houseBlob == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
-            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob);            
+            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);            
 
-            RespondWith(response);           
+            RespondTo(PDU,response);
+
+            //RespondTo(PDU, new TSODebugWrapperPDU(new byte[4] { 0x00,0x00,0x05,0x3A }, TSO_PreAlpha_DBActionCLSIDs.UpdateTaskStatus_Request,
+             //   (TSO_PreAlpha_kMSGs)(uint)TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestResynchHouse));
+           //RespondTo(PDU, new TSODefaultBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cLoadHouseAppointment,
+             //   File.ReadAllBytes(@"E:\packets\const\LoadHouseAppointment.dat")));
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            //RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
             RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.JOIN_ROOM_PDU, File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat")));
-            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_OCCUPANTS_PDU, body));            
             //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
         }
 
@@ -161,8 +168,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public void LOT_ENTRY_REQUEST_PDU(TSOVoltronPacket PDU)
         {
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
-            byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
-            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_ROOM_PDU, body));
+            //byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
+            string LotName = "BloatyLand";
+            string RoomName = LotName;
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, roomPDU.HouseID,
+                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
+                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+            RespondWith(updateRoomPDU);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]

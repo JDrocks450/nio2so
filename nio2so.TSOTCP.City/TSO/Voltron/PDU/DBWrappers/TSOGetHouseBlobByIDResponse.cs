@@ -30,11 +30,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 
         //**FOOTER
 
-        const uint FOOTERLEN = sizeof(uint) * 3;
+        const uint FOOTERLEN = sizeof(uint) * 1;
 
-        [TSOVoltronDBWrapperField] public uint Footer1 { get; set; } = 0x01;
-        [TSOVoltronDBWrapperField] public uint Footer2 { get; set; } = 0xDADDE510;
-        [TSOVoltronDBWrapperField] public uint Footer3 { get; set; } = 0xDADDE511;
+        [TSOVoltronDBWrapperField] public uint Footer1 { get; set; } = 0x02;//0x0036FCFC; // 0x01
+        //[TSOVoltronDBWrapperField] public uint Footer2 { get; set; } = 0x01; //0xDADDE510;
+        //[TSOVoltronDBWrapperField] public uint Footer3 { get; set; } = 0xDADDE511;
 
         [TSOVoltronDBWrapperField]
         public byte[] FooterGarbage => new byte[]
@@ -49,7 +49,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob) :
+        public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob, bool CompressBlob = true) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -59,9 +59,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             this.HouseID = houseID;
 
             var decompressedBytes = TSOVoltronSerializer.Serialize(HouseBlob);
-            HouseBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
+            if (CompressBlob)
+                HouseBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
+            else            
+                HouseBlobStream = new TSOSerializableStream(0x01, decompressedBytes, 0x200C);            
 
             MakeBodyFromProperties();
-        }        
+        }    
     }    
 }

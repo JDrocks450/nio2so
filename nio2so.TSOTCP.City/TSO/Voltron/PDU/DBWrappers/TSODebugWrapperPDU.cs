@@ -23,6 +23,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             PDUBytes = BodyArray;
             MakeBodyFromProperties();
         }
+        public TSODebugWrapperPDU(byte[] BodyArray, TSO_PreAlpha_DBActionCLSIDs Action,
+            uint kMSG = (uint)TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+            TSO_PreAlpha_DBStructCLSIDs Struct = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage
+            )
+            : this(BodyArray, Action, (TSO_PreAlpha_kMSGs)kMSG, Struct) { }
 
         public static TSODebugWrapperPDU FromFile(string FName, TSO_PreAlpha_DBActionCLSIDs Action,
             TSO_PreAlpha_kMSGs kMSG = TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

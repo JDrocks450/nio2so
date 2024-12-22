@@ -16,7 +16,7 @@ namespace nio2so.Formats.DB
         /// A string that always reads, "not needed".
         /// </summary>
         [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string NotNeeded { get; set; } = "not needed";
-        public uint AvatarID { get; set; }
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint AvatarID { get; set; }
         /// <summary>
         /// Personality, Skills, Appearance, and smashed "[name]$[description] are included in this stream
         /// </summary>

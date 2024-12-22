@@ -18,6 +18,17 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetHouseBlobByIDRequest() : base() { }    
+        public TSOGetHouseBlobByIDRequest() : base() { }  
+        
+        public TSOGetHouseBlobByIDRequest(uint HouseID) : 
+            base(
+                TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                TSO_PreAlpha_kMSGs.kDBServiceRequestMsg,
+                TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request
+                )
+        {
+            this.HouseID = HouseID;
+            MakeBodyFromProperties();
+        }
     }
 }

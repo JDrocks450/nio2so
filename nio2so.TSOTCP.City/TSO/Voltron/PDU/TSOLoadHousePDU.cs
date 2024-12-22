@@ -18,9 +18,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// </summary>
         public uint HouseID { get; set; }
 
-        public TSOLoadHousePDU()
+        public TSOLoadHousePDU() : base() { }
+        public TSOLoadHousePDU(uint houseID) : base()
         {
-
+            HouseID = houseID;
+            MakeBodyFromProperties();
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU;

@@ -123,11 +123,12 @@ namespace nio2so.TSOTCP.City.Telemetry
                     standardMsg.Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
                     return; // this is a server confirmation message, they spam. Do not log these.
             }
-                
+
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
 
             //**LOG PDU TO DISK
-            PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
+            if (Direction == NetworkTrafficDirections.INBOUND || Direction == NetworkTrafficDirections.OUTBOUND)
+                PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
         }
 
         internal void OnVoltron_DBWrapperPDU(NetworkTrafficDirections Direction, DateTime Time, TSODBRequestWrapper PDU, uint? ClientID = null)
@@ -141,7 +142,8 @@ namespace nio2so.TSOTCP.City.Telemetry
             Log($"{Time.ToLongTimeString()} - *VOLTRON_DATABASE* [{Direction}] {PDU.ToShortString()}");
 
             //**LOG PDU TO DISK
-            PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
+            if (Direction == NetworkTrafficDirections.INBOUND || Direction == NetworkTrafficDirections.OUTBOUND)
+                PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
         }
 
         internal void OnVoltron_OnDiscoveryPacket(ushort PacketType, byte[] PacketData, uint? ClientID = null)

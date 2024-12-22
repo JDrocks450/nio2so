@@ -39,5 +39,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => RefPackDataStream;
 
         public TSOSimEventBroadcastPDU() : base(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSimEvent) { }
+
+        public TSOSimEventBroadcastPDU(TSO_PreAlpha_MasterConstantsTable CLSID, 
+            TSO_PreAlpha_MasterConstantsTable SimulatorkMSG, TSO_PreAlpha_kMSGs SimMessageType) : base(CLSID)
+        {
+            Simulator_RequestType = SimMessageType;
+            Simulator_kMSG = SimulatorkMSG;
+            MakeBodyFromProperties();
+        }
     }
 }

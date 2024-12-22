@@ -14,7 +14,7 @@ namespace nio2so.Data.Common.Testing
         public const bool LogAriesPackets = false;
         public const bool LogVoltronPackets = true;
 
-        public const int ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
+        public const int ListenPort = 49101; // 49101 HouseSimServer test and 49100 for City Server
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
@@ -41,7 +41,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// What my avatar's name is
         /// </summary>
-        public const string MyAvatarName = "bisuqick"; // "Bisquick" //"JollySim";
+        public const string MyAvatarName = "bisquick"; // "Bisquick" //"JollySim";
         /// <summary>
         /// What shard name to use as the Default Shard
         /// </summary>

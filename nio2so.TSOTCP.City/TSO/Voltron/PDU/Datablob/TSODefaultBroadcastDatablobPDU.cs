@@ -17,5 +17,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         /// The packet data, dumped to this property
         /// </summary>
         [TSOVoltronBroadcastDatablobPDUField] [TSOVoltronBodyArray] public byte[] MessageContent { get; set; } = new byte[0];
+
+        public TSODefaultBroadcastDatablobPDU() : base() { }
+
+        public TSODefaultBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable CLSID, byte[] ContentBytes)
+            : base(CLSID)
+        {
+            Arg1 = 0x4101;
+            MessageContent = ContentBytes;
+            MakeBodyFromProperties();
+        }
     }
 }

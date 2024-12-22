@@ -104,7 +104,7 @@ namespace nio2so.Formats.Streams
         /// </summary>
         /// <param name="Data"></param>
         /// <returns></returns>
-        public static TSOSerializableStream FromStream(Stream Data)
+        [Obsolete] public static TSOSerializableStream FromStream(Stream Data)
         {            
             long startPosition = Data.Position;
             byte bodyType = (byte)Data.ReadByte();                        
@@ -134,7 +134,7 @@ namespace nio2so.Formats.Streams
             {
                 CompressedSize = hasCompression ? read_length : 0
             };
-        }        
+        }  
 
         static uint ReadDword(Stream Data, Endianness Endian)
         {
@@ -191,5 +191,8 @@ namespace nio2so.Formats.Streams
             CompressedSize = flip(CompressedSize);
             DecompressedSize = flip(DecompressedSize);
         }
+
+        public override string ToString() => 
+            $"{nameof(TSOSerializableStream)}(Decompressed: {DecompressedSize}, Compressed: {CompressedSize})[{Length}]";
     }
 }

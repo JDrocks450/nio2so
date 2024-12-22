@@ -285,6 +285,15 @@ namespace nio2so.TSOTCP.City.TSO
             return packets;
         }
 
+        public void DebugPlayground_SendManualResponseData()
+        {
+            var voltronPacket = new TSODebugWrapperPDU(new byte[20],
+                TSO_PreAlpha_DBActionCLSIDs.UpdateTaskStatus_Request, 
+                (uint)TSO_PreAlpha_MasterConstantsTable.kMSGID_UnLockBuildMode);
+            var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(voltronPacket);
+            Send(_clients.First().Key, ariesPacket);
+        }
+
         #region HANDLERS
         /// <summary>
         /// Handles an incoming connection by sending it the <see cref="TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU"/>

@@ -130,6 +130,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             return true;
         }
 
+        protected virtual bool OnUnknownBroadcastPDU(TSOBroadcastDatablobPacket PDU)
+        {
+            return false;
+        }
+
         public virtual bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
         {
             if (_server == null) throw new NullReferenceException("No server instance!!!");
@@ -145,6 +150,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             action(broadcastPDU);
                             return true;
                         }
+                        if (OnUnknownBroadcastPDU(broadcastPDU)) return true;
                     }
                     break;
                 default:

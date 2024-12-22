@@ -10,6 +10,9 @@ namespace nio2so.TSOTCP.City
         {
             TSOCityServer cityServer = new(TestingConstraints.ListenPort); // 49000 for City Server || HouseSimServer testing is 49101
             cityServer.Start();
+            while (Console.ReadLine() != "quit") {
+                cityServer.DebugPlayground_SendManualResponseData();
+            }
         }
     }
 }

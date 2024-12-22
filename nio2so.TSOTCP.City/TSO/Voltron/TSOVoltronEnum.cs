@@ -4205,9 +4205,10 @@
     /// </summary>
     public enum TSO_PreAlpha_DBStructCLSIDs : uint
     {
-        cCrDMStandardMessage = 0x125194E5,
+        cCrDMStandardMessage = TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
         cCrDMTestObject = 0x122A94F2,
-        cTSOSerializableStream = 0xDBB9126C,
+        cTSOSerializableStream = TSO_PreAlpha_MasterConstantsTable.GZCLSID_cTSOSerializableStream,
+        cTSORecordStreamer = TSO_PreAlpha_MasterConstantsTable.kGZCLSID_cTSORecordStreamer,
 
         //*PROBES
 
@@ -4470,11 +4471,11 @@
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
         /// </summary>
-        kDBServiceRequestMsg  = 0x3BF82D4E,
+        kDBServiceRequestMsg  = TSO_PreAlpha_MasterConstantsTable.kDBServiceRequestMsg,
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
         /// </summary>
-        kDBServiceResponseMsg = 0xDBF301A9,
+        kDBServiceResponseMsg = TSO_PreAlpha_MasterConstantsTable.kDBServiceResponseMsg,
         /// <summary>
         /// <see cref="TSOVoltronBroadcastDatablobPDU"/> PDUs that are intended as Responses
         /// </summary>

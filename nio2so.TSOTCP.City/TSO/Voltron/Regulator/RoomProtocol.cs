@@ -13,6 +13,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [TSORegulator]
     internal class RoomProtocol : TSOProtocol
     {
+        protected override bool OnUnknownBroadcastPDU(TSOBroadcastDatablobPacket PDU)
+        {
+            //RespondWith(PDU);
+            return true;
+        }
+
         [TSOProtocolBroadcastDatablobHandler(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)]
         public void OnStandardMessage(TSOBroadcastDatablobPacket PDU)
         {
@@ -27,7 +33,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var simEventPDU = (TSOSimEventBroadcastPDU)PDU;
             simEventPDU.RefPackDataStream.FlipEndian();
             RespondTo(PDU,PDU); // forces PDU to be reserialized with flipped endian numbers
-            TSOFactoryBase.Get<TSOAvatarFactory>().Debug_SetCustomDataToDisk((uint)simEventPDU.Simulator_kMSG, "simevent", 
+            TSOFactoryBase.Get<TSOHouseFactory>().Debug_SetCustomDataToDisk((uint)simEventPDU.Simulator_kMSG, "simevent", 
                 simEventPDU.RefPackDataStream.DecompressRefPack());
             
         }

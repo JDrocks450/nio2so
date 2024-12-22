@@ -40,6 +40,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     {
         public virtual string FriendlyPDUName => GetType().Name;
         public abstract UInt16 VoltronPacketType { get; }
+#if DEBUG
+        /// <summary>
+        /// DEBUG! Used when you want to manually change the <see cref="VoltronPacketType"/>
+        /// <para/>Note: This will not ship in Release builds and only works for Serialization.
+        /// </summary>
+        public UInt16? Debug_OverrideMyVoltronPacketType { get; set; } = null;
+#endif
         public TSO_PreAlpha_VoltronPacketTypes KnownPacketType => (TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType;
         public UInt32 PayloadSize { get; protected set; }
 
@@ -68,10 +75,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         {
             AllocateBody(2);  //clear old data...!         
 
+            ushort voltronPacketType = VoltronPacketType;
+#if DEBUG
+            if (Debug_OverrideMyVoltronPacketType.HasValue)
+                voltronPacketType = Debug_OverrideMyVoltronPacketType.Value;
+#endif
             if (VoltronPacketType == 0x00)
-                throw new InvalidDataException($"{nameof(VoltronPacketType)} is 0x00! This cannot be -- no packet should ever leave without a type.");
+                throw new InvalidDataException($"{nameof(voltronPacketType)} is 0x00! This cannot be -- no packet should ever leave without a type.");
 
-            EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)VoltronPacketType)); // voltron packet type emplaced
+            EmplaceBody(EndianBitConverter.Big.GetBytes((UInt16)voltronPacketType)); // voltron packet type emplaced
             EmplaceBody(EndianBitConverter.Big.GetBytes((UInt32)00)); // followed by placeholder data as we have no clue how big it is. 
 
             //**Distance to end property attribute map is here**
