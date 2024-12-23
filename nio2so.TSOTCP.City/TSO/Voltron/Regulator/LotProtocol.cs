@@ -6,7 +6,9 @@ using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -23,6 +25,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [TSORegulator]
     internal class LotProtocol : TSOProtocol
     {
+        bool _iminalot = false;
         private uint _houseCreateX = 83, _houseCreateY = 157; // ocean island
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request)]
@@ -90,18 +93,34 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);            
-
             RespondTo(PDU,response);
 
-            //RespondTo(PDU, new TSODebugWrapperPDU(new byte[4] { 0x00,0x00,0x05,0x3A }, TSO_PreAlpha_DBActionCLSIDs.UpdateTaskStatus_Request,
-             //   (TSO_PreAlpha_kMSGs)(uint)TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestResynchHouse));
-           //RespondTo(PDU, new TSODefaultBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cLoadHouseAppointment,
-             //   File.ReadAllBytes(@"E:\packets\const\LoadHouseAppointment.dat")));
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
-            //RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
-            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            //RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_OCCUPANTS_PDU, body));            
-            //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+            if (!_iminalot)
+            {
+                _iminalot = true;
+                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
+                    //new Struct.TSOAriesIDStruct("A 1337", ""),
+                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kClientHasConnected)
+                );
+                RespondTo(PDU, kClientConnectedMsg);                
+            }
+            else
+            {                
+                return;
+                RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+                var loadcharacterappointment = new TSOBroadcastDatablobPacket(
+                    //new Struct.TSOAriesIDStruct("A 1337", ""),
+                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cLoadCharacterAppointment,
+                    File.ReadAllBytes(@"E:\packets\avatar\LoadAvatarAppointment.dat")
+                );
+                RespondTo(PDU,loadcharacterappointment);
+            }
+
+            //OLD CODE: ==========
+
+            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
+            //RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
         }
 
         // The Client is requesting to set the house data for this HouseID in the Database
@@ -117,6 +136,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
             // write decompressed to the hard drive
             TSOCityTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(blob.Content));
+
+            //MESSAGE HOUSE OCCUPANTS
+            var msgHouseOccupants = new TSOBroadcastDatablobPacket(
+                //new Struct.TSOAriesIDStruct("A 1337", ""),
+                TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_MessageHouseOccupants,
+                File.ReadAllBytes(@"E:\packets\house\HOUSEOCCUPANTS.dat"))
+            );
+            RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, msgHouseOccupants);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
@@ -152,10 +180,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
             //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
             //when that happens
-            if (houseID == 0 && !TestingConstraints.LOTTestingMode)
-                return; // break;
-
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.                        
+            if (houseID == 0)
+            {                
+                if (!_iminalot)
+                    if (!TestingConstraints.LOTTestingMode) return; // break; 
+            }
+            //im in a lot -- send it the lot im supposed to be in
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.                                                                                                                  
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]

@@ -4477,11 +4477,11 @@
         /// </summary>
         kDBServiceResponseMsg = TSO_PreAlpha_MasterConstantsTable.kDBServiceResponseMsg,
         /// <summary>
-        /// <see cref="TSOVoltronBroadcastDatablobPDU"/> PDUs that are intended as Responses
+        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Responses
         /// </summary>
         kSimResponseMsg = TSO_PreAlpha_MasterConstantsTable.kSimResponseMsg,
         /// <summary>
-        /// <see cref="TSOVoltronBroadcastDatablobPDU"/> PDUs that are intended as Requests
+        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Requests
         /// </summary>
         kSimRequestMsg = TSO_PreAlpha_MasterConstantsTable.kSimRequestMsg,
     }

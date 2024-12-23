@@ -14,7 +14,9 @@ namespace nio2so.Data.Common.Testing
         public const bool LogAriesPackets = false;
         public const bool LogVoltronPackets = true;
 
-        public const int ListenPort = 49101; // 49101 HouseSimServer test and 49100 for City Server
+        public const int City_ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
+        public const int Room_ListenPort = 49101; // 49101 HouseSimServer test and 49100 for City Server
+
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
@@ -49,11 +51,7 @@ namespace nio2so.Data.Common.Testing
         /// <summary>
         /// Set the first Sim to always be blank after logging in
         /// </summary>
-        public const bool CASTestingMode = false;
-        /// <summary>
-        /// Will set the server to always redirect a client into a seemingly offline testing lot
-        /// </summary>
-        public const bool LOTTestingMode = false;
+        public const bool CASTestingMode = false;        
         /// <summary>
         /// Whenever you buy a lot, this is the ID for the lot.
         /// </summary>
@@ -80,5 +78,13 @@ namespace nio2so.Data.Common.Testing
         public const string UserAccountDictionaryFileName = WorkspaceDirectory + "/db/useraccounts.json";
 
         public const string MyFriendAvatarName = "FriendlyBuddy";
+
+        //**TEST
+        public const bool HSB_Testing = true;
+        /// <summary>
+        /// Will set the server to always redirect a client into a seemingly offline testing lot
+        /// <para/>Should be true if using the HSB test
+        /// </summary>
+        public const bool LOTTestingMode = true;
     }
 }

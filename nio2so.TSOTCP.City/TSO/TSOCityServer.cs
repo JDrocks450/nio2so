@@ -56,14 +56,32 @@ namespace nio2so.TSOTCP.City.TSO
     /// <para>To get the Client to connect to a <see cref="TSOCityServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
     /// and you have modified your hosts file in System32/drivers/etc to include xo.max.ea.com</para>
     /// </summary>
-    internal class TSOCityServer : QuazarServer<TSOTCPPacket>
+    public class TSOCityServer : QuazarServer<TSOTCPPacket>
     {
+        const bool DefaultRunningState = true;
+
         public const UInt16 TSO_Aries_SendRecvLimit = 1024;
 
         private List<TSOVoltronPacket> _VoltronBacklog = new();
         private TSORegulatorManager _regulatorManager;
 
+        public event EventHandler HSB_ImReady;
+
         public TSOCityTelemetryServer Telemetry { get; }
+        /// <summary>
+        /// True to pause the processing of any Voltron Packets until this is false
+        /// </summary>
+        public bool IsRunning
+        {
+            get => _running;
+            set
+            {
+                if (value) ServerPauseEvent.Set();
+                else ServerPauseEvent.Reset();
+            }
+        }
+        private ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
+        private bool _running = DefaultRunningState;
 
         public TSOCityServer(int port, IPAddress ListenIP = null) : base("TSOCity", port, 5, ListenIP)
         {
@@ -72,7 +90,9 @@ namespace nio2so.TSOTCP.City.TSO
             DisposePacketOnSent = true; // no more memory leaks :)
 
             //**TELEMETRY
-            Telemetry = new(this, TSOVoltronConst.SysLogPath);
+            if (TSOCityTelemetryServer.Global == null)
+                Telemetry = new(this, TSOVoltronConst.SysLogPath);
+            else Telemetry = TSOCityTelemetryServer.Global;
 
             //**REGULATOR
             _regulatorManager = new(this);
@@ -95,33 +115,6 @@ namespace nio2so.TSOTCP.City.TSO
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrame;
-
-            //**PLAYGROUND            
-            /*using (var fs = File.OpenRead(@"E:\packets\discoveries\IN [DB_REQUEST_WRAPPER_PDU] PDU INSERT CHAR BLOB.dat"))
-            {
-                var logRequest = TSOPDUFactory.CreatePacketObjectFromDataBuffer(fs);
-                bool h = false;
-                OnIncomingVoltronPacket(0, logRequest, ref h);
-            }*/
-
-            if (File.Exists(@"E:\packets\avatar\charblob.charblob"))
-            {
-                if (!File.Exists(@"E:\packets\avatar\charblob_decompressed.charblob"))
-                {
-                    using (var fs = File.OpenRead(@"E:\packets\avatar\charblob.charblob"))
-                    {
-                        var stream = TSOSerializableStream.FromStream(fs);
-                        byte[] fileData = stream.DecompressRefPack();
-                        File.WriteAllBytes(@"E:\packets\avatar\charblob_decompressed.charblob", fileData);
-                    }
-                }
-                if (!File.Exists(@"E:\packets\avatar\charblob_recompressed.charblob"))
-                {
-                    byte[] fileData = File.ReadAllBytes(@"E:\packets\avatar\charblob_decompressed.charblob");
-                    byte[] compressedBytes = new Decompresser().Compress(fileData);
-                    File.WriteAllBytes(@"E:\packets\avatar\charblob_recompressed.charblob", compressedBytes);
-                }
-            }
 
             //START THE SERVER
             BeginListening();
@@ -153,17 +146,21 @@ namespace nio2so.TSOTCP.City.TSO
                         QConsole.WriteLine($"Client: {ID}", sessionData.ToString());
 
                         //HOST_ONLINE_PDU
-                        HandleSendClientHostOnlinePacket(ID);                        
+                        HandleSendClientHostOnlinePacket(ID);
+
+                        HSB_ImReady?.Invoke(this, null);
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
-                    {                        
+                    {                                             
                         //GET VOLTRON PACKETS OUT OF DATA BUFFER
                         var packets = TSOVoltronPacket.ParseAllPackets(Data);
                         _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
                         List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>(); // WE WILL SEND THESE TO CLIENT
                         while (_VoltronBacklog.Count > 0)
                         { // Work through all incoming PDUs
+                            ServerPauseEvent.WaitOne();
+
                             var packet = _VoltronBacklog[0];
                             _VoltronBacklog.RemoveAt(0);
 

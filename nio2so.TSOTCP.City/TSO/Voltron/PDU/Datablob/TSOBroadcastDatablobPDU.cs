@@ -9,16 +9,18 @@ using System.Threading.Tasks;
 using MiscUtil.Conversion;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.Struct;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
 {
     internal class TSOBroadcastDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
-        public string AriesID { get; set; } = "";
-        public string MasterID { get; set; } = "";
-        public ushort Arg1 { get; set; }
+        public TSOAriesIDStruct CurrentSessionID { get; set; }
+        public ushort Arg1 { get; set; } = 0x4101;
         public uint MessageLength { get; set; }
-        public TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }        
+        public TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }
+        public TSOGenericDataBlobContent DataBlobContentObject { get; set; }
     }
 
     /// <summary>
@@ -27,24 +29,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
     /// <para/>As a sidenote (not like anyone reads these but me any way) why is everything called a blob? idk me, why don't you ask them?
     /// well i tried but this was made 20 years ago. why am i even doing this?
     /// </summary>    
-    internal abstract class TSOBroadcastDatablobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOBroadcastDatablobPDUHeader>, 
-        ITSOVoltronAriesMasterIDStructure
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU)]
+    internal class TSOBroadcastDatablobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOBroadcastDatablobPDUHeader>, 
+        ITSOVoltronAriesMasterIDStructure, ITSODataBlobPDU
     {
         private const uint MESSAGELENGTH_TO_BODY = sizeof(uint);
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU;
         protected override TSOBroadcastDatablobPDUHeader Header { get; } = new();
 
-        [TSOVoltronString]
-        public string AriesID
+        public TSOAriesIDStruct CurrentSessionID
         {
-            get => Header.AriesID;
-            set => Header.AriesID = value;
-        }
-        [TSOVoltronString] public string MasterID
-        {
-            get => Header.MasterID;
-            set => Header.MasterID = value;
+            get => Header.CurrentSessionID;
+            set => Header.CurrentSessionID = value;
         }
         public ushort Arg1
         {
@@ -60,6 +57,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         {
             get => Header.SubMsgCLSID;
             set => Header.SubMsgCLSID = value;
+        }
+        public TSOGenericDataBlobContent DataBlobContentObject
+        {
+            get => Header.DataBlobContentObject;
+            set => Header.DataBlobContentObject = value;
         }
 
         /// <summary>
@@ -83,11 +85,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         /// <param name="DBAction"></param>
         /// <param name="Header"></param>
         /// <param name="Payload"></param>
-        public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, uint MessageLength = 0xFFFFFFFF)
+        public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, 
+            ITSODataBlobContentObject? ContentObject = default,
+            uint MessageLength = 0xFFFFFFFF)
         {
             this.SubMsgCLSID = SubMsgCLSID;
+            DataBlobContentObject = new TSOGenericDataBlobContent(ContentObject);
 
             this.MessageLength = MessageLength;
+            MakeBodyFromProperties();
+        }
+        public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, byte[] ContentBytes)
+            : this(SubMsgCLSID)
+        {
+            DataBlobContentObject = new TSOGenericDataBlobContent(ContentBytes);
             MakeBodyFromProperties();
         }
 
@@ -114,8 +125,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
             BodyStream.Seek(startPosition, SeekOrigin.Begin);
             return new()
             {
-                AriesID = avatarID,
-                MasterID = avatarName,
+                CurrentSessionID = new(avatarID, avatarName),
                 Arg1 = arg1,
                 MessageLength = msgSize,
                 SubMsgCLSID = (TSO_PreAlpha_MasterConstantsTable)actionCLSID

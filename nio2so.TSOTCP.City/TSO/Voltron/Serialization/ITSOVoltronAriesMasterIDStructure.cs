@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.TSOTCP.City.TSO.Voltron.Struct;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,7 +12,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
     /// </summary>
     internal interface ITSOVoltronAriesMasterIDStructure
     {
-        public string AriesID { get; set; }
-        public string MasterID { get; set; }
+        /// <summary>
+        /// The current AriesID/MasterID combination that denotes the current Client
+        /// </summary>
+        public TSOAriesIDStruct CurrentSessionID { get; set; }
     }
 }

@@ -73,15 +73,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
         {
             Stream _bodyBuffer = Stream;
             //check if this property is the body array property
-            if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
-            { // it is.
-                if (property.PropertyType != typeof(Byte[]))
-                    throw new CustomAttributeFormatException("You applied the TSOVoltronBodyArray attribute to ... not a byte[]! Are you testing me?");
-                int remainingData = (int)(Stream.Length - Stream.Position);
-                byte[] destBuffer = new byte[remainingData];
-                _bodyBuffer.Read(destBuffer, 0, remainingData);
-                property.SetValue(Instance, destBuffer);
-                return true; // halt execution
+            if (property.PropertyType == typeof(byte[]))
+            {
+                if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
+                { // it is.
+                    if (property.PropertyType != typeof(Byte[]))
+                        throw new CustomAttributeFormatException("You applied the TSOVoltronBodyArray attribute to ... not a byte[]! Are you testing me?");
+                    int remainingData = (int)(Stream.Length - Stream.Position);
+                    byte[] destBuffer = new byte[remainingData];
+                    _bodyBuffer.Read(destBuffer, 0, remainingData);
+                    property.SetValue(Instance, destBuffer);
+                    return true; // halt execution
+                }
+                else throw new NotImplementedException("byte[] is the destination type to deserialize, yet you didn't " +
+                    "adorn the property with the TSOVoltronBodyArrayAtrribute! This is required to ensure you understand " +
+                    "that it will take EVERY byte to the end of the packet body into that property and for readability.");
             }
             //Numbers
             {

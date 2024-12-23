@@ -3,6 +3,7 @@ using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
@@ -35,9 +36,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
     }
     [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-    sealed class TSOProtocolBroadcastDatablobHandler : Attribute
+    sealed class TSOProtocolDatablobHandler : Attribute
     {
-        public TSOProtocolBroadcastDatablobHandler(TSO_PreAlpha_MasterConstantsTable CLS_ID)
+        public TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable CLS_ID)
         {
             ActionType = CLS_ID;
         }
@@ -57,8 +58,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public delegate void VoltronDatabaseInvokationDelegate(TSODBRequestWrapper PDU);
         private Dictionary<TSO_PreAlpha_DBActionCLSIDs, VoltronDatabaseInvokationDelegate> databaseMap = new();
 
-        public delegate void VoltronBroadcastInvokationDelegate(TSOBroadcastDatablobPacket PDU);
-        private Dictionary<TSO_PreAlpha_MasterConstantsTable, VoltronBroadcastInvokationDelegate> broadcastMap = new();
+        public delegate void VoltronDataBlobInvokationDelegate(ITSODataBlobPDU PDU);
+        private Dictionary<TSO_PreAlpha_MasterConstantsTable, VoltronDataBlobInvokationDelegate> dataBlobMap = new();
 
         protected TSOProtocolRegulatorResponse? CurrentResponse = null;
         private TSOCityServer? _server;
@@ -105,15 +106,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     nameof(TSOProtocol), $"MAPPED {packetType} to DB handler {function.Name}"));
             }
 
-            broadcastMap.Clear();
-            foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolBroadcastDatablobHandler>() != null))
+            dataBlobMap.Clear();
+            foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolDatablobHandler>() != null))
             {
-                var attribute = function.GetCustomAttribute<TSOProtocolBroadcastDatablobHandler>();
+                var attribute = function.GetCustomAttribute<TSOProtocolDatablobHandler>();
                 var packetType = attribute.ActionType;
-                VoltronBroadcastInvokationDelegate action = function.CreateDelegate<VoltronBroadcastInvokationDelegate>(this);
-                bool result = broadcastMap.TryAdd(packetType, action);
+                VoltronDataBlobInvokationDelegate action = function.CreateDelegate<VoltronDataBlobInvokationDelegate>(this);
+                bool result = dataBlobMap.TryAdd(packetType, action);
                 if (result) TSOCityTelemetryServer.LogConsole(new(TSOCityTelemetryServer.LogSeverity.Message,
-                    nameof(TSOProtocol), $"MAPPED {packetType} to BROADCAST handler {function.Name}"));
+                    nameof(TSOProtocol), $"MAPPED {packetType} to DATABLOB handler {function.Name}"));
             }
         }        
 
@@ -130,7 +131,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             return true;
         }
 
-        protected virtual bool OnUnknownBroadcastPDU(TSOBroadcastDatablobPacket PDU)
+        protected virtual bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
         {
             return false;
         }
@@ -142,15 +143,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>());
             switch (PDU.KnownPacketType)
             {
+                case TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU:
                 case TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU:
                     {
-                        var broadcastPDU = (TSOBroadcastDatablobPacket)PDU;
-                        if (broadcastMap.TryGetValue(broadcastPDU.SubMsgCLSID, out var action))
+                        var broadcastPDU = (ITSODataBlobPDU)PDU;
+                        if (dataBlobMap.TryGetValue(broadcastPDU.SubMsgCLSID, out var action))
                         {
                             action(broadcastPDU);
                             return true;
                         }
-                        if (OnUnknownBroadcastPDU(broadcastPDU)) return true;
+                        if (OnUnknownDataBlobPDU(broadcastPDU)) return true;
                     }
                     break;
                 default:
@@ -191,8 +193,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// <param name="ResponsePacket"></param>
         protected void RespondTo<T>(ITSOVoltronAriesMasterIDStructure DBPacket, T ResponsePacket) where T : TSOVoltronPacket, ITSOVoltronAriesMasterIDStructure
         {
-            ResponsePacket.AriesID = DBPacket.AriesID;
-            ResponsePacket.MasterID = DBPacket.MasterID;
+            ResponsePacket.CurrentSessionID = new(
+                DBPacket.CurrentSessionID.AriesID,
+                DBPacket.CurrentSessionID.MasterID
+            );
             ResponsePacket.MakeBodyFromProperties();
             RespondWith(ResponsePacket);
         }

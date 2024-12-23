@@ -6,6 +6,7 @@ using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using QuazarAPI;
 using System;
@@ -119,8 +120,9 @@ namespace nio2so.TSOTCP.City.Telemetry
             };
             if (!TestingConstraints.VerboseLogging)
             {
-                if (PDU is TSOStandardMessageBroadcastPDU standardMsg &&
-                    standardMsg.Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
+                if (PDU is ITSODataBlobPDU standardMsg &&
+                    standardMsg.DataBlobContentObject.GetAs<TSOStandardMessageContent>().
+                    Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
                     return; // this is a server confirmation message, they spam. Do not log these.
             }
 

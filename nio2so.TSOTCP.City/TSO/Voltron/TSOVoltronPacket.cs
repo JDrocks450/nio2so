@@ -24,19 +24,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// </summary>
     /// <param name="TSOPDUID"> The <see cref="TSO_PreAlpha_VoltronPacketTypes"/> PDU Type </param>
     /// <param name="PDUPayloadSize"> The size of the data, including the header </param>
-    internal record TSOVoltronPacketHeader(ushort TSOPDUID, uint PDUPayloadSize)
+    public record TSOVoltronPacketHeader(ushort TSOPDUID, uint PDUPayloadSize)
     {
         public const byte HEADER_SIZE = sizeof(ushort) + sizeof(uint); // <-- Just in case you forget
     }
 
-    internal interface ITSOVoltron
+    public interface ITSOVoltron
     {
         void MakeBodyFromProperties();
         int ReflectFromBody(Stream BodyStream);
         int ReflectFromBody(byte[] BodyData);
     }
 
-    internal abstract class TSOVoltronPacket : ExtendedBufferOperations, ITSOVoltron
+    public abstract class TSOVoltronPacket : ExtendedBufferOperations, ITSOVoltron
     {
         public virtual string FriendlyPDUName => GetType().Name;
         public abstract UInt16 VoltronPacketType { get; }

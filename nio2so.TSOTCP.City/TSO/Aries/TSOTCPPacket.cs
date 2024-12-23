@@ -32,7 +32,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
     /// <summary>
     /// An Aries Packet.
     /// </summary>
-    internal class TSOTCPPacket : QuazarAPI.Networking.Data.PacketBase
+    public class TSOTCPPacket : QuazarAPI.Networking.Data.PacketBase
     {
         private static bool _warningShownOnce = false;
 

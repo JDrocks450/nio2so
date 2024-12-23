@@ -62,7 +62,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             RespondTo(PDU,new TSOGetBookmarksResponse(avatarID,
                                                       TSO_PreAlpha_SearchCategories.Avatar,
                                                       TestingConstraints.MyFriendAvatarID,
-                                                      2027,
                                                       TestingConstraints.MyAvatarID)); // Add more to test Bookmarks
         }
 

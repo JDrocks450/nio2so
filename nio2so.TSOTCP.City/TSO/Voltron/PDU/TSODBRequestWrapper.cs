@@ -1,6 +1,7 @@
 ﻿using MiscUtil.Conversion;
 using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron.Struct;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using QuazarAPI.Networking.Data;
 using System.Text;
@@ -15,8 +16,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     {
         internal uint headerLength;
 
-        public string AriesID { get; set; } = "";
-        public string MasterID { get; set; } = "";
+        public TSOAriesIDStruct CurrentSessionID { get; set; }
         public ushort Arg1 { get; set; } = 0x00;
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_DBStructCLSIDs StructType { get; set; } = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage;
@@ -55,17 +55,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         protected override TSODBWrapperPDUHeader Header { get; } = new();
         public uint GetHeaderLength() => Header.headerLength;
 
-        [TSOVoltronString]
-        public string AriesID {
-            get => Header.AriesID;
-            set => Header.AriesID = value;
-        }
-        [TSOVoltronString]
-        public string MasterID
-        {
-            get => Header.MasterID;
-            set => Header.MasterID = value;
-        }
+        public TSOAriesIDStruct CurrentSessionID {
+            get => Header.CurrentSessionID;
+            set => Header.CurrentSessionID = value;
+        }        
         public ushort Bitfield_Arg1
         {
             get => Header.Arg1;
@@ -173,8 +166,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
             return new()
             {
                 headerLength = headerlength,
-                AriesID = avatarID,
-                MasterID = avatarName,
+                CurrentSessionID = new(avatarID, avatarName),                
                 Arg1 = arg1,
                 MessageLength = msgSize,
                 StructType = (TSO_PreAlpha_DBStructCLSIDs)struc,

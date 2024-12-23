@@ -40,13 +40,13 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// <summary>
     /// Similar to <see cref="TSOVoltronPDU"/>. When a packet is created using Reflection using a mapped <see cref="TSOVoltronPDU"/> - if it
     /// is a <see cref="TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU"/> it will have its header tested against this <see cref="TSO_PreAlpha_MasterConstantsTable"/>
-    /// provided to match this <see cref="TSOVoltronBroadcastDatablobPDU"/> implementation to the incoming/outgoing data.
+    /// provided to match this <see cref="TSOVoltronDatablobContent"/> implementation to the incoming/outgoing data.
     /// <para>See <see cref="TSOPDUFactory.CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes, Stream, bool)"/> for implementation</para>
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    class TSOVoltronBroadcastDatablobPDU : Attribute
+    class TSOVoltronDatablobContent : Attribute
     {
-        public TSOVoltronBroadcastDatablobPDU(TSO_PreAlpha_MasterConstantsTable ActionCLSID)
+        public TSOVoltronDatablobContent(TSO_PreAlpha_MasterConstantsTable ActionCLSID)
         {
             this.Type = ActionCLSID;
         }

@@ -43,13 +43,6 @@ namespace nio2so.TSOTCP.City.Factory
                     QConsole.WriteLine("cTSOPDUFactory", $"Mapped *DB* {dbattribute.Type} to {type.Name}");
                     continue;
                 }
-                var broadcastattribute = type.GetCustomAttribute<TSOVoltronBroadcastDatablobPDU>();
-                if (broadcastattribute != null)
-                {
-                    bool value = _broadcastDatablobTypeMap.TryAdd(broadcastattribute.Type, type);
-                    QConsole.WriteLine("cTSOPDUFactory", $"Mapped *BROADCAST* {broadcastattribute.Type} to {type.Name}");
-                    continue;
-                }
             }
         }
 
@@ -139,22 +132,6 @@ namespace nio2so.TSOTCP.City.Factory
                                 $"You must fix this and recompile.");
                             //Let case fall through to default Type map implementation below
                         }
-                    }
-                    break;
-                case TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU:
-                    {
-                        PDUData.Position += 6; // advance past voltron header
-                        TSO_PreAlpha_MasterConstantsTable clsID = TSOBroadcastDatablobPacket.ReadSpecializedPDUHeader(PDUData).SubMsgCLSID;
-                        //Use reflection to make corresponding type of DBWrapper packet format
-                        if (_broadcastDatablobTypeMap.TryGetValue(clsID, out var specialType))
-                        {
-                            var retValue = specialType?.Assembly?.CreateInstance(specialType.FullName) as TSOBroadcastDatablobPacket;
-                            if (retValue != null) return retValue;
-                            throw new InvalidDataException($"Your type: {specialType.Name} is not a {nameof(TSOBroadcastDatablobPacket)}! " +
-                                $"You must fix this and recompile.");
-                            //Let case fall through to default Type map implementation below
-                        }
-                        return new TSODefaultBroadcastDatablobPDU();
                     }
                     break;
                 case TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU:
