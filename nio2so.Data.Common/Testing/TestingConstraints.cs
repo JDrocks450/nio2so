@@ -80,11 +80,11 @@ namespace nio2so.Data.Common.Testing
         public const string MyFriendAvatarName = "FriendlyBuddy";
 
         //**TEST
-        public const bool HSB_Testing = true;
+        public const bool HSB_Testing = false;
         /// <summary>
         /// Will set the server to always redirect a client into a seemingly offline testing lot
         /// <para/>Should be true if using the HSB test
         /// </summary>
-        public const bool LOTTestingMode = true;
+        public const bool LOTTestingMode = false;
     }
 }

@@ -1,5 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.City;
 using nio2so.TSOTCP.City.TSO;
+using nio2so.TSOTCP.Voltron.Protocol;
 using System.Diagnostics;
 
 namespace nio2so.TSOTCP.HSBServer
@@ -18,32 +20,31 @@ namespace nio2so.TSOTCP.HSBServer
             });
         }
 
-        static TSOCityServer roomServer, cityServer;
-        static int readyClients = 0;
-
         static void Main(string[] args)
         {
             //**INIT HSB CLIENT FOR ROOM HOSTING**
-            InvokeNewHSBClient();
+            //InvokeNewHSBClient();
 
             //**AWAIT ARRIVAL OF THE HSB
-            roomServer = new(TestingConstraints.Room_ListenPort); // Room server
+            HSBHouseServer roomServer = new(TestingConstraints.Room_ListenPort); // Room server
             roomServer.IsRunning = false;
-            roomServer.HSB_ImReady += Component_HSBReady;
+            roomServer.HSB_ImReady += delegate { CreateCityServer(); };
             roomServer.Start();
+            HSBSession.RoomServer = roomServer;
 
-            //START THE CITY SERVER
-            cityServer = new(TestingConstraints.City_ListenPort); // 49000 for City Server || HouseSimServer testing is 49101
-            cityServer.IsRunning = false;
-            cityServer.HSB_ImReady += Component_HSBReady;
-            cityServer.Start();
+            Console.WriteLine("Waiting for the HSB server to arrive...");
         }
 
-        private static void Component_HSBReady(object? sender, EventArgs e)
+        static void CreateCityServer()
         {
-            readyClients++;
-            if (readyClients == 1)
-                cityServer.IsRunning = roomServer.IsRunning = true;
+            //START THE CITY SERVER
+            TSOCityServer cityServer = new(TestingConstraints.City_ListenPort); // 49000 for City Server || HouseSimServer testing is 49101
+            cityServer.Start();
+
+            HSBSession.CityServer = cityServer;            
+            HSBSession.HSB_Activated = true;
+
+            Console.WriteLine("Server is ready! Join as your Avatar onto a new lot.");
         }
     }
 }
