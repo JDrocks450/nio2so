@@ -19,7 +19,7 @@ namespace nio2so.TSOTCP.City.Factory
     /// <summary>
     /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>s
     /// </summary>
-    internal static class TSOPDUFactory
+    public static class TSOPDUFactory
     {
         private static Dictionary<TSO_PreAlpha_VoltronPacketTypes, Type> typeMap = new();
         private static Dictionary<TSO_PreAlpha_DBActionCLSIDs, Type> _dbtypeMap = new();

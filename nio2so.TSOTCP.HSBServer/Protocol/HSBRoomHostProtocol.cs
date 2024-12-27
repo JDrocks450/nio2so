@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
@@ -21,7 +22,7 @@ namespace nio2so.TSOTCP.HSBServer.Protocol
         {
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
                 PDU = new TSOBroadcastDatablobPacket(transmitPDU);                
-            HSBSession.CityServer.Slip(HSBSession.RoomServer, (TSOVoltronPacket)PDU);
+            HSBSession.CityServer.SendPacket(HSBSession.RoomServer, (TSOVoltronPacket)PDU);
         }
 
         protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
@@ -41,6 +42,7 @@ namespace nio2so.TSOTCP.HSBServer.Protocol
         {
             //HOST PROTOCOL SHOULD ALWAYS TELL THE CLIENT THIS
             RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
+            RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
         }
     }
 }

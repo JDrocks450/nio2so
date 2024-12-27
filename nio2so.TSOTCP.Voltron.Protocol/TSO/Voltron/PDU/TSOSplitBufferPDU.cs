@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
-    internal class TSOSplitBufferPDU : TSOVoltronPacket
+    public class TSOSplitBufferPDU : TSOVoltronPacket
     {
         public const byte STANDARD_CHUNK_SIZE = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
 

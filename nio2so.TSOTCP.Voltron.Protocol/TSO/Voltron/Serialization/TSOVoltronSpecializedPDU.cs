@@ -44,7 +44,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
         protected string GetParameterListString()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var property in GetSpecializedWrapperProperties())
+            foreach (var property in GetPropertiesToCopy())
                 sb.Append($"{property.Name}: {property.GetValue(this)}, ");
             string text = sb.ToString();
             if (text.Length > 1)

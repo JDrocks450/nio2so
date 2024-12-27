@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU)]
-    internal class TSOOccupantArrivedPDU : TSOVoltronPacket
+    public class TSOOccupantArrivedPDU : TSOVoltronPacket
     {
         public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
         {

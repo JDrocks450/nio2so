@@ -15,10 +15,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Struct
         public string MasterID { get; set; }
 
         public TSOAriesIDStruct() { }
-        public TSOAriesIDStruct(string ariesID, string masterID) : this()
+        public TSOAriesIDStruct(uint AriesID, string MasterID) : this()
         {
-            AriesID = ariesID;
-            MasterID = masterID;
+            this.AriesID = $"??{AriesID}";
+            this.MasterID = MasterID;
+        }
+        public TSOAriesIDStruct(string AriesID, string MasterID) : this()
+        {
+            this.AriesID = AriesID;
+            this.MasterID = MasterID;
+        }
+
+        public override string ToString()
+        {
+            return $"{AriesID} {MasterID}";
         }
     }
 }

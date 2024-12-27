@@ -1,6 +1,8 @@
-﻿using nio2so.TSOTCP.City.Telemetry;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.HSBServer;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +40,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU)]
         public void CLIENT_ONLINE_PDU(TSOVoltronPacket PDU)
         {
-            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
+            uint avatarID = TSOVoltronConst.MyAvatarID;
+            string avatarName = TSOVoltronConst.MyAvatarName;
+            if (Server == HSBSession.RoomServer)
+            {
+                avatarID = TestingConstraints.HSBHostID;
+                avatarName = TestingConstraints.HSBHostName;
+            }
+            RespondWith(new TSOUpdatePlayerPDU(avatarID,avatarName));
         }
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU)]
         public void BC_VERSION_LIST_PDU(TSOVoltronPacket PDU)

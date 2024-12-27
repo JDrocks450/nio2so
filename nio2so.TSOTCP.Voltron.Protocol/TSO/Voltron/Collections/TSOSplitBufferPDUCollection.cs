@@ -10,7 +10,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Collections
     /// <summary>
     /// A collection of <see cref="TSOSplitBufferPDU"/> instances
     /// </summary>
-    internal class TSOSplitBufferPDUCollection : List<TSOSplitBufferPDU>, IDisposable
+    public class TSOSplitBufferPDUCollection : List<TSOSplitBufferPDU>, IDisposable
     {
         public void Dispose()
         {

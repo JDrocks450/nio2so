@@ -11,7 +11,7 @@ using System.Net.Sockets;
 
 namespace nio2so.TSOTCP.Voltron.Protocol
 {
-    public abstract class DebugDefaultServer : QuazarServer<TSOTCPPacket>, ITSOServer
+    public abstract class TSOVoltronBasicServer : QuazarServer<TSOTCPPacket>, ITSOServer
     {
         const bool DefaultRunningState = true;
 
@@ -40,7 +40,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         protected ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
         protected bool _running = DefaultRunningState;
 
-        protected DebugDefaultServer(string name, int port, uint backlog = 1, IPAddress ListenIP = null) :
+        protected TSOVoltronBasicServer(string name, int port, uint backlog = 1, IPAddress ListenIP = null) :
             base(name, port, backlog, ListenIP) { }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)
@@ -238,11 +238,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         private void Debug_LogSendPDU(uint ID, TSOVoltronPacket PDU, NetworkTrafficDirections Direction) =>
             Telemetry.OnVoltronPacket(Direction, DateTime.Now, PDU, ID);
 
-        public void Slip(ITSOServer Sender, TSOVoltronPacket PDU)
+        /// <summary>
+        /// Sends a <see cref="TSOVoltronPacket"/> in a new <see cref="TSOTCPPacket"/> from a DIFFERENT server.
+        /// </summary>
+        /// <param name="Sender"></param>
+        /// <param name="PDU"></param>
+        public void SendPacket(ITSOServer Sender, TSOVoltronPacket PDU)
         {
+            if (Sender != null)
+                if (Sender == this) return;
             SubmitAriesFrame(_clientInfo.First().Key, PDU);
             Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                nameof(DebugDefaultServer),
+                nameof(TSOVoltronBasicServer),
                 $"Passed {PDU} from {Sender.GetType().Name} to {GetType().Name}"));
         }
     }

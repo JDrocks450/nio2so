@@ -31,7 +31,7 @@ namespace nio2so.TSOTCP.City.TSO
     /// <para>To get the Client to connect to a <see cref="TSOCityServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
     /// and you have modified your hosts file in System32/drivers/etc to include xo.max.ea.com</para>
     /// </summary>
-    public class TSOCityServer : DebugDefaultServer
+    public class TSOCityServer : TSOVoltronBasicServer
     {
         public TSOCityServer(int port, IPAddress ListenIP = null) : base(nameof(TSOCityServer), port, 5, ListenIP)
         {

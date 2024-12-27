@@ -6,6 +6,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
     {
         public bool IsRunning { get; set; }
 
-        void Slip(ITSOServer cityServer, TSOVoltronPacket PDU);
+        void SendPacket(ITSOServer cityServer, TSOVoltronPacket PDU);
     }
 }

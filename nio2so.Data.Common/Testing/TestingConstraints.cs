@@ -86,5 +86,8 @@ namespace nio2so.Data.Common.Testing
         /// <para/>Should be true if using the HSB test
         /// </summary>
         public const bool LOTTestingMode = false;
+
+        public const uint HSBHostID = 1220;
+        public const string HSBHostName = "HOUSEHSB";
     }
 }

@@ -9,6 +9,7 @@ using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron.Struct;
 using nio2so.TSOTCP.HSBServer;
 using QuazarAPI;
 using System;
@@ -27,7 +28,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [TSORegulator]
     public class LotProtocol : TSOProtocol
     {
-        bool _iminalot = false;
         private uint _houseCreateX = 83, _houseCreateY = 157; // ocean island
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request)]
@@ -97,38 +97,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);            
             RespondTo(PDU,response);
 
-            if (Server == HSBSession.RoomServer)
-                return;
-            if (TestingConstraints.LOTTestingMode) return;
-
-            if (!_iminalot)
-            {
-                _iminalot = true;
-                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                    //new Struct.TSOAriesIDStruct("A 1337", ""),
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kClientHasConnected)
-                );
-                RespondTo(PDU, kClientConnectedMsg);                
-            }
-            else
-            {
-                //RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
-                return;
-                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                    //new Struct.TSOAriesIDStruct("A 1337", ""),
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID,
-                    new byte[4] { 0x00, 0x00, 0x05, 0x39 })
-                );
-                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, kClientConnectedMsg);
-                
-            }
-
+            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
+            
             //OLD CODE: ==========
 
-            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.
-            //RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
+            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.            
         }
 
         // The Client is requesting to set the house data for this HouseID in the Database
@@ -165,15 +138,27 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             //byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
             string LotName = "BloatyLand";
             string RoomName = LotName;
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, roomPDU.HouseID,
-                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
-                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, TestingConstraints.MyAvatarID,
+                new(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName),
+                new(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName));
             RespondWith(updateRoomPDU);
 
             //**INVOKE THE HSB
             if (HSBSession.HSB_Activated)
             {
-                HSBSession.RoomServer.IsRunning = true;
+
+                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
+                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID,
+                    TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
+                )
+                {
+                    CurrentSessionID = new Struct.TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
+                };
+                kClientConnectedMsg.MakeBodyFromProperties();
+                HSBSession.RoomServer?.SendPacket(Server,
+                        new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+                HSBSession.RoomServer?.SendPacket(Server, kClientConnectedMsg);
             }
         }
 

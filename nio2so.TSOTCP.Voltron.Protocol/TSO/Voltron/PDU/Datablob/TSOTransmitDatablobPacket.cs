@@ -58,7 +58,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         public TSOGenericDataBlobContent DataBlobContentObject
         {
             get => Header.DataBlobContentObject;
-            set => Header.DataBlobContentObject = value;
+            set
+            {
+                Header.DataBlobContentObject = value;
+                Header.DataBlobContentObject?.SetCLSID(SubMsgCLSID); // used for ToString() mainly
+            }
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU;

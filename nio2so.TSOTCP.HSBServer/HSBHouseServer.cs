@@ -32,7 +32,7 @@ namespace nio2so.TSOTCP.HSBServer
     /// <para>To get the Client to connect to a <see cref="TSOCityServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
     /// and you have modified your hosts file in System32/drivers/etc to include xo.max.ea.com</para>
     /// </summary>
-    public class HSBHouseServer : DebugDefaultServer
+    public class HSBHouseServer : TSOVoltronBasicServer
     {
         public HSBHouseServer(int port, IPAddress ListenIP = null) : base(nameof(HSBHouseServer), port, 5, ListenIP)
         {

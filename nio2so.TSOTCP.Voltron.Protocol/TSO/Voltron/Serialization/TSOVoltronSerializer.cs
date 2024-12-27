@@ -93,11 +93,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             doDeserialize(Stream, newObject);
             return newObject;
         }
-
-        internal static T Deserialize<T>(byte[] streamBytes) where T : new()
+        public static T Deserialize<T>(byte[] streamBytes) where T : new()
         {
             using (MemoryStream stream = new MemoryStream(streamBytes))
                 return Deserialize<T>(stream);
+        }
+        public static object Deserialize(byte[] streamBytes, Type ObjectType)
+        {
+            using (MemoryStream stream = new MemoryStream(streamBytes))
+                return Deserialize(stream, ObjectType);
         }
     }
 }
