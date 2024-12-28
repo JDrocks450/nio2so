@@ -98,7 +98,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             RespondTo(PDU,response);
 
             RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            
+            //RespondTo(PDU, new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+              //  new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)));
+
             //OLD CODE: ==========
 
             //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.            
@@ -139,8 +141,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             string LotName = "BloatyLand";
             string RoomName = LotName;
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, TestingConstraints.MyAvatarID,
-                new(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName),
-                new(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName));
+                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
+                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
             RespondWith(updateRoomPDU);
 
             //**INVOKE THE HSB

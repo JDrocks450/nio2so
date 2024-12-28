@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.TSOTCP.City.TSO.Voltron.Struct;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,11 +8,13 @@ using System.Threading.Tasks;
 namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
-    internal class TSOChatMessagePDU : TSOVoltronPacket
+    public class TSOChatMessagePDU : TSOVoltronPacket
     {
         public byte Arg1 { get; set; }
-        public string Str1 { get; set; }
-        public string Str2 { get; set; }
+        /// <summary>
+        /// The person who sent the Chat Message
+        /// </summary>
+        public TSOAriesIDStruct Person { get; set; }
         public ushort Arg2 { get; set; }
         public string Message {  get; set; }
 
@@ -21,11 +24,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
             MakeBodyFromProperties();
         }
 
-        public TSOChatMessagePDU(string ChatMessage) : this()
+        public TSOChatMessagePDU(TSOAriesIDStruct User, string ChatMessage) : this()
         {
             Arg1 = 0x01;
-            Str1 = "A 1337";
-            Str2 = "bsiquikc";
+            Person = User;
             Arg2 = 0x00;
             Message = ChatMessage;
 

@@ -2,6 +2,7 @@
 using nio2so.TSOTCP.City.TSO;
 using nio2so.TSOTCP.City.TSO.Aries;
 using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
 using System.Diagnostics;
@@ -32,17 +33,8 @@ namespace nio2so.TSOTCP.City
 
             while(Console.ReadLine() != "shutdown")
             {
-                var housestatepacket = new TSOBroadcastDatablobPacket(
-                    //new Struct.TSOAriesIDStruct("A 1337", ""),
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_MessageHouseOccupants,
-                    new byte[] { 0x00,0x00,0x00,0x01 })
-                )
-                {
-                    CurrentSessionID = new TSO.Voltron.Struct.TSOAriesIDStruct("A 1337", TestingConstraints.MyAvatarName)
-                };
-                housestatepacket.MakeBodyFromProperties();
-                cityServer.SendPacket(null,housestatepacket);
+                cityServer.SendPacket(null,new TSOChatMessagePDU(new(TestingConstraints.MyAvatarID,
+                    TestingConstraints.MyAvatarName), "Test of the househsb works"));
             }
         }
     }
