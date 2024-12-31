@@ -1,13 +1,13 @@
 ﻿using nio2so.Formats.DB;
-using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.Factory
+namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 {
     /// <summary>
     /// Creates <see cref="TSODBCharBlob"/> and <see cref="TSODBChar"/> data types and saves them to disk
@@ -31,6 +31,6 @@ namespace nio2so.TSOTCP.City.Factory
         public TSODBCharBlob GetCharBlobByID(uint AvatarID) => GetDataObjectByID<TSODBCharBlob>(AvatarID);
         public void SetCharBlobByIDToDisk(uint AvatarID, TSODBCharBlob CharBlob) => SetDataObjectByIDToDisk(AvatarID, CharBlob);
         public TSODBChar GetCharByID(uint AvatarID) => GetDataObjectByID<TSODBChar>(AvatarID, CharExt);
-        public void SetCharByIDToDisk(uint AvatarID, TSODBChar CharBlob) => SetDataObjectByIDToDisk(AvatarID, CharBlob, true, CharExt);        
+        public void SetCharByIDToDisk(uint AvatarID, TSODBChar CharBlob) => SetDataObjectByIDToDisk(AvatarID, CharBlob, true, CharExt);
     }
 }

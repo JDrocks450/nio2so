@@ -1,12 +1,11 @@
 ﻿using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.Voltron.Protocol;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.HSBServer
+namespace nio2so.TSOTCP.Voltron.Protocol
 {
     public static class HSBSession
     {

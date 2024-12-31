@@ -1,6 +1,8 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+using nio2so.TSOTCP.City.TSO.Voltron;
+
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU)]
     internal class TSOSetAcceptFlashesPDU : TSOVoltronPacket

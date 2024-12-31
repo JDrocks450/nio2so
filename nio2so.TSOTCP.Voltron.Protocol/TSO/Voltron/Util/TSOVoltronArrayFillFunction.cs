@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Util
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util
 {
     /// <summary>
     /// A helper class to offer an extension method for byte[]s to be filled with:
@@ -23,7 +23,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Util
             if (Target.Length >= FillSize) return Target;
             byte[] returnArray = new byte[FillSize];
             Target.CopyTo(returnArray, 0);
-            for(uint index = (uint)Target.Length; index < FillSize; index++)
+            for (uint index = (uint)Target.Length; index < FillSize; index++)
             {
                 byte fillByte = 0xBA;
                 if (index % 4 == 0) ;

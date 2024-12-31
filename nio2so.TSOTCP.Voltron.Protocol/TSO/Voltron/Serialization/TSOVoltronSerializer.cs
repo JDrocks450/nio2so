@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using QuazarAPI.Networking.Data;
 using System.Reflection;
 using System.Runtime.Serialization;
-using QuazarAPI.Networking.Data;
-using System.Threading.Tasks;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Voltron.Util;
-using nio2so.Data.Common.Serialization.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
     /// <summary>
     /// Serializes and Deserializes to objects to Voltron-compatible streams
     /// </summary>
     internal static class TSOVoltronSerializer
-    {                
+    {
         public static void Serialize<T>(Stream Stream, T Object)
         {
             //Does this object type implement custom serialization behavior?
@@ -33,7 +27,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
 
             foreach (var property in Object.GetType().GetProperties())
             {
-                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) 
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null)
                     continue;
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))

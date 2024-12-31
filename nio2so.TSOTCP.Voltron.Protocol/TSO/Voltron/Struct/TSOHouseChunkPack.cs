@@ -1,7 +1,7 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using QuazarAPI.Networking.Data;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Struct
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
     public record TSOHouseChunk(TSO_PreAlpha_HouseStreamChunkHeaders Header, uint Param1, uint Size, byte[] Content)
     {
@@ -38,7 +38,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Struct
                 //cast to enum
                 TSO_PreAlpha_HouseStreamChunkHeaders header = (TSO_PreAlpha_HouseStreamChunkHeaders)headerBytes;
                 //is this defined?
-                if (!Enum.IsDefined(header)) {
+                if (!Enum.IsDefined(header))
+                {
                     DataStream.Seek(-4, SeekOrigin.Current); // roll it back and read in little endian
                     headerBytes = DataStream.ReadBodyDword(MiscUtil.Conversion.Endianness.LittleEndian);
                     header = (TSO_PreAlpha_HouseStreamChunkHeaders)headerBytes;

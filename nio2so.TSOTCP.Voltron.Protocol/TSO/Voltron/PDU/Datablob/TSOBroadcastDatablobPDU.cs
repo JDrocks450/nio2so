@@ -1,5 +1,4 @@
 ﻿using QuazarAPI.Networking.Data;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.City.TSO.Voltron.Util;
 using System;
 using System.Collections.Generic;
@@ -9,10 +8,11 @@ using System.Threading.Tasks;
 using MiscUtil.Conversion;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.Struct;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 {
     public class TSOBroadcastDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
@@ -30,7 +30,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
     /// well i tried but this was made 20 years ago. why am i even doing this?
     /// </summary>    
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU)]
-    public class TSOBroadcastDatablobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOBroadcastDatablobPDUHeader>, 
+    public class TSOBroadcastDatablobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOBroadcastDatablobPDUHeader>,
         ITSOVoltronAriesMasterIDStructure, ITSODataBlobPDU
     {
         private const uint MESSAGELENGTH_TO_BODY = sizeof(uint);
@@ -48,7 +48,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
             get => Header.Arg1;
             set => Header.Arg1 = value;
         }
-        [TSOVoltronDistanceToEnd] public uint MessageLength
+        [TSOVoltronDistanceToEnd]
+        public uint MessageLength
         {
             get => Header.MessageLength;
             set => Header.MessageLength = value;
@@ -89,7 +90,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         /// <param name="DBAction"></param>
         /// <param name="Header"></param>
         /// <param name="Payload"></param>
-        public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, 
+        public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID,
             ITSODataBlobContentObject? ContentObject = default,
             uint MessageLength = 0xFFFFFFFF)
         {
@@ -109,7 +110,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         /// Copy constructor for creating a <see cref="TSOBroadcastDatablobPacket"/> from a <see cref="TSOTransmitDataBlobPacket"/>
         /// </summary>
         /// <param name="transmitPDU"></param>
-        public TSOBroadcastDatablobPacket(TSOTransmitDataBlobPacket transmitPDU) : 
+        public TSOBroadcastDatablobPacket(TSOTransmitDataBlobPacket transmitPDU) :
             this(transmitPDU.SubMsgCLSID, transmitPDU.DataBlobContentObject.ContentBytes)
         {
             CurrentSessionID = transmitPDU.CurrentSessionID;

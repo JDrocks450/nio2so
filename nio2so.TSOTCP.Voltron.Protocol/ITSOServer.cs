@@ -1,4 +1,4 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 
 namespace nio2so.TSOTCP.Voltron.Protocol
 {

@@ -1,11 +1,9 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City;
-using nio2so.TSOTCP.City.Factory;
 using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.HSBServer.niotso;
 using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using System.Diagnostics;
 
 namespace nio2so.TSOTCP.HSBServer

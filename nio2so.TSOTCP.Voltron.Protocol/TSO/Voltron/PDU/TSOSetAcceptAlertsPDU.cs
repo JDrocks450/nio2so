@@ -1,7 +1,8 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU)]
     internal class TSOSetAcceptAlertsPDU : TSOVoltronPacket
@@ -10,7 +11,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         public TSOSetAcceptAlertsPDU()
         {
         }
-        public TSOSetAcceptAlertsPDU(uint value=0x0)
+        public TSOSetAcceptAlertsPDU(uint value = 0x0)
         {
             Value = value;
             MakeBodyFromProperties();
@@ -22,7 +23,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     internal class TSOSetAcceptAlertsResponsePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;
-        public TSOSetAcceptAlertsResponsePDU(bool AcceptsAlerts, 
+        public TSOSetAcceptAlertsResponsePDU(bool AcceptsAlerts,
             uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
             string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {

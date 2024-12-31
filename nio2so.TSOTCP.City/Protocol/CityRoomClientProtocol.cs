@@ -1,15 +1,11 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.HSBServer;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 {
@@ -71,7 +67,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_AvatarID)
             { // do nothing
-                RespondWith((TSOVoltronPacket)PDU);
+                //RespondWith((TSOVoltronPacket)PDU);
                 donoPacket = (TSOVoltronPacket)PDU;
             } 
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseData)
@@ -178,7 +174,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             //im in a lot -- send it the lot im supposed to be in
             RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
-
+            
             return;
             //HOUSE DATA
             RespondTo((ITSOVoltronAriesMasterIDStructure)donoPacket, GetHouseData());

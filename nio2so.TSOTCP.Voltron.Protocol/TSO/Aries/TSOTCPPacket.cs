@@ -1,6 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
 using System;
@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Aries
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
 {
     /// <summary>
     /// <see href="http://wiki.niotso.org/Maxis_Protocol#AriesPackets"/>    
@@ -32,7 +32,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
     /// <summary>
     /// An Aries Packet.
     /// </summary>
-    public class TSOTCPPacket : QuazarAPI.Networking.Data.PacketBase
+    public class TSOTCPPacket : PacketBase
     {
         private static bool _warningShownOnce = false;
 
@@ -61,7 +61,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
 
         public const byte ARIES_FRAME_HEADER_LEN = sizeof(uint) * 3;
 
-        public TSOTCPPacket() : base() { }        
+        public TSOTCPPacket() : base() { }
         public TSOTCPPacket(uint Type, uint Time, uint Size) : this()
         {
             PacketType = Type;
@@ -85,22 +85,22 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         /// <exception cref="InvalidDataException"></exception>
         public override IEnumerable<T> ParseAllPackets<T>(ref byte[] Data)
         {
-            List<T> packets = new List<T>();            
+            List<T> packets = new List<T>();
             int currentIndex = 0;
             do
             {
-                byte[] headerBytes = new byte[TSOTCPPacket.ARIES_FRAME_HEADER_LEN];
+                byte[] headerBytes = new byte[ARIES_FRAME_HEADER_LEN];
                 Array.Copy(Data, currentIndex, headerBytes, 0, headerBytes.Length);
                 var headerSuccess = TryGetAriesHeader(headerBytes, out uint pType, out uint time, out uint size);
                 if (!headerSuccess) // THROW IF FIRST PACKET
                 {
                     if (currentIndex == 0)
-                        TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, 
+                        TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors,
                             "cTSOTCPPacket", "First packet in the response body isn't an Aries packet.")); // FIRST PACKET ISN'T EVEN ARIES
                     break;
                 }
                 uint packetBuffer = size + ARIES_FRAME_HEADER_LEN;
-                if(Data.Length - currentIndex < packetBuffer)
+                if (Data.Length - currentIndex < packetBuffer)
                     throw new InternalBufferOverflowException("Packet length reported by client is longer than the received bytes");
                 byte[] frameData = new byte[packetBuffer];
                 Array.Copy(Data, currentIndex, frameData, 0, frameData.Length);
@@ -109,7 +109,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
                 currentIndex += readBytes;
                 packets.Add(val);
             }
-            while(currentIndex < Data.Length);
+            while (currentIndex < Data.Length);
             return packets; // RETURN ALL PACKETS FOUND IN THE RESPONSE BODY
         }
         /// <summary>
@@ -123,11 +123,11 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         {
             endIndex = bytes.Length;
             var headerSuccess = TryGetAriesHeader(bytes, out uint pType, out uint time, out uint size);
-            if (!headerSuccess) return default(T);
+            if (!headerSuccess) return default;
             byte[] bodyArray = new byte[size];
             Array.Copy(bytes, ARIES_FRAME_HEADER_LEN, bodyArray, 0, (int)size);
             return new TSOTCPPacket(pType, time, bodyArray) as T;
-        }        
+        }
 
         public override byte[] GetBytes()
         {
@@ -144,14 +144,15 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             }
             Array.Copy(BitConverter.GetBytes(Timestamp), 0, packetData, sizeof(uint) * 1, sizeof(uint));
             Array.Copy(BitConverter.GetBytes(PayloadSize), 0, packetData, sizeof(uint) * 2, sizeof(uint));
-            if (PayloadSize > 0) {
+            if (PayloadSize > 0)
+            {
                 byte[] bytes = base.GetBytes();
                 Array.Copy(bytes, 0, packetData, ARIES_FRAME_HEADER_LEN, PayloadSize);
             }
             return packetData;
         }
 
-        public override bool TryGetHeaderData(in Byte[] Buffer, out uint Size)
+        public override bool TryGetHeaderData(in byte[] Buffer, out uint Size)
         {
             Size = 0;
             if (Buffer == null) throw new NullReferenceException();
@@ -182,11 +183,11 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             PacketType = Timestamp = PayloadSize = 0;
             try
             {
-                GetAriesHeader(PacketData, out PacketType, out Timestamp, out PayloadSize);                
+                GetAriesHeader(PacketData, out PacketType, out Timestamp, out PayloadSize);
             }
             catch (Exception e)
             { // TRY FUNCTION WILL IGNORE ERRORS
-                TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, 
+                TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors,
                     "cTSOTCPPacket", $"Error when parsing Aries header: {e.Message}"));
                 return false;
             }
@@ -220,7 +221,7 @@ namespace nio2so.TSOTCP.City.TSO.Aries
             if (!TestingConstraints.LogAriesPackets) return;
             System.IO.Directory.CreateDirectory(Directory);
             var now = DateTime.Now;
-            string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] Packet {now.Hour%12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] Packet {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
             File.WriteAllBytes(Path.Combine(Directory, myName), GetBytes());
         }
     }

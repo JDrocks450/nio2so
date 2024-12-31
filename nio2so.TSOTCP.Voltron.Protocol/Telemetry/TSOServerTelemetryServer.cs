@@ -1,23 +1,14 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
-using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
 using QuazarAPI;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Channels;
-using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.Telemetry
+namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
 {
     /// <summary>
     /// A pipeline to receive information on the current running state of a <see cref="TSOCityServer"/>
@@ -79,7 +70,7 @@ namespace nio2so.TSOTCP.City.Telemetry
 
         private void Init()
         {
-            QConsole.OnLogUpdated += (string ChannelName, string Raw, string Formatted) =>
+            QConsole.OnLogUpdated += (ChannelName, Raw, Formatted) =>
             {
                 OnConsoleLog(new(LogSeverity.TCPLayer, ChannelName, Raw));
             };
@@ -177,13 +168,13 @@ namespace nio2so.TSOTCP.City.Telemetry
                 _ => ConsoleColor.White,
             };
 
-            if (!TestingConstraints.VerboseLogging && Entry.Severity == LogSeverity.TCPLayer) return;                
+            if (!TestingConstraints.VerboseLogging && Entry.Severity == LogSeverity.TCPLayer) return;
 
             //**PRETTY PRINT FOR MULTILINE
-            var time = (Entry.Time ?? DateTime.Now);
+            var time = Entry.Time ?? DateTime.Now;
             var message = Entry.Content;
             var header = $"--- {time} ";
-            var nmessage = (Entry.Content.Contains('\n')) ?
+            var nmessage = Entry.Content.Contains('\n') ?
                 $"{header}{new string('-', CONSOLE_WIDTH - header.Length)} \n" +
                 $"[{Entry.Sender}]: {message}\n" +
                 $"{new string('-', CONSOLE_WIDTH)} \n"
@@ -236,7 +227,7 @@ namespace nio2so.TSOTCP.City.Telemetry
                 {
                     fs.Seek(0, SeekOrigin.End);
                     using (StreamWriter sw = new StreamWriter(fs))
-                    {                        
+                    {
                         sw.WriteLine(Message);
                     }
                 }

@@ -5,9 +5,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
-    public interface ITSOVoltronSpecializedPDUHeader { 
+    public interface ITSOVoltronSpecializedPDUHeader
+    {
         public uint MessageLength { get; set; }
     }
 
@@ -39,8 +40,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
             properties.AddRange(base.GetPropertiesToCopy());
             properties.AddRange(GetSpecializedWrapperProperties());
             return properties;
-        }   
-        
+        }
+
         protected string GetParameterListString()
         {
             StringBuilder sb = new StringBuilder();

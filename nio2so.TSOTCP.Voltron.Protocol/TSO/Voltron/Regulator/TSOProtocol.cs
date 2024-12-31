@@ -1,11 +1,11 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +13,10 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
 
-    [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class TSOProtocolHandler : Attribute
     {
         public TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes packetType)
@@ -26,7 +26,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public TSO_PreAlpha_VoltronPacketTypes PacketType { get; set; }
     }
-    [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class TSOProtocolDatabaseHandler : Attribute
     {
         public TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs DatabaseAction)
@@ -36,7 +36,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
     }
-    [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class TSOProtocolDatablobHandler : Attribute
     {
         public TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable CLS_ID)
@@ -86,7 +86,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         private void MapMe()
         {
             voltronMap.Clear();
-            foreach(var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolHandler>() != null))
+            foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolHandler>() != null))
             {
                 var attribute = function.GetCustomAttribute<TSOProtocolHandler>();
                 var packetType = attribute.PacketType;
@@ -117,7 +117,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 if (result) TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                     nameof(TSOProtocol), $"MAPPED {packetType} to DATABLOB handler {function.Name}"));
             }
-        }        
+        }
 
         public virtual bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
@@ -176,7 +176,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             uint splitSize = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE;
             if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
                 packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
-            else 
+            else
                 packets.Add(DBWrapper);
             return packets;
         }
@@ -185,7 +185,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// Will send this packet to the remote connection at the end of this Aries frame
         /// </summary>
         /// <param name="ResponsePacket"></param>
-        protected void RespondWith(TSOVoltronPacket ResponsePacket) => 
+        protected void RespondWith(TSOVoltronPacket ResponsePacket) =>
             ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(SplitLargePDU(ResponsePacket));
         /// <summary>
         /// Will send this packet to the remote connection at the end of this Aries frame

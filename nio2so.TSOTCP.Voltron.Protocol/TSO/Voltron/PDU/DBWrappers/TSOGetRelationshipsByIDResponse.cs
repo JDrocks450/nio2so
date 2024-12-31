@@ -1,7 +1,8 @@
 ﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRelationshipsByID_Response)]
     internal class TSOGetRelationshipsByIDResponse : TSODBRequestWrapper
@@ -11,7 +12,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint NumEntries { get; set; }
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] RelationshipAvatarIDs { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RelationshipAvatarIDs { get; set; }
 
         public TSOGetRelationshipsByIDResponse(uint AvatarID, params uint[] FriendAvatarIDs) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
@@ -20,7 +21,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             )
         {
             this.AvatarID = AvatarID;
-            this.NumEntries = (uint)FriendAvatarIDs.Length;
+            NumEntries = (uint)FriendAvatarIDs.Length;
             RelationshipAvatarIDs = new byte[sizeof(uint) * NumEntries];
 
             int index = -1;

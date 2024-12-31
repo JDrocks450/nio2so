@@ -1,9 +1,7 @@
-﻿using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.Regulator;
+﻿using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using QuazarAPI;
 using QuazarAPI.Networking.Standard;
 using System.Net;
@@ -248,7 +246,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             if (Sender != null)
                 if (Sender == this) return;
             SubmitAriesFrame(_clientInfo.First().Key, PDU);
-            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
+            Telemetry?.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
                 nameof(TSOVoltronBasicServer),
                 $"Passed {PDU} from {Sender.GetType().Name} to {GetType().Name}"));
         }

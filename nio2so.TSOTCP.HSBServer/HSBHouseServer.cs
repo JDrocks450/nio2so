@@ -1,27 +1,12 @@
 ﻿#define MAKEMANY
 #undef MAKEMANY
 
-using nio2so.Formats.BPS;
-using nio2so.Formats.FAR3;
-using nio2so.Formats.Streams;
-using nio2so.Formats.TSOData;
-using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.Collections;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
-using nio2so.TSOTCP.City.TSO.Voltron.Regulator;
 using nio2so.TSOTCP.Voltron.Protocol;
-using QuazarAPI;
-using QuazarAPI.Networking.Standard;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using System.Net;
-using System.Net.Sockets;
 
 namespace nio2so.TSOTCP.HSBServer
 {

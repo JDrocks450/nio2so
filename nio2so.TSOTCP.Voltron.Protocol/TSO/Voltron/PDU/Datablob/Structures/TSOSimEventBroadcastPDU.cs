@@ -1,12 +1,13 @@
 ﻿using nio2so.Formats.Streams;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
 {
     /// <summary>
     /// This is found when the <see cref="TSO_PreAlpha_MasterConstantsTable.GZIID_cITSOSimEvent"/> is received by the server

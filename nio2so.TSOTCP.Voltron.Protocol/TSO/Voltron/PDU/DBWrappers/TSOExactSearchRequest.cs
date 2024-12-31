@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request)]
     internal class TSOExactSearchRequest : TSODBRequestWrapper
@@ -14,7 +15,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// What the player typed into the search box -- what they're searching for
         /// </summary>
-        [TSOVoltronDBWrapperField] [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string SearchTerm { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string SearchTerm { get; set; }
         /// <summary>
         /// The category to search for a resource in
         /// </summary>

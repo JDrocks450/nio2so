@@ -1,6 +1,6 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.City.TSO.Voltron.Struct;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 {
     public class TSOTransmitDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
@@ -85,12 +85,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob
         /// <param name="DBAction"></param>
         /// <param name="Header"></param>
         /// <param name="Payload"></param>
-        public TSOTransmitDataBlobPacket(TSOAriesIDStruct DestinationAddress, 
-            TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, 
+        public TSOTransmitDataBlobPacket(TSOAriesIDStruct DestinationAddress,
+            TSO_PreAlpha_MasterConstantsTable SubMsgCLSID,
             ITSODataBlobContentObject? Content = default,
             uint MessageLength = 0xFFFFFFFF) : base()
         {
-            this.DestinationSessionID = DestinationAddress;
+            DestinationSessionID = DestinationAddress;
             this.SubMsgCLSID = SubMsgCLSID;
             DataBlobContentObject = new TSOGenericDataBlobContent(Content);
 

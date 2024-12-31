@@ -4,13 +4,14 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
 using nio2so.Formats.Streams;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
     internal class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
-    { 
+    {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public byte Filler1 { get; set; } = 0x01;
 
@@ -56,15 +57,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                     TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response
                 )
         {
-            this.HouseID = houseID;
+            HouseID = houseID;
 
             var decompressedBytes = TSOVoltronSerializer.Serialize(HouseBlob);
             if (CompressBlob)
                 HouseBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
-            else            
-                HouseBlobStream = new TSOSerializableStream(0x01, decompressedBytes, 0x200C);            
+            else
+                HouseBlobStream = new TSOSerializableStream(0x01, decompressedBytes, 0x200C);
 
             MakeBodyFromProperties();
-        }    
-    }    
+        }
+    }
 }

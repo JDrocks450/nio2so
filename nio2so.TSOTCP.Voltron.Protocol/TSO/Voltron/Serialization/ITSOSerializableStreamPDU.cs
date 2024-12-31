@@ -1,6 +1,6 @@
 ﻿using nio2so.Formats.Streams;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Serialization
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
     /// <summary>
     /// A <see cref="TSOVoltronDBRequestWrapperPDU"/> that contains a <see cref="TSOSerializableStream"/>

@@ -1,13 +1,14 @@
 ﻿using nio2so.Formats.Util.Endian;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetBookmarksQuery"/>
     /// </summary>
-    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response)] 
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response)]
     internal class TSOGetBookmarksResponse : TSODBRequestWrapper
     {
         // ! NOTES ABOUT THIS PDU !
@@ -20,7 +21,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint AvatarID { get; }
         [TSOVoltronDBWrapperField] public uint ListType { get; }
         [TSOVoltronDBWrapperField] public uint ItemCount { get; }
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] ItemList { get; }        
+        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] ItemList { get; }
 
         /// <summary>
         /// Creates a new <see cref="TSOGetBookmarksResponse"/> PDU with the provided parameters
@@ -50,6 +51,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
                 ItemList[index * sizeof(uint) + 3] = lotIdBytes[3];
             }
             MakeBodyFromProperties();
-        }        
+        }
     }
 }

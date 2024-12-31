@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 {
     /// <summary>
     /// Constants to use for the <see cref="TSOCityServer"/>
@@ -29,7 +29,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         //****BETA TESTING
         public const uint MyHouseID = TestingConstraints.MyHouseID; //0x053A; // 1338 // can be zero for testing as well
         public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 0x0539
-        public const string MyAvatarName = TestingConstraints.MyAvatarName;        
+        public const string MyAvatarName = TestingConstraints.MyAvatarName;
         //****
     }
 }

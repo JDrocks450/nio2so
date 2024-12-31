@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
     /// <summary>
     /// Handles all requests pertaining to the Message Inbox in The Sims Online: Pre-Alpha

@@ -6,8 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// The response PDU to a <see cref="TSOGetCharByIDRequest"/> PDU
@@ -70,7 +71,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The <see cref="TSODBChar"/> data to send, in bytes
         /// </summary>
-        [TSOVoltronDBWrapperField] public TSODBChar CharProfile { get; set; }                
+        [TSOVoltronDBWrapperField] public TSODBChar CharProfile { get; set; }
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharByIDResponse"/> packet with the provided <see cref="TSODBChar"/>
@@ -87,7 +88,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             this.AvatarID = AvatarID;
             CharProfile = CharData;
 
-            MakeBodyFromProperties();                                           
+            MakeBodyFromProperties();
         }
     }
 }

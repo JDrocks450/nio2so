@@ -1,7 +1,8 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Sends a log to the remote server console log
@@ -12,7 +13,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// Not sure needs more testing
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint LogType {  get; set; }
+        [TSOVoltronDBWrapperField] public uint LogType { get; set; }
         [TSOVoltronDBWrapperField] public uint Arg1 { get; set; }
         [TSOVoltronDBWrapperField] public uint Arg2 { get; set; }
         /// <summary>
@@ -21,7 +22,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <para>See: <seealso cref="TSO_PreAlpha_GZPROBE"/> for guidance on Probe types</para>
         /// </summary>
         [TSOVoltronDBWrapperField] public uint ProbeCLSID { get; set; } = (uint)TSO_PreAlpha_DBStructCLSIDs.GZPROBEID_cEAS;
-        
+
         //**EVERYTHING AFTER HERE MAY BE PROBE-TYPE SPECIFIC!!!
         //**THIS IS ONLY BASED OF EAS PROBE!!
 

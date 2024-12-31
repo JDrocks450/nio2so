@@ -1,4 +1,6 @@
-﻿namespace nio2so.TSOTCP.City.TSO.Voltron
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 {
     /// <summary>
     /// This is a complete dump of constants tables found in the disassembly of the game client.
@@ -6,7 +8,7 @@
     /// <list type="bullet"><see cref="TSO_PreAlpha_DBActionCLSIDs"/> - Actions on the database. See: <see cref="TSODBRequestWrapper.TSOSubMsgCLSID"/></list>
     /// <list type="bullet"><see cref="TSO_PreAlpha_DBStructCLSIDs"/> - The type of <see cref="TSODBRequestWrapper"/> 
     /// in the database. See: <see cref="TSODBRequestWrapper.TSOPacketFormatCLSID"/></list>
-    /// <list type="bullet"><see cref="TSO_PreAlpha_GZPROBE"/> - Used in the <see cref="Voltron.PDU.DBWrappers.TSOInsertGenericLogRequest"/> to determine the 
+    /// <list type="bullet"><see cref="TSO_PreAlpha_GZPROBE"/> - Used in the <see cref="PDU.DBWrappers.TSOInsertGenericLogRequest"/> to determine the 
     /// format of the packet and also what system raised the log request.</list>
     /// <list type="bullet"><see cref="TSO_PreAlpha_kMSGs"/> - kMSGs are used between regulators to communicate what events are taking place, generally.</list>
     /// <i>However,</i> these are incomplete because they are manually populated. This type is a complete listing. You can use this enum to make new discoveries
@@ -4447,7 +4449,7 @@
         /// <summary>
         /// The response packet to an exact-search
         /// </summary>
-        SearchExactMatch_Response =  0x89527401,
+        SearchExactMatch_Response = 0x89527401,
         /// <summary>
         /// A general search, not exactly matching the resource requested
         /// </summary>
@@ -4471,7 +4473,7 @@
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
         /// </summary>
-        kDBServiceRequestMsg  = TSO_PreAlpha_MasterConstantsTable.kDBServiceRequestMsg,
+        kDBServiceRequestMsg = TSO_PreAlpha_MasterConstantsTable.kDBServiceRequestMsg,
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
         /// </summary>
@@ -4501,7 +4503,7 @@
         /// A House search
         /// </summary>
         House = 0x2,
-    }    
+    }
 
     public enum TSO_PreAlpha_HouseStreamChunkHeaders
     {

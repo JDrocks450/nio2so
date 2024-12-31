@@ -1,18 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Nothing is known about this PDU... this is a placeholder file
     /// </summary>    
-    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response)] 
-    internal class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
+    [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response)]
+    public class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
     {
-        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }        
+        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
         [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x1;
 

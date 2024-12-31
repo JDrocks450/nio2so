@@ -1,10 +1,11 @@
-﻿using System;
+﻿using nio2so.TSOTCP.City.TSO.Voltron;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Confirms with the Client what the money fields for the Avatar should be.
@@ -26,7 +27,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
 
         }
 
-        public TSOSetMoneyFieldsResponse(uint avatarID, uint arg1=0, uint arg2 = 0, uint arg3 = 0) : this()
+        public TSOSetMoneyFieldsResponse(uint avatarID, uint arg1 = 0, uint arg2 = 0, uint arg3 = 0) : this()
         {
             AvatarID = avatarID;
             Arg1 = arg1;

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Aries
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
 {
     /// <summary>
     /// This Aries packet gets information about the client that's calling into the server. 
@@ -32,14 +32,14 @@ namespace nio2so.TSOTCP.City.TSO.Aries
         {
             return new TSOAriesClientSessionInfo(
                 User: basePacket.ReadBodyNullTerminatedString(0, 112),
-                AriesClientVersion : basePacket.ReadBodyNullTerminatedString(80),
-                Email : basePacket.ReadBodyNullTerminatedString(40),
-                AuthServ : basePacket.ReadBodyNullTerminatedString(84),
-                Product : basePacket.ReadBodyUshort(Endianness.LittleEndian),
-                Unknown : basePacket.ReadBodyByte(),
-                ServiceIdentifier : basePacket.ReadBodyNullTerminatedString(3),
-                ReconnectedPriorFlag : basePacket.ReadBodyUshort(Endianness.BigEndian),
-                Password : basePacket.ReadBodyNullTerminatedString((int)(basePacket.PayloadSize - 331))                
+                AriesClientVersion: basePacket.ReadBodyNullTerminatedString(80),
+                Email: basePacket.ReadBodyNullTerminatedString(40),
+                AuthServ: basePacket.ReadBodyNullTerminatedString(84),
+                Product: basePacket.ReadBodyUshort(Endianness.LittleEndian),
+                Unknown: basePacket.ReadBodyByte(),
+                ServiceIdentifier: basePacket.ReadBodyNullTerminatedString(3),
+                ReconnectedPriorFlag: basePacket.ReadBodyUshort(Endianness.BigEndian),
+                Password: basePacket.ReadBodyNullTerminatedString((int)(basePacket.PayloadSize - 331))
             );
         }
     }

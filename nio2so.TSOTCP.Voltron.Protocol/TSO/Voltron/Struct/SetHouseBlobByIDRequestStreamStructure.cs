@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Struct
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
     /// <summary>
     /// Represents the structure of the TSOSerializableStream included in the <see cref="TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request"/>

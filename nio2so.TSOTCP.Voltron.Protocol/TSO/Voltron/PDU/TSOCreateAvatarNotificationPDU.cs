@@ -1,6 +1,7 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using nio2so.TSOTCP.City.TSO.Voltron;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
     /// Sent from the client when a new avatar is created

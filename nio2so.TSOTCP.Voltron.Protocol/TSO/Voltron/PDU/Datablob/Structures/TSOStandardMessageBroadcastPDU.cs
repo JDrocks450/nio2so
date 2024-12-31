@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using QuazarAPI.Networking.Data;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
 {
     /// <summary>
     /// This is a <see cref="TSOGenericDataBlobContent"/> that is a <see cref="TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage"/>
@@ -18,7 +19,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
     {
         [TSOVoltronBroadcastDatablobPDUField] public byte BufferStartByte { get; set; } = 0x01;
         [TSOVoltronBroadcastDatablobPDUField] public TSO_PreAlpha_MasterConstantsTable kMSG { get; set; }
-        [TSOVoltronBroadcastDatablobPDUField] [TSOVoltronBodyArray] public byte[] MessageContent { get; set; }
+        [TSOVoltronBroadcastDatablobPDUField][TSOVoltronBodyArray] public byte[] MessageContent { get; set; }
 
         public TSOStandardMessageContent() { }
 

@@ -1,4 +1,4 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
 {
     /// <summary>
     /// Denotes that this <see cref="TSOVoltronPacket"/> has a <see cref="DataBlobContentObject"/> property
@@ -38,7 +38,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
     /// <para/>To decode the data, you can use the <see cref="GetAs{T}"/> function, and if you want to set data to
     /// this object you should use <see cref="SetTo{T}(T)"/>
     /// </summary>
-    public sealed class TSOGenericDataBlobContent {
+    public sealed class TSOGenericDataBlobContent
+    {
         private TSO_PreAlpha_MasterConstantsTable? _contentCLSID = default;
         public void SetCLSID(TSO_PreAlpha_MasterConstantsTable CLSID) => _contentCLSID = CLSID;
 
@@ -65,7 +66,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ContentObject"></param>
-        public void SetTo<T>(T ContentObject) where T : ITSODataBlobContentObject => ContentBytes = TSOVoltronSerializer.Serialize<T>(ContentObject);
+        public void SetTo<T>(T ContentObject) where T : ITSODataBlobContentObject => ContentBytes = TSOVoltronSerializer.Serialize(ContentObject);
         /// <summary>
         /// Attempts to map the CLSID stored in this <see cref="TSOGenericDataBlobContent"/> object to a defined type
         /// using the <see cref="TSOVoltronDatablobContent"/> attribute.
@@ -74,10 +75,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures
         /// <param name="CLSID"></param>
         /// <param name="Object"></param>
         /// <returns></returns>
-        public bool TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable CLSID, out ITSODataBlobContentObject? Object) 
-        {            
+        public bool TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable CLSID, out ITSODataBlobContentObject? Object)
+        {
             Object = default;
-            foreach(var type in typeof(TSOBroadcastDatablobPacket).Assembly.
+            foreach (var type in typeof(TSOBroadcastDatablobPacket).Assembly.
                 GetTypes().Where(x => x.GetCustomAttribute<TSOVoltronDatablobContent>() != null))
             {
                 TSOVoltronDatablobContent attribute = type.GetCustomAttribute<TSOVoltronDatablobContent>();

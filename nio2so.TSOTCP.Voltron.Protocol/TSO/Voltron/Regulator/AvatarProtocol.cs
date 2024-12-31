@@ -1,10 +1,12 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.Collections;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -13,7 +15,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
     /// <summary>
     /// Handles incoming requests related to the Avatars and their DB operations
@@ -24,7 +26,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request)]
         public void GetCharByID_Request(TSODBRequestWrapper PDU)
         {
-            var charPacket = ((TSOGetCharByIDRequest)PDU);
+            var charPacket = (TSOGetCharByIDRequest)PDU;
             var avatarID = charPacket.AvatarID;
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
@@ -50,7 +52,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.OUTBOUND, avatarID, charBlob);
             var response = new TSOGetCharBlobByIDResponse(avatarID, charBlob);
-            RespondTo(PDU, response);            
+            RespondTo(PDU, response);
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Request)]
@@ -60,7 +62,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var avatarID = bookmarkPDU.AvatarID;
             if (avatarID == 0) return;
 
-            RespondTo(PDU,new TSOGetBookmarksResponse(avatarID,
+            RespondTo(PDU, new TSOGetBookmarksResponse(avatarID,
                                                       TSO_PreAlpha_SearchCategories.Avatar,
                                                       TestingConstraints.MyFriendAvatarID,
                                                       TestingConstraints.MyAvatarID)); // Add more to test Bookmarks
@@ -111,7 +113,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
         public void SetCharByID_Request(TSODBRequestWrapper PDU)
         {
-            var charPacket = ((TSOSetCharByIDRequest)PDU);
+            var charPacket = (TSOSetCharByIDRequest)PDU;
             var avatarID = charPacket.AvatarID;
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
@@ -120,21 +122,21 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
             //log this to disk
             TSOServerTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);
-            RespondTo(PDU,new TSOSetCharByIDResponse(avatarID));
+            RespondTo(PDU, new TSOSetCharByIDResponse(avatarID));
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Request)]
         public void DebitCredit_Request(TSODBRequestWrapper PDU)
         {
             var debitcreditPDU = (TSODebitCreditRequestPDU)PDU;
-            RespondTo(PDU,new TSODebitCreditResponsePDU(
+            RespondTo(PDU, new TSODebitCreditResponsePDU(
                 debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount + 12345));
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request)]
         public void SetMoneyFields_Request(TSODBRequestWrapper PDU)
         {
-            var moneyPacket = ((TSOSetMoneyFieldsRequest)PDU);
+            var moneyPacket = (TSOSetMoneyFieldsRequest)PDU;
             var avatarID = moneyPacket.AvatarID;
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");

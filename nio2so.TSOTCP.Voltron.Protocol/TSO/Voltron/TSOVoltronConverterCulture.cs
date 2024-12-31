@@ -1,8 +1,9 @@
 ﻿using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 {
     //**** CLASS LEVEL****
 
@@ -15,7 +16,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     class TSOVoltronPDU : Attribute
     {
         public TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes Type)
-        {            
+        {
             this.Type = Type;
         }
 
@@ -32,7 +33,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     {
         public TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs ActionCLSID)
         {
-            this.Type = ActionCLSID;
+            Type = ActionCLSID;
         }
 
         public TSO_PreAlpha_DBActionCLSIDs Type { get; }
@@ -48,7 +49,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     {
         public TSOVoltronDatablobContent(TSO_PreAlpha_MasterConstantsTable ActionCLSID)
         {
-            this.Type = ActionCLSID;
+            Type = ActionCLSID;
         }
 
         public TSO_PreAlpha_MasterConstantsTable Type { get; }
@@ -59,7 +60,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// <summary>
     /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable -- because it is in a <see cref="DBWrapper"/> packet
     /// </summary>
-    [System.AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
     public sealed class TSOVoltronDBWrapperField : TSOVoltronIgnorable
     {
         public TSOVoltronDBWrapperField()
@@ -70,7 +71,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
     /// <summary>
     /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable -- because it is in a <see cref="TSOBroadcastDatablobPDU"/> packet
     /// </summary>
-    [System.AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
     public sealed class TSOVoltronBroadcastDatablobPDUField : TSOVoltronIgnorable
     {
         public TSOVoltronBroadcastDatablobPDUField()

@@ -1,20 +1,11 @@
-﻿using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.Collections;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using QuazarAPI;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
+﻿using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Collections;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.Factory
+namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 {
     /// <summary>
     /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>s
@@ -41,7 +32,7 @@ namespace nio2so.TSOTCP.City.Factory
                 if (dbattribute != null)
                 {
                     bool value = _dbtypeMap.TryAdd(dbattribute.Type, type);
-                    TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, 
+                    TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                         "cTSOPDUFactory", $"Mapped *DB* {dbattribute.Type} to {type.Name}"));
                     continue;
                 }
@@ -63,7 +54,7 @@ namespace nio2so.TSOTCP.City.Factory
             long startPosition = Stream.Position;
 
             int readBytes = TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
-            currentIndex += Size;            
+            currentIndex += Size;
             cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType, Stream);
             Stream.Seek(startPosition, SeekOrigin.Begin);
             byte[] temporaryBuffer = new byte[Size];
@@ -118,7 +109,7 @@ namespace nio2so.TSOTCP.City.Factory
         public static TSOVoltronPacket? CreatePacketObjectByPacketType(TSO_PreAlpha_VoltronPacketTypes PacketType, Stream PDUData, bool MakeBlankPacketOnFail = true)
         {
             TSOVoltronPacket? getReturnValue() => MakeBlankPacketOnFail ? new TSOBlankPDU(PacketType) : default;
-            
+
             switch (PacketType)
             {
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
@@ -139,7 +130,7 @@ namespace nio2so.TSOTCP.City.Factory
                 case TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU:
                     return new TSOHostOnlinePDU();
                 case TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU:
-                    return new TSOClientOnlinePDU();                                        
+                    return new TSOClientOnlinePDU();
             }
             //Use the cTSOFactory Type map to reflect the packet type
             if (typeMap.TryGetValue(PacketType, out var type))
@@ -195,7 +186,7 @@ namespace nio2so.TSOTCP.City.Factory
                 TSOSplitBufferPDUCollection collection = new();
                 while (ms.Position < ms.Length)
                 {
-                    byte[] buffer2 = new byte[Math.Min(SizeLimit,dataRemaining)];
+                    byte[] buffer2 = new byte[Math.Min(SizeLimit, dataRemaining)];
                     ms.Read(buffer2, 0, buffer2.Length);
                     dataRemaining = ms.Length - ms.Position;
                     TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining > 0);
@@ -215,7 +206,7 @@ namespace nio2so.TSOTCP.City.Factory
             string? displayName = Enum.GetName((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ??
                             "0x" + VoltronPacketType.ToString("X4");
             Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
-            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,$"cTSOPDU [{displayName}].dat");
+            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory, $"cTSOPDU [{displayName}].dat");
             bool existing = File.Exists(fileName);
             File.WriteAllBytes(fileName, PacketData);
             return !existing;

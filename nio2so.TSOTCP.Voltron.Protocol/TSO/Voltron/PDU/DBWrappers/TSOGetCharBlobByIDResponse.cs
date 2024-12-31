@@ -1,10 +1,11 @@
 ﻿using nio2so.Formats.DB;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
 using nio2so.Formats.Streams;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Contains a <see cref="TSODBCharBlob"/> object in a cTSOSerializable Stream, which contains a RefPack 
@@ -31,7 +32,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The size of the proceeding data from the end of this dword to the end of the payload
         /// </summary>
-        [TSOVoltronDBWrapperField][TSOVoltronDistanceToEnd]                
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronDistanceToEnd]
         public uint PayloadSize { get; set; }
 
         //***ITSOSerializableStream
@@ -57,9 +59,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             this.AvatarID = AvatarID;
 
             var decompressedBytes = TSOVoltronSerializer.Serialize(BlobData);
-            CharBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);        
+            CharBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
 
             MakeBodyFromProperties();
-        }        
+        }
     }
 }

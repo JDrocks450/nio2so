@@ -1,27 +1,16 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
-using nio2so.Formats.FAR3;
-using nio2so.Formats.Streams;
-using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.City.TSO.Voltron.Struct;
-using nio2so.TSOTCP.HSBServer;
-using QuazarAPI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
-{   
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
+{
     /// <summary>
     /// Handles incoming requests related to the Avatars and their DB operations
     /// </summary>
@@ -68,7 +57,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request)]
-        public void GetLotByID_Request(TSODBRequestWrapper PDU)        
+        public void GetLotByID_Request(TSODBRequestWrapper PDU)
         { // Gets a TSODataDefinition Lot struct with the LotID provided
             RespondTo(PDU, TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotByID_Response.dat",
                 TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response));
@@ -94,12 +83,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             if (houseBlob == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
-            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);            
-            RespondTo(PDU,response);
+            var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);
+            RespondTo(PDU, response);
 
             RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
             //RespondTo(PDU, new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-              //  new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)));
+            //  new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)));
 
             //OLD CODE: ==========
 
@@ -113,7 +102,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
 
             uint HouseID = housePDU.HouseID;
-            if (!housePDU.TryUnpack(out Struct.SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
+            if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
             var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
 
@@ -123,9 +112,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
         public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
-        {            
+        {
             RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
-        }        
+        }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
         public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
@@ -155,7 +144,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
                 )
                 {
-                    CurrentSessionID = new Struct.TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
+                    CurrentSessionID = new TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
                 };
                 kClientConnectedMsg.MakeBodyFromProperties();
                 HSBSession.RoomServer?.SendPacket(Server,

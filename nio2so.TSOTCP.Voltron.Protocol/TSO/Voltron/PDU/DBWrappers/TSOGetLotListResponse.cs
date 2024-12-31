@@ -1,12 +1,13 @@
 ﻿using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.TSO.Voltron.Util;
+using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// This will return <i>stubs</i> of Lots in the City, the stubs contain basic information about
@@ -15,7 +16,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response)]
     internal class TSOGetLotListResponse : TSODBRequestWrapper
-    { 
+    {
         [TSOVoltronDBWrapperField] public uint Arg1 { get; set; } = 0x10111213;
         [TSOVoltronDBWrapperField] public uint LotCount { get; set; } = 0x01;
 
@@ -62,8 +63,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// It is unknown what this does, but it needs to be here for the game to 
         /// accept the incoming information
         /// </summary>
-        [TSOVoltronDBWrapperField] public byte[] FooterData => new byte[4 * 8].TSOFillArray();  
-        
+        [TSOVoltronDBWrapperField] public byte[] FooterData => new byte[4 * 8].TSOFillArray();
+
 
         public TSOGetLotListResponse(uint LotID, uint X, uint Y) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,

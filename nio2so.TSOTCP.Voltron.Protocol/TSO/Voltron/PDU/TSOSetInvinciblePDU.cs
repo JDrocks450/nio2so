@@ -1,7 +1,8 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU)]
     internal class TSOSetInvinciblePDU : TSOVoltronPacket
@@ -24,8 +25,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_RESPONSE_PDU;
 
-        public TSOSetInvincibleResponsePDU(bool IsInvincible, 
-            uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode, 
+        public TSOSetInvincibleResponsePDU(bool IsInvincible,
+            uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
             string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
         {
             StatusCode = statusCode;

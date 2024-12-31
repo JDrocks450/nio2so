@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.City.TSO.Voltron;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     internal class TSODebugWrapperPDU : TSODBRequestWrapper
     {
@@ -14,12 +15,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronBodyArray]
         public byte[] PDUBytes { get; set; }
 
-        public TSODebugWrapperPDU(byte[] BodyArray, TSO_PreAlpha_DBActionCLSIDs Action, 
+        public TSODebugWrapperPDU(byte[] BodyArray, TSO_PreAlpha_DBActionCLSIDs Action,
             TSO_PreAlpha_kMSGs kMSG = TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-            TSO_PreAlpha_DBStructCLSIDs Struct = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage 
+            TSO_PreAlpha_DBStructCLSIDs Struct = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage
             )
-            : base(Struct, kMSG, Action) 
-        { 
+            : base(Struct, kMSG, Action)
+        {
             PDUBytes = BodyArray;
             MakeBodyFromProperties();
         }
@@ -34,7 +35,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             TSO_PreAlpha_DBStructCLSIDs Struct = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage
             )
         {
-            var bytes = File.ReadAllBytes( FName );
+            var bytes = File.ReadAllBytes(FName);
             return new TSODebugWrapperPDU(bytes, Action, kMSG, Struct);
         }
     }

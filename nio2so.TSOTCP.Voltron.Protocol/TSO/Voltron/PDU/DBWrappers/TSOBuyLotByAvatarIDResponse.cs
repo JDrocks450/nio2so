@@ -1,10 +1,11 @@
-﻿using System;
+﻿using nio2so.TSOTCP.City.TSO.Voltron;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Sent when the Player requests to purchase a lot in the World View
@@ -12,7 +13,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response)]
     internal class TSOBuyLotByAvatarIDResponse : TSODBRequestWrapper
-    {       
+    {
         /// <summary>
         /// The ID in the database of the newly created house
         /// </summary>
@@ -43,12 +44,12 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <param name="Funds"></param>
         /// <param name="X"></param>
         /// <param name="Y"></param>
-        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint Funds, uint X, uint Y) : 
+        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint Funds, uint X, uint Y) :
             base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response
-            ) 
+            )
         {
             this.NewHouseID = NewHouseID;
             NewFunds = Funds;

@@ -1,14 +1,14 @@
-﻿using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.City.TSO.Voltron.Collections;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
+﻿using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Collections;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
     [TSORegulator("cTSOSplitBufferProtocol")]
     internal class SplitBufferPDUProtocol : TSOProtocol
@@ -32,7 +32,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             _recvBytes += splitBuffer.SplitBufferPayloadSize;
             _SplitBufferPDUs.Add(splitBuffer);
-            if ((_recvBytes >= _VoltronPacketHeader.PDUPayloadSize) || !splitBuffer.HasDataRemaining)
+            if (_recvBytes >= _VoltronPacketHeader.PDUPayloadSize || !splitBuffer.HasDataRemaining)
             { // all packets received. dispose and reset
                 var enclosedPDU = TSOPDUFactory.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);
                 InsertOne(enclosedPDU);

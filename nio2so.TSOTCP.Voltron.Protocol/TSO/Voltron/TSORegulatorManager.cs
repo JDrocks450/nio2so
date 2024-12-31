@@ -1,6 +1,7 @@
-﻿using nio2so.TSOTCP.City.Factory;
-using nio2so.TSOTCP.City.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol;
+﻿using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using QuazarAPI;
 using System;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 {
     /// <summary>
     /// A response to a <see cref="ITSOProtocolRegulator"/> Handle() method
@@ -45,7 +46,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response);
     }
 
-    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class TSORegulator : Attribute
     {
         public string Name { get; set; } = "";
@@ -76,7 +77,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         /// Registers all default protocols implemented in TSOTCP.Voltron (this assembly)
         /// <para/><paramref name="OmissionList"/> will omit any types specified from this mapping process.
         /// </summary>
-        public void RegisterDefaultProtocols(params Type[] OmissionList) => 
+        public void RegisterDefaultProtocols(params Type[] OmissionList) =>
             RegisterProtocols(typeof(TSOPDUFactory).Assembly, OmissionList);
 
         /// <summary>
@@ -110,14 +111,14 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 
         public bool HandleIncomingPDU(TSOVoltronPacket Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {
-            foreach(var regulator in  typeMap)            
+            foreach (var regulator in typeMap)
                 if (regulator.HandleIncomingPDU(Incoming, out Outgoing)) return true;
             Outgoing = null;
             return false;
         }
 
         public bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
-        {            
+        {
             foreach (var regulator in typeMap)
                 if (regulator.HandleIncomingDBRequest(Incoming, out Outgoing)) return true;
             Outgoing = null;

@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     internal class TSOClientOnlinePDU : TSOVoltronPacket
     {
@@ -69,7 +69,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <summary>
         /// m_pRelogStats - Unknown
         /// </summary>
-        public UInt32 Arg1 { get; set; }
+        public uint Arg1 { get; set; }
         /// <summary>
         /// m_pRelogStats - Time Component
         /// </summary>
@@ -77,11 +77,11 @@ namespace nio2so.TSOTCP.City.TSO.Voltron
         /// <summary>
         /// m_pRelogStats - Amount of attempts to relog in
         /// </summary>
-        public UInt32 NumberOfAttempts { get; set; }
+        public uint NumberOfAttempts { get; set; }
         /// <summary>
         /// m_pClientStatus - m_lastExitCode 
         /// </summary>
-        public UInt32 LastExitCode { get; set; }
+        public uint LastExitCode { get; set; }
         /// <summary>
         /// m_pClientStatus - m_lastFailureType 
         /// </summary>

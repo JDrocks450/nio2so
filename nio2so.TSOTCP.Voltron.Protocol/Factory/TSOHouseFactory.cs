@@ -1,7 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
 using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.City.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,12 +9,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.Factory
+namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 {
     /// <summary>
     /// Serves data in relation to House requests
     /// </summary>
-    [TSOFactory] 
+    [TSOFactory]
     internal class TSOHouseFactory : TSOFactoryBase
     {
         const string HOUSE_DIR = TSOVoltronConst.HouseDataDirectory;
@@ -47,6 +47,6 @@ namespace nio2so.TSOTCP.City.Factory
         /// </summary>
         /// <param name="houseID"></param>
         /// <param name="houseBlob"></param>
-        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob HouseBlob) => SetDataObjectByIDToDisk(houseID, HouseBlob, false);    
+        public void SetHouseBlobByIDToDisk(uint houseID, TSODBHouseBlob HouseBlob) => SetDataObjectByIDToDisk(houseID, HouseBlob, false);
     }
 }

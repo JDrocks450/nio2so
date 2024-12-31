@@ -1,7 +1,7 @@
 ﻿using nio2so.Formats.DB;
-using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,14 +12,14 @@ using System.Text;
 using System.Threading.Tasks;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace nio2so.TSOTCP.City.Factory
+namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 {
     /// <summary>
     /// Marks this type as a <see cref="TSOFactoryBase"/> to be added to the Type map
     /// </summary>
     public class TSOFactoryAttribute : Attribute
     {
-        public TSOFactoryAttribute() : base() { }    
+        public TSOFactoryAttribute() : base() { }
     }
 
     public interface ITSOFactory
@@ -54,7 +54,7 @@ namespace nio2so.TSOTCP.City.Factory
         /// <returns></returns>
         public static T Get<T>() where T : TSOFactoryBase
         {
-            if (typeof(T) == typeof(TSOFactoryBase)) 
+            if (typeof(T) == typeof(TSOFactoryBase))
                 throw new InvalidOperationException("Every factory is TSOFactoryBase, give a type that's more specific.");
             return (T)_factories[typeof(T)];
         }
@@ -76,8 +76,8 @@ namespace nio2so.TSOTCP.City.Factory
         /// Uses reflection to find all TSOFactories with the <see cref="TSOFactoryAttribute"/>
         /// </summary>
         static TSOFactoryBase()
-        {            
-            InitializeFactories();    
+        {
+            InitializeFactories();
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace nio2so.TSOTCP.City.Factory
         /// <returns></returns>
         protected byte[] GetDataByID(uint ObjectID, string? OverrideExtension = default)
         {
-            string uri = GetObjectURI(ObjectID,OverrideExtension);
+            string uri = GetObjectURI(ObjectID, OverrideExtension);
             if (!File.Exists(uri))
             {
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
@@ -160,7 +160,7 @@ namespace nio2so.TSOTCP.City.Factory
         /// <param name="Overwrite">Can we overwrite pre-existing data?</param>
         /// <param name="OverrideExtension">What extension you would like to save it with. Default: <see cref="MY_EXT"/></param>
         protected void SetDataObjectByIDToDisk<T>(uint ObjectID, T ObjectData, bool Overwrite = true, string? OverrideExtension = default) where T : new() =>
-            SetDataByIDToDisk(ObjectID, TSOVoltronSerializer.Serialize<T>(ObjectData), Overwrite, OverrideExtension);
+            SetDataByIDToDisk(ObjectID, TSOVoltronSerializer.Serialize(ObjectData), Overwrite, OverrideExtension);
 
         /// <summary>
         /// Writes the <see cref="TSODBHouseBlob"/> to the disk at <see cref="HOUSE_DIR"/>
@@ -168,7 +168,7 @@ namespace nio2so.TSOTCP.City.Factory
         /// <param name="ObjectID"></param>
         /// <param name="houseBlob"></param>
         protected void SetDataByIDToDisk(uint ObjectID, byte[] Buffer, bool Overwrite = true, string? OverrideExtension = default)
-        {            
+        {
             Directory.CreateDirectory(MY_DIR);
             File.WriteAllBytes(GetObjectURI(ObjectID, OverrideExtension), Buffer);
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
@@ -178,7 +178,7 @@ namespace nio2so.TSOTCP.City.Factory
         public void Debug_SetCustomDataToDisk(uint DebugObjectID, string DataTypeName, byte[] WriteBytes, bool Overwrite = true) =>
             SetDataByIDToDisk(DebugObjectID, WriteBytes, Overwrite, DataTypeName);
         public void Debug_SetCustomDataToDisk<T>(uint DebugObjectID, string DataTypeName, T WriteObject, bool Overwrite = true)
-            where T : new() => SetDataObjectByIDToDisk<T>(DebugObjectID, WriteObject, Overwrite, DataTypeName);
+            where T : new() => SetDataObjectByIDToDisk(DebugObjectID, WriteObject, Overwrite, DataTypeName);
         public byte[] Debug_GetDataByID(uint ObjectID, string DataTypeName) => GetDataByID(ObjectID, DataTypeName);
         public T Debug_GetDataByID<T>(uint ObjectID, string DataTypeName) where T : new() => GetDataObjectByID<T>(ObjectID, DataTypeName);
 #endif

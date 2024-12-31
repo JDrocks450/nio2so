@@ -1,7 +1,8 @@
-﻿using QuazarAPI.Networking.Data;
+﻿using nio2so.TSOTCP.City.TSO.Voltron;
+using QuazarAPI.Networking.Data;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request"/>
@@ -27,7 +28,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public uint NumberOfRoommates { get; set; } = 0x01;
-        [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] RoommateAvatarIDs { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RoommateAvatarIDs { get; set; }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
@@ -35,7 +36,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
         public TSOGetRoommateInfoByLotIDResponse(uint HouseID, params uint[] RoommateAvatarIDs) :
-            base(                
+            base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                     TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
@@ -50,7 +51,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
             }
             NumberOfRoommates = (uint)RoommateAvatarIDs.Length;
 
-            MakeBodyFromProperties();            
+            MakeBodyFromProperties();
         }
     }
 }

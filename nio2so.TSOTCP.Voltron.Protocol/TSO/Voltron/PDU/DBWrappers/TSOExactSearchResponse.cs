@@ -1,16 +1,17 @@
 ﻿using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.City.TSO.Voltron;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Response)]
     internal class TSOExactSearchResponse : TSODBRequestWrapper
     {
-        [TSOVoltronDBWrapperField] public uint SearchType {  get; set; }
+        [TSOVoltronDBWrapperField] public uint SearchType { get; set; }
         [TSOVoltronDBWrapperField] public uint NumResults { get; set; }
         [TSOVoltronDBWrapperField] public byte[] ResultsVec { get; set; }
 

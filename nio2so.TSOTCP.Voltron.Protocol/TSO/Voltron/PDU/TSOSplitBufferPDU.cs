@@ -1,6 +1,7 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using nio2so.TSOTCP.City.TSO.Voltron;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
     public class TSOSplitBufferPDU : TSOVoltronPacket
@@ -16,15 +17,15 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
         /// <summary>
         /// This is 0x00 00 00 00 if there are more SPLIT_BUFFER_PDUs after this one
         /// </summary>
-        public uint DataRemaining { get; set; }    
+        public uint DataRemaining { get; set; }
         /// <summary>
         /// This byte indicates how many bytes are in this <see cref="TSOSplitBufferPDU"/>
         /// </summary>
-        public byte SplitBufferPayloadSize {  get; set; }
+        public byte SplitBufferPayloadSize { get; set; }
         [TSOVoltronBodyArray] public byte[] DataBuffer { get; set; }
 
         public TSOSplitBufferPDU() : base() { }
-        
+
         public TSOSplitBufferPDU(byte[] DataBuffer, bool DataRemainingHereafter)
         {
             if (DataBuffer.Length > byte.MaxValue)

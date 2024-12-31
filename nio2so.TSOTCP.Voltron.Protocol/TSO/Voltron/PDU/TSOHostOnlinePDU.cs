@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
     /// The <see cref="TSOHostOnlinePDU"/> sends to the Client that this server is a Voltron server.
@@ -21,9 +21,9 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.PDU
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU;
 
-        public ushort SizeLimit { get; }               
+        public ushort SizeLimit { get; }
         public uint Arg3 { get; }
-        public TSOHostOnlinePDU(ushort packetSize = PACKET_SIZE_LIMIT, uint arg3 = 0x7FFF7FFF)      
+        public TSOHostOnlinePDU(ushort packetSize = PACKET_SIZE_LIMIT, uint arg3 = 0x7FFF7FFF)
         {
             SizeLimit = packetSize;
             Arg3 = arg3;

@@ -1,6 +1,6 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Struct
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
     /// <summary>
     /// This is the structure used in Packets to track where the packet is coming (or going)

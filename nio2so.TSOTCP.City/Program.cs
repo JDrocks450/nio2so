@@ -1,10 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
-using nio2so.TSOTCP.City.TSO.Voltron;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using System.Diagnostics;
 
 namespace nio2so.TSOTCP.City
@@ -35,6 +31,7 @@ namespace nio2so.TSOTCP.City
             {
                 cityServer.SendPacket(null,new TSOChatMessagePDU(new(TestingConstraints.MyAvatarID,
                     TestingConstraints.MyAvatarName), "Test of the househsb works"));
+                cityServer.SendPacket(null, new TSOOccupantArrivedPDU(161, "FriendlyBuddy"));
             }
         }
     }

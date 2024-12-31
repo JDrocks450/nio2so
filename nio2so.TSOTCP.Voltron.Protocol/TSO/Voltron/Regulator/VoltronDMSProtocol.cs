@@ -1,8 +1,9 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City.Telemetry;
 using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU.DBWrappers;
-using nio2so.TSOTCP.HSBServer;
+using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,9 +12,9 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
-    [Voltron.Regulator.TSORegulator("VoltronDMSProtocol")]
+    [Regulator.TSORegulator("VoltronDMSProtocol")]
     /// <summary>
     /// This protocol handles lower-level functions of the Voltron Data Service such as 
     /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientByePDU"/>
@@ -32,7 +33,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BYE_PDU)]
-        public void BYE_PDU(TSOVoltronPacket PDU) {
+        public void BYE_PDU(TSOVoltronPacket PDU)
+        {
             var bye_pdu = (TSOClientBye)PDU;
             LogMessage("Client is saying Bye! Disconnecting after frame...");
             RespondWith(new TSOClientBye(bye_pdu.StatusCode, bye_pdu.Message));
@@ -47,7 +49,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 avatarID = TestingConstraints.HSBHostID;
                 avatarName = TestingConstraints.HSBHostName;
             }
-            RespondWith(new TSOUpdatePlayerPDU(avatarID,avatarName));
+            RespondWith(new TSOUpdatePlayerPDU(avatarID, avatarName));
         }
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU)]
         public void BC_VERSION_LIST_PDU(TSOVoltronPacket PDU)

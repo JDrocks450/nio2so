@@ -1,7 +1,7 @@
 ﻿#define MAKEMANY
 #undef MAKEMANY
 
-namespace nio2so.TSOTCP.City.TSO
+namespace nio2so.TSOTCP.Voltron.Protocol
 {
     /// <summary>
     /// Describes the flow of traffic for a network event
