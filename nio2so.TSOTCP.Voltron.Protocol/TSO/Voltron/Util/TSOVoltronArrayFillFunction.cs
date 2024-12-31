@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util
+﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util
 {
     /// <summary>
     /// A helper class to offer an extension method for byte[]s to be filled with:

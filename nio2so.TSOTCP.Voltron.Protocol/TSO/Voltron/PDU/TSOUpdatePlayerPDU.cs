@@ -1,14 +1,4 @@
-﻿using MiscUtil.Conversion;
-using nio2so.TSOTCP.City.TSO.Aries;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
+﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
 
     internal class TSOUpdatePlayerPDU : TSOVoltronPacket

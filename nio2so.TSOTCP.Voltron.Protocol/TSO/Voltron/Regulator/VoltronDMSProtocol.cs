@@ -1,20 +1,11 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.City.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
-    [Regulator.TSORegulator("VoltronDMSProtocol")]
+    [TSORegulator("VoltronDMSProtocol")]
     /// <summary>
     /// This protocol handles lower-level functions of the Voltron Data Service such as 
     /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientByePDU"/>

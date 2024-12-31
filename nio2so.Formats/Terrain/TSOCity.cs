@@ -1,6 +1,5 @@
 ﻿using nio2so.Data.Common;
 using System.Drawing;
-using System.Runtime;
 
 namespace nio2so.Formats.Terrain
 {

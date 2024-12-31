@@ -1,17 +1,12 @@
 ﻿using nio2so.Formats.UI.UIScript;
 using nio2so.TSOView2.Util;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using System.Windows;
 using nio2so.Formats.UI.TSOTheme;
-using System.Xml.Linq;
-using System.ComponentModel;
 using nio2so.TSOView2.Formats.UIs.Controls;
 
 namespace nio2so.TSOView2.Formats.UIs

@@ -1,5 +1,4 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron;
-using QuazarAPI.Networking.Data;
+﻿using QuazarAPI.Networking.Data;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers

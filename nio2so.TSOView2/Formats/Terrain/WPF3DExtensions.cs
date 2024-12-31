@@ -8,7 +8,6 @@ using System.Numerics;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using static nio2so.Formats.Terrain.TSOCity;
 
 namespace nio2so.TSOView2.Formats.Terrain
 {

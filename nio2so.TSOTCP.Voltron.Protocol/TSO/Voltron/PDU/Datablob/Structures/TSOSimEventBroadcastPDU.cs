@@ -1,11 +1,5 @@
 ﻿using nio2so.Formats.Streams;
-using nio2so.TSOTCP.City.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
 {

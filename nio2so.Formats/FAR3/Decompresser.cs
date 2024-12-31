@@ -4,12 +4,7 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
-using System.Xml.Linq;
 using nio2so.Formats.Util.Endian;
 /*
  * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS

@@ -1,6 +1,5 @@
 ﻿using nio2so.Formats.Img.Targa;
 using System.Drawing;
-using System.IO;
 using System.Text.RegularExpressions;
 
 namespace nio2so.Formats.Terrain

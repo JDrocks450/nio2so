@@ -1,10 +1,5 @@
 ﻿using nio2so.Formats.UI.UIScript;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.Formats.UI.TSOTheme
 {

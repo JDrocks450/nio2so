@@ -1,7 +1,6 @@
 ﻿using Microsoft.Win32;
 using nio2so.Formats.Img.Targa;
 using nio2so.TSOView2.Util;
-using System;
 using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;

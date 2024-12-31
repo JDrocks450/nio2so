@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace nio2so.Formats.CST
+﻿namespace nio2so.Formats.CST
 {
     public class CSTImporter : TSOFileImporterBase<CSTFile>
     {

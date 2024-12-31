@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace nio2so.Formats.Util.Endian

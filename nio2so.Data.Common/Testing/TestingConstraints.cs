@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.Data.Common.Testing
+﻿namespace nio2so.Data.Common.Testing
 {
     public static class TestingConstraints
     {

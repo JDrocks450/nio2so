@@ -1,11 +1,4 @@
-﻿using nio2so.TSOTCP.City.TSO.Voltron;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
+﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_FAILED_PDU)]
     internal class TSOChatMessageFailedPDU : TSOVoltronPacket

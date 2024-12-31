@@ -1,9 +1,7 @@
 ﻿using nio2so.Formats.DB;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
-using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.Streams;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.City.TSO.Voltron;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {

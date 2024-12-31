@@ -1,16 +1,9 @@
 ﻿using nio2so.Formats.Img.Targa;
 using nio2so.Formats.UI.UIScript;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 using static nio2so.Formats.UI.TSOTheme.TSOThemeFile;
 
 namespace nio2so.Formats.UI.TSOTheme

@@ -1,10 +1,6 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures

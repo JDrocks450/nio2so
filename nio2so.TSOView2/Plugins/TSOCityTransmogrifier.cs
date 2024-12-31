@@ -1,15 +1,11 @@
 ﻿using Microsoft.Win32;
 using nio2so.TSOView2.Formats;
-using nio2so.TSOView2.Util;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace nio2so.TSOView2.Plugins
