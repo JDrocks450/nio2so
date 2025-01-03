@@ -5,15 +5,13 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
-    [TSORegulator("VoltronDMSProtocol")]
+    [TSORegulator]
     /// <summary>
     /// This protocol handles lower-level functions of the Voltron Data Service such as 
     /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientByePDU"/>
     /// </summary>
     internal class VoltronDMSProtocol : TSOProtocol
     {
-        public string RegulatorName => "VoltronDMSProtocol";
-
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request)]
         public void InsertGenericLog_Request(TSODBRequestWrapper PDU)
         {

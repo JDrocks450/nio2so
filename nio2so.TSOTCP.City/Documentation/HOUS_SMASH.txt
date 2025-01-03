@@ -1,18 +1,19 @@
 HOUS_SMASH
 
-Find the Hous stream in the RAS_ file, then it goes 0x00000000 <uint32 size> then the stream follows. there is a byte header, in some cases is found to be 0x03.
+Find the Hous stream in the RAS_ file (you can tell what it is because there are four chars that read "hous" note that it may actually read "suoh" because it's backwards), then follows, 0x00000000 <uint32 size> then the stream follows thereafter. There is a byte header, in some cases is found to be 0x03.
 This Hous stream is sent as the payload to the GetHouseBlobByID_Response, hence why it is called that.
 
 SO! The game will save the house to disk in RAS_ format and directly dump the contents of the HouseBlob it is sent into the Hous stream in the file.
 
-What we can derive from this is that in order to master the GetHouseBlobByID_Response -- we need to a HOUS_SMASH
+What we can derive from this is that in order to master the GetHouseBlobByID_Response -- we need to do a HOUS_SMASH
 
 basically the procedure is two-fold. 
 
 1. Receive the SetHouseBlobByID_Request payload from the client (or use the dump to the disk in the houses folder)
-2. (if option 1, decompress the incoming data stream)
+2. (if option 1, decompress the incoming data stream, as this PDU body is compressed using RefPack)
 3. Harvest the Hous blob from either file.
 4. Recompress it.
 5. Send it back to the client.
 
 few issues:
+nevermind.

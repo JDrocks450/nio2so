@@ -6,6 +6,7 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 {
@@ -172,9 +173,20 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 if (!TestingConstraints.LOTTestingMode)
                     if (_attempts < 2) return; // break; 
             }
+            
             //im in a lot -- send it the lot im supposed to be in
             RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
-            
+            return;
+
+            RespondWith(
+                new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_LoadHouse))
+                {
+                    CurrentSessionID = new TSOAriesIDStruct(
+                        TestingConstraints.MyAvatarID,
+                        TestingConstraints.MyAvatarName)
+                });
+
             return;
             //HOUSE DATA
             RespondTo((ITSOVoltronAriesMasterIDStructure)donoPacket, GetHouseData());
