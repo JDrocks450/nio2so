@@ -1,13 +1,6 @@
 ﻿using nio2so.Formats.CST;
-using nio2so.Formats.TSOData;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace nio2so.Formats.UI.UIScript
 {

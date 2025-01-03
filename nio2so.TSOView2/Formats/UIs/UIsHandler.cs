@@ -3,11 +3,7 @@ using nio2so.Formats.CST;
 using nio2so.Formats.UI.TSOTheme;
 using nio2so.Formats.UI.UIScript;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace nio2so.TSOView2.Formats.UIs

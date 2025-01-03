@@ -1,14 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.Data.Common.Testing;
-using nio2so.TSOHTTPS.Protocol.Data;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.TSOProtocol.Controllers
 {

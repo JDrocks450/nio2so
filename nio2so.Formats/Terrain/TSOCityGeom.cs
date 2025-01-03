@@ -1,15 +1,6 @@
 ﻿using nio2so.Data.Common;
 using nio2so.Formats.Util;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using static nio2so.Formats.Terrain.TSOCity;
 
 namespace nio2so.Formats.Terrain
 {

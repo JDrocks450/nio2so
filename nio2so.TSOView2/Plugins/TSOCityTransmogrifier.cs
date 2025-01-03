@@ -1,15 +1,11 @@
 ﻿using Microsoft.Win32;
 using nio2so.TSOView2.Formats;
-using nio2so.TSOView2.Util;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 
 namespace nio2so.TSOView2.Plugins
@@ -168,20 +164,45 @@ namespace nio2so.TSOView2.Plugins
         private static void handle8bppindexedresize(string bmpFile, string DestinationDirectory)
         {
             string makedestdirstring(string fname) => Path.Combine(DestinationDirectory, fname);
+
+            ColorPalette colorPalette = null;
+            using (Bitmap bmp = (Bitmap)Image.FromFile(bmpFile))
+                colorPalette = bmp.Palette;            
+            
             //load the city we want to transfer to Pre-Alpha
             Bitmap8bpp releaseTSOBmp = new Bitmap8bpp(bmpFile);
             //check the size
             if (releaseTSOBmp.Width != 512 || releaseTSOBmp.Height != 512) goto imdone;
             //make a new 8bppindexed bmp -- has to be 256 color palette indexed bmp to work ugh
-            Bitmap8bpp compatBmp = new Bitmap8bpp(256, 256, releaseTSOBmp.ColorPalette);
+            Bitmap8bpp compatBmp = new Bitmap8bpp(256, 256, colorPalette);            
             //make the name what it would be in TSO pre alpha
             string mynewname = Path.GetFileNameWithoutExtension(bmpFile) + "00.bmp";
+
+            byte? getColorIndex(System.Drawing.Color Color)
+            {
+                Color[] palette = colorPalette.Entries;
+                for (int i = 0; i < palette.Length; i++)
+                {
+                    Color current = palette[i];
+                    if (current.R == Color.R && Color.G == current.G && Color.B == current.B)
+                        return (byte)i;
+                }
+                return default;
+            }
+
+            //**HOLIDAY TWEAK**
+            byte? snowIndex = getColorIndex(System.Drawing.Color.White);
+            byte? grassIndex = getColorIndex(Color.FromArgb(255,0,255,0));
+            grassIndex = null;
+            //**
 
             for (int x = 0; x < compatBmp.Width; x++)
             {
                 for (int y = 0; y < compatBmp.Height; y++)
                 {
                     byte color = releaseTSOBmp.GetPixel(x * 2, y * 2);
+                    if (grassIndex.HasValue && snowIndex.HasValue && color == grassIndex)
+                        color = snowIndex.Value;
                     compatBmp.SetPixel(x, y, color);
                 }
             }

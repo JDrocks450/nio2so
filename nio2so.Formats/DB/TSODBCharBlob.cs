@@ -1,6 +1,4 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Formats.Util.Endian;
-using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Formats.DB

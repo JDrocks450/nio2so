@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.Protocol.Data.Credential;
-using nio2so.Protocol.Packets;
 using nio2so.TSOProtocol.Packets.TSOXML;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 

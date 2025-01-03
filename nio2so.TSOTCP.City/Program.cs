@@ -1,32 +1,38 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.City.TSO.Aries;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using System.Diagnostics;
 
 namespace nio2so.TSOTCP.City
 {
     internal class Program
     {
-        static void InvokeNewHSBClient()
-        {
-            string fname = @"E:\Games\TSO Pre-Alpha\TSO - Patched HouseSimServer\TSOClient.exe";
-            Process? proc = Process.Start(new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                FileName = fname,
-                Arguments = "-w -debug_objects -nosound -hsb_mode -playerid:1220 -vport:49 -vhost:localhost -city:1",
-                WorkingDirectory = Path.GetDirectoryName(fname)
-            });
-        }
+        static TSOCityServer cityServer;
 
         static void Main(string[] args)
         {
-            //**INIT HSB CLIENT FOR ROOM HOSTING**
-            InvokeNewHSBClient();
+            //CLEAR PREVIOUS PACKETS
+            string clearDirProcName = @"E:\packets\cleandir.bat";
+            if (File.Exists(clearDirProcName))
+            {
+                Process.Start(new ProcessStartInfo()
+                {
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.GetDirectoryName(clearDirProcName),
+                    FileName = clearDirProcName
+                })?.WaitForExit();
+            }
 
-
-            TSOCityServer cityServer = new(TestingConstraints.ListenPort); // 49000 for City Server || HouseSimServer testing is 49101
+            //START THE CITY SERVER
+            cityServer = new(TestingConstraints.City_ListenPort); // 49000 for City Server || HouseSimServer testing is 49101
             cityServer.Start();
+
+            while(Console.ReadLine() != "shutdown")
+            {
+                cityServer.SendPacket(null,new TSOChatMessagePDU(new(TestingConstraints.MyAvatarID,
+                    TestingConstraints.MyAvatarName), "Test of the househsb works"));
+                cityServer.SendPacket(null, new TSOOccupantArrivedPDU(161, "FriendlyBuddy"));
+            }
         }
     }
 }
