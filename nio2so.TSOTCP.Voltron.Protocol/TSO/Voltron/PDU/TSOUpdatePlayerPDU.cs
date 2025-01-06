@@ -1,7 +1,6 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
-
-    internal class TSOUpdatePlayerPDU : TSOVoltronPacket
+    public class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU;
         public string AriesID { get; set; }

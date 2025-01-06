@@ -6,7 +6,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     /// Sent from the client when a new avatar is created
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_CREATEAVATARNOTIFICATION_PDU)]
-    internal class TSOCreateAvatarNotificationPDU : TSOVoltronPacket
+    public class TSOCreateAvatarNotificationPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_CREATEAVATARNOTIFICATION_PDU;
 

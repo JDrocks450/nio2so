@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net7.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <Configurations>Debug;Release</Configurations>
@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
+    <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.TSOTCP.Voltron.Protocol.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,7 +2,7 @@
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
-    internal class TSODebugWrapperPDU : TSODBRequestWrapper
+    public class TSODebugWrapperPDU : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField]
         [TSOVoltronBodyArray]

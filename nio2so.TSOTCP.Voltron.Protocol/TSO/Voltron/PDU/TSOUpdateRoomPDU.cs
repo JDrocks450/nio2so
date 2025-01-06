@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     /// Sent to a remote party to update which room it is currently in
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_ROOM_PDU)]
-    internal class TSOUpdateRoomPDU : TSOVoltronPacket
+    public class TSOUpdateRoomPDU : TSOVoltronPacket
     {
         /// <summary>
         /// An object that has String1 and String2

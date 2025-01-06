@@ -1,7 +1,7 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request)]
-    internal class TSOGetHouseBlobByIDRequest : TSODBRequestWrapper
+    public class TSOGetHouseBlobByIDRequest : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
 

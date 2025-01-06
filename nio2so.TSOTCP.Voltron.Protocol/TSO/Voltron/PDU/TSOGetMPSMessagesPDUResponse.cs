@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_RESPONSE_PDU)]
-    internal class TSOGetMPSMessagesPDUResponse : TSOVoltronPacket
+    public class TSOGetMPSMessagesPDUResponse : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_RESPONSE_PDU;
         public uint Arg1 { get; set; } = 0x01;

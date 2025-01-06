@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU)]
-    internal class TSOBCVersionListPDU : TSOVoltronPacket
+    public class TSOBCVersionListPDU : TSOVoltronPacket
     {
         public TSOBCVersionListPDU() : base() { }
         public TSOBCVersionListPDU(string versionString, string str1, uint arg1)

@@ -8,15 +8,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
     /// <summary>
     /// Serializes and Deserializes to objects to Voltron-compatible streams
     /// </summary>
-    internal static class TSOVoltronSerializer
+    public static class TSOVoltronSerializer
     {
+        private static TSOVoltronSerializerGraphItem? _lastGraphItem;
+
         public static void Serialize<T>(Stream Stream, T Object)
         {
+            _lastGraphItem = null;
+
             //Does this object type implement custom serialization behavior?
             //as in-- does it define how it should deserialized itself?
             if (Object is ITSOCustomSerialize serializable)
             {
-                Stream.Write(serializable.OnSerialize());
+                byte[] customData = serializable.OnSerialize();
+                Stream.Write(customData);
+                _lastGraphItem = new("", Object.GetType(), Object, $"Custom serialization technique ({customData.Length} bytes)");
                 return;
             }
             // no-- proceed with default serialize    
@@ -25,6 +31,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
+            _lastGraphItem = new("", Object.GetType(), Object);
+
             foreach (var property in Object.GetType().GetProperties())
             {
                 if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null)
@@ -32,6 +40,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
+                _lastGraphItem.Add(TSOVoltronSerializerCore.GetLastGraph());
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)
@@ -97,5 +106,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             using (MemoryStream stream = new MemoryStream(streamBytes))
                 return Deserialize(stream, ObjectType);
         }
+        /// <summary>
+        /// Gets the <see cref="TSOVoltronSerializerGraphItem"/> from the last object
+        /// serialized for research/studying
+        /// </summary>
+        /// <returns></returns>
+        public static TSOVoltronSerializerGraphItem GetLastGraph() => _lastGraphItem;
     }
 }

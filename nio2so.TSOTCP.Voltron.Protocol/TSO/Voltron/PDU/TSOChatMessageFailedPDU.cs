@@ -1,7 +1,7 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_FAILED_PDU)]
-    internal class TSOChatMessageFailedPDU : TSOVoltronPacket
+    public class TSOChatMessageFailedPDU : TSOVoltronPacket
     {
         public byte Arg1 { get; set; }
         public string Str1 { get; set; }

@@ -93,6 +93,8 @@ namespace nio2so.TSOView2
             wnd.Closed += delegate
             {
                 SaveConfiguration();
+                MessageBox.Show("Your config settings are saved. Please restart the application.");
+                Application.Current.Shutdown();
             };
             wnd.Show();
         }
@@ -110,7 +112,7 @@ namespace nio2so.TSOView2
                 if (MessageBox.Show("You haven't selected a The Sims Online directory yet. Would you like to do so now?",
                     "Warning", MessageBoxButton.YesNo) != MessageBoxResult.Yes)
                     return false;
-                TSOViewConfigHandler.Directory_PromptAndSaveResult("Select any file in your The Sims Online Directory",
+                TSOViewConfigHandler.Directory_PromptAndSaveResult("Select your The Sims Online Root Directory",
                     ref basePath);
                 if (basePath == null) return false;
                 TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory = basePath;
@@ -125,17 +127,17 @@ namespace nio2so.TSOView2
         /// <returns></returns>
         public static bool Directory_PromptAndSaveResult(string Prompt, ref string DirectoryResult)
         {
-            OpenFileDialog fileDialog = new()
+            OpenFolderDialog fileDialog = new()
             {
                 Title = Prompt,
                 InitialDirectory = DirectoryResult,
                 Multiselect = false,
                 DereferenceLinks = true,
-                CheckFileExists = true,
+                ValidateNames = true,
             };
             if (fileDialog.ShowDialog() ?? false)
             {
-                DirectoryResult = Path.GetDirectoryName(fileDialog.FileName);
+                DirectoryResult = fileDialog.FolderName;
                 return true;
             }
             return false;

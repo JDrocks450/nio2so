@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetBookmarksQuery"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Response)]
-    internal class TSOGetBookmarksResponse : TSODBRequestWrapper
+    public class TSOGetBookmarksResponse : TSODBRequestWrapper
     {
         // ! NOTES ABOUT THIS PDU !
         // ListType is only ever 0x01
@@ -16,10 +16,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         // The AvatarID that belongs to the current avatar downloading the bookmarks can match a bookmark in the list
         // (as in -- you can bookmark yourself without issue
 
-        [TSOVoltronDBWrapperField] public uint AvatarID { get; }
-        [TSOVoltronDBWrapperField] public uint ListType { get; }
-        [TSOVoltronDBWrapperField] public uint ItemCount { get; }
-        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] ItemList { get; }
+        [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
+        [TSOVoltronDBWrapperField] public uint ListType { get; set; }
+        [TSOVoltronDBWrapperField] public uint ItemCount { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] ItemList { get; set; }
+
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetBookmarksResponse() : base() { }
 
         /// <summary>
         /// Creates a new <see cref="TSOGetBookmarksResponse"/> PDU with the provided parameters

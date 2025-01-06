@@ -1,0 +1,22 @@
+﻿<Window x:Class="nio2so.TSOView2.Formats.Network.TSOVoltronPacketPropertiesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:nio2so.TSOView2.Formats.Network"
+        mc:Ignorable="d"
+        Title="Voltron Packet Properties" Height="500" Width="650" Background="{StaticResource TSOWindowBackgroundBrush}">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File...">
+                <MenuItem x:Name="OpenAnotherItem" Header="Open Voltron Packet..." Click="OpenAnotherItem_Click"/>
+                <Separator/>
+                <MenuItem Name="CloseItem" Header="Close" Click="CloseItem_Click"/>
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <TextBlock Margin="10,5" Style="{StaticResource TSOPreAlpha_BasicTextStyle}" HorizontalAlignment="Right" VerticalAlignment="Top">TSOView2 PDU Properties</TextBlock>
+            <local:TSOVoltronPacketPropertiesControl x:Name="PropertiesControl" Margin="5"/>
+        </Grid>
+    </DockPanel>
+</Window>

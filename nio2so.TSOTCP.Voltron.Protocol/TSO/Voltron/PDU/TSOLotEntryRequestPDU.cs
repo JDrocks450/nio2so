@@ -4,7 +4,7 @@
     /// Sent when the remote connection clicks "Join House" in the interface
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU)]
-    internal class TSOLotEntryRequestPDU : TSOVoltronPacket
+    public class TSOLotEntryRequestPDU : TSOVoltronPacket
     {
         public ushort Lot_X { get; set; }
         public ushort Lot_Y { get; set; }

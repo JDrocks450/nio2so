@@ -7,8 +7,11 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
-    internal static class TSOVoltronSerializerCore
-    {
+    /// <summary>
+    /// Provides low-level serialization functionality for individual data types part of a larger data contract
+    /// </summary>
+    public static class TSOVoltronSerializerCore
+    {        
         private static T? getPropertyAttribute<T>(PropertyInfo property, out TSOVoltronValueTypes ValueType) where T : TSOVoltronValue
         {
             ValueType = TSOVoltronValueTypes.BigEndian;
@@ -26,7 +29,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             ValueType = type;
             return attribute;
         }
-
+        /// <summary>
+        /// Encodes a string to the given <paramref name="Stream"/> using the provided <paramref name="type"/> as a format specifier
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="Text"></param>
+        /// <param name="type"></param>
+        /// <exception cref="InvalidCastException">Unsupported string format or not a valid string format value at all</exception>
         public static void WriteString(Stream Stream, string Text, TSOVoltronValueTypes type = TSOVoltronValueTypes.Pascal)
         {
             if (type == TSOVoltronValueTypes.Pascal)
@@ -40,6 +49,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             else throw new InvalidCastException($"{nameof(TSOVoltronSerializerCore)}::WriteString() non-exhaustive string type switch! {type} not found!");
             Stream.EmplaceBody(Encoding.UTF8.GetBytes(Text));
         }
+
+        /// <summary>
+        /// Reads an encoded string in the given <paramref name="StringType"/> format specifier from the provided <paramref name="Stream"/>
+        /// </summary>
+        /// <param name="StringType"></param>
+        /// <param name="Stream"></param>
+        /// <param name="NullTerminatedMaxLength"></param>
+        /// <returns>The string read from the stream</returns>
+        /// <exception cref="Exception"></exception>
         public static string ReadString(TSOVoltronValueTypes StringType, Stream Stream, int NullTerminatedMaxLength = 255)
         {
             string destValue = "Error.";
@@ -68,7 +86,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             }
             return destValue;
         }
-
+        /// <summary>
+        /// Deserializes the given <paramref name="property"/> from the provided <paramref name="Stream"/> and 
+        /// assigns it on the <paramref name="Instance"/> provided
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="property"></param>
+        /// <param name="Instance"></param>
+        /// <returns>A value indicating successful deserialization</returns>
+        /// <exception cref="CustomAttributeFormatException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public static bool ReflectProperty(Stream Stream, PropertyInfo property, object? Instance)
         {
             Stream _bodyBuffer = Stream;
@@ -167,11 +194,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             return false;
         }
 
+        private static TSOVoltronSerializerGraphItem? _lastGraphItem;
+        /// <summary>
+        /// Serializes the given <paramref name="property"/> to the <paramref name="Stream"/> using the value assigned on
+        /// <paramref name="Instance"/>        
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="property"></param>
+        /// <param name="Instance"></param>
+        /// <returns>Value indicating whether writing is successful. Unsuccessful case would be a provided data type is not 
+        /// supported</returns>
         public static bool WriteProperty(Stream Stream, PropertyInfo property, object? Instance)
         {
+            _lastGraphItem = null;            
+
             bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
             object? myValue = property.GetValue(Instance);
-            if (myValue == default) return true;
+            if (myValue == default)
+            {
+                _lastGraphItem = new(property.Name, property.PropertyType, null);
+                return true;
+            }
             var endianConverter = (EndianBitConverter)(
                     type == TSOVoltronValueTypes.BigEndian ?
                         EndianBitConverter.Big :
@@ -182,6 +225,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (property.PropertyType == typeof(byte[]))
             {
                 Stream.EmplaceBody((byte[])myValue);
+                _lastGraphItem = new(property.Name,
+                    typeof(byte[]), (byte[])myValue, $"{((byte[])myValue).Length} bytes.");
                 return true;
             }
 
@@ -206,7 +251,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 Stream.EmplaceBody((byte)((bool)myValue ? 1 : 0));
             else wroteValue = false;
 
-            if (wroteValue) return true;
+            if (wroteValue)
+            {
+                string valueString = myValue.ToString();
+                if (property.PropertyType.IsEnum)                
+                    valueString = Enum.GetName(property.PropertyType, myValue) ?? valueString;                
+                _lastGraphItem = new(property.Name, PropertyType, myValue, valueString);
+                return true;
+            }
             if (!hasAttrib) // AUTOSELECT
                 type = TSOVoltronValueTypes.Pascal;
 
@@ -214,12 +266,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (PropertyType == typeof(string[]))
             {
                 foreach (var str in (string[])myValue)
-                    WriteString(Stream, str, type);
+                    WriteString(Stream, str, type);                
                 return true;
             }
             else if (myValue is string myStringValue)
             {
                 WriteString(Stream, myStringValue, type);
+                _lastGraphItem = new(property.Name, typeof(string), myStringValue, myStringValue);
                 return true;
             }
 
@@ -227,10 +280,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (PropertyType.IsClass)
             {
                 TSOVoltronSerializer.Serialize(Stream, myValue);
+                _lastGraphItem = TSOVoltronSerializer.GetLastGraph() ?? new(property.Name, PropertyType, myValue);
                 return true;
             }
 
             return wroteValue;
         }
+
+        public static TSOVoltronSerializerGraphItem? GetLastGraph() => _lastGraphItem;
     }
 }

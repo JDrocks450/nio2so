@@ -5,7 +5,7 @@
     /// <para/>
     /// </summary>
     // You cannot map two classes to one type. [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response)]
-    internal class TSOBuyLotByAvatarIDFailedResponse : TSODBRequestWrapper
+    public class TSOBuyLotByAvatarIDFailedResponse : TSODBRequestWrapper
     {
         public TSOBuyLotByAvatarIDFailedResponse(uint ErrorCode) :
             base(

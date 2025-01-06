@@ -4,7 +4,7 @@
     /// This PDU will ask the remote connection for information on a lot by the given <c>HouseID</c>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request)]
-    internal class TSOGetLotByID_Request : TSODBRequestWrapper
+    public class TSOGetLotByID_Request : TSODBRequestWrapper
     {
         /// <summary>
         /// The ID of the Lot we wish to get information on

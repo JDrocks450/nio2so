@@ -80,31 +80,32 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// TSO has different classes in the library that correspond with the structure of these requests.
         /// <para>This is the identifier for which class should be created to house the data.</para>
         /// </summary>
-        public uint TSOPacketFormatCLSID
+        public TSO_PreAlpha_DBStructCLSIDs TSOPacketFormatCLSID
         {
-            get => (uint)Header.StructType;
-            set => Header.StructType = (TSO_PreAlpha_DBStructCLSIDs)value;
+            get => Header.StructType;
+            set => Header.StructType = value;
         }
         /// <summary>
-        /// The length of the header, is usually <c>0x21</c>
+        /// Contains information on the structure of the Header, currently unknown.
+        /// <para/>Appears that the <see cref="TSOVoltronDBRequestWrapperPDU"/> is always 0x21
         /// </summary>
         public byte HeaderByte
         {
             get => Header.HeaderByte;
             set => Header.HeaderByte = value;
         }
-        public uint kMSGID
+        public TSO_PreAlpha_kMSGs kMSGID
         {
-            get => (uint)Header.kMSGID;
-            set => Header.kMSGID = (TSO_PreAlpha_kMSGs)value;
+            get => Header.kMSGID;
+            set => Header.kMSGID = value;
         }
         /// <summary>
         /// Beneath the overall packet type there is a CLSID for the individual request being made.
         /// </summary>
-        public uint TSOSubMsgCLSID
+        public TSO_PreAlpha_DBActionCLSIDs TSOSubMsgCLSID
         {
-            get => (uint)Header.ActionType;
-            set => Header.ActionType = (TSO_PreAlpha_DBActionCLSIDs)value;
+            get => Header.ActionType;
+            set => Header.ActionType = value;
         }
 
         /// <summary>
@@ -132,9 +133,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
                                    TSO_PreAlpha_kMSGs kMSG_ID,
                                    TSO_PreAlpha_DBActionCLSIDs DBAction)
         {
-            TSOPacketFormatCLSID = (uint)StructCLSID;
-            kMSGID = (uint)kMSG_ID;
-            TSOSubMsgCLSID = (uint)DBAction;
+            TSOPacketFormatCLSID = StructCLSID;
+            kMSGID = kMSG_ID;
+            TSOSubMsgCLSID = DBAction;
 
             MakeBodyFromProperties();
         }
@@ -196,9 +197,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
                 throw new Exception("This should never happen.");
         }
 
-        public override string ToString() => ToShortString();
+        public override string ToString() => $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}({GetParameterListString()})";
 
-        public override string ToShortString(string Arguments = "") => $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}({GetParameterListString()})";
+        public override string ToShortString(string Arguments = "") => $"{(TSO_PreAlpha_kMSGs)kMSGID}->{GetDBWrapperName()}";
 
         public string GetDBWrapperName() => $"{(TSO_PreAlpha_DBStructCLSIDs)TSOPacketFormatCLSID}::{(TSO_PreAlpha_DBActionCLSIDs)TSOSubMsgCLSID}";
 

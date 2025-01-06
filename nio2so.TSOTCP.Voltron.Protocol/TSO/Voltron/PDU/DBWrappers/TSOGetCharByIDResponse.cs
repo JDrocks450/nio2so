@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// <para/>It contains extremely surface-level info about an Avatar, like their Name and Description
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response)]
-    internal class TSOGetCharByIDResponse : TSODBRequestWrapper
+    public class TSOGetCharByIDResponse : TSODBRequestWrapper
     {
         static byte[] reference_material = new byte[]
         {
@@ -52,6 +52,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
             0x68,0x69,0x6A,0x6B
             #endregion
         };
+
         /// <summary>
         /// The Avatar this packet is in reference to
         /// </summary>
@@ -64,6 +65,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// The <see cref="TSODBChar"/> data to send, in bytes
         /// </summary>
         [TSOVoltronDBWrapperField] public TSODBChar CharProfile { get; set; }
+
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetCharByIDResponse() : base() { }
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharByIDResponse"/> packet with the provided <see cref="TSODBChar"/>

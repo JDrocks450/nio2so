@@ -5,7 +5,7 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Request)]
-    internal class TSOSetCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    public class TSOSetCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint RefPackLength { get; set; }

@@ -67,7 +67,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
             }
             if (cTSOVoltronpacket is TSOBlankPDU)
             {
-                TSOServerTelemetryServer.Global.OnVoltron_OnDiscoveryPacket(VPacketType, temporaryBuffer);
+                TSOServerTelemetryServer.Global?.OnVoltron_OnDiscoveryPacket(VPacketType, temporaryBuffer);
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);

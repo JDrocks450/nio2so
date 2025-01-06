@@ -6,8 +6,12 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
+    /// <summary>
+    /// This PDU is used when the remote party wants to overwrite the <see cref="TSODBHouseBlob"/> stored in 
+    /// the Database
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request)]
-    internal class TSOSetHouseBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    public class TSOSetHouseBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         /// <summary>
@@ -38,6 +42,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 
         public TSOSetHouseBlobByIDRequest() : base() { }
 
+        /// <summary>
+        /// Decompresses the <see cref="HouseFileStream"/> to a <see cref="SetHouseBlobByIDRequestStreamStructure"/> instance
+        /// </summary>
+        /// <param name="Structure"></param>
+        /// <returns></returns>
         public bool TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out Structure);
     }
 }

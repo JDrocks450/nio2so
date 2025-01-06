@@ -14,7 +14,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// <summary>
     /// A stream that has a 4-byte header, 4-bytes, then 4-byte size chunks
     /// </summary>
-    internal class TSOHouseChunkPack : ITSOCustomDeserialize
+    public class TSOHouseChunkPack : ITSOCustomDeserialize
     {
         /// <summary>
         /// Maps read chunk to the index it is found at in the source data stream

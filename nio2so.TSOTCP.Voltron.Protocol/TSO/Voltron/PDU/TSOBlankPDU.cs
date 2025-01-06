@@ -2,7 +2,7 @@
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
-    internal class TSOBlankPDU : TSOVoltronPacket
+    public class TSOBlankPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType { get; }
 

@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
@@ -8,7 +9,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// PDU to get additional information about the house.
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response)]
-    internal class TSOGetLotListResponse : TSODBRequestWrapper
+    public class TSOGetLotListResponse : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint Arg1 { get; set; } = 0x10111213;
         [TSOVoltronDBWrapperField] public uint LotCount { get; set; } = 0x01;
@@ -56,8 +57,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// It is unknown what this does, but it needs to be here for the game to 
         /// accept the incoming information
         /// </summary>
-        [TSOVoltronDBWrapperField] public byte[] FooterData => new byte[4 * 8].TSOFillArray();
+        [TSOVoltronDBWrapperField] 
+        [TSOVoltronBodyArray] 
+        public byte[] FooterData { get; set; } = new byte[4 * 8].TSOFillArray();
 
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetLotListResponse() : base() { }
 
         public TSOGetLotListResponse(uint LotID, uint X, uint Y) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,

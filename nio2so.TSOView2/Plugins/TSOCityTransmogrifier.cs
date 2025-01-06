@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using nio2so.TSOView2.FileDialog;
 using nio2so.TSOView2.Formats;
 using System;
 using System.Diagnostics;
@@ -16,10 +17,16 @@ namespace nio2so.TSOView2.Plugins
     /// </summary>
     internal static class TSOCityTransmogrifier
     {
+        /// <summary>
+        /// Change all Grass tiles to be Snow terrain tiles
+        /// </summary>
+        public static Boolean LetItSnow { get; set; } = false;
+
         const string WELCOMEWAGON = "Welcome to the TSO: Pre-Alpha city Transmogrifier!\r\n" +
             "First you will select a city from The Sims Online Release 1.0 or onward, then this tool " +
             "will make city files compatible with The Sims Online Pre-Alpha which you can then replace with " +
             "the original GameData/FarZoom folder.";
+
         public static void Do()
         {
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
@@ -27,20 +34,9 @@ namespace nio2so.TSOView2.Plugins
             MessageBox.Show(WELCOMEWAGON);
 
             //PROMPT FOR CITY DIRECTORY
-            OpenFileDialog dlg = new()
-            {
-                AddExtension = true,
-                DefaultExt = "*.uis",
-                CheckFileExists = true,
-                RestoreDirectory = true,
-                InitialDirectory = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory + "\\FarZoom",
-                Filter = "The Sims Online City Bitmap|*.bmp",
-                Multiselect = false,
-                Title = "Open any City file in a City folder..."
-            };
-            if (!dlg.ShowDialog() ?? true)
+            if (!FileDialogHandler.ShowUser_SelectCityFolder(out string FileName) ?? true)
                 return; // user dismissed the dialog away
-            string sourceDirectory = Path.GetDirectoryName(dlg.FileName);
+            string sourceDirectory = FileName;
             //make sure the directory is valid
             Exception obj = null;
             try
@@ -193,7 +189,6 @@ namespace nio2so.TSOView2.Plugins
             //**HOLIDAY TWEAK**
             byte? snowIndex = getColorIndex(System.Drawing.Color.White);
             byte? grassIndex = getColorIndex(Color.FromArgb(255,0,255,0));
-            grassIndex = null;
             //**
 
             for (int x = 0; x < compatBmp.Width; x++)
@@ -201,8 +196,11 @@ namespace nio2so.TSOView2.Plugins
                 for (int y = 0; y < compatBmp.Height; y++)
                 {
                     byte color = releaseTSOBmp.GetPixel(x * 2, y * 2);
-                    if (grassIndex.HasValue && snowIndex.HasValue && color == grassIndex)
-                        color = snowIndex.Value;
+                    if (LetItSnow)
+                    { // Snow holiday easter-egg
+                        if (grassIndex.HasValue && snowIndex.HasValue && color == grassIndex)
+                            color = snowIndex.Value;
+                    }
                     compatBmp.SetPixel(x, y, color);
                 }
             }

@@ -4,7 +4,7 @@
     /// Confirms with the Client what the money fields for the Avatar should be.
     /// </summary>   
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Response)]
-    internal class TSOSetMoneyFieldsResponse : TSODBRequestWrapper
+    public class TSOSetMoneyFieldsResponse : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint Arg1 { get; set; }
@@ -15,11 +15,15 @@
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Response
-            )
-        {
+            ) { }        
 
-        }
-
+        /// <summary>
+        /// Creates a new <see cref="TSOSetMoneyFieldsResponse"/>
+        /// </summary>
+        /// <param name="avatarID"></param>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        /// <param name="arg3"></param>
         public TSOSetMoneyFieldsResponse(uint avatarID, uint arg1 = 0, uint arg2 = 0, uint arg3 = 0) : this()
         {
             AvatarID = avatarID;

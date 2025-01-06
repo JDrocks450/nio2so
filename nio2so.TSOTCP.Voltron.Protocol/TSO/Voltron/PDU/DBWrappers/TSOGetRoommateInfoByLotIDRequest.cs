@@ -4,7 +4,7 @@
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request)]
-    internal class TSOGetRoommateInfoByLotIDRequest : TSODBRequestWrapper
+    public class TSOGetRoommateInfoByLotIDRequest : TSODBRequestWrapper
     {
         /// <summary>
         /// The ID of the House we're getting information on

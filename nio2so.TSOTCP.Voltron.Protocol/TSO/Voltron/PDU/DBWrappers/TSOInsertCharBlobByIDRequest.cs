@@ -14,7 +14,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// <para/>See also: <seealso href="http://wiki.niotso.org/Stream"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request)]
-    internal class TSOInsertCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    public class TSOInsertCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         [TSOVoltronDBWrapperField] public uint StatusCode { get; set; }

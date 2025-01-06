@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
-    internal class TSOSetCharByIDRequest : TSODBRequestWrapper
+    public class TSOSetCharByIDRequest : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField]
         public uint AvatarID { get; set; }

@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// The response packet structure to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response)]
-    internal class TSOGetRoommateInfoByLotIDResponse : TSODBRequestWrapper
+    public class TSOGetRoommateInfoByLotIDResponse : TSODBRequestWrapper
     {
         /// <summary>
         /// A byte array for the body of the DBRequestWrapper that seems to work?
@@ -30,7 +30,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RoommateAvatarIDs { get; set; }
 
         /// <summary>
-        /// Makes a default response packet using the supplied parameters.
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetRoommateInfoByLotIDResponse() : base() { }
+
+        /// <summary>
+        /// Creates a <see cref="TSOGetRoommateInfoByLotIDResponse"/> using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>

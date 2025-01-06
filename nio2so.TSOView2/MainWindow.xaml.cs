@@ -1,4 +1,6 @@
-﻿using nio2so.TSOView2.Formats.Compressor;
+﻿using nio2so.TSOView2.FileDialog;
+using nio2so.TSOView2.Formats.Compressor;
+using nio2so.TSOView2.Formats.Network;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.TSOData;
 using nio2so.TSOView2.Formats.UIs;
@@ -66,6 +68,9 @@ namespace nio2so.TSOView2
                 { GithubItem, () => OpenWebsite(@"https://github.com/JDrocks450/nio2so") },
                 { OpenTSODataFileItem, TSODataDefinitionExplorerWindow.ShowExplorer },
                 { RefPackItem, DecompressorWindow.ShowDecompressor },
+                { VoltronPacketOpenItem, () => TSOVoltronPacketPropertiesWindow.TryPromptUserAndShowDialog(out _) },
+                { VoltronDirectoryOpenItem, () => TSOVoltronPacketDirectoryWindow.TryPromptUserAndShowDialog(out _) },
+                { MaxisProtocolItem, () => new TSOPacketLibraryWindow().Show() }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

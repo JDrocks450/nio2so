@@ -7,7 +7,7 @@
     /// <para/>See also: <see cref="TSOGetMPSMessagesPDUResponse"/>
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_PDU)]
-    internal class TSOGetMPSMessagesPDU : TSOVoltronPacket
+    public class TSOGetMPSMessagesPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_PDU;
 

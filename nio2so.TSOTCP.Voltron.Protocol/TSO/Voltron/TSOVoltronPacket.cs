@@ -55,6 +55,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         /// </summary>
         public virtual void EnsureNoErrors() { }
 
+        public TSOVoltronSerializerGraphItem? MySerializedGraph { get; private set; }
+
         /// <summary>
         /// Uses reflection to create a packet body from the properties you implement. 
         /// <para>You can use the <see cref="TSOVoltronString"/> and <see cref="TSOVoltronValue"/> attributes to get granular with this feature.</para>
@@ -84,6 +86,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
+            MySerializedGraph = new("", GetType(), this, ToShortString());
+
             foreach (var property in GetPropertiesToCopy())
             {
                 if (property.GetCustomAttribute<TSOVoltronDistanceToEnd>() != default)
@@ -94,6 +98,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
                 }
                 if (!EmbedProperty(property))
                     throw new Exception($"VOLTRON PDU -- Cannot serialize {property.PropertyType}! Property: {property}");
+                MySerializedGraph.Add(TSOVoltronSerializerCore.GetLastGraph());
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)

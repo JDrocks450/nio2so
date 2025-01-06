@@ -8,18 +8,39 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
+    /// <summary>
+    /// The response packet to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request"/> which will provide
+    /// the remote party with the stored <see cref="TSODBHouseBlob"/> data in the Database
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
-    internal class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    public class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public byte Filler1 { get; set; } = 0x01;
 
         //**
 
-        [TSOVoltronDBWrapperField] public uint Filler4 => (uint)(0x1D + (HouseBlobStream?.Length ?? 0) + FOOTERLEN);
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] public uint Filler5 => 0x5F534152;
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint Filler6 => HouseBlobStream?.DecompressedSize ?? 0 + 0x11;
-        [TSOVoltronDBWrapperField] public uint HB_Payload_Size => HouseBlobStream?.GetTotalLength() ?? 0;
+        [TSOVoltronDBWrapperField]
+        public uint Filler4
+        {
+            get => (uint)(0x1D + (HouseBlobStream?.Length ?? 0) + FOOTERLEN); set => _ = value;
+        }
+        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] public uint Filler5 { get; set; } = 0x5F534152;
+        
+        [TSOVoltronDBWrapperField]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
+        public uint Filler6
+        {
+            get => HouseBlobStream?.DecompressedSize ?? 0 + 0x11;
+            set => _ = value;
+        }
+
+        [TSOVoltronDBWrapperField]
+        public uint HB_Payload_Size
+        {
+            get => HouseBlobStream?.GetTotalLength() ?? 0;
+            set => _ = value;
+        }
 
         //**TSOSERIALIZABLE
         /// <summary>
@@ -37,12 +58,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint Footer3 { get; set; } = 0xDADDE511;
 
         [TSOVoltronDBWrapperField]
-        public byte[] FooterGarbage => new byte[]
+        public byte[] FooterGarbage
         {
-            0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,
-            0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,
-            0xBA,0xAD,0xF0,0x0D
-        };
+            get => new byte[]
+            {
+                0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,
+                0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,0xBA,0xAD,0xF0,0x0D,
+                0xBA,0xAD,0xF0,0x0D
+            };
+            set => _ = value;
+        }
+
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetHouseBlobByIDResponse() : base() { }
 
         /// <summary>
         /// Makes a default response packet using the supplied parameters.

@@ -5,6 +5,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU)]
     public class TSOOccupantArrivedPDU : TSOVoltronPacket
     {
+        public TSOOccupantArrivedPDU() : base() { }
         public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
         {
             AvatarID = $"A {avatarID}";

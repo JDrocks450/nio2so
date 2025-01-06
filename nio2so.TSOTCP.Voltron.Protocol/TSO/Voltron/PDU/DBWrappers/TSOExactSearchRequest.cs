@@ -4,7 +4,7 @@ using nio2so.Data.Common.Serialization.Voltron;
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request)]
-    internal class TSOExactSearchRequest : TSODBRequestWrapper
+    public class TSOExactSearchRequest : TSODBRequestWrapper
     {
         /// <summary>
         /// What the player typed into the search box -- what they're searching for

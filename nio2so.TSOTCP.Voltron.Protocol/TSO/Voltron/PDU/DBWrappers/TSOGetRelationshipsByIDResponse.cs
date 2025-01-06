@@ -3,8 +3,11 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
+    /// <summary>
+    /// Needs revisiting, this format is not correct.
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRelationshipsByID_Response)]
-    internal class TSOGetRelationshipsByIDResponse : TSODBRequestWrapper
+    public class TSOGetRelationshipsByIDResponse : TSODBRequestWrapper
     {
         /// <summary>
         /// The Avatar that is being asked about relationships for
@@ -13,6 +16,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint NumEntries { get; set; }
         [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RelationshipAvatarIDs { get; set; }
 
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetRelationshipsByIDResponse() : base() { }
+
+        /// <summary>
+        /// Creates a new <see cref="TSOGetRelationshipsByIDResponse"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <param name="FriendAvatarIDs"></param>
         public TSOGetRelationshipsByIDResponse(uint AvatarID, params uint[] FriendAvatarIDs) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

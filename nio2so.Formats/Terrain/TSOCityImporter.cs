@@ -126,7 +126,7 @@ namespace nio2so.Formats.Terrain
 
                 //GENERATE MESH
                 TSOCityBrush defaultBrush = new("blank");
-                _palette.Add("blank", defaultBrush);
+                _ = _palette.TryAdd("blank", defaultBrush);
 
                 TSOCityMesh mesh = await geomMachine.GenerateMeshGeometry(newCity); // generate the mesh geometry                
 

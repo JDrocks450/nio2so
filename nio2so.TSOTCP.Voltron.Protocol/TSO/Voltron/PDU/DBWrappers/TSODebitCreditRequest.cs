@@ -1,7 +1,7 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Request)]
-    internal class TSODebitCreditRequestPDU : TSODBRequestWrapper
+    public class TSODebitCreditRequestPDU : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         /// <summary>

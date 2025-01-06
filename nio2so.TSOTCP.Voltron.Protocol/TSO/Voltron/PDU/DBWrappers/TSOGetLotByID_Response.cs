@@ -1,6 +1,9 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
-    internal class TSOGetLotByID_Response
+    /// <summary>
+    /// not implemented yet
+    /// </summary>
+    public class TSOGetLotByID_Response
     {
     }
 }

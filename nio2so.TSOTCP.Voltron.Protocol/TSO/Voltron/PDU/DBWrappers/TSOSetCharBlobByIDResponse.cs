@@ -3,10 +3,11 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
-    /// Sends a confirmation to the Client that the <c>TSODBCharBlob</c> was received successfully
+    /// Sends a confirmation to the Client that the <see cref="TSODBCharBlob"/> was received successfully.
+    /// <para/>This format needs revisiting, it is not correct.
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response)]
-    internal class TSOSetCharBlobByIDResponse : TSOGetCharBlobByIDResponse
+    public class TSOSetCharBlobByIDResponse : TSOGetCharBlobByIDResponse
     {
         /// <summary>
         /// Creates a new <see cref="TSOSetCharBlobByIDResponse"/> packet with the provided <see cref="TSODBCharBlob"/> payload
@@ -15,7 +16,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <param name="BlobData"></param>
         public TSOSetCharBlobByIDResponse(uint AvatarID, TSODBCharBlob BlobData) : base(AvatarID, BlobData)
         {
-            TSOSubMsgCLSID = (uint)TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response;
+            TSOSubMsgCLSID = TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response;
             MakeBodyFromProperties();
         }
     }

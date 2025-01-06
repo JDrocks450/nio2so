@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using nio2so.Formats.Terrain;
+using nio2so.TSOView2.FileDialog;
 using nio2so.TSOView2.Util;
 using System;
 using System.IO;
@@ -32,21 +33,10 @@ namespace nio2so.TSOView2.Formats.Terrain
             if (gamePath == default) throw new NullReferenceException("Game directory not set.");
 
             //PROMPT FOR CITY DIRECTORY
-            OpenFileDialog dlg = new()
-            {
-                AddExtension = true,
-                DefaultExt = "*.uis",
-                CheckFileExists = true,
-                RestoreDirectory = true,
-                InitialDirectory = TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory +"\\FarZoom",
-                Filter = "The Sims Online City Bitmap|*.bmp",
-                Multiselect = false,
-                Title = "Open any City file in a City folder..."
-            };
-            if (!dlg.ShowDialog() ?? true)
-                return default; // user dismissed the dialog away
-                                // 
-            return await LoadCity(Path.GetDirectoryName(dlg.FileName), Version);
+            if (!FileDialogHandler.ShowUser_SelectCityFolder(out string FileName) ?? true)
+                return null; // user dismissed the dialog away
+                        // 
+            return await LoadCity(FileName, Version);
         }        
 
         public static async Task<CityTerrainHandler?> LoadCity(string FolderName, TSOVersion Version)

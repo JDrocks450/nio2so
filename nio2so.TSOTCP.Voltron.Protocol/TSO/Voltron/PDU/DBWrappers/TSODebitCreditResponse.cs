@@ -1,7 +1,10 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
+    /// <summary>
+    /// Sent from the remote party when a charge appears on the avatar's funds
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Response)]
-    internal class TSODebitCreditResponsePDU : TSODBRequestWrapper
+    public class TSODebitCreditResponsePDU : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
         /// <summary>
@@ -13,6 +16,10 @@
         /// </summary>
         [TSOVoltronDBWrapperField] public uint Amount { get; set; }
 
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSODebitCreditResponsePDU() : base() { }
         public TSODebitCreditResponsePDU(uint avatarID, uint account, uint amount) : base(
             TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
             TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

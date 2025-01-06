@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// Sent when the Player requests to purchase a lot in the World View
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request)]
-    internal class TSOBuyLotByAvatarIDRequest : TSODBRequestWrapper
+    public class TSOBuyLotByAvatarIDRequest : TSODBRequestWrapper
     {
         /// <summary>
         /// The Index of the cell in the World Grid

@@ -5,7 +5,7 @@
     /// <para/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response)]
-    internal class TSOBuyLotByAvatarIDResponse : TSODBRequestWrapper
+    public class TSOBuyLotByAvatarIDResponse : TSODBRequestWrapper
     {
         /// <summary>
         /// The ID in the database of the newly created house
@@ -29,6 +29,11 @@
         /// Thumbnail?
         /// </summary>
         [TSOVoltronDBWrapperField] public uint RemainingBytes { get; set; } = 0x0;
+
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOBuyLotByAvatarIDResponse() : base() { }
 
         /// <summary>
         /// Confirms to the Client that buying this house was successful

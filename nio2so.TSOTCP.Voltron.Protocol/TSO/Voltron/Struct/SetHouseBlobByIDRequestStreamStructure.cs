@@ -8,7 +8,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// upon deserialization.
     /// </summary>
     [Serializable]
-    internal class SetHouseBlobByIDRequestStreamStructure
+    public class SetHouseBlobByIDRequestStreamStructure
     {
         //*TOC_*
 

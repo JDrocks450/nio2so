@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// Sends a log to the remote server console log
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request)]
-    internal class TSOInsertGenericLogRequest : TSODBRequestWrapper
+    public class TSOInsertGenericLogRequest : TSODBRequestWrapper
     {
         /// <summary>
         /// Not sure needs more testing

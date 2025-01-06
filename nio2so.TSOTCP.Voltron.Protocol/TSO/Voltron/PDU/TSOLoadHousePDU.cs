@@ -5,7 +5,7 @@
     /// <para>Found to be called after SetHouseBlobByID was sent from the server</para>
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
-    internal class TSOLoadHousePDU : TSOVoltronPacket
+    public class TSOLoadHousePDU : TSOVoltronPacket
     {
         /// <summary>
         /// Can be absent from packet body in some circumstances

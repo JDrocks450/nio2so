@@ -67,13 +67,25 @@ namespace nio2so.TSOView2.Formats.UIs
                 //ONLY RUN THESE WHEN THE PATH CHANGES
 
                 // (RE)LOAD CST FILE
-                var directory = CSTImporter.ImportDirectory(
-                    System.IO.Path.Combine(
-                        TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "UIText.dir"
-                    ));
-                if (directory != null)
-                    StringTables = directory;
-                defaultImporter.SetCST(StringTables);
+                try
+                {
+                    var directory = CSTImporter.ImportDirectory(
+                        System.IO.Path.Combine(
+                            TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "UIText.dir"
+                        ));
+                    if (directory != null)
+                        StringTables = directory;
+                    defaultImporter.SetCST(StringTables);
+                }
+                catch(DirectoryNotFoundException e)
+                {
+                    MessageBox.Show($"You may want to double-check the chosen directory: {NewGameDirectoryPath}." +
+                        $"\n{e.Message}\nPlease restart the application.");
+                    TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory = null;
+                    TSOViewConfigHandler.SaveConfiguration();
+                    Application.Current.Shutdown();
+                    return;
+                }
 
                 if (NewGameDirectoryPath != default)
                 { // ONLY RUN THESE WHEN THE PATH CHANGES AND IS NOT NULL

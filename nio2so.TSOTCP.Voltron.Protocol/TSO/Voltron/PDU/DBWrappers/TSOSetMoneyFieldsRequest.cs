@@ -7,7 +7,7 @@
     /// shouldn't change in CAS.
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request)]
-    internal class TSOSetMoneyFieldsRequest : TSODBRequestWrapper
+    public class TSOSetMoneyFieldsRequest : TSODBRequestWrapper
     {
         /// <summary>
         /// The ID of the Avatar

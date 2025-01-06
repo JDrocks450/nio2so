@@ -4,7 +4,7 @@
     /// Sent when the Client requests the thumbnail after a successful <see cref="TSOGetLotByID_Response"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseThumbByID_Request)]
-    internal class TSOGetHouseThumbByIDRequest : TSODBRequestWrapper
+    public class TSOGetHouseThumbByIDRequest : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
 

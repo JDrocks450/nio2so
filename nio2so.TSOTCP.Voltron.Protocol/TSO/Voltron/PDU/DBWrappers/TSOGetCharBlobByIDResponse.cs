@@ -13,7 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     /// <para/>See also: <seealso href="http://wiki.niotso.org/Stream"/>
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Response)]
-    internal class TSOGetCharBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
+    public class TSOGetCharBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         const uint HEADERLEN = 0xD;
 
@@ -38,6 +38,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 
         [TSOVoltronDBWrapperField] public TSOSerializableStream CharBlobStream { get; set; }
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => CharBlobStream;
+
+        /// <summary>
+        /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
+        /// </summary>
+        public TSOGetCharBlobByIDResponse() : base() { }
 
         /// <summary>
         /// Creates a new <see cref="TSOGetCharBlobByIDResponse"/> packet with the provided <paramref name="BlobData"/>

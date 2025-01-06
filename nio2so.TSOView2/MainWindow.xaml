@@ -17,6 +17,11 @@
                             <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
                             <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
                             <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
+                            <MenuItem Header="nio2so Network Activity">
+                                <MenuItem Name="TSOTCPPacketOpenItem" Header="Open Aries Frame..."/>
+                                <MenuItem Name="VoltronPacketOpenItem" Header="Open Voltron Packet PDU"/>
+                                <MenuItem Name="VoltronDirectoryOpenItem" Header="Open Voltron PDU Directory..."/>
+                            </MenuItem>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>
@@ -25,6 +30,9 @@
 
                     </MenuItem>
                     <MenuItem Header="View...">
+                        <MenuItem Header="Interactive Documentation...">
+                            <MenuItem Name="MaxisProtocolItem" Header="Maxis Protocol"/>
+                        </MenuItem>
                         <MenuItem Header="View TGA..." Name="ViewTGAItem"/>
                         <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
                     </MenuItem>

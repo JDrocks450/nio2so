@@ -185,7 +185,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
             Log(nmessage);
         }
 
-        public static void LogConsole(ConsoleLogEntry Entry) => Global.OnConsoleLog(Entry);
+        public static void LogConsole(ConsoleLogEntry Entry)
+        {
+            if (Global == null)
+            {
+                Debug.WriteLine($"Cannot log as there is no active {nameof(TSOServerTelemetryServer)}!");
+                return;
+            }
+            Global.OnConsoleLog(Entry);
+        }
 
         public void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob HouseBlob)
         {
