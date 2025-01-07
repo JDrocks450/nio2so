@@ -19,9 +19,10 @@ namespace nio2so.TSOView2.Formats.Network
     /// </summary>
     public partial class TSOPacketLibraryWindow : Window
     {
-        public TSOPacketLibraryWindow()
+        public TSOPacketLibraryWindow(Window? Owner = default)
         {
             InitializeComponent();
+            this.Owner = Owner;
         }
     }
 }

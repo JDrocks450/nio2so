@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:nio2so.TSOView2.Formats.Network"
         mc:Ignorable="d" ResizeMode="CanResize" WindowStyle="ToolWindow"
-        Title="Voltron Packets in Directory" Height="400" Width="375" Background="{StaticResource TSOWindowBackgroundBrush}">
+        Title="Voltron Packets in Directory" Height="530" Width="575" Background="{StaticResource TSOWindowBackgroundBrush}">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>

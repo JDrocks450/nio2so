@@ -59,7 +59,10 @@ namespace nio2so.TSOView2.Formats.Network
             if (!dlg?.ShowDialog() ?? true)
                 return false; // User cancel or error ??
 
-            Window = new(dlg.FolderName);
+            Window = new(dlg.FolderName)
+            {
+                Owner = Application.Current.MainWindow
+            };
             return true;
         }
         /// <summary>

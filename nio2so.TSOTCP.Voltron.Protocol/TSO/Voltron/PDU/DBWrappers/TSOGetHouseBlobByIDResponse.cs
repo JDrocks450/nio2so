@@ -77,8 +77,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// Makes a default response packet using the supplied parameters.
         /// </summary>
-        /// <param name="AriesID"></param>
-        /// <param name="MasterID"></param>
+        /// <param name="houseID">The ID of the house</param> 
+        /// <param name="HouseBlob">The house data blob</param> 
+        /// <param name="CompressBlob">Flag indicating if the blob should be compressed</param>
         public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob, bool CompressBlob = true) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
@@ -87,6 +88,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
                 )
         {
             HouseID = houseID;
+
+            // Error handling for null HouseBlob
+            if (HouseBlob == null) 
+                throw new ArgumentNullException(nameof(HouseBlob));
 
             var decompressedBytes = TSOVoltronSerializer.Serialize(HouseBlob);
             if (CompressBlob)

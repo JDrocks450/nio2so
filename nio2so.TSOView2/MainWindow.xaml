@@ -32,6 +32,7 @@
                     <MenuItem Header="View...">
                         <MenuItem Header="Interactive Documentation...">
                             <MenuItem Name="MaxisProtocolItem" Header="Maxis Protocol"/>
+                            <MenuItem x:Name="ConstantsBrowser" Header="Constants Browser"/>
                         </MenuItem>
                         <MenuItem Header="View TGA..." Name="ViewTGAItem"/>
                         <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
@@ -39,6 +40,7 @@
                     <MenuItem Header="Plugin...">
                         <MenuItem Header="Format Constants Table to Enum" Name="EnumPluginItem"/>
                         <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
+                        <MenuItem Header="Edith ResEdit Hex Dumper" Name="HexDumperEdithPluginItem"/>
                     </MenuItem>
                     <MenuItem Header="Help...">
                         <MenuItem Header="About" Name="AboutItem"/>

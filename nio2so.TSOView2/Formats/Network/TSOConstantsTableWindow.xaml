@@ -1,0 +1,63 @@
+﻿<Window x:Class="nio2so.TSOView2.Formats.Network.TSOConstantsTableWindow"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:nio2so.TSOView2.Formats.Network"
+             mc:Ignorable="d" Title="The Sims Online Constants Table Explorer"
+             Height="550" Width="500" Foreground="White" Background="{StaticResource TSOWindowBackgroundBrush}">
+    <Grid Margin="10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <DockPanel Margin="0,0,10,0">
+            <DockPanel DockPanel.Dock="Top" Margin="0,0,0,5">
+                <TextBlock VerticalAlignment="Center" Margin="0,0,5,0" DockPanel.Dock="Left">Search</TextBlock>
+                <TextBox Name="SearchBox" KeyUp="SearchBox_KeyUp"/>
+            </DockPanel>
+            <ComboBox x:Name="TypeSwitcher" DockPanel.Dock="Top" SelectionChanged="ComboBox_SelectionChanged"/>
+            <ListBox Name="ConstantsListing" SelectionChanged="ConstantsListing_SelectionChanged"/>
+        </DockPanel>
+        <StackPanel Grid.Column="1">
+            <GroupBox Header="Name">
+                <TextBox Name="ConstantNameBox" IsReadOnly="True" Background="{x:Null}" Foreground="White"/>
+            </GroupBox>
+            <GroupBox Header="Hex">
+                <TextBox Name="ConstantHexBox" IsReadOnly="True" Background="{x:Null}" Foreground="White"/>
+            </GroupBox>
+            <GroupBox Header="Decimal">
+                <TextBox Name="ConstantDecBox" IsReadOnly="True" Background="{x:Null}" Foreground="White"/>
+            </GroupBox>
+            <GroupBox Header="Bytes">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+                    <TextBlock VerticalAlignment="Center" Margin="0,0,5,0">Little:</TextBlock>
+                    <TextBox Name="ConstantBytesBox" Grid.Column="2" Margin="0,0,0,5" IsReadOnly="True" Background="{x:Null}" Foreground="White"/>
+                    <TextBlock VerticalAlignment="Center" Grid.Row="2">Big:</TextBlock>
+                    <TextBox Name="ConstantBytesBigEndianBox" Grid.Row="2" Grid.Column="2" IsReadOnly="True" Background="{x:Null}" Foreground="White"/>
+                </Grid>
+            </GroupBox>
+            <Separator/>
+            <GroupBox Header="Decimal">
+                <TextBlock Name="TypeInformation">
+                    <Run FontStyle="Italic">Object Type: Enum</Run> <LineBreak/>
+                    <Run FontStyle="Italic">Base Type: </Run> <Run Name="EnumBaseTypeLabel" Text="UInt32"/>
+                </TextBlock>
+            </GroupBox>
+        </StackPanel>
+
+        <TextBlock TextAlignment="Right" Grid.Column="1" VerticalAlignment="Bottom" Style="{StaticResource TSOPreAlpha_BasicTextStyle}">
+            <Run Name="ConstantsAmountLabel">0</Run><Run Text=" Constants found."></Run>
+            <LineBreak/>
+            <Run Text=":("/>
+        </TextBlock>
+    </Grid>
+</Window>

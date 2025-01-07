@@ -1,0 +1,49 @@
+﻿<Window x:Class="nio2so.TSOView2.Formats.HexDumpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:nio2so.TSOView2.Formats" xmlns:wpfhexaeditor="clr-namespace:WpfHexaEditor;assembly=WPFHexaEditor"
+        mc:Ignorable="d" Name="HOST" Foreground="White"
+        Title="ResEdit Text Dump Window" Height="450" Width="800" Background="{StaticResource TSOWindowBackgroundBrush}">
+    <DockPanel Margin="10">
+        <TextBlock Name="BlurbMessageLabel" DockPanel.Dock="Top" Text="{Binding MY_DESCRIPTION, ElementName=HOST}" Margin="0,0,0,5"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition Height="75"/>
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="390"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <TextBox FontFamily="Consolas" Margin="0,0,5,0" Name="HexDisplay" TextWrapping="NoWrap" AcceptsReturn="True" TextChanged="HexDisplay_TextChanged" Grid.RowSpan="2" />
+            <wpfhexaeditor:HexEditor Margin="5,0,0,0" Name="BytesDisplay" Grid.Column="1"/>
+            <UniformGrid Columns="3" Rows="1" Grid.Row="1" Grid.Column="1" Margin="5,0,0,0" VerticalAlignment="Bottom" Height="23" >
+                <Button>Save As...</Button>
+                <Button>Save As *.dat</Button>
+                <ToggleButton Name="ViewAsButton">View As...</ToggleButton>
+            </UniformGrid>
+            <TextBlock Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Run>Size (bytes): </Run>
+                <Run Name="ByteLengthLabel" Text="0"/>
+                <Run>bytes</Run>
+            </TextBlock>
+            <Popup IsOpen="{Binding IsChecked, ElementName=ViewAsButton}" PopupAnimation="Fade" StaysOpen="False" PlacementTarget="{Binding ElementName=ViewAsButton}" Placement="Top">
+                <Border BorderThickness="1" Padding="5" Width="{Binding ActualWidth, ElementName=ViewAsButton}" Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}" BorderBrush="#FFFFBC50">
+                    <StackPanel>
+                        <TextBlock Foreground="Black" FontFamily="Comic Sans MS" HorizontalAlignment="Center" Margin="0,0,0,5">View Options</TextBlock>
+                        <Button Name="ViewAsImageButton" Click="ViewAsImageButton_Click">Image</Button>
+                    </StackPanel>
+                </Border>
+            </Popup>
+            <Border x:Name="ErrorMessageWindow" Margin="10" MaxWidth="350" Grid.Column="1" Padding="10" Background="Black" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock FontWeight="Bold" TextWrapping="Wrap">
+                    <Run>ERROR</Run>
+                    <LineBreak/>
+                    <Run Name="ErrorMessageLabel">ERROR MESSAGE</Run>
+                </TextBlock>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>
