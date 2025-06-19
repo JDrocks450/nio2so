@@ -84,26 +84,34 @@ namespace nio2so.TSOView2.Formats
                 ErrorMessageWindow.Visibility = Visibility.Visible;
             }
         }
-
+        /// <summary>
+        /// Shows a window containing the bytes as an image for previewing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ViewAsImageButton_Click(object sender, RoutedEventArgs e)
         {
             if (_openedStream == null) return;
             try
             {
-                var img = System.Drawing.Image.FromStream(_openedStream);
+                using var img = System.Drawing.Image.FromStream(_openedStream);
                 var imgControl = new Image()
                 {
-                    Source = img.Convert()
+                    Source = img.Convert(),                    
                 };
                 RenderOptions.SetBitmapScalingMode(imgControl, BitmapScalingMode.NearestNeighbor);
                 Window wnd = new()
                 {
                     Owner = this,
-                    SizeToContent = SizeToContent.WidthAndHeight,
+                    //SizeToContent = SizeToContent.WidthAndHeight,
                     MinWidth = 256,
-                    MinHeight = 256,
+                    MinHeight = 256,                    
                     Content = imgControl
                 };
+                // set this here so the window isn't gigantic on open
+                //basically pick whatever is smaller the size of window or the height of the image
+                wnd.Width = Math.Min(img.Width, this.Width); 
+                wnd.Height = Math.Min(img.Height, this.Height);
                 wnd.Show();
             }
             catch(Exception ex)
