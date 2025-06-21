@@ -41,6 +41,17 @@ I would highly recommend editing your StartUp Project Settings to match mine:
 
 Build & Run, ensure there are no build errors.
 
+### Edit your hosts file
+Since the Pre-Alpha build is hard-coded to connect to specific addresses, the easiest way to ensure your Hosts File in Windows has these additions:
+
+  `127.0.0.1 www.ea.com`
+
+  `127.0.0.1 ea4.dev.ea.com`
+
+  `127.0.0.1 xo.max.ad.ea.com`
+
+These will intercept network traffic from the Game Client to the nio2so server program running on your PC.
+
 ### Boot-up Sims Online Pre-Alpha
 This was designed to run with an unmodified client. However, you can also use FatBag's patch, detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
 
