@@ -42,7 +42,7 @@ I would highly recommend editing your StartUp Project Settings to match mine:
 Build & Run, ensure there are no build errors.
 
 ### Edit your hosts file
-Since the Pre-Alpha build is hard-coded to connect to specific addresses, the easiest way to ensure your Hosts File in Windows has these additions:
+Since the Pre-Alpha build is hard-coded to connect to specific addresses, the easiest way to get up and running is to ensure your Hosts File in Windows has these additions:
 
   `127.0.0.1 www.ea.com`
 
