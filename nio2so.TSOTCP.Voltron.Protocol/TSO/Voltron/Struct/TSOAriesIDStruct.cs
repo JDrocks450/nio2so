@@ -1,4 +1,5 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using System.Runtime.Serialization;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
@@ -12,7 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
         public string AriesID { get; set; }
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
-        public string MasterID { get; set; }
+        public string MasterID { get; set; }        
 
         public TSOAriesIDStruct() { }
         public TSOAriesIDStruct(uint AriesID, string MasterID) : this()
@@ -30,5 +31,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         {
             return $"{AriesID} {MasterID}";
         }
+
+        /// <summary>
+        /// Gets a blank <see cref="TSOAriesIDStruct"/> object with blank IDs
+        /// </summary>
+        [IgnoreDataMember]
+        internal static TSOAriesIDStruct Default => new TSOAriesIDStruct() { AriesID = "", MasterID = "" };
     }
 }

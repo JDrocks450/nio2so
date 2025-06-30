@@ -17,26 +17,49 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator]
     public class LotProtocol : TSOProtocol
     {
-        private uint _houseCreateX = 83, _houseCreateY = 157; // ocean island
+        struct LotTest
+        {
+            public uint ID, X, Y;
 
+            public LotTest(uint iD,uint x, uint y)
+            {
+                X = x;
+                Y = y;
+                ID = iD;
+            }
+        }
+
+        private static List<LotTest> _lots = new() {
+            new(TestingConstraints.BuyLotID,83,157) // ocean island
+        };
+
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOBuyLotByAvatarIDRequest"/>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request)]
         public void BuyLotByAvatarID_Request(TSODBRequestWrapper PDU)
         {
             TSOBuyLotByAvatarIDRequest lotPurchasePDU = (TSOBuyLotByAvatarIDRequest)PDU;
-            uint? NewID = TestingConstraints.BuyLotID;//TSOFactoryBase.Get<TSOHouseFactory>()?.Create();
+            long? NewID = TestingConstraints.BuyLotID + (_lots.Count);//TSOFactoryBase.Get<TSOHouseFactory>()?.Create();
             if (!NewID.HasValue) throw new NullReferenceException("Factory could not be mapped or there was an error creating a house.");
-            TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse(NewID.Value,
+            TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse((uint)NewID.Value,
                                                                       TestingConstraints.BuyLotEndingFunds,
                                                                       lotPurchasePDU.Lot_X,
                                                                       lotPurchasePDU.Lot_Y);
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
-                "Congrats on the new property. Your GetLotList_Response has been updated to include your new place."));
-            _houseCreateX = lotPurchasePDU.Lot_X;
-            _houseCreateY = lotPurchasePDU.Lot_Y;
-
+                $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.Lot_X},{lotPurchasePDU.Lot_Y}"));
+            _lots.Add(new((uint)NewID, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y));        
             RespondTo(PDU, buyPDU);
         }
 
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetRoommateInfoByLotIDRequest"/>
+        /// <para/> For testing purposes, is always hardcoded to respond <see cref="TestingConstraints.MyAvatarID"/> is the owner, and <see cref="TestingConstraints.MyFriendAvatarID"/> is a roommate
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Request)]
         public void GetRoommateInfoByLotID_Request(TSODBRequestWrapper PDU)
         {
@@ -49,27 +72,67 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 TestingConstraints.MyAvatarID,
                 TestingConstraints.MyFriendAvatarID));
         }
-
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request"/>
+        /// <para/>Responds with a new <see cref="TSOGetLotListResponse"/> with <see cref="TestingConstraints.BuyLotID"/> at the last clicked position on the map
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request)]
         public void GetLotList_Request(TSODBRequestWrapper PDU)
         {
-            RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID, _houseCreateX, _houseCreateY));
+            foreach(var lot in _lots)
+                RespondTo(PDU, new TSOGetLotListResponse(lot.ID, lot.X, lot.Y));
+            // ** You can send this PDU as many times as needed for each house to add to the map **
+            //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
         }
-
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetLotByID_Request"/>
+        /// <para/>Not functional
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request)]
         public void GetLotByID_Request(TSODBRequestWrapper PDU)
         { // Gets a TSODataDefinition Lot struct with the LotID provided
-            RespondTo(PDU, TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotByID_Response.dat",
-                TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response));
-        }
+            TSOGetLotByID_Request req = (TSOGetLotByID_Request)PDU;
 
+            //send requested data
+            RespondWith(TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotByID_Response.dat",TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response));
+            
+            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
+                $"GetLotByID_Request: ID: {req.Lot_DatabaseID}"));
+            //RespondTo(PDU, new TSOGetLotByID_Response(TestingConstraints.MyHouseID, "HOUSE1", "YUH!"));
+        }
+        /// <summary>
+        /// Handles when a Client requests the PNG thumbnail image for a lot.
+        /// <para/>Responds with a <see cref="TSOGetHouseThumbByIDResponse"/> containing the PNG image for the requested lot's thumbnail
+        /// </summary>
+        /// <param name="PDU"></param>
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetHouseThumbByID_Request)]
+        public void GetHouseThumbByID_Request(TSODBRequestWrapper PDU)
+        {
+            TSOGetHouseThumbByIDRequest req = (TSOGetHouseThumbByIDRequest)PDU;
+            RespondWith(new TSOGetHouseThumbByIDResponse(req.HouseID, File.ReadAllBytes(@"E:\packets\house\special.png")));
+        }
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
+        /// <para/>Responds with a new <see cref="TSOGetHouseLeaderByIDResponse"/> with <see cref="TestingConstraints.MyAvatarID"/>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request)]
         public void GetHouseLeaderByLotID_Request(TSODBRequestWrapper PDU)
         {
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
             RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
         }
-
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseBlobByIDRequest"/>
+        /// <para/>Responds with a new <see cref="TSOGetHouseBlobByIDResponse"/> with the <see cref="TSODBHouseBlob"/> requested by its <c>HouseID</c>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request)]
         public void GetHouseBlobByID_Request(TSODBRequestWrapper PDU)
         {
@@ -94,7 +157,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.            
         }
-
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetHouseBlobByIDRequest"/>
+        /// <para/>Responds with nothing. Saves the <see cref="TSODBHouseBlob"/> to file by its <c>HouseID</c>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
         // The Client is requesting to set the house data for this HouseID in the Database
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request)]
         public void SetHouseBlobByID_Request(TSODBRequestWrapper PDU)
@@ -105,15 +173,37 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
             var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
-
+            if (blob == null) // get hous chunk in the package
+                throw new InvalidDataException("Unable to read incoming HouseBlob data!");
             // write decompressed to the hard drive
             TSOServerTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(blob.Content));
+        }
+        /// <summary>
+        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetLotByIDRequest"/>
+        /// <para/>Responds with nothing. Saves the <see cref="TSODBHouseBlob"/> to file by its <c>HouseID</c>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
+        // The Client is requesting to set the house data for this HouseID in the Database
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetLotByID_Request)]
+        public void SetLotByID_Request(TSODBRequestWrapper PDU)
+        { // client is giving us lot profile data
+            TSOSetLotByIDRequest req = (TSOSetLotByIDRequest)PDU;
+            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
+                $"SetLotByID_Request: ID: {req.LotID}"));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
         public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
         {
             RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
+        }
+
+        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
+        public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
+        {
+            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU));
+            RespondWith(new TSOClientBye(0x11, ""));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
@@ -129,7 +219,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
             string LotName = "BloatyLand";
             string RoomName = LotName;
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, TestingConstraints.MyAvatarID,
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, roomPDU.HouseID,
                 new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
                 new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
             RespondWith(updateRoomPDU);

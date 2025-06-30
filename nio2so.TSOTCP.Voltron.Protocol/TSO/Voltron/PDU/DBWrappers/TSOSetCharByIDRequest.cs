@@ -21,7 +21,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         public uint Arg2 { get; set; } = 0x0;
 
         /// <summary>
-        /// The char data payload
+        /// The payload of the request, containing a <see cref="TSODBChar"/> serialized object
         /// </summary>
         [TSOVoltronDBWrapperField]
         public TSODBChar CharProfile { get; set; }

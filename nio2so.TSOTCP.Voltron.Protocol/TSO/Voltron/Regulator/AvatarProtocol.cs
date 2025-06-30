@@ -148,16 +148,24 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU)]
         public void FIND_PLAYER_PDU(TSOVoltronPacket PDU)
         {
+            return;
             var formattedPacket = (TSOFindPlayerPDU)PDU;
-            if (uint.TryParse(formattedPacket.AriesID.Substring(
-                formattedPacket.AriesID.IndexOf("A ") + 2), out uint AvatarID))
+            if (!string.IsNullOrWhiteSpace(formattedPacket?.RequestedPlayer?.AriesID))
             {
-                RespondWith(new TSOFindPlayerResponsePDU());
+                if (uint.TryParse(formattedPacket.RequestedPlayer.AriesID.Substring(
+                    formattedPacket.RequestedPlayer.AriesID.IndexOf("A ") + 2), out uint AvatarID))
+                {
+                    RespondWith(new TSOFindPlayerResponsePDU(formattedPacket.RequestedPlayer, 0x0));
+                    TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
+                        RegulatorName, $"FIND PLAYER: {AvatarID}"));
+                    return;
+                }
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    RegulatorName, $"FIND PLAYER: {AvatarID}"));
+                        RegulatorName, $"FIND PLAYER: ERROR! {formattedPacket.RequestedPlayer.AriesID} ???"));
+                return;
             }
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    RegulatorName, $"FIND PLAYER: ERROR! {formattedPacket.AriesID} ???"));
+                        RegulatorName, $"FIND PLAYER: ERROR! ARIES ID WAS NULL!"));
         }
 
         public override bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)

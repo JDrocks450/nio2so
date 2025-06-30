@@ -7,7 +7,7 @@
     public class TSOGetLotByID_Request : TSODBRequestWrapper
     {
         /// <summary>
-        /// The ID of the Lot we wish to get information on
+        /// The ID of the Lot we are requesting information on
         /// </summary>
         [TSOVoltronDBWrapperField] public uint Lot_DatabaseID { get; set; }
 

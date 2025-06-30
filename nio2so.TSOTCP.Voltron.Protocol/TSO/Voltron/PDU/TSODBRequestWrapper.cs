@@ -14,7 +14,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     {
         internal uint headerLength;
 
-        public TSOAriesIDStruct CurrentSessionID { get; set; }
+        public TSOAriesIDStruct CurrentSessionID { get; set; } = TSOAriesIDStruct.Default;
         public ushort Arg1 { get; set; } = 0x00;
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_DBStructCLSIDs StructType { get; set; } = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage;

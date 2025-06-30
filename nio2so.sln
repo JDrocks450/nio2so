@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.TSOTCP.HSBServer", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.TSOTCP.Voltron.Protocol", "nio2so.TSOTCP.Voltron.Protocol\nio2so.TSOTCP.Voltron.Protocol.csproj", "{B9A73912-A59A-48E0-963C-B9DD9AEE475C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Database", "nio2so.Database\nio2so.Database.csproj", "{23BC9628-58FC-4D10-A095-87188FD95EBE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,10 @@ Global
 		{B9A73912-A59A-48E0-963C-B9DD9AEE475C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B9A73912-A59A-48E0-963C-B9DD9AEE475C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B9A73912-A59A-48E0-963C-B9DD9AEE475C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23BC9628-58FC-4D10-A095-87188FD95EBE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23BC9628-58FC-4D10-A095-87188FD95EBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23BC9628-58FC-4D10-A095-87188FD95EBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23BC9628-58FC-4D10-A095-87188FD95EBE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,6 +105,7 @@ Global
 		{30E792E2-C22E-4732-87EE-ED3149DE4D46} = {2DFE9B84-042E-49D7-895B-D2472D3F7B5B}
 		{7BE8C426-6742-4BF8-8BD3-0C99876FDC71} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
 		{B9A73912-A59A-48E0-963C-B9DD9AEE475C} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
+		{23BC9628-58FC-4D10-A095-87188FD95EBE} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}
