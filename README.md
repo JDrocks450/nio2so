@@ -41,6 +41,17 @@ I would highly recommend editing your StartUp Project Settings to match mine:
 
 Build & Run, ensure there are no build errors.
 
+### Edit your hosts file
+Since the Pre-Alpha build is hard-coded to connect to specific addresses, the easiest way to get up and running is to ensure your Hosts File in Windows has these additions:
+
+  `127.0.0.1 www.ea.com`
+
+  `127.0.0.1 ea4.dev.ea.com`
+
+  `127.0.0.1 xo.max.ad.ea.com`
+
+These will intercept network traffic from the Game Client to the nio2so server program running on your PC.
+
 ### Boot-up Sims Online Pre-Alpha
 This was designed to run with an unmodified client. However, you can also use FatBag's patch, detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
 
@@ -56,6 +67,10 @@ Run another instance with these runtime arguments: `-w -debug_objects`
 
 Next step.
 
+### Demonstration YouTube Video
+Before continuing with the instructions, you can refer to this YouTube video I recorded to see how it works in action:
+https://www.youtube.com/watch?v=8wcedhRtuLs&t=11s
+
 ### Logging in
 OK, made it this far. Now you gotta log in. Let's begin.
 
@@ -69,6 +84,23 @@ First, The Sims Online will connect on TSOHTTPS. Then, it will ping TSOHTTP. If 
 Welcome to the research area. Anything from here we have to discover.
 
 The City Server is a daunting animal. Let me give you some insight below.
+
+## Getting into a Lot
+What you can do is the following steps to get into a simulated lot: (as of now you will need a Debugger program -- I recommend x32dbg for this)
+ * Place a breakpoint here: (In CityRoomClientProtocol.cs)
+![image](https://github.com/user-attachments/assets/81640aec-bd96-42e8-8e09-1a8313018d1d)
+ * In your debugger, place a breakpoint here in `tsoprotocolsd.dll`: `0x0340A3E6`
+![image](https://github.com/user-attachments/assets/250c2351-69fa-4918-b0dc-693ca3dff8b5)
+ * Log into Select-A-Sim
+ * Create a new Sim (if you haven't already)
+ * Load into the City View
+ * The Breakpoint in nio2so (may be) triggered. SKIP this line as of now.
+ * Purchase a new lot (anywhere)
+ * Restart the Sims Online Game Client
+ * In Select-A-Sim again, now you should see an option to Join City and Lot under your Avatar. Click it.
+ * The Breakpoint in nio2so should now be triggered. Allow the line to run this time. TestingConstraints.LOTTestingMode will do this automatically for you FYI ;)
+ * The Breakpoint in `tsoprotocolsd.dll` should now be triggered. SKIP to line `0x0340A466` to skip the 30 Second Lot Timeout.
+ * Explore!
 
 ## Voltron? Cadence? Aries? What are you talking about?
 I will tell you a little bit about these technologies.
@@ -89,6 +121,7 @@ Hey developers! Check out TSOVoltronPacket.cs in TSOTCP.City! Wanna see how it's
 [Here's a list of all TSO Pre-Alpha PDU IDs.](http://niotso.org/files/prealpha_pdu_tables.txt)
 
 Don't want to use that link? There is an enum for you to use in code at TSOVoltronEnum.cs
+In fact, for developers there are many enums in the same directory as TSOVoltronEnum.cs containing specific CLSIDs for other Packet Formats -- and an enum for all constants found in the game binary.
 
 ## Regulators & Protocols
 Yes, regulators are controllers, basically. Each Regulator has a protocol that it uses. The protocol is the set of PDUs it can send/receive and how to interpret them. There are the following Protocols in The Sims Online: Pre-Alpha:
