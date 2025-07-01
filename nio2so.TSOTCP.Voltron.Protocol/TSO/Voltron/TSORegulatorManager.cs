@@ -61,6 +61,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         private HashSet<ITSOProtocolRegulator> typeMap = new();
         private readonly ITSOServer server;
 
+        /// <summary>
+        /// Attaches a <see cref="TSORegulatorManager"/> to the current <see cref="ITSOServer"/> instance provided by <paramref name="Server"/>
+        /// <para/>All registered <see cref="ITSOProtocolRegulator"/> types will be added using functionality provided by <see cref="RegisterProtocols(Assembly, Type[])"/>
+        /// which itself is usually invoked through <see cref="RegisterDefaultProtocols(Type[])"/> which takes an OmissionList if needed
+        /// </summary>
+        /// <param name="Server"></param>
         public TSORegulatorManager(ITSOServer Server)
         {
             server = Server;

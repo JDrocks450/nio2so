@@ -17,20 +17,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator]
     public class LotProtocol : TSOProtocol
     {
-        struct LotTest
+        record LotTest(uint ID, uint X,  uint Y, string Name, string Description)
         {
-            public uint ID, X, Y;
-
-            public LotTest(uint iD,uint x, uint y)
-            {
-                X = x;
-                Y = y;
-                ID = iD;
-            }
-        }
+            public string Name { get; set; } = Name;
+            public string Description { get; set; } = Description;
+        }             
 
         private static List<LotTest> _lots = new() {
-            new(TestingConstraints.BuyLotID,83,157) // ocean island
+            new(TestingConstraints.BuyLotID,94,105,"First House","The first house profile working in nio2so. Check out that cool thumbnail.") // ocean island
         };
 
         /// <summary>
@@ -50,7 +44,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                                                                       lotPurchasePDU.Lot_Y);
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
                 $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.Lot_X},{lotPurchasePDU.Lot_Y}"));
-            _lots.Add(new((uint)NewID, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y));        
+            _lots.Add(new((uint)NewID, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y, PDU.CurrentSessionID.MasterID + "'s Place", "Please enter a description for your new property."));        
             RespondTo(PDU, buyPDU);
         }
 
@@ -83,26 +77,29 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             foreach(var lot in _lots)
                 RespondTo(PDU, new TSOGetLotListResponse(lot.ID, lot.X, lot.Y));
+
             // ** You can send this PDU as many times as needed for each house to add to the map **
             //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetLotByID_Request"/>
-        /// <para/>Not functional
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Request)]
         public void GetLotByID_Request(TSODBRequestWrapper PDU)
-        { // Gets a TSODataDefinition Lot struct with the LotID provided
+        { // Gets information on the house with the LotID provided
             TSOGetLotByID_Request req = (TSOGetLotByID_Request)PDU;
 
+            //get data
+            LotTest? item = _lots.FirstOrDefault(lot => lot.ID == req.Lot_DatabaseID);
+            if (item == null) throw new InvalidDataException($"LotID {req.Lot_DatabaseID} doesn't exist.");
+
             //send requested data
-            RespondWith(TSODebugWrapperPDU.FromFile(@"E:\packets\const\GetLotByID_Response.dat",TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response));
+            RespondWith(new TSOGetLotByID_Response(req.Lot_DatabaseID, item.Name, "bisquick", item.Description, new(item.X, item.Y)));
             
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"GetLotByID_Request: ID: {req.Lot_DatabaseID}"));
-            //RespondTo(PDU, new TSOGetLotByID_Response(TestingConstraints.MyHouseID, "HOUSE1", "YUH!"));
         }
         /// <summary>
         /// Handles when a Client requests the PNG thumbnail image for a lot.
@@ -189,6 +186,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void SetLotByID_Request(TSODBRequestWrapper PDU)
         { // client is giving us lot profile data
             TSOSetLotByIDRequest req = (TSOSetLotByIDRequest)PDU;
+
+            //get data
+            LotTest? item = _lots.FirstOrDefault(lot => lot.ID == req.LotID);
+            if (item == null) throw new InvalidDataException($"LotID {req.LotID} doesn't exist.");
+
+            //set data
+            item.Name = req.LotName;
+            item.Description = req.LotDescription;            
+
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"SetLotByID_Request: ID: {req.LotID}"));
         }

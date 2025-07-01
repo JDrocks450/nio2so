@@ -58,8 +58,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         protected TSOProtocolRegulatorResponse? CurrentResponse = null;
         private ITSOServer _server;
 
+        /// <summary>
+        /// The underlying <see cref="ITSOServer"/> instance used for sending/receiving PDUs/other network traffic
+        /// </summary>
         public ITSOServer Server { get => _server; set => _server = value; }
-
+        /// <summary>
+        /// The name of this regulator
+        /// </summary>
         public virtual string RegulatorName
         {
             get
@@ -76,6 +81,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             MapMe();
         }
 
+        /// <summary>
+        /// Maps all <see cref="TSOProtocolHandler"/>, <see cref="TSOProtocolDatabaseHandler"/> and <see cref="TSOProtocolDatablobHandler"/> adorned methods as handlers to this regulator
+        /// </summary>
         private void MapMe()
         {
             voltronMap.Clear();
@@ -163,6 +171,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             return false;
         }
 
+        /// <summary>
+        /// Helper function to automatically create a <see cref="TSOSplitBufferPDU"/> for largely sized networked data
+        /// <para/> See: <see cref="TestingConstraints.SplitBuffersPDUEnabled"/> and <see cref="TSOSplitBufferPDU.STANDARD_CHUNK_SIZE"/>
+        /// </summary>
+        /// <param name="DBWrapper"></param>
+        /// <returns></returns>
         protected IEnumerable<TSOVoltronPacket> SplitLargePDU(TSOVoltronPacket DBWrapper)
         {
             List<TSOVoltronPacket> packets = new();
@@ -175,14 +189,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
 
         /// <summary>
-        /// Will send this packet to the remote connection at the end of this Aries frame
+        /// Sends this packet to the remote connection(s) at the end of this Aries frame.
         /// </summary>
         /// <param name="ResponsePacket"></param>
         protected void RespondWith(TSOVoltronPacket ResponsePacket) =>
             ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(SplitLargePDU(ResponsePacket));
         /// <summary>
-        /// Will send this packet to the remote connection at the end of this Aries frame
-        /// <para/>This will take the AriesID, MasterID fields from the packet given to the response
+        /// Sends this packet to the remote connection(s) at the end of this Aries frame.
+        /// <para/>This function copies the <see cref="ITSOVoltronAriesMasterIDStructure"/> data to the <paramref name="ResponsePacket"/>
         /// </summary>
         /// <param name="ResponsePacket"></param>
         protected void RespondTo<T>(ITSOVoltronAriesMasterIDStructure DBPacket, T ResponsePacket) where T : TSOVoltronPacket, ITSOVoltronAriesMasterIDStructure
@@ -195,14 +209,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             RespondWith(ResponsePacket);
         }
         /// <summary>
-        /// Puts this packet to the end of the current <see cref="TSOCityServer"/> ReceiveQueue
+        /// Puts this packet to the end of the current <see cref="ITSOServer"/> Receive Queue
+        /// <para/>This works by using the <see cref="TSOProtocolRegulatorResponse"/> which is used by internal logic in <see cref="ITSOServer"/> implementations
         /// </summary>
         /// <param name="EnqueuePacket"></param>
         protected void EnqueueOne(TSOVoltronPacket EnqueuePacket) => ((List<TSOVoltronPacket>)CurrentResponse.EnqueuePackets).Add(EnqueuePacket);
         /// <summary>
-        /// Puts this packet to the beginning of the current <see cref="TSOCityServer"/> ReceiveQueue
+        /// Puts this packet to the beginning of the current <see cref="ITSOServer"/> Receive Queue. Generally this means it will be processed directly after this <see cref="TSOVoltronPacket"/> is processed
+        /// <para/>This is primarily used by internal logic for the <see cref="TSOSplitBufferPDU"/>
+        /// <para/>This works by using the <see cref="TSOProtocolRegulatorResponse"/> which is used by internal logic in <see cref="ITSOServer"/> implementations
         /// </summary>
-        /// <param name="EnqueuePacket"></param>
+        /// <param name="InsertionPacket"></param>
         protected void InsertOne(TSOVoltronPacket InsertionPacket) => ((List<TSOVoltronPacket>)CurrentResponse.InsertionPackets).Add(InsertionPacket);
     }
 }

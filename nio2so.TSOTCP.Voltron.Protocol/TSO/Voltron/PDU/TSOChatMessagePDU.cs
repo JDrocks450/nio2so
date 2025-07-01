@@ -9,8 +9,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// The person who sent the Chat Message
         /// </summary>
-        public TSOAriesIDStruct Person { get; set; }
+        public TSOAriesIDStruct Author { get; set; }
         public ushort Arg2 { get; set; }
+        /// <summary>
+        /// The content of their message
+        /// </summary>
         public string Message { get; set; }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU;
@@ -23,7 +26,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public TSOChatMessagePDU(TSOAriesIDStruct User, string ChatMessage) : this()
         {
             Arg1 = 0x01;
-            Person = User;
+            Author = User;
             Arg2 = 0x00;
             Message = ChatMessage;
 
