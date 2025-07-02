@@ -24,6 +24,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// A PNG Image stream containing the thumbnail to display
         /// </summary>
         [TSOVoltronDBWrapperField] [TSOVoltronBodyArray] public byte[] PNGByteStream { get; set; }
+
+        public TSOGetHouseThumbByIDResponse() : base() { }
+
         /// <summary>
         /// Creates a new <see cref="TSOGetHouseThumbByIDResponse"/> for the given <paramref name="HouseID"/> containing a PNG file <paramref name="PNGBytes"/>
         /// </summary>

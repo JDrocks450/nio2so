@@ -12,5 +12,10 @@
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
 
         public TSOGetHouseThumbByIDRequest() : base() { }
+        public TSOGetHouseThumbByIDRequest(uint HouseID) : this()
+        {
+            this.HouseID = HouseID;
+            MakeBodyFromProperties();
+        }
     }
 }

@@ -1,4 +1,6 @@
-﻿using nio2so.Formats.Util.Endian;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.Formats.Util.Endian;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
@@ -21,7 +23,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
             )
         {
             this.SearchType = (uint)SearchType;
-            NumResults = (uint)ResultIDs.Length;
+            var array = new byte[]
+            {
+                0x01,0x01,0x41
+            };
+            Array.Resize(ref array, 16);
+            ResultsVec = array;
+            NumResults = 1;
+            MakeBodyFromProperties();
+            return;
+            NumResults = (uint)ResultIDs.Length * sizeof(uint);
             ResultsVec = new byte[sizeof(uint) * ResultIDs.Length];
             int index = -1;
             foreach (uint DB_ID in ResultIDs)

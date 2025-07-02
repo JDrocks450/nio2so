@@ -1,7 +1,14 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.TSO;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace nio2so.TSOTCP.City
 {
@@ -29,9 +36,17 @@ namespace nio2so.TSOTCP.City
 
             while(Console.ReadLine() != "shutdown")
             {
-                cityServer.SendPacket(null,new TSOChatMessagePDU(new(TestingConstraints.MyAvatarID,
-                    TestingConstraints.MyAvatarName), "Test of the househsb works"));
-                cityServer.SendPacket(null, new TSOOccupantArrivedPDU(161, "FriendlyBuddy"));
+                var callsign = new TSOAriesIDStruct("??1337", TestingConstraints.MyAvatarName);
+                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
+                        TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                        new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kClientHasConnected,
+                        TSOVoltronSerializer.Serialize(callsign))
+                    )
+                {
+                    CurrentSessionID = callsign
+                };
+                kClientConnectedMsg.MakeBodyFromProperties();
+                cityServer.SendPacket(null,kClientConnectedMsg);
             }
         }
     }

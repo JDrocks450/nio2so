@@ -17,14 +17,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator]
     public class LotProtocol : TSOProtocol
     {
-        record LotTest(uint ID, uint X,  uint Y, string Name, string Description)
+        record LotTest(uint ID, TSODBLotPosition Position, string Name, string Description)
         {
             public string Name { get; set; } = Name;
             public string Description { get; set; } = Description;
         }             
 
         private static List<LotTest> _lots = new() {
-            new(TestingConstraints.BuyLotID,94,105,"First House","The first house profile working in nio2so. Check out that cool thumbnail.") // ocean island
+            new(TestingConstraints.BuyLotID,new(94,105),"First House","The first house profile working in nio2so. Check out that cool thumbnail.") // ocean island
         };
 
         /// <summary>
@@ -40,11 +40,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!NewID.HasValue) throw new NullReferenceException("Factory could not be mapped or there was an error creating a house.");
             TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse((uint)NewID.Value,
                                                                       TestingConstraints.BuyLotEndingFunds,
-                                                                      lotPurchasePDU.Lot_X,
-                                                                      lotPurchasePDU.Lot_Y);
+                                                                      lotPurchasePDU.LotPosition);
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
-                $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.Lot_X},{lotPurchasePDU.Lot_Y}"));
-            _lots.Add(new((uint)NewID, lotPurchasePDU.Lot_X, lotPurchasePDU.Lot_Y, PDU.CurrentSessionID.MasterID + "'s Place", "Please enter a description for your new property."));        
+                $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.LotPosition}"));
+            _lots.Add(new((uint)NewID, lotPurchasePDU.LotPosition, $"{PDU.CurrentSessionID.MasterID}'s Place", "Please enter a description for your new property."));        
             RespondTo(PDU, buyPDU);
         }
 
@@ -76,7 +75,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void GetLotList_Request(TSODBRequestWrapper PDU)
         {
             foreach(var lot in _lots)
-                RespondTo(PDU, new TSOGetLotListResponse(lot.ID, lot.X, lot.Y));
+                RespondTo(PDU, new TSOGetLotListResponse(lot.ID, lot.Position));
 
             // ** You can send this PDU as many times as needed for each house to add to the map **
             //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
@@ -96,7 +95,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (item == null) throw new InvalidDataException($"LotID {req.Lot_DatabaseID} doesn't exist.");
 
             //send requested data
-            RespondWith(new TSOGetLotByID_Response(req.Lot_DatabaseID, item.Name, "bisquick", item.Description, new(item.X, item.Y)));
+            RespondWith(new TSOGetLotByID_Response(req.Lot_DatabaseID, item.Name, "bisquick", item.Description, item.Position));
             
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"GetLotByID_Request: ID: {req.Lot_DatabaseID}"));
@@ -146,13 +145,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);
             RespondTo(PDU, response);
 
-            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));
-            //RespondTo(PDU, new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-            //  new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)));
-
-            //OLD CODE: ==========
-
-            //RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // dictate what lot to load here.            
+            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));            
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetHouseBlobByIDRequest"/>
@@ -215,14 +208,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
         public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
         {
-            RespondWith(new TSOListRoomsResponsePDU());
+            RespondWith(new TSOListRoomsResponsePDU(0x053A));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU)]
         public void LOT_ENTRY_REQUEST_PDU(TSOVoltronPacket PDU)
         {
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
-            //byte[] body = File.ReadAllBytes(@"E:\packets\const\UpdateRoomPDU.dat");
+
+            // TELL THE CLIENT TO START THE HOST PROTOCOL
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID)); 
+
+            //Update which room they're in currently
             string LotName = "BloatyLand";
             string RoomName = LotName;
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, roomPDU.HouseID,
@@ -246,7 +243,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 HSBSession.RoomServer?.SendPacket(Server,
                         new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
                 HSBSession.RoomServer?.SendPacket(Server, kClientConnectedMsg);
-            }
+            }            
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]

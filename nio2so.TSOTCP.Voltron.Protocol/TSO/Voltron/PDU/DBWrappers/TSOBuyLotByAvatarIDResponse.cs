@@ -1,4 +1,6 @@
-﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
+﻿using nio2so.Formats.DB;
+
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
     /// Sent when the Player requests to purchase a lot in the World View
@@ -18,11 +20,7 @@
         /// <summary>
         /// The X location of the house
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Lot_X { get; set; }
-        /// <summary>
-        /// The Y location of the house
-        /// </summary>
-        [TSOVoltronDBWrapperField] public uint Lot_Y { get; set; }
+        [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }
         [TSOVoltronDBWrapperField] public uint Filler4 { get; set; } = 0x0E0F;
         [TSOVoltronDBWrapperField] public uint Filler5 { get; set; } = 0x1011;
         /// <summary>
@@ -42,7 +40,7 @@
         /// <param name="Funds"></param>
         /// <param name="X"></param>
         /// <param name="Y"></param>
-        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint Funds, uint X, uint Y) :
+        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint Funds, TSODBLotPosition Position) :
             base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -51,7 +49,7 @@
         {
             this.NewHouseID = NewHouseID;
             NewFunds = Funds;
-            Lot_X = X; Lot_Y = Y;
+            LotPosition = Position;
 
             MakeBodyFromProperties();
         }

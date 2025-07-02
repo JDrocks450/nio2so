@@ -11,7 +11,7 @@
         /// <summary>
         /// Untested -- placeholder label name
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Amount { get; set; }
+        [TSOVoltronDBWrapperField] public int Amount { get; set; }
 
         public TSODebitCreditRequestPDU() : base() { }
     }

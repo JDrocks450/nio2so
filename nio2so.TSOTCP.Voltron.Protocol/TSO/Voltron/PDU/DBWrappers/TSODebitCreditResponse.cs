@@ -14,13 +14,13 @@
         /// <summary>
         /// Untested -- placeholder label name
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Amount { get; set; }
+        [TSOVoltronDBWrapperField] public int Amount { get; set; }
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
         /// </summary>
         public TSODebitCreditResponsePDU() : base() { }
-        public TSODebitCreditResponsePDU(uint avatarID, uint account, uint amount) : base(
+        public TSODebitCreditResponsePDU(uint avatarID, uint account, int amount) : base(
             TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
             TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
             TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Response

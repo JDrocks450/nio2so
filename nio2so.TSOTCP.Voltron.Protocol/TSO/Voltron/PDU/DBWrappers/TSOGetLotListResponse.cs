@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
+﻿using nio2so.Formats.DB;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
@@ -31,11 +32,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The X component of the lot's Location
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Lot_X { get; set; }
-        /// <summary>
-        /// The Y component of the lot's Location
-        /// </summary>
-        [TSOVoltronDBWrapperField] public uint Lot_Y { get; set; }
+        [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }
         /// <summary>
         /// <i>Unknown</i>
         /// </summary>
@@ -66,14 +63,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         public TSOGetLotListResponse() : base() { }
 
-        public TSOGetLotListResponse(uint LotID, uint X, uint Y) : base(
+        public TSOGetLotListResponse(uint LotID, TSODBLotPosition Position) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response
             )
         {
             Lot_DatabaseID = LotID;
-            Lot_X = X; Lot_Y = Y;
+            LotPosition = Position;
 
             MakeBodyFromProperties();
         }

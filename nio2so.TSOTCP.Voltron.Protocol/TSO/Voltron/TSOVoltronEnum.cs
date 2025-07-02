@@ -1832,6 +1832,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         kJoinedRoom = 0x5BF7002C,
         kPartedRoom = 0x5BF7002F,
         kConnecting = 0x5BF7DA13,
+        /// <summary>
+        /// DevMsg: "The house you thought was online has disappeared. go back to mapview."
+        /// </summary>
         kRoomJoinFailed = 0x5BF828CB,
         GZCLSID_cInteractionTimeoutAppointment = 0x5BF9BF4B,
         kGZGUID_reference = 0x5BFD950C,

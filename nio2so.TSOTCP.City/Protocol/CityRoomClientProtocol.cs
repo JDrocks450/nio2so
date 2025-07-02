@@ -1,9 +1,13 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
@@ -56,24 +60,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             var stdMessagePDU = PDU.DataBlobContentObject.GetAs<TSOStandardMessageContent>();
             if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)
             {
-                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                    //new Struct.TSOAriesIDStruct("A 1337", ""),
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_AvatarID,
-                    new byte[4] { 0x00, 0x00, 0x04, 0xC4 })
-                );
-                //RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, kClientConnectedMsg);
                 //AVATARID
                 RespondWith((TSOVoltronPacket)PDU);
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_AvatarID)
             { // do nothing
-                //RespondWith((TSOVoltronPacket)PDU);
+                RespondWith((TSOVoltronPacket)PDU);
                 donoPacket = (TSOVoltronPacket)PDU;
-            } 
+            }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseData)
             {
-                RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName));
                 //HOUSE DATA
                 RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, GetHouseData());
                 //MESSAGE HOUSE OCCUPANTS
@@ -86,7 +82,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_JoinHouseResponse)
             {
-                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, GetJoinResponse());                               
+                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, GetJoinResponse());
             }
             else
             {
@@ -96,12 +92,8 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                             PDU.SubMsgCLSID,
                             PDU.DataBlobContentObject.ContentBytes
                         ));
-                else
-                {
-                    return;
-                    RespondWith((TSOVoltronPacket)PDU);
-                }
-            }        
+                else return;                    
+            } 
 #endif
         }
 
@@ -136,8 +128,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     BufferStartByte = 0x3F
                 }
             );
-
-        int _attempts = 0;
+        
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU)]
         public void LOAD_HOUSE_RESPONSE_PDU(TSOVoltronPacket PDU)
@@ -162,39 +153,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             ** LoadHouseResponsePDU without us ever having sent it a LoadHousePDU. ;)
             */
 
-            _attempts++;
-
             var houseID = ((TSOLoadHouseResponsePDU)PDU).HouseID;
 
             //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
             //when that happens
             if (houseID == 0)
             {
+                houseID = TSOVoltronConst.MyHouseID;
                 if (!TestingConstraints.LOTTestingMode)
-                    if (_attempts < 2) return; // break; 
+                    return;
             }
-            
+
             //im in a lot -- send it the lot im supposed to be in
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
-            return;
-
-            RespondWith(
-                new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_LoadHouse))
-                {
-                    CurrentSessionID = new TSOAriesIDStruct(
-                        TestingConstraints.MyAvatarID,
-                        TestingConstraints.MyAvatarName)
-                });
-
-            return;
-            //HOUSE DATA
-            RespondTo((ITSOVoltronAriesMasterIDStructure)donoPacket, GetHouseData());
-            //MESSAGE HOUSE OCCUPANTS
-            RespondTo((ITSOVoltronAriesMasterIDStructure)donoPacket, GetHouseOccupants());
-            RespondTo((ITSOVoltronAriesMasterIDStructure)donoPacket,
-                new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_LoadHouse)));
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(houseID)); // dictate what lot to load here.                       
         }
     }
 }

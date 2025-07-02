@@ -246,9 +246,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             if (Sender != null)
                 if (Sender == this) return;
             SubmitAriesFrame(_clientInfo.First().Key, PDU);
-            Telemetry?.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                nameof(TSOVoltronBasicServer),
-                $"Passed {PDU} from {Sender.GetType().Name} to {GetType().Name}"));
+            if (Sender != null)
+                Telemetry?.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
+                    nameof(TSOVoltronBasicServer),
+                    $"Passed {PDU} from {Sender.GetType().Name} to {GetType().Name}"));
         }
     }
 }

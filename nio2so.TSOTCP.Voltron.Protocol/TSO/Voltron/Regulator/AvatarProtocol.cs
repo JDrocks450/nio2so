@@ -114,13 +114,24 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSOServerTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);
             RespondTo(PDU, new TSOSetCharByIDResponse(avatarID));
         }
-
+        /// <summary>
+        /// Invoked when the AvatarID embedded in the PDU should add/remove funds from their account
+        /// </summary>
+        /// <param name="PDU"></param>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.DebitCredit_Request)]
         public void DebitCredit_Request(TSODBRequestWrapper PDU)
         {
             var debitcreditPDU = (TSODebitCreditRequestPDU)PDU;
+            var avatarID = debitcreditPDU.AvatarID;
+            if (avatarID == 0)
+                throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
+
+            //log this to disk
+            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
+                RegulatorName, $"AvatarID: {debitcreditPDU.AvatarID} Account: {debitcreditPDU.Account} +/-: {debitcreditPDU.Amount}"));
+
             RespondTo(PDU, new TSODebitCreditResponsePDU(
-                debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount + 12345));
+                debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount));
         }
 
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request)]
@@ -130,10 +141,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var avatarID = moneyPacket.AvatarID;
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
-
-            //log this to disk
-            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                RegulatorName, $"AvatarID: {moneyPacket.AvatarID} has ${moneyPacket.Arg1}"));
+            
             RespondTo(PDU, new TSOSetMoneyFieldsResponse(avatarID, 1, 2, 3));
         }
 

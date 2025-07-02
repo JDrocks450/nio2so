@@ -8,7 +8,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public TSOOccupantArrivedPDU() : base() { }
         public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
         {
-            AvatarID = $"A {avatarID}";
+            AvatarID = $"??{avatarID}";
             AvatarName = avatarName;
         }
 
