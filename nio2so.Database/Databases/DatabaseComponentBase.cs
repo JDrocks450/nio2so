@@ -2,13 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace nio2so.Database.Databases
 {
-    internal abstract class DatabaseComponentBase<T1, T2>
+    public abstract class DatabaseComponentBase<T1, T2>
     {
         private string _baseDir;
+
+        private Dictionary<T1, T2> _data;
 
         /// <summary>
         /// Creates a new <see cref="DatabaseComponentBase{T1, T2}"/> with the given home directory
@@ -29,6 +32,15 @@ namespace nio2so.Database.Databases
         public bool TryGet(T1 Key, out T2? Value)
         {
             return false;
+        }
+
+        public void Load(string DBPath)
+        {
+
+        }
+        public void Save(string DBPath)
+        {
+            JsonSerializer.Serialize
         }
     }
 }

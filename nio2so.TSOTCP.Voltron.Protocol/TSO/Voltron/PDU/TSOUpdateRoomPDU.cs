@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
@@ -42,7 +43,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 
             public UpdateRoom_AvatarInformationPack(uint AvatarID, string AvatarName)
             {
-                AvatarIDString = "A " + AvatarID;
+                AvatarIDString = TSOAriesIDStruct.FormatIDString(AvatarID);
                 this.AvatarName = AvatarName;
             }
 
@@ -59,7 +60,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
             UpdateRoom_AvatarInformationPack roomHostInformation)
         {
             RoomID = roomID;
-            RoomNameLotIDPack = RoomNameLotIDPack2 = new(roomName, "A " + dbLotID);
+            RoomNameLotIDPack = RoomNameLotIDPack2 = new(roomName, TSOAriesIDStruct.FormatIDString(dbLotID, "H "));
             LotOwnerInformation = lotOwnerInformation;
             RoomHostInformation = roomHostInformation;
 

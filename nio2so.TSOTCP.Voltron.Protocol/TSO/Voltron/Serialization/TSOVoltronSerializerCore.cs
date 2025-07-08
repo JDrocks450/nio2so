@@ -153,7 +153,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                     uint fromPacket = Stream.ReadBodyDword(dataEndianMode); // read an unsigned int
                     if (PropertyType == typeof(uint)) // is it even an unsigned int?
                         property.SetValue(Instance, fromPacket); // yeah
-                    else property.SetValue(Instance, Convert.ToInt32(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
+                    else ;// property.SetValue(Instance, Convert.ToInt64(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
                     return true;
                 }
                 else readValue = false;

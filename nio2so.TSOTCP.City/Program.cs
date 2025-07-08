@@ -36,17 +36,7 @@ namespace nio2so.TSOTCP.City
 
             while(Console.ReadLine() != "shutdown")
             {
-                var callsign = new TSOAriesIDStruct("??1337", TestingConstraints.MyAvatarName);
-                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                        TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                        new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kClientHasConnected,
-                        TSOVoltronSerializer.Serialize(callsign))
-                    )
-                {
-                    CurrentSessionID = callsign
-                };
-                kClientConnectedMsg.MakeBodyFromProperties();
-                cityServer.SendPacket(null,kClientConnectedMsg);
+                cityServer.SendPacket(null, new TSOGetHouseThumbByIDRequest(1339));
             }
         }
     }

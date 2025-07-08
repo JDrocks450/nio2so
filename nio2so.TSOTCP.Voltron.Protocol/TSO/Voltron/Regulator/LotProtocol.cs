@@ -143,9 +143,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);
-            RespondTo(PDU, response);
-
-            RespondWith(new TSOUpdatePlayerPDU(TSOVoltronConst.MyAvatarID, TSOVoltronConst.MyAvatarName));            
+            RespondTo(PDU, response);         
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetHouseBlobByIDRequest"/>
@@ -162,6 +160,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             uint HouseID = housePDU.HouseID;
             if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
+            File.WriteAllBytes("E:\\refpack.dat", housePDU.HouseFileStream.StreamContents);
             var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
             if (blob == null) // get hous chunk in the package
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
@@ -202,7 +201,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
         {
             RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU));
-            RespondWith(new TSOClientBye(0x11, ""));
+            RespondWith(new TSOBroadcastDatablobPacket(
+                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kPartedRoom,
+                    new byte[4] { 0x00, 0x00, 0x05, 0x39 })
+                ));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]

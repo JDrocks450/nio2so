@@ -1,4 +1,5 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
@@ -7,8 +8,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     {
         public TSOOccupantArrivedPDU() : base() { }
         public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
-        {
-            AvatarID = $"??{avatarID}";
+        {            
+            AvatarID = TSOAriesIDStruct.FormatIDString(avatarID);
             AvatarName = avatarName;
         }
 

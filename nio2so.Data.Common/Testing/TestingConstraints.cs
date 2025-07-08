@@ -1,5 +1,8 @@
 ﻿namespace nio2so.Data.Common.Testing
 {
+    /// <summary>
+    /// Constraints for Beta Testing
+    /// </summary>
     public static class TestingConstraints
     {
         //****BETA TESTING
@@ -64,6 +67,11 @@
         /// For testing, this is the AvatarID of "MyFriend" as in-your first bookmark, your friend in the relationship web, etc.
         /// </summary>
         public const uint MyFriendAvatarID = 161;
+
+        /// <summary>
+        /// The static amount of funds in your avatar's account
+        /// </summary>
+        public const uint StaticFunds = 500000;
         //****
 
         //**PATHS

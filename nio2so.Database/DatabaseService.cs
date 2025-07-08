@@ -5,6 +5,13 @@
     /// </summary>
     public class DatabaseService
     {
+        /// <summary>
+        /// The directory on the hard drive where the databases
+        /// </summary>
+        public string HomeDirectory { get; set; }
 
+        public DatabaseService(string HomeDirectory) {
+            
+        }
     }
 }

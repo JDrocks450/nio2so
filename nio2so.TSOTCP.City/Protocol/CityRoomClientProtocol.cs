@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.Formats.DB;
+using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
@@ -67,6 +68,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             { // do nothing
                 RespondWith((TSOVoltronPacket)PDU);
                 donoPacket = (TSOVoltronPacket)PDU;
+                RespondWith(new TSOOccupantArrivedPDU(EndianBitConverter.Big.ToUInt32(PDU.DataBlobContentObject.ContentBytes,0), "bsiquick"));
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseData)
             {
@@ -82,7 +84,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_JoinHouseResponse)
             {
-                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, GetJoinResponse());
+                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, GetJoinResponse());                
             }
             else
             {

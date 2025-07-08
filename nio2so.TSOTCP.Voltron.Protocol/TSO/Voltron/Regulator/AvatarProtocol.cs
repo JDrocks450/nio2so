@@ -13,6 +13,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator("AvatarProtocol")]
     internal class AvatarProtocol : TSOProtocol
     {
+        /// <summary>
+        /// Handles a <see cref="TSOGetCharByIDRequest"/> PDU and returns the <see cref="TSODBChar"/> data item for this player using the <see cref="TSOAvatarFactory"/>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="InvalidDataException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Request)]
         public void GetCharByID_Request(TSODBRequestWrapper PDU)
         {
@@ -21,17 +26,23 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (avatarID == 0)
                 throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
 
-            var charData = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharByID(avatarID);
+            TSODBChar charData = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharByID(avatarID);
+            charData.Funds = TestingConstraints.StaticFunds; // set beta funds level here
             RespondTo(PDU, new TSOGetCharByIDResponse(avatarID, charData));
         }
-
+        /// <summary>
+        /// Handles a <see cref="TSOGetCharBlobByIDRequest"/> PDU and returns the <see cref="TSODBCharBlob"/> data item for this player using the <see cref="TSOAvatarFactory"/>
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetCharBlobByID_Request)]
         public void GetCharBlobByID_Request(TSODBRequestWrapper PDU)
         {
             var charBlobReqPDU = (TSOGetCharBlobByIDRequest)PDU;
             var avatarID = charBlobReqPDU.AvatarID;
             if (avatarID == 0) avatarID = 1337;
-            var charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharBlobByID(avatarID);
+            TSODBCharBlob charBlob = TSOFactoryBase.Get<TSOAvatarFactory>().GetCharBlobByID(avatarID);
             if (charBlob == null)
                 throw new NullReferenceException($"CharBlob {avatarID} is null and unhandled.");
             if (charBlob.AvatarID != avatarID) // oh no that's not good.
@@ -41,10 +52,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 else throw new InvalidDataException($"AvatarID: {avatarID} requested, got {charBlob.AvatarID}'s data.");
             }
             TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.OUTBOUND, avatarID, charBlob);
-            var response = new TSOGetCharBlobByIDResponse(avatarID, charBlob);
+            TSOGetCharBlobByIDResponse response = new TSOGetCharBlobByIDResponse(avatarID, charBlob);
             RespondTo(PDU, response);
         }
 
+        /// <summary>
+        /// Handles an incoming <see cref="TSOGetBookmarksRequest"/> and returns the player's bookmarks, which are hard-coded right now
+        /// </summary>
+        /// <param name="PDU"></param>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetBookmarks_Request)]
         public void GetBookmarks_Request(TSODBRequestWrapper PDU)
         {
@@ -59,7 +74,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
 
         /// <summary>
-        /// The client is attempting to send us a newly created Avatar blob
+        /// The client is attempting to send us a newly created <see cref="TSODBCharBlob"/> object.
         /// We will take the new data and add it to our pseudo-database for later usage
         /// </summary>
         /// <param name="PDU"></param>
@@ -83,23 +98,38 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
             RespondTo(PDU, new TSOInsertCharBlobByIDResponse(avatarID));
         }
-
+        /// <summary>
+        /// The client is attempting to send us a modified <see cref="TSODBCharBlob"/> object.
+        /// We will take the new data and add it to our pseudo-database for later usage
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="InvalidDataException"></exception>        
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Request)]
         public void SetCharBlob_Request(TSODBRequestWrapper PDU)
         {
             var avatarID = ((TSOSetCharBlobByIDRequest)PDU).AvatarID;
             if (avatarID == 0)
-                throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignored.");
+                throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignoring...");
 
             //decompress enclosed stream into a TSODBCharBlob
             if (!((TSOSetCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
                 throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
+
+            if (Blob.AvatarID != avatarID)
+                throw new InvalidDataException("Submitted Character Blob from the server doesn't match the avatar we're modifying! Changes not saved...");
 
             //log this to disk
             TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
             RespondTo(PDU, new TSOSetCharBlobByIDResponse(avatarID, Blob));
         }
 
+        /// <summary>
+        /// The client is attempting to send us a modified <see cref="TSODBChar"/> object.
+        /// We will take the new data and add it to our pseudo-database for later usage
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="InvalidDataException"></exception>    
+        /// <exception cref="InvalidDataException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
         public void SetCharByID_Request(TSODBRequestWrapper PDU)
         {
@@ -134,6 +164,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount));
         }
 
+        /// <summary>
+        /// Unsure what this does. Sent whenever a money transaction happens.
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="InvalidDataException"></exception>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request)]
         public void SetMoneyFields_Request(TSODBRequestWrapper PDU)
         {
