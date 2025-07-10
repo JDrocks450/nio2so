@@ -4,6 +4,7 @@ using System.Text;
 using QuazarAPI.Networking.Data;
 using nio2so.Data.Common.Serialization.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
@@ -57,7 +58,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="Stream"></param>
         /// <param name="NullTerminatedMaxLength"></param>
         /// <returns>The string read from the stream</returns>
-        /// <exception cref="Exception"></exception>
+        /// <exception cref="Exception">Pascal string not supported</exception>
         public static string ReadString(TSOVoltronValueTypes StringType, Stream Stream, int NullTerminatedMaxLength = 255)
         {
             string destValue = "Error.";
@@ -104,70 +105,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             {
                 if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
                 { // it is.
-                    if (property.PropertyType != typeof(byte[]))
-                        throw new CustomAttributeFormatException("You applied the TSOVoltronBodyArray attribute to ... not a byte[]! Are you testing me?");
-                    int remainingData = (int)(Stream.Length - Stream.Position);
+                    if (property.PropertyType != typeof(byte[])) // not a byte[]
+                        throw new CustomAttributeFormatException($"You applied the TSOVoltronBodyArray attribute to {property.PropertyType.Name}! Please ensure it matches byte[].");
+                    int remainingData = (int)(Stream.Length - Stream.Position); // get remaining bytes count
                     byte[] destBuffer = new byte[remainingData];
-                    _bodyBuffer.Read(destBuffer, 0, remainingData);
+                    _bodyBuffer.Read(destBuffer, 0, remainingData); // read into buffer
                     property.SetValue(Instance, destBuffer);
                     return true; // halt execution
                 }
                 else throw new NotImplementedException("byte[] is the destination type to deserialize, yet you didn't " +
                     "adorn the property with the TSOVoltronBodyArrayAtrribute! This is required to ensure you understand " +
-                    "that it will take EVERY byte to the end of the packet body into that property and for readability.");
+                    "that it will take EVERY byte to the end of the packet body into that property and also for code-clarity.");
             }
-            //Numbers
+            
+            if (property.PropertyType.IsArray)
             {
-                TSOVoltronValue? attribute = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type);
-                bool hasAttrib = attribute != default;
-                //BigEndian by default!
-                Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
-                bool readValue = true;
-
-                Type PropertyType = property.PropertyType;
-                while (PropertyType.IsEnum)
-                    PropertyType = Enum.GetUnderlyingType(PropertyType);
-
-                //---NUMBERS
-                if (PropertyType == typeof(byte))
-                {
-                    property.SetValue(Instance, (byte)Stream.ReadBodyByte());
-                    return true;
-                }
-                else if (PropertyType == typeof(bool))
-                {
-                    byte value = (byte)Stream.ReadBodyByte();
-                    property.SetValue(Instance, value != 0);
-                    return true;
-                }
-                else if (PropertyType == typeof(ushort) || PropertyType == typeof(short))
-                {
-                    ushort fromPacket = Stream.ReadBodyUshort(dataEndianMode); // read an unsigned short
-                    if (PropertyType == typeof(ushort)) // is it even an unsigned short?
-                        property.SetValue(Instance, fromPacket); // yeah
-                    else property.SetValue(Instance, Convert.ToInt16(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                    return true;
-                }
-                else if (PropertyType == typeof(uint) || PropertyType == typeof(int))
-                {
-                    uint fromPacket = Stream.ReadBodyDword(dataEndianMode); // read an unsigned int
-                    if (PropertyType == typeof(uint)) // is it even an unsigned int?
-                        property.SetValue(Instance, fromPacket); // yeah
-                    else ;// property.SetValue(Instance, Convert.ToInt64(fromPacket)); // no it wasn't, convert it. uhh, i think this works?
-                    return true;
-                }
-                else readValue = false;
-
-                if (readValue) return true;
-
-                if (PropertyType == typeof(DateTime))
-                {
-                    uint fromPacket = Stream.ReadBodyDword();
-                    var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
-                    property.SetValue(Instance, value);
-                    return true;
-                }
+                throw new NotImplementedException("Array reflection is not implemented yet!");
             }
+
+            //Numbers
+            if (TryNumericTypes(Stream, property, Instance)) return true;
+
             //Strings
             if (property.PropertyType == typeof(string))
             {
@@ -194,9 +152,85 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             return false;
         }
 
+        /// <summary>
+        /// Tries to evaluate this property as a Numeric type and returns true if successful.
+        /// <para/>Value is automatically applied to <paramref name="property"/> if available
+        /// <para/>Supports:
+        /// <code>byte, bool, ushort, short, uint, int, DateTime</code>
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="property"></param>
+        /// <param name="Instance"></param>
+        /// <returns></returns>
+        static bool TryNumericTypes(Stream Stream, PropertyInfo property, object Instance)
+        {
+            //check member attribute for special considerations
+            TSOVoltronValue? attribute = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type);
+            bool hasAttributes = attribute != default;
+            //BigEndian by default!
+            Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
+            bool readValue = true;
+
+            Type PropertyType = property.PropertyType;
+            //fully evaluate enum types to base value type
+            while (PropertyType.IsEnum)
+                PropertyType = Enum.GetUnderlyingType(PropertyType);            
+
+            //---NUMBERS
+            if (PropertyType == typeof(byte))
+            { // BYTE
+                property.SetValue(Instance, (byte)Stream.ReadBodyByte());
+                return true;
+            }
+            else if (PropertyType == typeof(bool))
+            { // TRUE FALSE
+                byte value = (byte)Stream.ReadBodyByte();
+                property.SetValue(Instance, value != 0);
+                return true;
+            }
+            else if (PropertyType == typeof(ushort) || PropertyType == typeof(short))
+            { // INT16/U16 rewrite 07/08/25
+                if (PropertyType == typeof(ushort)) // uint16
+                    property.SetValue(Instance, Stream.ReadBodyUshort(dataEndianMode)); // read in an unsigned short
+                else // int16
+                { // no it wasn't. previous solution sucked. read 2 bytes from body and convert to int16 like a normal human being.
+                    byte[] intBytes = new byte[2];
+                    Stream.ReadAtLeast(intBytes, 2);
+                    property.SetValue(Instance,
+                        ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt16(intBytes, 0));
+                }
+                return true;
+            }
+            else if (PropertyType == typeof(uint) || PropertyType == typeof(int))
+            {// INT32/U32 rewrite 07/08/25
+                if (PropertyType == typeof(uint)) // uint32
+                    property.SetValue(Instance, Stream.ReadBodyDword(dataEndianMode)); // read in an unsigned int
+                else // int32
+                { // no it wasn't. previous solution sucked. read 4 bytes from body and convert to int32 like a normal human being.
+                    byte[] intBytes = new byte[4];
+                    Stream.ReadAtLeast(intBytes, 4);
+                    property.SetValue(Instance,
+                        ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt32(intBytes, 0));
+                }
+                return true;
+            }
+            else readValue = false;
+
+            if (readValue) return true;
+
+            if (PropertyType == typeof(DateTime))
+            { // DATE TIME does this even work for tso pre alpha.. lol?
+                uint fromPacket = Stream.ReadBodyDword();
+                var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
+                property.SetValue(Instance, value);
+                return true;
+            }
+            return false;
+        }
+
         private static TSOVoltronSerializerGraphItem? _lastGraphItem;
         /// <summary>
-        /// Serializes the given <paramref name="property"/> to the <paramref name="Stream"/> using the value assigned on
+        /// Serializes the given <paramref name="property"/> to the <paramref name="Stream"/> using the value assigned on the given
         /// <paramref name="Instance"/>        
         /// </summary>
         /// <param name="Stream"></param>
@@ -222,11 +256,26 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             bool wroteValue = true;
 
+            //optimization
             if (property.PropertyType == typeof(byte[]))
             {
                 Stream.EmplaceBody((byte[])myValue);
                 _lastGraphItem = new(property.Name,
                     typeof(byte[]), (byte[])myValue, $"{((byte[])myValue).Length} bytes.");
+                return true;
+            }
+
+            //--ARRAYS
+            if (property.PropertyType.IsArray)
+            {
+                Array arr = (Array)property.GetValue(Instance);
+                int i = 0;
+                foreach (var item in arr)
+                {
+                    TSOVoltronSerializer.Serialize(Stream, item);
+                    _lastGraphItem = TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item);
+                    i++;
+                }
                 return true;
             }
 

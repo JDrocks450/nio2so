@@ -13,7 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The Index of the cell in the World Grid
         /// </summary>
-        [TSOVoltronDBWrapperField][TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string LotIndexString { get; set; }
+        [TSOVoltronDBWrapperField][TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)] public string LotPhoneNumber { get; set; }
         /// <summary>
         /// The purchaser of the Lot
         /// </summary>

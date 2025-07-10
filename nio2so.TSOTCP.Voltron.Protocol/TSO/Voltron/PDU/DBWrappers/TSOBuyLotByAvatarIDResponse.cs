@@ -18,7 +18,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public uint NewFunds { get; set; }
         /// <summary>
-        /// The X location of the house
+        /// The location of the house
         /// </summary>
         [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }
         [TSOVoltronDBWrapperField] public uint Filler4 { get; set; } = 0x0E0F;
@@ -34,13 +34,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         public TSOBuyLotByAvatarIDResponse() : base() { }
 
         /// <summary>
-        /// Confirms to the Client that buying this house was successful
+        /// Creates a new <see cref="TSOBuyLotByAvatarIDResponse"/> packet. Confirms to the Client that buying this house was successful
         /// </summary>
-        /// <param name="NewHouseID"></param>
-        /// <param name="Funds"></param>
-        /// <param name="X"></param>
-        /// <param name="Y"></param>
-        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint Funds, TSODBLotPosition Position) :
+        /// <param name="NewHouseID">The ID of the house created</param>
+        /// <param name="AccountFunds">The amount of money you have after buying the house</param>
+        /// <param name="Position">The position on the map the new house is at</param>
+        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint AccountFunds, TSODBLotPosition Position) :
             base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -48,7 +47,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
             )
         {
             this.NewHouseID = NewHouseID;
-            NewFunds = Funds;
+            NewFunds = AccountFunds;
             LotPosition = Position;
 
             MakeBodyFromProperties();

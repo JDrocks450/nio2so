@@ -34,7 +34,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             _lastGraphItem = new("", Object.GetType(), Object);
 
             foreach (var property in Object.GetType().GetProperties())
-            {
+            {               
                 if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null)
                     continue;
                 //**serializable property

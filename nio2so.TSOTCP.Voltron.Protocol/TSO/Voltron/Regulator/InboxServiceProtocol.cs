@@ -11,6 +11,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_PDU)]
         public void GET_MPS_MESSAGES_PDU(TSOVoltronPacket PDU)
         { // get all of my messages
+            return;
             RespondWith(new TSOGetMPSMessagesPDUResponse());
         }
     }

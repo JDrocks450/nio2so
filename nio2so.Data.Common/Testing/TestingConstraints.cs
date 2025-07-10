@@ -33,6 +33,8 @@
         /// What the ID for My House
         /// </summary>
         public const uint MyHouseID = 0x053A; // 1338 // can be zero for testing as well
+        public const string MyHouseName = "First House";
+        public const string MyHousePhoneNumber = "6094983";
         /// <summary>
         /// What the ID for my Avatar is
         /// </summary>

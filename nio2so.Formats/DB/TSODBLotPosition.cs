@@ -2,6 +2,7 @@
 {
     /// <summary>
     /// A Grid Position in the TSO World View
+    /// <code>uint X, uint Y</code>
     /// </summary>
     public class TSODBLotPosition
     {
