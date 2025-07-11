@@ -6,17 +6,19 @@ A continuation of niotso (The Sims Online)
 An image of TSOView2 rendering City terrain as it would appear in TSO Pre-Alpha.
 More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).
 
-## Project Roadmap
-You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
+## Project Roadmap & Reference Materials
+**Roadmap** You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
 
-### Original Project
-The original project can be found archived here: [Niotso - GitHub](https://github.com/daddesio/niotso)
+**Original Project** - The original project can be found archived here: [Niotso - GitHub](https://github.com/daddesio/niotso)
+**Machuga Client (original proof-of-concept for niotso)** -
+The mashuga client can be found here: [Machuga - GitHub](https://github.com/daddesio/mashuga)
 
-Additionally, the mashuga client is here: [Machuga - GitHub](https://github.com/daddesio/mashuga)
-
+**Maxis Protocol Documentation** -
 Here is some helpful reading: [Maxis Protocol (Niotso Wiki)](http://wiki.niotso.org/Maxis_Protocol)
 
+**Technical Write-Up** -
 Here is a document I update periodically about various systems in the game and interesting findings. It also contains documentation taken from the original creator. [Technical Analysis of The Sims Online: Pre-Alpha](/nio2so.TSOTCP.City/Documentation/Technical%20Analysis%20of%20The%20Sims%20Online.pdf)
+
 
 ## Summary
 nio2so (and niotso) are/were projects aimed to restore The Sims Online in its unaltered state by emulating the server the game interacted with back when the game was online.
