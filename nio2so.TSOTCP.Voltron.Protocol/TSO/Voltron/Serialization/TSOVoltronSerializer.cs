@@ -40,7 +40,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
-                _lastGraphItem.Add(TSOVoltronSerializerCore.GetLastGraph());
+                foreach(var item in TSOVoltronSerializerCore.GetLastGraph())
+                    _lastGraphItem.Add(item);
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)
@@ -75,7 +76,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             // no-- proceed with default deserialize            
             foreach (var property in instance.GetType().GetProperties())
             {
-                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) continue;
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) 
+                    continue;
                 //**serializable property
                 if (!TSOVoltronSerializerCore.ReflectProperty(Stream, property, instance))
                     throw new ArgumentException($"Could not deserialize: {property}");

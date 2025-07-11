@@ -6,13 +6,22 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU)]
     public class TSOFindPlayerResponsePDU : TSOVoltronPacket
     {
+        public enum PlayerStatuses
+        {
+            Online = 0x0,
+            Offline = 0x01,
+            LetterOnly = 0x21,
+        }
+
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU;
 
-        public TSOAriesIDStruct PlayerID { get; set; }
+        public uint ReasonCode { get; set; }
+        
+        public string ReasonText { get; set; } = "OK";
 
-        public uint StatusCode { get; set; } = 0x21;
-        public uint StatusCode1 { get; set; } = 0;
-        public uint StatusCode2 { get; set; } = 0;
+        public TSORoomInfo RoomInfo { get; set; } = TSORoomInfo.NoRoom;
+
+        public TSOPlayerInfoStruct PlayerInfo { get; set; }
 
         public TSOFindPlayerResponsePDU() : base()
         {
@@ -21,8 +30,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 
         public TSOFindPlayerResponsePDU(TSOAriesIDStruct PlayerID, uint StatusCode) : this()
         {
-            this.PlayerID = PlayerID;
-            this.StatusCode = StatusCode;
+            ReasonCode = StatusCode;            
+            PlayerInfo = new(PlayerID,1,true);
             MakeBodyFromProperties();
         }
     }

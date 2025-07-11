@@ -42,5 +42,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 
             MakeBodyFromProperties();
         }
+
+        public TSOListRoomsResponsePDU() : base() { }
     }
 }

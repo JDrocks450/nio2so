@@ -14,5 +14,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             return;
             RespondWith(new TSOGetMPSMessagesPDUResponse());
         }
+        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FLASH_MSG_PDU)]
+        public void FLASH_MESSAGE_PDU(TSOVoltronPacket PDU)
+        {
+            TSOFlashMessagePDU messagePDU = (TSOFlashMessagePDU)PDU;
+            string[] strings = messagePDU.GetContentStrings();
+            ;
+            RespondWith(new TSOFlashMessageResponsePDU());
+        }
     }
 }

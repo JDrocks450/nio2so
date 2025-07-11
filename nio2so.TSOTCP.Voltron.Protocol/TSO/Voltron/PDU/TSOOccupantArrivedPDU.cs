@@ -7,17 +7,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     public class TSOOccupantArrivedPDU : TSOVoltronPacket
     {
         public TSOOccupantArrivedPDU() : base() { }
-        public TSOOccupantArrivedPDU(uint avatarID, string avatarName)
-        {            
-            AvatarID = TSOAriesIDStruct.FormatIDString(avatarID);
-            AvatarName = avatarName;
+        public TSOOccupantArrivedPDU(TSOAriesIDStruct PlayerID)
+        {
+            PlayerInfo = new(PlayerID);
+            MakeBodyFromProperties();
         }
-
-        [TSOVoltronString] public string AvatarID { get; set; }
-        [TSOVoltronString] public string AvatarName { get; set; }
-        public byte Arg1 { get; set; } = 0x41;
-        public byte Arg2 { get; set; } = 0x01;
-        public byte[] Garbage { get; set; } = new byte[48];
+        /// <summary>
+        /// The <see cref="TSOPlayerInfoStruct"/> of the newly joined player
+        /// </summary>
+        public TSOPlayerInfoStruct PlayerInfo { get; set; }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU;
     }

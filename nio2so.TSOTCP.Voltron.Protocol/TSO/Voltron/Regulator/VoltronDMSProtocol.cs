@@ -38,7 +38,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 avatarID = TestingConstraints.HSBHostID;
                 avatarName = TestingConstraints.HSBHostName;
             }
-            RespondWith(new TSOUpdatePlayerPDU(avatarID, avatarName));
+            RespondWith(new TSOUpdatePlayerPDU(new Struct.TSOAriesIDStruct(avatarID, avatarName)));
         }
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU)]
         public void BC_VERSION_LIST_PDU(TSOVoltronPacket PDU)

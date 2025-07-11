@@ -98,7 +98,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
                 }
                 if (!EmbedProperty(property))
                     throw new Exception($"VOLTRON PDU -- Cannot serialize {property.PropertyType}! Property: {property}");
-                MySerializedGraph.Add(TSOVoltronSerializerCore.GetLastGraph());
+                foreach (var item in TSOVoltronSerializerCore.GetLastGraph())
+                    MySerializedGraph.Add(item);
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)

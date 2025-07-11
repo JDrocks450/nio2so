@@ -59,7 +59,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="NullTerminatedMaxLength"></param>
         /// <returns>The string read from the stream</returns>
         /// <exception cref="Exception">Pascal string not supported</exception>
-        public static string ReadString(TSOVoltronValueTypes StringType, Stream Stream, int NullTerminatedMaxLength = 255)
+        public static string ReadString(TSOVoltronValueTypes StringType, Stream Stream, int NullTerminatedMaxLength = 255, char NullTerminatorChar = '\0')
         {
             string destValue = "Error.";
             switch (StringType)
@@ -75,7 +75,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                     }
                     break;
                 case TSOVoltronValueTypes.NullTerminated:
-                    destValue = Stream.ReadBodyNullTerminatedString(NullTerminatedMaxLength);
+                    destValue = Stream.ReadBodyNullTerminatedString(NullTerminatedMaxLength, NullTerminatorChar);
                     break;
                 case TSOVoltronValueTypes.Length_Prefixed_Byte:
                     {
@@ -135,7 +135,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                     type = TSOVoltronValueTypes.Pascal;
 
                 //---STRING
-                string destValue = ReadString(type, _bodyBuffer, attribute?.NullTerminatedMaxLength ?? 255);
+                string destValue = ReadString(type, _bodyBuffer, attribute?.NullTerminatedMaxLength ?? 255, attribute?.NullTerminatorChar ?? '\0');
                 property.SetValue(Instance, destValue);
                 return true;
             }
@@ -228,7 +228,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             return false;
         }
 
-        private static TSOVoltronSerializerGraphItem? _lastGraphItem;
+        private static Stack<TSOVoltronSerializerGraphItem> _lastGraphItems = new();
         /// <summary>
         /// Serializes the given <paramref name="property"/> to the <paramref name="Stream"/> using the value assigned on the given
         /// <paramref name="Instance"/>        
@@ -240,15 +240,38 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// supported</returns>
         public static bool WriteProperty(Stream Stream, PropertyInfo property, object? Instance)
         {
-            _lastGraphItem = null;            
+            _lastGraphItems.Clear();            
 
             bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
-            object? myValue = property.GetValue(Instance);
-            if (myValue == default)
+            object? SerializeValue = property.GetValue(Instance);
+
+            //**array length property handler
             {
-                _lastGraphItem = new(property.Name, property.PropertyType, null);
+                var arrLegAtt = property.GetCustomAttribute<TSOVoltronArrayLength>();
+                if (arrLegAtt != null) { // it is one of these array length attributes
+                    void error (string error) => throw new InvalidOperationException(error);
+                    if (string.IsNullOrWhiteSpace(arrLegAtt.ArrayPropertyName))
+                        error($"{arrLegAtt.ArrayPropertyName} is null");
+                    //try to locate the desired property
+                    PropertyInfo? foundArrayProperty = property?.DeclaringType?.GetProperty(arrLegAtt.ArrayPropertyName);
+                    if (foundArrayProperty == null)
+                        error($"{arrLegAtt.ArrayPropertyName} is doesn't exist on the type {property?.DeclaringType.Name ?? "not found!"}");
+                    if (!foundArrayProperty.PropertyType.IsArray)
+                        error($"{arrLegAtt.ArrayPropertyName} might very well be a property on the given type -- but it is not an array. Fix this.");
+                    Array? myArrayValue = foundArrayProperty.GetValue(Instance) as Array;
+                    if (myArrayValue == null)
+                        error($"{arrLegAtt.ArrayPropertyName} is an array type, but its value is null. You really should not be doing this. It should be an empty array when using these attributes.");
+                    SerializeValue = Convert.ChangeType(myArrayValue.Length, property.PropertyType); // set myvalue to be the length of the array
+                }
+            }
+
+            if (SerializeValue == null) // handle NULLs!
+            { // item is null -- handle this
+                _lastGraphItems.Push(new(property.Name, property.PropertyType, null));
                 return true;
             }
+
+            //get endian converter by current culture
             var endianConverter = (EndianBitConverter)(
                     type == TSOVoltronValueTypes.BigEndian ?
                         EndianBitConverter.Big :
@@ -256,12 +279,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             bool wroteValue = true;
 
-            //optimization
+            //optimization -- arrays are handled below, but that's slow and heavy-handed. just dump the array-call it a day. that rhymes ha ha ha ha ha ha ha ha
             if (property.PropertyType == typeof(byte[]))
             {
-                Stream.EmplaceBody((byte[])myValue);
-                _lastGraphItem = new(property.Name,
-                    typeof(byte[]), (byte[])myValue, $"{((byte[])myValue).Length} bytes.");
+                Stream.EmplaceBody((byte[])SerializeValue);
+                _lastGraphItems.Push(new(property.Name,
+                    typeof(byte[]), (byte[])SerializeValue, $"{((byte[])SerializeValue).Length} bytes."));
                 return true;
             }
 
@@ -273,9 +296,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 foreach (var item in arr)
                 {
                     TSOVoltronSerializer.Serialize(Stream, item);
-                    _lastGraphItem = TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item);
+                    _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item));
                     i++;
-                }
+                }                
                 return true;
             }
 
@@ -285,27 +308,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             //---NUMERICS
             if (PropertyType.IsAssignableTo(typeof(ushort)))
-                Stream.EmplaceBody(endianConverter.GetBytes((ushort)myValue));
+                Stream.EmplaceBody(endianConverter.GetBytes((ushort)SerializeValue));
             else if (PropertyType == typeof(short))
-                Stream.EmplaceBody(endianConverter.GetBytes((short)myValue));
+                Stream.EmplaceBody(endianConverter.GetBytes((short)SerializeValue));
             else if (PropertyType.IsAssignableTo(typeof(uint)))
-                Stream.EmplaceBody(endianConverter.GetBytes((uint)myValue));
+                Stream.EmplaceBody(endianConverter.GetBytes((uint)SerializeValue));
             else if (PropertyType == typeof(int))
-                Stream.EmplaceBody(endianConverter.GetBytes((int)myValue));
+                Stream.EmplaceBody(endianConverter.GetBytes((int)SerializeValue));
             else if (PropertyType == typeof(byte))
-                Stream.EmplaceBody((byte)myValue);
+                Stream.EmplaceBody((byte)SerializeValue);
             else if (PropertyType == typeof(DateTime))
-                Stream.EmplaceBody((uint)((DateTime)myValue).Minute); // probably not right
+                Stream.EmplaceBody((uint)((DateTime)SerializeValue).Minute); // probably not right
             else if (PropertyType == typeof(bool))
-                Stream.EmplaceBody((byte)((bool)myValue ? 1 : 0));
+                Stream.EmplaceBody((byte)((bool)SerializeValue ? 1 : 0));
             else wroteValue = false;
 
             if (wroteValue)
             {
-                string valueString = myValue.ToString();
+                string valueString = SerializeValue.ToString();
                 if (property.PropertyType.IsEnum)                
-                    valueString = Enum.GetName(property.PropertyType, myValue) ?? valueString;                
-                _lastGraphItem = new(property.Name, PropertyType, myValue, valueString);
+                    valueString = Enum.GetName(property.PropertyType, SerializeValue) ?? valueString;                
+                _lastGraphItems.Push(new(property.Name, PropertyType, SerializeValue, valueString));
                 return true;
             }
             if (!hasAttrib) // AUTOSELECT
@@ -314,28 +337,37 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             //---STRINGS            
             if (PropertyType == typeof(string[]))
             {
-                foreach (var str in (string[])myValue)
+                foreach (var str in (string[])SerializeValue)
                     WriteString(Stream, str, type);                
                 return true;
             }
-            else if (myValue is string myStringValue)
+            else if (SerializeValue is string myStringValue)
             {
                 WriteString(Stream, myStringValue, type);
-                _lastGraphItem = new(property.Name, typeof(string), myStringValue, myStringValue);
+                _lastGraphItems.Push(new(property.Name, typeof(string), myStringValue, myStringValue));
                 return true;
             }
 
             //--SERIALIZABLES
             if (PropertyType.IsClass)
             {
-                TSOVoltronSerializer.Serialize(Stream, myValue);
-                _lastGraphItem = TSOVoltronSerializer.GetLastGraph() ?? new(property.Name, PropertyType, myValue);
+                TSOVoltronSerializer.Serialize(Stream, SerializeValue);
+                _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name, PropertyType, SerializeValue));
                 return true;
             }
 
             return wroteValue;
         }
 
-        public static TSOVoltronSerializerGraphItem? GetLastGraph() => _lastGraphItem;
+        /// <summary>
+        /// Gets all graph items off the stack then clears it
+        /// </summary>
+        /// <returns></returns>
+        public static TSOVoltronSerializerGraphItem[] GetLastGraph()
+        {
+            var arr = _lastGraphItems.ToArray();
+            _lastGraphItems.Clear();
+            return arr;
+        }
     }
 }

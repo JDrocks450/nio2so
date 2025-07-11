@@ -1,4 +1,5 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
@@ -15,8 +16,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSOExactSearchRequest searchPDU = (TSOExactSearchRequest)PDU;
             string searchTerm = searchPDU.SearchTerm;
             TSO_PreAlpha_SearchCategories category = searchPDU.SearchResourceType;
-
-            RespondTo(PDU, new TSOExactSearchResponse(category, TSOVoltronConst.MyAvatarID));
+            switch (category)
+            {
+                case TSO_PreAlpha_SearchCategories.Avatar:
+                    RespondTo(PDU, new TSOExactSearchResponse(searchTerm, category, new TSOExactSearchResponse.TSOSearchResultStruct(TestingConstraints.MyFriendAvatarID, "FriendlyBuddy")));
+                    return;
+                case TSO_PreAlpha_SearchCategories.House:
+                    RespondTo(PDU, new TSOExactSearchResponse(searchTerm, category, new TSOExactSearchResponse.TSOSearchResultStruct(TestingConstraints.MyHouseID, TestingConstraints.MyHouseName)));
+                    break;
+            }            
         }
     }
 }

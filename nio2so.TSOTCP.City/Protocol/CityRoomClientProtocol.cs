@@ -68,7 +68,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             { // do nothing
                 RespondWith((TSOVoltronPacket)PDU);
                 donoPacket = (TSOVoltronPacket)PDU;
-                RespondWith(new TSOOccupantArrivedPDU(EndianBitConverter.Big.ToUInt32(PDU.DataBlobContentObject.ContentBytes,0), "bsiquick"));
+                RespondWith(new TSOOccupantArrivedPDU(new(EndianBitConverter.Big.ToUInt32(PDU.DataBlobContentObject.ContentBytes,0), "bisquick")));
             }
             else if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseData)
             {

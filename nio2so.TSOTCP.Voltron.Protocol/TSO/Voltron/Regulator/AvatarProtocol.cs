@@ -191,14 +191,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU)]
         public void FIND_PLAYER_PDU(TSOVoltronPacket PDU)
         {
-            return;
             var formattedPacket = (TSOFindPlayerPDU)PDU;
             if (!string.IsNullOrWhiteSpace(formattedPacket?.RequestedPlayer?.AriesID))
             {
                 if (uint.TryParse(formattedPacket.RequestedPlayer.AriesID.Substring(
                     formattedPacket.RequestedPlayer.AriesID.IndexOf("A ") + 2), out uint AvatarID))
                 {
-                    RespondWith(new TSOFindPlayerResponsePDU(formattedPacket.RequestedPlayer, 0x0));
+                    formattedPacket.RequestedPlayer.MasterID = TestingConstraints.MyFriendAvatarName;
+                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID), 0x0));
                     TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                         RegulatorName, $"FIND PLAYER: {AvatarID}"));
                     return;

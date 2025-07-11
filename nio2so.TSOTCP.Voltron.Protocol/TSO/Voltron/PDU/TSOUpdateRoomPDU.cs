@@ -22,15 +22,23 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <param name="lotPhoneNumber"></param>
         /// <param name="roomName"></param>
         /// <param name="lotOwnerInformation"></param>
-        /// <param name="roomHostInformation"></param>
+        /// <param name="Admins"></param>
         public TSOUpdateRoomPDU(uint roomID, string lotPhoneNumber, string roomName, 
-            TSORoomAvatarInformationStringPackStruct lotOwnerInformation,
-            TSORoomAvatarInformationStringPackStruct roomHostInformation)
+            TSOAriesIDStruct lotOwnerInformation,
+            params TSOAriesIDStruct[] Admins)
         {
             RoomID = roomID;
             NewRoomInfo = new(new TSORoomLotInformationStringPackStruct(lotPhoneNumber, roomName),
-                lotOwnerInformation, 1, roomHostInformation);
+                lotOwnerInformation, 1, TSORoomInfo.MAX_OCCUPANTS, false, Admins);
 
+            MakeBodyFromProperties();
+        }
+
+        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfo RoomInfo, byte DataStartByte = 0x01)
+        {
+            this.RoomID = RoomID;
+            this.DataStartByte = DataStartByte;
+            NewRoomInfo = RoomInfo;
             MakeBodyFromProperties();
         }
 

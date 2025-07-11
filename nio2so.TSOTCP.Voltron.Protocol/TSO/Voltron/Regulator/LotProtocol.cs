@@ -219,7 +219,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
         {
             var destroyRoomPDU = (TSODestroyRoomPDU)PDU;
-            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU));
+            var myRoom = _lots[0];
+            
+            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU, 
+                TSOVoltronSerializer.Serialize(
+                new TSORoomInfo(new(myRoom.PhoneNumber,myRoom.Name),new TSOAriesIDStruct(TestingConstraints.MyAvatarID,TestingConstraints.MyAvatarName),0))));            
+            //RespondWith(new TSOUpdateRoomPDU(0x0, TSORoomInfo.NoRoom));
             return;
             RespondWith(new TSOBroadcastDatablobPacket(
                     TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
@@ -239,7 +244,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             {
                 rooms[i++] = new TSORoomInfo(
                     new TSORoomLotInformationStringPackStruct(lot.PhoneNumber, lot.Name),
-                    TSORoomAvatarInformationStringPackStruct.Default, (uint)i+1
+                    new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
+                    (uint)i+1
                     );
             }
             RespondWith(new TSOListRoomsResponsePDU(rooms));
@@ -261,8 +267,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             string phoneNumber = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID)?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
 
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, phoneNumber,
-                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
-                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // m_ownerID
+                [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)] // m_AdminList[]
+            );
             RespondWith(updateRoomPDU);
 
             //**INVOKE THE HSB
@@ -279,7 +286,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 };
                 kClientConnectedMsg.MakeBodyFromProperties();
                 HSBSession.RoomServer?.SendPacket(Server,
-                        new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+                        new TSOOccupantArrivedPDU(new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)));
                 HSBSession.RoomServer?.SendPacket(Server, kClientConnectedMsg);
             }            
         }

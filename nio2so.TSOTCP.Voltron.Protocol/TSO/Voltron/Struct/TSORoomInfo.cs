@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -62,13 +63,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
             RoomName = roomName;
         }
 
-        /// <summary>        
+        /// <summary>    
+        /// <c>Maps to m_hostName</c><para/>
         /// Follows format: "XXXXXXX" which is given from the <see cref="TSOBuyLotByAvatarIDRequest.LotPhoneNumber"/> property
         /// <para/>Is a unique id for the given cell in the world map
         /// </summary>
         [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string LotPhoneNumber { get; set; }
         /// <summary>
-        /// The name of the room
+        /// <c>Maps to m_roomName</c> The name of the room
         /// </summary>
         [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string RoomName { get; set; }        
 
@@ -91,47 +93,54 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         }
 
         public TSORoomInfo(TSORoomLotInformationStringPackStruct roomLocationInfo,
-                           TSORoomAvatarInformationStringPackStruct ownerVector,
-                           uint currentOccupants,
-                           TSORoomAvatarInformationStringPackStruct? roomHostInformation = default,
+                           TSOAriesIDStruct ownerVector,
+                           uint currentOccupants,                           
                            uint maxOccupants = MAX_OCCUPANTS,
-                           bool isLocked = false)                           
-        {
-            if (roomHostInformation == default) roomHostInformation = ownerVector;
-            RoomLocationInfo = RoomLocationInfo2 = roomLocationInfo;
+                           bool isLocked = false,
+                           params TSOAriesIDStruct[] roomHostInformation)                           
+        {            
+            RoomLocationInfo = StageID = roomLocationInfo;
             OwnerVector = ownerVector;
-            RoomHostInformation = roomHostInformation;
+            AdminList = roomHostInformation;
             CurrentOccupants = currentOccupants;
             MaxOccupants = maxOccupants;
             IsLocked = isLocked;
-            RoomHostInformation = roomHostInformation;
         }
 
         [IgnoreDataMember]
         public static TSORoomInfo DebugSettings => new TSORoomInfo()
         {
             RoomLocationInfo = new(TestingConstraints.MyHousePhoneNumber,TestingConstraints.MyHouseName),            
-            OwnerVector = TSORoomAvatarInformationStringPackStruct.Default,
-            RoomHostInformation = TSORoomAvatarInformationStringPackStruct.Default,
+            OwnerVector = new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
+            AdminList = [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)],
             CurrentOccupants = 0x01,
         };
-        
+        [IgnoreDataMember]
+        public static TSORoomInfo NoRoom => new TSORoomInfo(new("no host", "bad roomname"), new TSOAriesIDStruct("", ""),0);
+
         public TSORoomLotInformationStringPackStruct RoomLocationInfo { get; set; } = TSORoomLotInformationStringPackStruct.Error;
         /// <summary>
-        /// Unsure what this does
+        /// <c>Maps to m_nameLocked</c> and dictates if the name can be changed
         /// </summary>
-        public bool Bool1 { get; set; } = true;
-        public TSORoomAvatarInformationStringPackStruct OwnerVector { get; set; } = new(0,"");
-        [TSOVoltronString] public TSORoomLotInformationStringPackStruct RoomLocationInfo2 { get; set; } = TSORoomLotInformationStringPackStruct.Error;
+        public bool NameLocked { get; set; } = true;
+        /// <summary>
+        /// <c>Maps to m_ownerID</c>
+        /// </summary>
+        public TSOAriesIDStruct OwnerVector { get; set; } = new(0,"");
+        /// <summary>
+        /// <c>Maps to m_stageID</c> Should point to the lot this room is taking place at
+        /// </summary>
+        [TSOVoltronString] public TSORoomLotInformationStringPackStruct StageID { get; set; } = TSORoomLotInformationStringPackStruct.Error;
         /// <summary>
         /// The amount of people currently in this room
         /// </summary>
         public uint CurrentOccupants { get; set; } = 0x0;
         /// <summary>
-        /// The maximum amount of people in the room
+        /// The maximum amount of people that can be in the room
         /// </summary>
         public uint MaxOccupants { get; set; } = MAX_OCCUPANTS;
         /// <summary>
+        /// <c>Maps to s_m_pwdRequired</c>
         /// The lot is locked to outside guests
         /// <para/>HousePage will show (and lot is not joinable):
         /// <code>Online And Locked</code>
@@ -140,29 +149,42 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <summary>
         /// Unsure what this does
         /// </summary>
-        public bool Bool3 { get; set; } = true;
+        public byte RoomType { get; set; } = 0x01;
 
         /// <summary>
-        /// Unsure what this is currently used for.
+        /// Not sure what groups mean right now but it is the ID of the group
         /// </summary>
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string String1 { get; set; } = "G";
-        public ushort Arg4 { get; set; } = 0x0001;
+        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string GroupID { get; set; } = "G";
+
         /// <summary>
-        /// Avatar information for seemingly the host of the room? Unsure of this.
+        /// <inheritdoc cref="TSOVoltronArrayLength"/>
         /// </summary>
-        public TSORoomAvatarInformationStringPackStruct RoomHostInformation { get; set; } = new(0, "");
+        [TSOVoltronArrayLength(nameof(AdminList))]
+        public ushort AdminListCount { get; set; }
+        /// <summary>
+        /// A list of Admin <see cref="TSOAriesIDStruct"/> in this room
+        /// </summary>
+        public TSOAriesIDStruct[] AdminList { get; set; } = new TSOAriesIDStruct[0];
         public byte DataStartByte3 { get; set; } = 0x01;
-        public ushort Arg5 { get; set; } = 0x01;
+        /// <summary>
+        /// <inheritdoc cref="AdminListCount"/>
+        /// </summary>
+        [TSOVoltronArrayLength(nameof(AdmitList))]
+        public ushort AdmitListCount { get; set; }
         /// <summary>
         /// Unsure what this is used for.
         /// </summary>
-        public TSORoomStringPackStruct StringPack1 { get; set; } = new("J", "K");
+        public TSOAriesIDStruct[] AdmitList { get; set; } = new TSOAriesIDStruct[0];
         public byte DataStartByte4 { get; set; } = 0x01;
-        public ushort Arg6 { get; set; } = 0x01;
+        /// <summary>
+        /// <inheritdoc cref="AdminListCount"/>
+        /// </summary>
+        [TSOVoltronArrayLength(nameof(DenyList))]
+        public ushort DenyListCount { get; set; }
         /// <summary>
         /// Unsure what this is used for.
         /// </summary>
-        public TSORoomStringPackStruct StringPack2 { get; set; } = new("L", "M");
+        public TSOAriesIDStruct[] DenyList { get; set; } = new TSOAriesIDStruct[0];
         public byte EndByte { get; set; } = 0x01;
     }
 }
