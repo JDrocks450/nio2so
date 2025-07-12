@@ -2,6 +2,7 @@
 using nio2so.Data.Common.Testing;
 using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
+using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
@@ -32,14 +33,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// Friendlier way to view the <see cref="SearchCategory"/>
         /// <para/> This property is omitted from the PDU payload, it is <see cref="TSOVoltronIgnorable"/>
         /// </summary>
-        [TSOVoltronIgnorable] public TSO_PreAlpha_SearchCategories SearchResourceType => (TSO_PreAlpha_SearchCategories)SearchCategory;
+        [TSOVoltronIgnorable][IgnoreDataMember] public TSO_PreAlpha_Categories SearchResourceType => (TSO_PreAlpha_Categories)SearchCategory;
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
         /// </summary>
         public TSOExactSearchResponse() : base() { }
 
-        public TSOExactSearchResponse(string SearchTerm, TSO_PreAlpha_SearchCategories SearchType, params TSOSearchResultStruct[] Results) : base(
+        public TSOExactSearchResponse(string SearchTerm, TSO_PreAlpha_Categories SearchType, params TSOSearchResultStruct[] Results) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Response

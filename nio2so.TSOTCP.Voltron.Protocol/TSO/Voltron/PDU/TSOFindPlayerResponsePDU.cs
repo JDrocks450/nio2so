@@ -15,22 +15,28 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU;
 
-        public uint ReasonCode { get; set; }
-        
-        public string ReasonText { get; set; } = "OK";
+        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Success;
 
-        public TSORoomInfo RoomInfo { get; set; } = TSORoomInfo.NoRoom;
+        public TSORoomInfoStruct RoomInfo { get; set; } = TSORoomInfoStruct.NoRoom;
 
-        public TSOPlayerInfoStruct PlayerInfo { get; set; }
+        public TSOPlayerInfoStruct PlayerInfo { get; set; } = new();
 
+        /// <summary>
+        /// Creates a new <see cref="TSOFindPlayerResponsePDU"/>
+        /// </summary>
         public TSOFindPlayerResponsePDU() : base()
         {
             MakeBodyFromProperties();
         }
-
-        public TSOFindPlayerResponsePDU(TSOAriesIDStruct PlayerID, uint StatusCode) : this()
+        /// <summary>
+        /// <inheritdoc cref="TSOFindPlayerResponsePDU()"/> with the <paramref name="PlayerID"/> and <paramref name="Status"/> provided
+        /// </summary>
+        /// <param name="PlayerID"></param>
+        /// <param name="Status">If default, will respond <see cref="TSOStatusReasonStruct.Success"/></param>
+        public TSOFindPlayerResponsePDU(TSOAriesIDStruct PlayerID, TSOStatusReasonStruct? Status = default) : this()
         {
-            ReasonCode = StatusCode;            
+            if (Status == default) Status = TSOStatusReasonStruct.Success;
+            StatusReason = Status;                     
             PlayerInfo = new(PlayerID,1,true);
             MakeBodyFromProperties();
         }

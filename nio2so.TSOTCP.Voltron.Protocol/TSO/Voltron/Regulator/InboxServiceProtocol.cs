@@ -1,4 +1,6 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
@@ -19,8 +21,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             TSOFlashMessagePDU messagePDU = (TSOFlashMessagePDU)PDU;
             string[] strings = messagePDU.GetContentStrings();
-            ;
-            RespondWith(new TSOFlashMessageResponsePDU());
+            
+            RespondWith(new TSOFlashMessageResponsePDU(messagePDU.RecipientID, messagePDU.PlayerInfo, messagePDU.PackedContent));
+
+            RespondWith(
+                new TSOFlashMessagePDU(
+                    new TSOPlayerInfoStruct(new TSOAriesIDStruct(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName)),
+                    messagePDU.PlayerInfo.PlayerID, "please stop contacting me."
+                ));
+                
+            return;
+            //DELETE MPS MESSAGE?
         }
     }
 }

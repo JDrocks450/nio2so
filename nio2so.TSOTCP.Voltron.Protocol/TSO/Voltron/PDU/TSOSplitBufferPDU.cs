@@ -1,4 +1,5 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using System.Runtime.Serialization;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
@@ -10,7 +11,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// True if there are more SPLIT_BUFFER_PDUs after this one
         /// </summary>
-        [TSOVoltronIgnorable] public bool HasDataRemaining => DataRemaining == 0;
+        [TSOVoltronIgnorable][IgnoreDataMember] public bool HasDataRemaining => DataRemaining == 0;
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU;
 
         /// <summary>

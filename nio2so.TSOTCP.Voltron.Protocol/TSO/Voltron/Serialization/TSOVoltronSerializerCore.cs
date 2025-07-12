@@ -293,12 +293,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             {
                 Array arr = (Array)property.GetValue(Instance);
                 int i = 0;
+                if (arr.Length <= 0)
+                    _lastGraphItems.Push(new(property.Name + $" (Array)", arr.GetType(), arr));
                 foreach (var item in arr)
                 {
+                    if (!arr.GetType().GetElementType().IsClass) throw new NotImplementedException("Arrays with an element type that isn't a class isn't supported right now.");
                     TSOVoltronSerializer.Serialize(Stream, item);
                     _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item));
                     i++;
-                }                
+                }
                 return true;
             }
 

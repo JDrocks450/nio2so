@@ -11,7 +11,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
     {
         [TSOVoltronBroadcastDatablobPDUField] public byte BufferStartByte { get; set; } = 0x01;
         [TSOVoltronBroadcastDatablobPDUField] public TSO_PreAlpha_MasterConstantsTable kMSG { get; set; }
-        [TSOVoltronBroadcastDatablobPDUField][TSOVoltronBodyArray] public byte[] MessageContent { get; set; }
+        [TSOVoltronBroadcastDatablobPDUField] [TSOVoltronBodyArray] public byte[] MessageContent { get; set; }
 
         public TSOStandardMessageContent() { }
 

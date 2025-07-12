@@ -1,4 +1,5 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
@@ -12,19 +13,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.BYE_PDU)]
     public class TSOClientBye : TSOVoltronPacket
     {
-        public uint StatusCode { get; set; }
-        [TSOVoltronString]
-        public string Message { get; set; }
-
+        public TSOStatusReasonStruct StatusReason { get; set; }
+        /// <summary>
+        /// Creates a new <see cref="TSOClientBye"/>
+        /// </summary>
         public TSOClientBye() : base()
         {
             MakeBodyFromProperties();
         }
-
-        public TSOClientBye(uint statusCode, string message) : base()
+        /// <summary>
+        /// <inheritdoc cref="TSOClientBye()"/> with the <paramref name="statusCode"/> and <paramref name="message"/>
+        /// </summary>
+        /// <param name="statusCode"></param>
+        /// <param name="message"></param>
+        public TSOClientBye(uint statusCode, string message) : this(new(statusCode, message)) { }
+        /// <summary>
+        /// <inheritdoc cref="TSOClientBye(uint,string)"/>
+        /// </summary>
+        /// <param name="StatusReason"></param>
+        public TSOClientBye(TSOStatusReasonStruct StatusReason) : this()
         {
-            StatusCode = statusCode;
-            Message = message;
+            this.StatusReason = StatusReason;
             MakeBodyFromProperties();
         }
 

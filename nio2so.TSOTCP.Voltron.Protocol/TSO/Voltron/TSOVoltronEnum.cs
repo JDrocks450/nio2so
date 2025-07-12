@@ -4495,7 +4495,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
     /// Search categories in TSO: Pre-Alpha sent from <see cref="TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request"/>
     /// or <see cref="TSO_PreAlpha_DBActionCLSIDs.Search_Request"/> PDUs
     /// </summary>
-    public enum TSO_PreAlpha_SearchCategories : uint
+    public enum TSO_PreAlpha_Categories : uint
     {
         None = 0x0,
         /// <summary>

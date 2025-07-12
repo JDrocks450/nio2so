@@ -16,10 +16,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         // The AvatarID that belongs to the current avatar downloading the bookmarks can match a bookmark in the list
         // (as in -- you can bookmark yourself without issue
 
+        /// <summary>
+        /// Represents a bookmark
+        /// </summary>
+        public record TSOBookmark
+        {
+            public TSOBookmark()
+            {
+            }
+
+            public TSOBookmark(uint avatarID)
+            {
+                AvatarID = avatarID;
+            }
+
+            public uint AvatarID { get; set; }
+        }
+
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
-        [TSOVoltronDBWrapperField] public uint ListType { get; set; }
-        [TSOVoltronDBWrapperField] public uint ItemCount { get; set; }
-        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] ItemList { get; set; }
+        [TSOVoltronDBWrapperField] public TSO_PreAlpha_Categories ListType { get; set; }
+        [TSOVoltronDBWrapperField] [TSOVoltronArrayLength(nameof(Bookmarks))] public uint BookmarkCount { get; set; }
+        [TSOVoltronDBWrapperField] public TSOBookmark[] Bookmarks { get; set; } = new TSOBookmark[0];
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
@@ -32,7 +49,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <param name="AvatarID">The AvatarID we're supplying bookmarks for</param>
         /// <param name="ListType">Not functional in this version? Always gets added to Avatar List</param>
         /// <param name="ItemIDs">The IDs of the items to add to the Bookmarks list</param>
-        public TSOGetBookmarksResponse(uint AvatarID, TSO_PreAlpha_SearchCategories ListType, params uint[] ItemIDs) :
+        public TSOGetBookmarksResponse(uint AvatarID, params uint[] ItemIDs) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
@@ -40,19 +57,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
                 )
         {
             this.AvatarID = AvatarID;
-            this.ListType = (uint)ListType;
-            ItemCount = (uint)ItemIDs.Length;
-            ItemList = new byte[sizeof(uint) * ItemCount];
-            int index = -1;
-            foreach (uint ItemID in ItemIDs)
-            {
-                index++;
-                byte[] lotIdBytes = EndianBitConverter.Big.GetBytes(ItemID);
-                ItemList[index * sizeof(uint)] = lotIdBytes[0];
-                ItemList[index * sizeof(uint) + 1] = lotIdBytes[1];
-                ItemList[index * sizeof(uint) + 2] = lotIdBytes[2];
-                ItemList[index * sizeof(uint) + 3] = lotIdBytes[3];
-            }
+            ListType = TSO_PreAlpha_Categories.Avatar;
+            Bookmarks = ItemIDs.Select(x => new TSOBookmark(x)).ToArray();
             MakeBodyFromProperties();
         }
     }

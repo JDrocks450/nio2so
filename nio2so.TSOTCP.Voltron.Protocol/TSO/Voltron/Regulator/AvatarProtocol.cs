@@ -68,7 +68,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (avatarID == 0) return;
 
             RespondTo(PDU, new TSOGetBookmarksResponse(avatarID,
-                                                      TSO_PreAlpha_SearchCategories.Avatar,
                                                       TestingConstraints.MyFriendAvatarID,
                                                       TestingConstraints.MyAvatarID)); // Add more to test Bookmarks
         }
@@ -198,7 +197,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     formattedPacket.RequestedPlayer.AriesID.IndexOf("A ") + 2), out uint AvatarID))
                 {
                     formattedPacket.RequestedPlayer.MasterID = TestingConstraints.MyFriendAvatarName;
-                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID), 0x0));
+                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID)));
                     TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                         RegulatorName, $"FIND PLAYER: {AvatarID}"));
                     return;

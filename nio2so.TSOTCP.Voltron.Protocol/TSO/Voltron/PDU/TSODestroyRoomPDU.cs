@@ -8,8 +8,12 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
+    /// <summary>
+    /// Sent from a Client when it deems it necessary to close the current room it is in
+    /// <para/>Should respond with the <see cref="TSODestroyRoomResponsePDU"/>
+    /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
-    internal class TSODestroyRoomPDU : TSOVoltronPacket
+    public sealed class TSODestroyRoomPDU : TSOVoltronPacket
     {
         /// <summary>
         /// The name of the Room

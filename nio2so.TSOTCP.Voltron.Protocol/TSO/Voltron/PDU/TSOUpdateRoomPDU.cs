@@ -29,12 +29,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         {
             RoomID = roomID;
             NewRoomInfo = new(new TSORoomLotInformationStringPackStruct(lotPhoneNumber, roomName),
-                lotOwnerInformation, 1, TSORoomInfo.MAX_OCCUPANTS, false, Admins);
+                lotOwnerInformation, 1, TSORoomInfoStruct.MAX_OCCUPANTS, false, Admins);
 
             MakeBodyFromProperties();
         }
 
-        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfo RoomInfo, byte DataStartByte = 0x01)
+        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, byte DataStartByte = 0x01)
         {
             this.RoomID = RoomID;
             this.DataStartByte = DataStartByte;
@@ -48,8 +48,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public uint RoomID { get; set; }
         public byte DataStartByte { get; set; } = 0x01;
         /// <summary>
-        /// The new <see cref="TSORoomInfo"/> the client should update itself to a be a member of
+        /// The new <see cref="TSORoomInfoStruct"/> the client should update itself to a be a member of
         /// </summary>
-        public TSORoomInfo NewRoomInfo { get; set; }
+        public TSORoomInfoStruct NewRoomInfo { get; set; }
     }
 }

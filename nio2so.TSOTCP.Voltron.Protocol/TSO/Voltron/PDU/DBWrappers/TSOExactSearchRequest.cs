@@ -1,5 +1,6 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
-using nio2so.Data.Common.Serialization.Voltron;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using System.Runtime.Serialization;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
@@ -18,7 +19,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// Friendlier way to view the <see cref="SearchCategory"/>
         /// <para/> This property is omitted from the PDU payload, it is <see cref="TSOVoltronIgnorable"/>
         /// </summary>
-        [TSOVoltronIgnorable] public TSO_PreAlpha_SearchCategories SearchResourceType => (TSO_PreAlpha_SearchCategories)SearchCategory;
+        [TSOVoltronIgnorable][IgnoreDataMember] public TSO_PreAlpha_Categories SearchResourceType => (TSO_PreAlpha_Categories)SearchCategory;
         /// <summary>
         /// Unknown
         /// </summary>

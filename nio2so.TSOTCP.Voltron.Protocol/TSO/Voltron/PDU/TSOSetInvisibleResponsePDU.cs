@@ -1,25 +1,14 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
-using nio2so.Data.Common.Serialization.Voltron;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU)]
-    public class TSOSetInvisibleResponsePDU : TSOVoltronPacket
+    public class TSOSetInvisibleResponsePDU : TSOVoltronBasicResponsePacket
     {
-        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU;
-
-        public TSOSetInvisibleResponsePDU(bool IsInvisible, uint statusCode = TSOVoltronConst.ResponsePDU_DefaultStatusCode,
-            string reasonText = TSOVoltronConst.ResponsePDU_DefaultReasonText)
-        {
-            StatusCode = statusCode;
-            ReasonText = reasonText;
-            CurrentlyInvisible = (byte)(IsInvisible ? 1 : 0);
-            MakeBodyFromProperties();
-        }
-
-        public uint StatusCode { get; set; }
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)]
-        public string ReasonText { get; set; }
-        public byte CurrentlyInvisible { get; set; } = 0x0;
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;
+        public TSOSetInvisibleResponsePDU(bool IsInvisible, TSOStatusReasonStruct? StatusReason = default) : base(IsInvisible, StatusReason) { }
+        public TSOSetInvisibleResponsePDU() : this(true) { }
     }
 }

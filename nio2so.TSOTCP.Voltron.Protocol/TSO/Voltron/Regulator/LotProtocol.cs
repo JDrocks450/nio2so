@@ -220,17 +220,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             var destroyRoomPDU = (TSODestroyRoomPDU)PDU;
             var myRoom = _lots[0];
-            
-            RespondWith(new TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU, 
-                TSOVoltronSerializer.Serialize(
-                new TSORoomInfo(new(myRoom.PhoneNumber,myRoom.Name),new TSOAriesIDStruct(TestingConstraints.MyAvatarID,TestingConstraints.MyAvatarName),0))));            
-            //RespondWith(new TSOUpdateRoomPDU(0x0, TSORoomInfo.NoRoom));
+
+            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, myRoom.Name, myRoom.PhoneNumber));
+            //RespondWith(new TSOExitRoomPDU(new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)));
             return;
             RespondWith(new TSOBroadcastDatablobPacket(
                     TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
                     new TSOStandardMessageContent(
                         TSO_PreAlpha_MasterConstantsTable.kPartedRoom,
-                        TSOVoltronSerializer.Serialize(TSORoomInfo.DebugSettings)
+                        TSOVoltronSerializer.Serialize(TSORoomInfoStruct.DebugSettings)
                     )
                 ));
         }
@@ -238,17 +236,20 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
         public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
         {
-            TSORoomInfo[] rooms = new TSORoomInfo[_lots.Count];
+            TSORoomInfoStruct[] rooms = new TSORoomInfoStruct[_lots.Count];
             int i = 0;
             foreach(var lot in _lots)
             {
-                rooms[i++] = new TSORoomInfo(
+                rooms[i++] = new TSORoomInfoStruct(
                     new TSORoomLotInformationStringPackStruct(lot.PhoneNumber, lot.Name),
                     new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
                     (uint)i+1
                     );
             }
             RespondWith(new TSOListRoomsResponsePDU(rooms));
+            return;
+            //test message pdu ... doesn't work
+            RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")), "Testing"));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU)]
@@ -257,15 +258,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
 
             // TELL THE CLIENT TO START THE HOST PROTOCOL
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID)); 
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
 
-            //Update which room they're in currently
-            string LotName = "BloatyLand";
-            string RoomName = LotName;
+            //get the lot
+            LotTest? thisLot = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID);
 
             //get the phone number of the lot
-            string phoneNumber = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID)?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
+            string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
+            
+            //Update which room they're in currently
+            string LotName = thisLot?.Name ?? "BloatyLand";
+            string RoomName = LotName;            
 
+            //tell the client to join this new room
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, phoneNumber,
                 new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // m_ownerID
                 [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)] // m_AdminList[]

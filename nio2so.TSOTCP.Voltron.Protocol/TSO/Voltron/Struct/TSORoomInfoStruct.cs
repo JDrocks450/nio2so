@@ -84,15 +84,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// <summary>
     /// The structure of an m_RoomInfo structure in Voltron. Describes the settings for a given online room
     /// </summary>
-    public record TSORoomInfo
+    public record TSORoomInfoStruct
     {        
         public const uint MAX_OCCUPANTS = 10;
 
-        public TSORoomInfo()
+        public TSORoomInfoStruct()
         {
         }
 
-        public TSORoomInfo(TSORoomLotInformationStringPackStruct roomLocationInfo,
+        public TSORoomInfoStruct(TSORoomLotInformationStringPackStruct roomLocationInfo,
                            TSOAriesIDStruct ownerVector,
                            uint currentOccupants,                           
                            uint maxOccupants = MAX_OCCUPANTS,
@@ -107,16 +107,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
             IsLocked = isLocked;
         }
 
-        [IgnoreDataMember]
-        public static TSORoomInfo DebugSettings => new TSORoomInfo()
+        [IgnoreDataMember]        
+        public static TSORoomInfoStruct DebugSettings => new TSORoomInfoStruct()
         {
             RoomLocationInfo = new(TestingConstraints.MyHousePhoneNumber,TestingConstraints.MyHouseName),            
             OwnerVector = new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
             AdminList = [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)],
             CurrentOccupants = 0x01,
         };
+
         [IgnoreDataMember]
-        public static TSORoomInfo NoRoom => new TSORoomInfo(new("no host", "bad roomname"), new TSOAriesIDStruct("", ""),0);
+        public static TSORoomInfoStruct NoRoom => new TSORoomInfoStruct(new("no host", "bad roomname"), new TSOAriesIDStruct("", ""),0);
 
         public TSORoomLotInformationStringPackStruct RoomLocationInfo { get; set; } = TSORoomLotInformationStringPackStruct.Error;
         /// <summary>

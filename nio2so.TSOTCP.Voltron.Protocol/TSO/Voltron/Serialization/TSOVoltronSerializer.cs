@@ -2,16 +2,34 @@
 using QuazarAPI.Networking.Data;
 using System.Reflection;
 using System.Runtime.Serialization;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
     /// <summary>
-    /// Serializes and Deserializes to objects to Voltron-compatible streams
+    /// Provides functionality that Serializes and Deserializes object instances to/from Voltron-compatible streams at runtime
     /// </summary>
     public static class TSOVoltronSerializer
     {
         private static TSOVoltronSerializerGraphItem? _lastGraphItem;
 
+        /// <summary>
+        /// Gets all <see cref="BindingFlags.Public"/> properties that don't have <see cref="TSOVoltronIgnorable"/> or <see cref="IgnoreDataMemberAttribute"/> 
+        /// </summary>
+        /// <param name="Object"></param>
+        /// <returns></returns>
+        private static IEnumerable<PropertyInfo> GetSerializableProperties(object Object) => 
+            Object.GetType().GetProperties().Where(x => 
+            x.GetCustomAttribute<IgnoreDataMemberAttribute>() == null && x.GetCustomAttribute<TSOVoltronIgnorable>() == null);
+
+        /// <summary>
+        /// <inheritdoc cref="Serialize{T}(T)"/>
+        /// then writes it to <paramref name="Stream"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Stream">The <see cref="Stream"/> to write the data bytes to</param>
+        /// <param name="Object">The instance of <typeparamref name="T"/> object to serialize</param>
+        /// <exception cref="ArgumentException"></exception>
         public static void Serialize<T>(Stream Stream, T Object)
         {
             _lastGraphItem = null;
@@ -33,10 +51,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             _lastGraphItem = new("", Object.GetType(), Object);
 
-            foreach (var property in Object.GetType().GetProperties())
+            foreach (var property in GetSerializableProperties(Object))
             {               
-                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null)
-                    continue;
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
@@ -54,7 +70,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                     throw new ArgumentException($"Could not serialize: {distanceToEnd.Value}");
             }
         }
-
+        /// <summary>
+        /// Serializes the given <paramref name="Object"/> to a Voltron data stream and writes it to a new <see cref="byte"/><c>[]</c>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Object"></param>
+        /// <returns></returns>
         public static byte[] Serialize<T>(T Object)
         {
             using (var ms = new MemoryStream())
@@ -73,10 +94,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 serializable.OnDeserialize(Stream);
                 return;
             }
-            // no-- proceed with default deserialize            
-            foreach (var property in instance.GetType().GetProperties())
+            // no-- proceed with default deserialize
+            var properties = instance.GetType().GetProperties();
+            foreach (var property in properties)
             {
-                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) 
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null)
                     continue;
                 //**serializable property
                 if (!TSOVoltronSerializerCore.ReflectProperty(Stream, property, instance))
@@ -84,7 +106,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 if (Stream.Position == Stream.Length) break;
             }
         }
-
+        /// <summary>
+        /// <inheritdoc cref="Deserialize(byte[], Type)"/>
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="ObjectType"></param>
+        /// <returns></returns>
         public static object? Deserialize(Stream Stream, Type ObjectType)
         {
             object? instance = Activator.CreateInstance(ObjectType);
@@ -92,17 +119,35 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             doDeserialize(Stream, instance);
             return instance;
         }
+        /// <summary>
+        /// Deserializes a <typeparamref name="T"/> from the given <paramref name="Stream"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Stream"></param>
+        /// <returns></returns>
         public static T Deserialize<T>(Stream Stream) where T : new()
         {
             T newObject = new T();
             doDeserialize(Stream, newObject);
             return newObject;
         }
+        /// <summary>
+        /// Deserializes a <typeparamref name="T"/> from the <paramref name="streamBytes"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="streamBytes"></param>
+        /// <returns></returns>
         public static T Deserialize<T>(byte[] streamBytes) where T : new()
         {
             using (MemoryStream stream = new MemoryStream(streamBytes))
                 return Deserialize<T>(stream);
         }
+        /// <summary>
+        /// Deserializes a given <paramref name="streamBytes"/> to the destination <paramref name="ObjectType"/> 
+        /// </summary>
+        /// <param name="streamBytes"></param>
+        /// <param name="ObjectType"></param>
+        /// <returns></returns>
         public static object Deserialize(byte[] streamBytes, Type ObjectType)
         {
             using (MemoryStream stream = new MemoryStream(streamBytes))

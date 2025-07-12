@@ -163,7 +163,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             {
                 houseID = TSOVoltronConst.MyHouseID;
                 if (!TestingConstraints.LOTTestingMode)
+                {
+                    
                     return;
+                }
             }
 
             //im in a lot -- send it the lot im supposed to be in

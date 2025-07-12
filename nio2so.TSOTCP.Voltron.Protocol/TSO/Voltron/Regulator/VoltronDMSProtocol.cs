@@ -26,7 +26,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             var bye_pdu = (TSOClientBye)PDU;
             LogMessage("Client is saying Bye! Disconnecting after frame...");
-            RespondWith(new TSOClientBye(bye_pdu.StatusCode, bye_pdu.Message));
+            RespondWith(bye_pdu);
         }
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU)]
         public void CLIENT_ONLINE_PDU(TSOVoltronPacket PDU)

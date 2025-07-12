@@ -29,13 +29,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// Rooms that should be sent to the client
         /// </summary>
-        public TSORoomInfo[] Rooms { get; set; } = new TSORoomInfo[0];
+        public TSORoomInfoStruct[] Rooms { get; set; } = new TSORoomInfoStruct[0];
 
         /// <summary>
-        /// Creates a new <see cref="TSOListRoomsResponsePDU"/> that sends a list of <see cref="TSORoomInfo"/> objects to the client
+        /// Creates a new <see cref="TSOListRoomsResponsePDU"/> that sends a list of <see cref="TSORoomInfoStruct"/> objects to the client
         /// </summary>
         /// <param name="Rooms"></param>
-        public TSOListRoomsResponsePDU(params TSORoomInfo[] Rooms) : base()
+        public TSOListRoomsResponsePDU(params TSORoomInfoStruct[] Rooms) : base()
         {
             Amount = (uint)Rooms.Length;
             this.Rooms = Rooms;
