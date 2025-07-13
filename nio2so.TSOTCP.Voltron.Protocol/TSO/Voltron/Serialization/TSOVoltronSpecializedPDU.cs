@@ -6,6 +6,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
     public interface ITSOVoltronSpecializedPDUHeader
     {
         public uint MessageLength { get; set; }
+
+        void EnsureNoErrors();
     }
 
     /// <summary>
@@ -47,6 +49,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (text.Length > 1)
                 text = text.Remove(text.Length - 2);
             return text;
+        }
+
+        public override void EnsureNoErrors()
+        {
+            Header.EnsureNoErrors();
+            base.EnsureNoErrors();
         }
     }
 }

@@ -7,26 +7,32 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 {
     public class TSOTransmitDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
-        public TSOAriesIDStruct CurrentSessionID { get; set; }
+        public TSOAriesIDStruct SenderSessionID { get; set; } = new();
         public ushort Arg1 { get; set; } = 0x4101;
-        public TSOAriesIDStruct DestinationSessionID { get; set; }
+        public TSOAriesIDStruct DestinationSessionID { get; set; } = new();
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }
         public TSOGenericDataBlobContent DataBlobContentObject { get; set; }
+
+        public void EnsureNoErrors()
+        {
+            if (SubMsgCLSID == TSO_PreAlpha_MasterConstantsTable.key_mResourceType) // 0x00000000!!!!
+                throw new InvalidDataException($"{nameof(SubMsgCLSID)} is {SubMsgCLSID} (INVALID)");
+        }
     }
 
     /// <summary>
-    /// This <see cref="TSOVoltronSpecializedPacket{TAttribute, THeader}"/> will transmit data to only the specified Client
+    /// This <see cref="TSOVoltronSpecializedPacket{TAttribute, THeader}"/> is intended to transmit data to only the specified Client
     /// by their <see cref="TSOAriesIDStruct"/>.
     /// </summary>    
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU)]
     public class TSOTransmitDataBlobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOTransmitDatablobPDUHeader>,
         ITSOVoltronAriesMasterIDStructure, ITSODataBlobPDU
     {
-        public TSOAriesIDStruct CurrentSessionID
+        public TSOAriesIDStruct SenderSessionID
         {
-            get => Header.CurrentSessionID;
-            set => Header.CurrentSessionID = value;
+            get => Header.SenderSessionID;
+            set => Header.SenderSessionID = value;
         }
         public ushort Arg1
         {
@@ -91,6 +97,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 
             this.MessageLength = MessageLength;
             MakeBodyFromProperties();
-        }
+        }        
     }
 }

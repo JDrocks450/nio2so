@@ -71,6 +71,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
+            cTSOVoltronpacket.EnsureNoErrors();// check for errors in PDU
             return cTSOVoltronpacket;
         }
 
@@ -90,11 +91,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
             {
                 TSOVoltronPacket? cTSOVoltronpacket = default;
                 cTSOVoltronpacket = CreatePacketObjectFromDataBuffer(AriesPacket.BodyStream);
-                if (cTSOVoltronpacket != default)
-                {
-                    cTSOVoltronpacket.EnsureNoErrors();// check for errors in PDU
-                    packets.Add(cTSOVoltronpacket);
-                }
+                if (cTSOVoltronpacket != default)                
+                    packets.Add(cTSOVoltronpacket);                
             }
             while (!AriesPacket.IsBodyEOF);
             return packets;

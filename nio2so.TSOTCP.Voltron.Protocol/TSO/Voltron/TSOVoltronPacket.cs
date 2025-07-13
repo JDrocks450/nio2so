@@ -51,9 +51,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         public TSOVoltronPacket() { }
 
         /// <summary>
-        /// When overridden by a class, can be used to throw exceptions when checking the packet after being received.
+        /// When overridden by a class, can be used to throw exceptions when checking the packet after:
+        /// <list type="bullet"><see cref="TSOPDUFactory.CreatePacketObjectFromDataBuffer(Stream)"/></list>
+        /// <list type="bullet"><see cref="MakeVoltronAriesPacket(TSOVoltronPacket)"/></list>
+        /// <list type="bullet"><see cref="MakeVoltronAriesPacket(IEnumerable{TSOVoltronPacket})"/></list>
         /// </summary>
-        public virtual void EnsureNoErrors() { }
+        public virtual void EnsureNoErrors()         
+        {
+            if (KnownPacketType == TSO_PreAlpha_VoltronPacketTypes.UNKNOWN_MESSAGE_ID_PDU)
+                throw new InvalidDataException($"{nameof(KnownPacketType)} is {KnownPacketType} (INVALID)");
+        }
 
         public TSOVoltronSerializerGraphItem? MySerializedGraph { get; private set; }
 
@@ -93,7 +100,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
                 if (property.GetCustomAttribute<TSOVoltronDistanceToEnd>() != default)
                 {
                     distanceToEnds.Add((uint)BodyPosition, property);
-                    EmplaceBody(new byte[sizeof(uint)]); // fill with blank for now
+                    EmplaceBody(new byte[sizeof(uint)]); // fill with blank for now                    
+                    MySerializedGraph.Add(new TSOVoltronSerializerGraphItem(property.Name, property.PropertyType, property.GetValue(this)));
                     continue;
                 }
                 if (!EmbedProperty(property))
@@ -221,6 +229,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         /// <returns></returns>
         public static TSOTCPPacket MakeVoltronAriesPacket(TSOVoltronPacket VoltronPacket)
         {
+            VoltronPacket.EnsureNoErrors(); // ensure no errors before creation
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, VoltronPacket.Body);
         }
         /// <summary>
@@ -242,6 +251,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 
             foreach (var p in VoltronPackets)
             {
+                p.EnsureNoErrors(); // ensure no errors before creation
                 p.Body.CopyTo(bodyBuffer, currentIndex);
                 currentIndex += (int)p.BodyLength;
             }

@@ -36,7 +36,7 @@ namespace nio2so.TSOTCP.City
 
             while(Console.ReadLine() != "shutdown")
             {
-                cityServer.SendPacket(null, new TSOGetHouseThumbByIDRequest(1339));
+                cityServer.SendPacket(null, new TSOJoinRoomPDU(new TSORoomLotInformationStringPackStruct(TestingConstraints.MyHousePhoneNumber,TestingConstraints.MyHouseName)));
             }
         }
     }

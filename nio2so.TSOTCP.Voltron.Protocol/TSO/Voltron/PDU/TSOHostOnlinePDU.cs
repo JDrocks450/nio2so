@@ -3,6 +3,7 @@
     /// <summary>
     /// The <see cref="TSOHostOnlinePDU"/> sends to the Client that this server is a Voltron server.
     /// <para>Encompasses a HostVersion and PacketSize</para>
+    /// <code>Unverified!</code>
     /// </summary>
     public class TSOHostOnlinePDU : TSOVoltronPacket
     {

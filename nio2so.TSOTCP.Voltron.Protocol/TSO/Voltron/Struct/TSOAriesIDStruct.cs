@@ -11,9 +11,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     public class TSOAriesIDStruct
     {
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
-        public string AriesID { get; set; }
+        public string AriesID { get; set; } = "";
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
-        public string MasterID { get; set; }        
+        public string MasterID { get; set; } = "";  
 
         public TSOAriesIDStruct() { }
         /// <summary>

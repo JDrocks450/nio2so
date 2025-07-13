@@ -21,6 +21,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public byte HeaderByte { get; set; } = 0x21;
         public TSO_PreAlpha_kMSGs kMSGID { get; set; } = TSO_PreAlpha_kMSGs.kDBServiceResponseMsg;
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
+
+        public void EnsureNoErrors()
+        {
+            if (ActionType == TSO_PreAlpha_DBActionCLSIDs.Error)
+                throw new InvalidDataException($"{nameof(ActionType)} is {ActionType} (INVALID)");
+        }
     }
 
     [Obsolete]
@@ -54,7 +60,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         protected override TSODBWrapperPDUHeader Header { get; } = new();
         public uint GetHeaderLength() => Header.headerLength;
 
-        public TSOAriesIDStruct CurrentSessionID
+        public TSOAriesIDStruct SenderSessionID
         {
             get => Header.CurrentSessionID;
             set => Header.CurrentSessionID = value;

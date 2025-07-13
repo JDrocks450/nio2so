@@ -3,6 +3,9 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
+    /// <summary>
+    /// <code>Unverified!</code>
+    /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU)]
     public class TSOOccupantArrivedPDU : TSOVoltronPacket
     {

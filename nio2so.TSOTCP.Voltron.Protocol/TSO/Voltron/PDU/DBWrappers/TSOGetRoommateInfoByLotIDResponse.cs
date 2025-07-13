@@ -21,40 +21,48 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
             // ** Then use the API to fill the rest with garbage
             // ** Please note, see: TSODBWrapperPDU.FillAvailableSpace()
         };
+        /// <summary>
+        /// Represents a roommate in the <see cref="TSOGetRoommateInfoByLotIDResponse"/>
+        /// </summary>
+        public record TSORoommate
+        {
+            public TSORoommate()
+            {
+            }
+
+            public TSORoommate(uint avatarID) : this()
+            {
+                AvatarID = avatarID;
+            }
+
+            public uint AvatarID { get; set; }
+        }
 
         /// <summary>
         /// The ID of the House we're getting information on
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
-        [TSOVoltronDBWrapperField] public uint NumberOfRoommates { get; set; } = 0x01;
-        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RoommateAvatarIDs { get; set; }
+        [TSOVoltronDBWrapperField] public uint HouseID { get; set; } = 0x0;
+        [TSOVoltronDBWrapperField][TSOVoltronArrayLength(nameof(Roommates))] public uint NumberOfRoommates { get; set; } = 0x01;
+        [TSOVoltronDBWrapperField] public TSORoommate[] Roommates { get; set; } = new TSORoommate[0];
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
         /// </summary>
-        public TSOGetRoommateInfoByLotIDResponse() : base() { }
+        public TSOGetRoommateInfoByLotIDResponse() : base(
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
+                ) { }        
 
         /// <summary>
         /// Creates a <see cref="TSOGetRoommateInfoByLotIDResponse"/> using the supplied parameters.
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOGetRoommateInfoByLotIDResponse(uint HouseID, params uint[] RoommateAvatarIDs) :
-            base(
-                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetRoommateInfoByLotID_Response
-                )
+        public TSOGetRoommateInfoByLotIDResponse(uint HouseID, params uint[] Roommates) : this()
         {
             this.HouseID = HouseID;
-            using (var ms = new MemoryStream())
-            {
-                foreach (uint id in RoommateAvatarIDs)
-                    ms.EmplaceBody(id);
-                this.RoommateAvatarIDs = ms.ToArray();
-            }
-            NumberOfRoommates = (uint)RoommateAvatarIDs.Length;
-
+            this.Roommates = Roommates.Select(x => new TSORoommate(x)).ToArray();            
             MakeBodyFromProperties();
         }
     }

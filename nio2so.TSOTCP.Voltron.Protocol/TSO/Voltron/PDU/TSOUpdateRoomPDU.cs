@@ -33,7 +33,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 
             MakeBodyFromProperties();
         }
-
+        /// <summary>
+        /// <inheritdoc cref="TSOUpdateRoomPDU(uint, string, string, TSOAriesIDStruct, TSOAriesIDStruct[])"/>                    
+        /// </summary>
+        /// <param name="RoomID"></param>
+        /// <param name="RoomInfo"></param>
+        /// <param name="DataStartByte"></param>
         public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, byte DataStartByte = 0x01)
         {
             this.RoomID = RoomID;

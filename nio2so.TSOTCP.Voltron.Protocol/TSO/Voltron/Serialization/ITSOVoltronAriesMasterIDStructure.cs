@@ -10,6 +10,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <summary>
         /// The current AriesID/MasterID combination that denotes the current Client
         /// </summary>
-        public TSOAriesIDStruct CurrentSessionID { get; set; }
+        public TSOAriesIDStruct SenderSessionID { get; set; }
     }
 }

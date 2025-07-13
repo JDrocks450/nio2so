@@ -4288,6 +4288,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
     /// </summary>
     public enum TSO_PreAlpha_DBActionCLSIDs : uint
     {
+        Error = 0x0,
         /// <summary>
         /// Asks for a list of Roommates at the given LotID in Data1. <para/>
         /// Structure implementation does not exist but can be read by nio2so

@@ -53,7 +53,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                                                                           lotPurchasePDU.LotPosition);
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
                     $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.LotPosition} String: {lotPurchasePDU.LotPhoneNumber}"));
-                _lots.Add(new((uint)NewID, lotPurchasePDU.LotPosition, lotPurchasePDU.LotPhoneNumber, $"{PDU.CurrentSessionID.MasterID}'s Place", "Please enter a description for your new property."));
+                _lots.Add(new((uint)NewID, lotPurchasePDU.LotPosition, lotPurchasePDU.LotPhoneNumber, $"{PDU.SenderSessionID.MasterID}'s Place", "Please enter a description for your new property."));
                 RespondTo(PDU, buyPDU);
             }
 
@@ -287,7 +287,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
                 )
                 {
-                    CurrentSessionID = new TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
+                    SenderSessionID = new TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
                 };
                 kClientConnectedMsg.MakeBodyFromProperties();
                 HSBSession.RoomServer?.SendPacket(Server,

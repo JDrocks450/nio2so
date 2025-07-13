@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// <c>WARNING:</c>
-    /// <para>The TSOClient seems to use this packet wrong. Sucks. Therefore, in current spec, this packet type is never actually 
+    /// <para>The TSOClient uses this PDU in a very interesting way. Therefore, in current spec, this packet type is never actually 
     /// sent to the Client, and <see cref="TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU"/> will be sent 
     /// instead.</para>
     /// </summary>
