@@ -13,6 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// </summary>
     [Serializable] public sealed record TSOStatusReasonStruct
     {
+
         /// <summary>
         /// Creates a new <see cref="TSOStatusReasonStruct"/>
         /// </summary>

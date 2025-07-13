@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
-    /// Updates the m_PlayerInfo this client is acting as
+    /// Updates the <c>m_PlayerInfo</c> this client is acting as
     /// </summary>
     public class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
