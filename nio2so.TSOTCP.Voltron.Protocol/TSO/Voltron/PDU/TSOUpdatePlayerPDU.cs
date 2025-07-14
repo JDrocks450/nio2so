@@ -5,6 +5,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     /// <summary>
     /// Updates the <c>m_PlayerInfo</c> this client is acting as
     /// </summary>
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU)]
     public class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU;
@@ -25,12 +26,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// Creates a new <see cref="TSOUpdatePlayerPDU"/> with the given <see cref="TSOPlayerInfoStruct"/>
         /// </summary>
         /// <param name="PlayerID"></param>
-        public TSOUpdatePlayerPDU(TSOPlayerInfoStruct PlayerInfo)
+        public TSOUpdatePlayerPDU(TSOPlayerInfoStruct PlayerInfo) : this()
         {
             this.PlayerInfo = PlayerInfo;
             MakeBodyFromProperties();
         }
 
-        public TSOUpdatePlayerPDU() : base() { }
+        public TSOUpdatePlayerPDU() : base() { MakeBodyFromProperties(); }
     }
 }

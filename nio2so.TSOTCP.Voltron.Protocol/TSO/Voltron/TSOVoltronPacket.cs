@@ -101,7 +101,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
                 {
                     distanceToEnds.Add((uint)BodyPosition, property);
                     EmplaceBody(new byte[sizeof(uint)]); // fill with blank for now                    
-                    MySerializedGraph.Add(new TSOVoltronSerializerGraphItem(property.Name, property.PropertyType, property.GetValue(this)));
+                    MySerializedGraph.Add(new TSOVoltronSerializerGraphItem(property, property.PropertyType, property.GetValue(this)));
                     continue;
                 }
                 if (!EmbedProperty(property))
@@ -232,12 +232,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             VoltronPacket.EnsureNoErrors(); // ensure no errors before creation
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, VoltronPacket.Body);
         }
-        /// <summary>
-        /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
-        /// <para/> You must ensure <see cref="MakeBodyFromProperties"/> was called as needed to ensure your
-        /// packet is ready to leave.
-        /// </summary>
-        public static TSOTCPPacket MakeVoltronAriesPacket(params TSOVoltronPacket[] VoltronPackets) => MakeVoltronAriesPacket(VoltronPackets);
         /// <summary>
         /// Wraps this packet into a <see cref="TSOTCPPacket"/> for tranmission to the remote endpoint
         /// <para/> You must ensure <see cref="MakeBodyFromProperties"/> was called as needed to ensure your

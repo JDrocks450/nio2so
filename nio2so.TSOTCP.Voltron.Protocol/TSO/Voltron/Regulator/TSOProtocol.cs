@@ -169,34 +169,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             }
             Response = null;
             return false;
-        }
-
-        /// <summary>
-        /// Helper function to automatically create a <see cref="TSOSplitBufferPDU"/> for largely sized networked data
-        /// <para/> See: <see cref="TestingConstraints.SplitBuffersPDUEnabled"/> and <see cref="TSOSplitBufferPDU.STANDARD_CHUNK_SIZE"/>
-        /// </summary>
-        /// <param name="DBWrapper"></param>
-        /// <returns></returns>
-        protected IEnumerable<TSOVoltronPacket> SplitLargePDU(TSOVoltronPacket DBWrapper)
-        {
-            List<TSOVoltronPacket> packets = new();
-            uint splitSize = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE;
-            if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
-                packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper));
-            else
-                packets.Add(DBWrapper);
-            return packets;
-        }
+        }        
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
+        /// <para/>Splitting into a <see cref="TSOSplitBufferPDU"/> is handled automatically by the <see cref="TSOVoltronBasicServer"/>
         /// </summary>
         /// <param name="ResponsePacket"></param>
         protected void RespondWith(TSOVoltronPacket ResponsePacket) =>
-            ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(SplitLargePDU(ResponsePacket));
+            ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).Add(ResponsePacket);
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
-        /// <para/>This function copies the <see cref="ITSOVoltronAriesMasterIDStructure"/> data to the <paramref name="ResponsePacket"/>
+        /// <para/>This function copies the <see cref="ITSOVoltronAriesMasterIDStructure"/> data to the <paramref name="ResponsePacket"/> before then calling <see cref="RespondWith(TSOVoltronPacket)"/>
+        /// <para/>Splitting into a <see cref="TSOSplitBufferPDU"/> is handled automatically by the <see cref="TSOVoltronBasicServer"/>
         /// </summary>
         /// <param name="ResponsePacket"></param>
         protected void RespondTo<T>(ITSOVoltronAriesMasterIDStructure DBPacket, T ResponsePacket) where T : TSOVoltronPacket, ITSOVoltronAriesMasterIDStructure

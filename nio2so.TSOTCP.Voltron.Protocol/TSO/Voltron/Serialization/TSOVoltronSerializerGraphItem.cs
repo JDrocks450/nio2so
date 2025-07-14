@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 {
@@ -8,7 +9,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
     /// <para/>These can have <see cref="TSOVoltronSerializerGraphItem"/> children which would indicate a property 
     /// found on a larger enclosing type
     /// </summary>
-    public class TSOVoltronSerializerGraphItem : IList<TSOVoltronSerializerGraphItem>
+    public record TSOVoltronSerializerGraphItem : IList<TSOVoltronSerializerGraphItem>
     {
         private readonly List<TSOVoltronSerializerGraphItem> _graph;
         private string? stringFormat;
@@ -17,6 +18,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// The name of the property being encoded, this can be blank.
         /// </summary>
         public string PropertyName { get; }
+        public PropertyInfo? PropertyInfo { get; private set; } = null;
+        public void AttachProperty(PropertyInfo info) => PropertyInfo = info;
         /// <summary>
         /// The type of object being encoded
         /// </summary>
@@ -39,13 +42,26 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="SerializedValue">The object value being encoded</param>
         /// <param name="ValueStringFormat">This encoded value, in a string format that adds clarity to the user viewing
         /// this graph in an editor</param>
-        public TSOVoltronSerializerGraphItem(string PropertyName, Type SerializedType, object SerializedValue, string? ValueStringFormat = null)
+        public TSOVoltronSerializerGraphItem(string? PropertyName, Type SerializedType, object SerializedValue, string? ValueStringFormat = null)
         {
             _graph = new();
-            this.PropertyName = PropertyName;
+            this.PropertyName = PropertyName ?? "";
             this.SerializedType = SerializedType;
             this.SerializedValue = SerializedValue;
             stringFormat = ValueStringFormat;
+        }
+        /// <summary>
+        /// <inheritdoc cref="TSOVoltronSerializerGraphItem(string, Type, object, string?)"/>
+        /// </summary>
+        /// <param name="Property"></param>
+        /// <param name="SerializedType"></param>
+        /// <param name="SerializedValue"></param>
+        /// <param name="ValueStringFormat"></param>
+        public TSOVoltronSerializerGraphItem(PropertyInfo? Property, Type SerializedType, object SerializedValue, string? ValueStringFormat = null) : 
+            this(Property?.Name, SerializedType, SerializedValue, ValueStringFormat)
+        {
+            if (Property != null)
+                AttachProperty(Property);  
         }
 
         //**BELOW IS LIST FUNCTIONS**

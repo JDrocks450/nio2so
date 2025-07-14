@@ -4,16 +4,19 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
     /// <summary>
-    /// This is the structure used in Packets to track where the packet is coming (or going)
-    /// <para>It consists of an AriesID and MasterID</para>
+    /// This is a structure consisting of an AriesID and MasterID </para>
     /// </summary>
     [Serializable]
-    public class TSOAriesIDStruct
+    public record TSOAriesIDStruct : ITSONumeralStringStruct
     {
+        public const string DEFAULT_HEADER = "A ";
+
+        private string _header = DEFAULT_HEADER;
+
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
         public string AriesID { get; set; } = "";
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
-        public string MasterID { get; set; } = "";  
+        public string MasterID { get; set; } = "";        
 
         public TSOAriesIDStruct() { }
         /// <summary>
@@ -21,9 +24,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// </summary>
         /// <param name="AriesID"></param>
         /// <param name="MasterID"></param>
-        public TSOAriesIDStruct(uint AriesID, string MasterID) : this()
+        public TSOAriesIDStruct(uint AriesID, string MasterID, string FormatSpecifier = DEFAULT_HEADER) : this()
         {
-            this.AriesID = FormatIDString(AriesID);
+            _header = FormatSpecifier;
+            this.AriesID = ITSONumeralStringStruct.FormatIDString(AriesID);
             this.MasterID = MasterID;
         }
         /// <summary>
@@ -35,25 +39,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         {
             this.AriesID = AriesID;
             this.MasterID = MasterID;
-        }
-
-        public override string ToString()
-        {
-            return $"{AriesID} {MasterID}";
-        }
+        }                
 
         /// <summary>
         /// Gets a blank <see cref="TSOAriesIDStruct"/> object with blank IDs
         /// </summary>
         [IgnoreDataMember]
+        [TSOVoltronIgnorable]
         internal static TSOAriesIDStruct Default => new TSOAriesIDStruct() { AriesID = "", MasterID = "" };
-        /// <summary>
-        /// Formats a string into the ID found in a <see cref="TSOAriesIDStruct"/>
-        /// <para/>Example: <c>A 1338</c>        
-        /// </summary>
-        /// <param name="ID">Example: <c>A 1338</c>  </param>
-        /// <param name="Header"></param>
-        /// <returns></returns>
-        public static string FormatIDString(uint ID, string Header = "A ") => Header + ID;
+
+        string ITSONumeralStringStruct.FormatSpecifier => _header;
+        string ITSONumeralStringStruct.IDString { get => AriesID; set => AriesID = value; }
+        string ITSONumeralStringStruct.NameString { get => MasterID; set => MasterID = value; }
     }
 }

@@ -21,7 +21,7 @@ namespace nio2so.TSOTCP.HSBServer
     {
         public HSBHouseServer(int port, IPAddress ListenIP = null) : base(nameof(HSBHouseServer), port, 5, ListenIP)
         {
-            SendAmount = ReceiveAmount = TSO_Aries_SendRecvLimit; // 1MB by default           
+            SendAmount = ReceiveAmount = ClientBufferLength; // 1MB by default           
             CachePackets = false; // massive memory pit here if true
             DisposePacketOnSent = true; // no more memory leaks :)
 

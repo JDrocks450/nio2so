@@ -125,10 +125,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
                         }
                     }
                     break;
-                case TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU:
-                    return new TSOHostOnlinePDU();
-                case TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU:
-                    return new TSOClientOnlinePDU();
             }
             //Use the cTSOFactory Type map to reflect the packet type
             if (typeMap.TryGetValue(PacketType, out var type))
@@ -154,7 +150,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
                 {
                     read++;
                     stream.Write(splitBuffer.DataBuffer);
-                    if (!splitBuffer.HasDataRemaining) break;
+                    if (splitBuffer.EOF) break;
                 }
                 if (read != Packets.Count) throw new Exception("This may be totally safe. Supplied SplitBuffer Collection had " +
                     "more items than there were for this buffer.");
@@ -172,6 +168,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
         public static TSOSplitBufferPDUCollection CreateSplitBufferPacketsFromPDU(TSOVoltronPacket PDU,
             uint SizeLimit = TSOSplitBufferPDU.STANDARD_CHUNK_SIZE)
         {
+            if (SizeLimit == 0)
+                SizeLimit = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
             if (PDU.BodyLength < SizeLimit)
                 throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
 
@@ -187,7 +185,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
                     byte[] buffer2 = new byte[Math.Min(SizeLimit, dataRemaining)];
                     ms.Read(buffer2, 0, buffer2.Length);
                     dataRemaining = ms.Length - ms.Position;
-                    TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining > 0);
+                    TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining == 0);
                     collection.Add(splitBuffer);
                 }
                 return collection;

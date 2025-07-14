@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 {
@@ -9,7 +10,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
     {
         public const uint ResponsePDU_DefaultStatusCode = 0;
         public const string ResponsePDU_DefaultReasonText = "OK.";
-        public const byte SplitBufferPDU_DefaultChunkSize = 0xB4;
+
+        public const ushort TSOAriesClientBufferLength = 0x200;
+        public const uint SplitBufferPDU_DefaultChunkSize = TSOAriesClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN;
 
         //****WORKSPACE
         public const string WorkspaceDirectory = TestingConstraints.WorkspaceDirectory;

@@ -16,7 +16,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public TSOUpdateRoomPDU() : base() { }
 
         /// <summary>
-        /// Creates a new <see cref="TSOUpdatePlayerPDU"/> with the given information
+        /// Creates a new <see cref="TSOUpdateRoomPDU"/> with the given information
         /// </summary>
         /// <param name="roomID"></param>
         /// <param name="lotPhoneNumber"></param>
@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
             params TSOAriesIDStruct[] Admins)
         {
             RoomID = roomID;
-            NewRoomInfo = new(new TSORoomLotInformationStringPackStruct(lotPhoneNumber, roomName),
+            NewRoomInfo = new(new TSORoomIDStruct(lotPhoneNumber, roomName),
                 lotOwnerInformation, 1, TSORoomInfoStruct.MAX_OCCUPANTS, false, Admins);
 
             MakeBodyFromProperties();

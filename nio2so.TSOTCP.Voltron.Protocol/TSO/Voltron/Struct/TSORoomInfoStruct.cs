@@ -1,85 +1,11 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
 {
-    /// <summary>
-    /// An object that has String1 and String2
-    /// </summary>
-    public interface ITSORoomStringPackStruct
-    {
-        public string String1 { get; }
-        public string String2 { get; }
-    }
-
-    /// <summary>
-    /// Two strings one after another
-    /// </summary>
-    /// <param name="String1"></param>
-    /// <param name="String2"></param>
-    public record TSORoomStringPackStruct(
-        [property: TSOVoltronString(TSOVoltronValueTypes.Pascal)] string String1,
-        [property: TSOVoltronString(TSOVoltronValueTypes.Pascal)] string String2)
-        : ITSORoomStringPackStruct;
-
-    /// <summary>
-    /// A <see cref="ITSORoomStringPackStruct"/> that contains the AvatarID and AvatarName
-    /// </summary>
-    public record TSORoomAvatarInformationStringPackStruct : ITSORoomStringPackStruct
-    {
-        /// <summary>
-        /// Follows format: "__[AvatarID]" where the first two character are seemingly ignored.
-        /// <para/>Nio2so would follow this format: "A 1337" where 1337 is the avatar ID
-        /// </summary>
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string AvatarIDString { get; set; }
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string AvatarName { get; set; }
-
-        public TSORoomAvatarInformationStringPackStruct(uint AvatarID, string AvatarName)
-        {
-            AvatarIDString = TSOAriesIDStruct.FormatIDString(AvatarID);
-            this.AvatarName = AvatarName;
-        }
-
-        string ITSORoomStringPackStruct.String1 => AvatarIDString;
-        string ITSORoomStringPackStruct.String2 => AvatarName;
-
-        [IgnoreDataMember]
-        public static TSORoomAvatarInformationStringPackStruct Default => new TSORoomAvatarInformationStringPackStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName);
-    }
-    /// <summary>
-    /// A <see cref="ITSORoomStringPackStruct"/> that contains the <see cref="LotPhoneNumber"/> and <see cref="RoomName"/>
-    /// </summary>
-    public record TSORoomLotInformationStringPackStruct : ITSORoomStringPackStruct
-    {
-        public const string NOHOST = "no host", BADROOMNAME = "bad roomname";
-
-        public TSORoomLotInformationStringPackStruct(string lotPhoneNumber, string roomName)
-        {
-            LotPhoneNumber = lotPhoneNumber;
-            RoomName = roomName;
-        }
-
-        /// <summary>    
-        /// <c>Maps to m_hostName</c><para/>
-        /// Follows format: "XXXXXXX" which is given from the <see cref="TSOBuyLotByAvatarIDRequest.LotPhoneNumber"/> property
-        /// <para/>Is a unique id for the given cell in the world map
-        /// </summary>
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string LotPhoneNumber { get; set; }
-        /// <summary>
-        /// <c>Maps to m_roomName</c> The name of the room
-        /// </summary>
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string RoomName { get; set; }        
-
-        string ITSORoomStringPackStruct.String1 => LotPhoneNumber;
-        string ITSORoomStringPackStruct.String2 => RoomName;
-
-        [IgnoreDataMember]
-        public static TSORoomLotInformationStringPackStruct Error => new TSORoomLotInformationStringPackStruct(NOHOST, BADROOMNAME);
-    }
 
     /// <summary>
     /// The structure of an m_RoomInfo structure in Voltron. Describes the settings for a given online room
@@ -92,7 +18,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         {
         }
 
-        public TSORoomInfoStruct(TSORoomLotInformationStringPackStruct roomLocationInfo,
+        public TSORoomInfoStruct(TSORoomIDStruct roomLocationInfo,
                            TSOAriesIDStruct ownerVector,
                            uint currentOccupants,                           
                            uint maxOccupants = MAX_OCCUPANTS,
@@ -107,6 +33,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
             IsLocked = isLocked;
         }
 
+        [TSOVoltronIgnorable]
         [IgnoreDataMember]        
         public static TSORoomInfoStruct DebugSettings => new TSORoomInfoStruct()
         {
@@ -115,11 +42,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
             AdminList = [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)],
             CurrentOccupants = 0x01,
         };
-
+        [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public static TSORoomInfoStruct NoRoom => new TSORoomInfoStruct(new("no host", "bad roomname"), new TSOAriesIDStruct("", ""),0);
+        public static TSORoomInfoStruct NoRoom => new TSORoomInfoStruct(TSORoomIDStruct.Blank, new TSOAriesIDStruct("", ""),0);
 
-        public TSORoomLotInformationStringPackStruct RoomLocationInfo { get; set; } = TSORoomLotInformationStringPackStruct.Error;
+        public TSORoomIDStruct RoomLocationInfo { get; set; } = TSORoomIDStruct.Blank;
         /// <summary>
         /// <c>Maps to m_nameLocked</c> and dictates if the name can be changed
         /// </summary>
@@ -131,7 +58,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <summary>
         /// <c>Maps to m_stageID</c> Should point to the lot this room is taking place at
         /// </summary>
-        [TSOVoltronString] public TSORoomLotInformationStringPackStruct StageID { get; set; } = TSORoomLotInformationStringPackStruct.Error;
+        public TSORoomIDStruct StageID { get; set; } = TSORoomIDStruct.Blank;
         /// <summary>
         /// The amount of people currently in this room
         /// </summary>
@@ -155,7 +82,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <summary>
         /// Not sure what groups mean right now but it is the ID of the group
         /// </summary>
-        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string GroupID { get; set; } = "G";
+        [TSOVoltronString(TSOVoltronValueTypes.Pascal)] public string GroupID { get; set; } = "BASIC_GROUP";
 
         /// <summary>
         /// <inheritdoc cref="TSOVoltronArrayLength"/>

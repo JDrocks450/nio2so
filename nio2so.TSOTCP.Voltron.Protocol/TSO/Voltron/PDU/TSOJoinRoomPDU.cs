@@ -17,13 +17,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         {
         }
 
-        public TSOJoinRoomPDU(TSORoomLotInformationStringPackStruct roomID, string password = "")
+        public TSOJoinRoomPDU(TSORoomIDStruct roomID, string password = "")
         {
             RoomID = roomID;
             Password = password;
         }
 
-        public TSORoomLotInformationStringPackStruct RoomID { get; set; } = new("","");
+        public TSORoomIDStruct RoomID { get; set; } = new("","");
         public string Password { get; set; } = "";
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.JOIN_ROOM_PDU;
     }

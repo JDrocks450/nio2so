@@ -1,7 +1,10 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using QuazarAPI;
 using QuazarAPI.Networking.Standard;
 using System.Net;
@@ -13,7 +16,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol
     {
         const bool DefaultRunningState = true;
 
-        public const UInt16 TSO_Aries_SendRecvLimit = 1024;
+        /// <summary>
+        /// The size of the ClientBuffer and SendBuffer for incoming and outgoing data
+        /// </summary>
+        public ushort ClientBufferLength { get; set; } = TSOVoltronConst.TSOAriesClientBufferLength;
+        public override int ReceiveAmount => ClientBufferLength;
+        public override int SendAmount => ClientBufferLength;
+
 
         protected List<TSOVoltronPacket> _VoltronBacklog = new();
         List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
@@ -23,6 +32,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         public event EventHandler HSB_ImReady;
 
         public TSOServerTelemetryServer Telemetry { get; protected set; }
+
         /// <summary>
         /// True to pause the processing of any Voltron Packets until this is false
         /// </summary>
@@ -58,11 +68,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             {
                 case (uint)TSOAriesPacketTypes.Client_SessionInfoResponse:
                     {
+                        //**Client is logging into Voltron!
                         var sessionData = TSOAriesClientSessionInfo.FromPacket(Data);
-                        QConsole.WriteLine($"Client: {ID}", sessionData.ToString());
+                        TSOTCPPacket.WriteAllPacketsToDisk([Data]);
+                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Discoveries, Name, $"User {sessionData.User} is logging into Voltron on nio2so!"));            
 
                         //HOST_ONLINE_PDU
-                        HandleSendClientHostOnlinePacket(ID);
+                        SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
+                        //UPDATE_PLAYER_PDU
+                        SubmitAriesFrame(ID, new TSOUpdatePlayerPDU(new TSOAriesIDStruct(uint.Parse(sessionData.User), TestingConstraints.MyAvatarName)));
 
                         HSB_ImReady?.Invoke(this, null);
                     }
@@ -201,32 +215,61 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             }
             packetSendQueue.Clear();
             _VoltronBacklog.Clear();
+
             if (disconnecting)
                 Disconnect(ID, SocketError.Disconnecting);
         }
 
-        private void SubmitAriesFrame(uint ID, TSOVoltronPacket voltronPacket)
-        {
-            var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(voltronPacket);
-            Send(ID, ariesPacket);
-            Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING
-            Telemetry.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING
-        }
-
-        #region HANDLERS
         /// <summary>
-        /// Handles an incoming connection by sending it the <see cref="TSO_PreAlpha_VoltronPacketTypes.HOST_ONLINE_PDU"/>
+        /// Submits the <see cref="TSOVoltronPacket"/> to be sent to the remote connection <paramref name="ID"/> 
+        /// <para/>This will call <see cref="SplitLargePDU(TSOVoltronPacket)"/> on a larger <see cref="TSOVoltronPacket"/> size than 
+        /// <see cref="ClientBufferLength"/>!
+        /// <para/>Please note: TCPQuaZar also will automatically slice the data buffer of a <see cref="TSOTCPPacket"/> into multiple buffers if this is an overage.. but don't rely on this.
         /// </summary>
         /// <param name="ID"></param>
-        /// <param name="PacketProperties"></param>
-        private void HandleSendClientHostOnlinePacket(uint ID, TSOHostOnlinePDU? PacketProperties = default)
+        /// <param name="voltronPacket"></param>
+        private void SubmitAriesFrame(uint ID, TSOVoltronPacket voltronPacket)
         {
-            if (PacketProperties == default) PacketProperties = new TSOHostOnlinePDU();
-            var sendPacket = TSOVoltronPacket.MakeVoltronAriesPacket(PacketProperties); //new TSOHostOnlinePDU(1, 1024, "Hello", "World"));            
-            Send(ID, sendPacket);
-            Debug_LogSendPDU(ID, PacketProperties, NetworkTrafficDirections.CREATED);
+            IEnumerable<TSOVoltronPacket> largePDUs = SplitLargePDU(voltronPacket);
+            if (largePDUs.Count() > 1) // log console on auto TSOSplitBuffers            
+                Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name,
+                    $"***\n" +
+                    $"\n" +
+                    $"Split {voltronPacket.ToShortString()} into {largePDUs.Count()} {nameof(TSOSplitBufferPDU)}s... " +
+                    $"({largePDUs.Count()} x {ClientBufferLength}(max) = {largePDUs.Sum(x => x.BodyLength)} bytes)\n" +
+                    $"\n" +
+                    $"***"));            
+            foreach (var splitPDU in largePDUs)
+            {
+                TSOTCPPacket ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(splitPDU);
+                if (ariesPacket.BodyLength > ClientBufferLength)
+                { // ERROR! Size too large!
+                    throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
+                }
+                Send(ID, ariesPacket);
+                Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING for ARIES packets
+            }                        
+            Telemetry.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING FOR VOLTRON PDUs
         }
-        #endregion
+
+        /// <summary>
+        /// Helper function to automatically create a <see cref="TSOSplitBufferPDU"/> for largely sized networked data
+        /// <para/> See: <see cref="TestingConstraints.SplitBuffersPDUEnabled"/> and <see cref="TSOSplitBufferPDU.STANDARD_CHUNK_SIZE"/>
+        /// </summary>
+        /// <param name="DBWrapper"></param>
+        /// <returns></returns>
+        protected IEnumerable<TSOVoltronPacket> SplitLargePDU(TSOVoltronPacket DBWrapper)
+        {
+            List<TSOVoltronPacket> packets = new();
+            //ensure to remove the ARIES header size from the split size to ensure we don't spill over            
+            uint splitSize = ClientBufferLength != 0 ? (uint)ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN : TSOSplitBufferPDU.STANDARD_CHUNK_SIZE;
+            if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
+                packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize));
+            else
+                packets.Add(DBWrapper);
+            return packets;
+        }
+
         /// <summary>
         /// Logs to the debug output stream the packet's information so it can be assessed when debugging.
         /// </summary>

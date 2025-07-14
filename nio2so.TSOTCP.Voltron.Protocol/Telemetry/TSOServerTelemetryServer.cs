@@ -112,6 +112,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
             };
             if (!TestingConstraints.VerboseLogging)
             {
+                if (PDU is TSOSplitBufferPDU)
+                    return; // skip these
                 if (PDU is ITSODataBlobPDU standardMsg &&
                     standardMsg.DataBlobContentObject.GetAs<TSOStandardMessageContent>().
                     Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))

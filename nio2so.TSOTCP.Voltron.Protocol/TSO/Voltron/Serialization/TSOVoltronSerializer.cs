@@ -11,7 +11,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
     /// </summary>
     public static class TSOVoltronSerializer
     {
-        private static TSOVoltronSerializerGraphItem? _lastGraphItem;
+        private static Stack<TSOVoltronSerializerGraphItem> _graphStack = new();
+        private static TSOVoltronSerializerGraphItem? _lastGraphItem = null;
 
         /// <summary>
         /// Gets all <see cref="BindingFlags.Public"/> properties that don't have <see cref="TSOVoltronIgnorable"/> or <see cref="IgnoreDataMemberAttribute"/> 
@@ -30,9 +31,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="Stream">The <see cref="Stream"/> to write the data bytes to</param>
         /// <param name="Object">The instance of <typeparamref name="T"/> object to serialize</param>
         /// <exception cref="ArgumentException"></exception>
-        public static void Serialize<T>(Stream Stream, T Object)
+        public static void Serialize<T>(Stream Stream, T Object, PropertyInfo Property = default)
         {
-            _lastGraphItem = null;
+            void SetGraphItem(TSOVoltronSerializerGraphItem newItem)
+            {
+                if (!_graphStack.Any())
+                {
+                    _graphStack.Push(newItem);
+                    return;
+                }
+                //_graphStack.First().Add(newItem);
+                _graphStack.Push(newItem);
+            }
 
             //Does this object type implement custom serialization behavior?
             //as in-- does it define how it should deserialized itself?
@@ -40,7 +50,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             {
                 byte[] customData = serializable.OnSerialize();
                 Stream.Write(customData);
-                _lastGraphItem = new("", Object.GetType(), Object, $"Custom serialization technique ({customData.Length} bytes)");
+                SetGraphItem(new(Property, Object.GetType(), Object, $"Custom serialization technique ({customData.Length} bytes)"));
                 return;
             }
             // no-- proceed with default serialize    
@@ -49,7 +59,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
-            _lastGraphItem = new("", Object.GetType(), Object);
+            SetGraphItem(new(Property, Object.GetType(), Object));
 
             foreach (var property in GetSerializableProperties(Object))
             {               
@@ -57,7 +67,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
                 foreach(var item in TSOVoltronSerializerCore.GetLastGraph())
-                    _lastGraphItem.Add(item);
+                    _graphStack.First().Add(item);
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)
@@ -69,6 +79,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, distanceToEnd.Value, Object))
                     throw new ArgumentException($"Could not serialize: {distanceToEnd.Value}");
             }
+            _lastGraphItem = _graphStack.Pop();
+            
         }
         /// <summary>
         /// Serializes the given <paramref name="Object"/> to a Voltron data stream and writes it to a new <see cref="byte"/><c>[]</c>
@@ -158,6 +170,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// serialized for research/studying
         /// </summary>
         /// <returns></returns>
-        public static TSOVoltronSerializerGraphItem GetLastGraph() => _lastGraphItem;
+        public static TSOVoltronSerializerGraphItem? GetLastGraph()
+        {
+            return _lastGraphItem;
+        }
     }
 }

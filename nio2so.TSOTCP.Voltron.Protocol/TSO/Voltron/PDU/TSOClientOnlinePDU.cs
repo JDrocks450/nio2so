@@ -1,6 +1,7 @@
 ﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
-    internal class TSOClientOnlinePDU : TSOVoltronPacket
+    [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU)]
+    public class TSOClientOnlinePDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU;
         /// <summary>

@@ -157,7 +157,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
 
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);
-            RespondTo(PDU, response);         
+            RespondTo(PDU, response);            
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetHouseBlobByIDRequest"/>
@@ -212,7 +212,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
         public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
         {
-            RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
+            throw new NotImplementedException();
+            //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
@@ -221,16 +222,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var destroyRoomPDU = (TSODestroyRoomPDU)PDU;
             var myRoom = _lots[0];
 
-            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, myRoom.Name, myRoom.PhoneNumber));
-            //RespondWith(new TSOExitRoomPDU(new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)));
-            return;
-            RespondWith(new TSOBroadcastDatablobPacket(
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(
-                        TSO_PreAlpha_MasterConstantsTable.kPartedRoom,
-                        TSOVoltronSerializer.Serialize(TSORoomInfoStruct.DebugSettings)
-                    )
-                ));
+            //Get the avatar who is trying to leave and destroy the room behind them
+            uint RoomID = ((ITSONumeralStringStruct)destroyRoomPDU.RoomInfo)?.NumericID ?? 0;
+            if (RoomID == 0)
+                ;// throw new InvalidDataException($"{nameof(DESTROY_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
+
+            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, myRoom.Name, myRoom.PhoneNumber));                      
+            RespondWith(new TSOUpdateRoomPDU(1, TSORoomInfoStruct.NoRoom));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
@@ -241,7 +239,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             foreach(var lot in _lots)
             {
                 rooms[i++] = new TSORoomInfoStruct(
-                    new TSORoomLotInformationStringPackStruct(lot.PhoneNumber, lot.Name),
+                    new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
                     new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
                     (uint)i+1
                     );
@@ -268,13 +266,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             
             //Update which room they're in currently
             string LotName = thisLot?.Name ?? "BloatyLand";
-            string RoomName = LotName;            
+            string RoomName = LotName;
+
+            //create a list of admins
+            var admins = new TSOAriesIDStruct[] { new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName) };
+            uint occupants = (uint)admins.Length;
+
+            //create the roominfo struct
+            TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new (phoneNumber, RoomName),
+                ownerVector: new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // m_ownerID
+                currentOccupants: occupants, maxOccupants: 10, isLocked: false,
+                roomHostInformation: admins
+            );
 
             //tell the client to join this new room
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, RoomName, phoneNumber,
-                new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // m_ownerID
-                [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)] // m_AdminList[]
-            );
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, roomInfo);
             RespondWith(updateRoomPDU);
 
             //**INVOKE THE HSB

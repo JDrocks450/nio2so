@@ -216,7 +216,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             bool success = false;
 
-            void logme(TSOVoltronPacket statusUpdater)
+            void statusUpdated(TSOVoltronPacket statusUpdater)
             {
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                     RegulatorName, $"[STATUS_UPDATED] {statusUpdater}"));
@@ -234,15 +234,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     break;
                 //**STATUS UPDATERS**
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU:
-                    logme(new TSOSetAcceptAlertsResponsePDU(false)); break;
+                    statusUpdated(new TSOSetAcceptAlertsResponsePDU(((TSOSetAcceptAlertsPDU)PDU).AcceptingAlerts == 0)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_FLASHES_PDU:
-                    logme(new TSOSetAcceptFlashesResponsePDU(false)); break;
+                    statusUpdated(new TSOSetAcceptFlashesResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_IGNORE_LIST_PDU:
-                    logme(new TSOSetIgnoreListResponsePDU(false)); break;
+                    statusUpdated(new TSOSetIgnoreListResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
-                    logme(new TSOSetInvincibleResponsePDU(false)); break;
+                    statusUpdated(new TSOSetInvincibleResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU:
-                    logme(new TSOSetInvisibleResponsePDU(false)); break;
+                    statusUpdated(new TSOSetInvisibleResponsePDU(false)); break;
             }
             Response = null;
             if (success)

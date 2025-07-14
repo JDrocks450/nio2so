@@ -194,8 +194,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
             System.IO.Directory.CreateDirectory(Directory);
             foreach (TSOTCPPacket packet in packets)
             {
-                string myName = $"[{packetNumber}] {(TSOAriesPacketTypes)packet.PacketType} Packet - {DateTime.Now.ToShortTimeString()}.dat";
-                File.WriteAllBytes(Path.Combine(Directory, myName), packet.GetBytes());
+                string myName = $"[{packetNumber}] {(TSOAriesPacketTypes)packet.PacketType} Packet.dat";
+                byte[] packetBytes = packet.GetBytes();
+                File.WriteAllBytes(Path.Combine(Directory, myName), packetBytes);
             }
         }
 

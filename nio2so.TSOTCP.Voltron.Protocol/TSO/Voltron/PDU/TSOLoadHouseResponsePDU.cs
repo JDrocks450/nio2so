@@ -1,6 +1,9 @@
-﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+
+namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
+    /// This PDU is not stubbed out by the Client and will raise an exception without reading the response body
     /// <c>WARNING:</c>
     /// <para>The TSOClient uses this PDU in a very interesting way. Therefore, in current spec, this packet type is never actually 
     /// sent to the Client, and <see cref="TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU"/> will be sent 
@@ -14,6 +17,7 @@
         /// One UInt32 with an ID to load.
         /// </summary>
         public uint HouseID { get; set; }
+
         public TSOLoadHouseResponsePDU() : base() { MakeBodyFromProperties(); }
 
         public TSOLoadHouseResponsePDU(uint houseID) : base()

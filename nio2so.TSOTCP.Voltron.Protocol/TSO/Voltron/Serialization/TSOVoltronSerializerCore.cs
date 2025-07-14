@@ -267,7 +267,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             if (SerializeValue == null) // handle NULLs!
             { // item is null -- handle this
-                _lastGraphItems.Push(new(property.Name, property.PropertyType, null));
+                _lastGraphItems.Push(new(property, property.PropertyType, null));
                 return true;
             }
 
@@ -283,7 +283,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (property.PropertyType == typeof(byte[]))
             {
                 Stream.EmplaceBody((byte[])SerializeValue);
-                _lastGraphItems.Push(new(property.Name,
+                _lastGraphItems.Push(new(property,
                     typeof(byte[]), (byte[])SerializeValue, $"{((byte[])SerializeValue).Length} bytes."));
                 return true;
             }
@@ -294,7 +294,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 Array arr = (Array)property.GetValue(Instance);
                 int i = 0;
                 if (arr.Length <= 0)
-                    _lastGraphItems.Push(new(property.Name + $" (Array)", arr.GetType(), arr));
+                    _lastGraphItems.Push(new(property, arr.GetType(), arr));
                 foreach (var item in arr)
                 {
                     if (!arr.GetType().GetElementType().IsClass) throw new NotImplementedException("Arrays with an element type that isn't a class isn't supported right now.");
@@ -331,7 +331,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 string valueString = SerializeValue.ToString();
                 if (property.PropertyType.IsEnum)                
                     valueString = Enum.GetName(property.PropertyType, SerializeValue) ?? valueString;                
-                _lastGraphItems.Push(new(property.Name, PropertyType, SerializeValue, valueString));
+                _lastGraphItems.Push(new(property, PropertyType, SerializeValue, valueString));
                 return true;
             }
             if (!hasAttrib) // AUTOSELECT
@@ -347,15 +347,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             else if (SerializeValue is string myStringValue)
             {
                 WriteString(Stream, myStringValue, type);
-                _lastGraphItems.Push(new(property.Name, typeof(string), myStringValue, myStringValue));
+                _lastGraphItems.Push(new(property, typeof(string), myStringValue, myStringValue));
                 return true;
             }
 
             //--SERIALIZABLES
             if (PropertyType.IsClass)
             {
-                TSOVoltronSerializer.Serialize(Stream, SerializeValue);
-                _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name, PropertyType, SerializeValue));
+                TSOVoltronSerializer.Serialize(Stream, SerializeValue, property);
+                _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property, PropertyType, SerializeValue));
                 return true;
             }
 

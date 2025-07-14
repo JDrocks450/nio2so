@@ -9,10 +9,10 @@
         }
         public TSOSetAcceptAlertsPDU(uint value = 0x0)
         {
-            Value = value;
+            AcceptingAlerts = value;
             MakeBodyFromProperties();
         }
 
-        public uint Value { get; set; }
+        public uint AcceptingAlerts { get; set; }
     }
 }

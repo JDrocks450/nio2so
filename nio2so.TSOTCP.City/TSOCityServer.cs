@@ -15,15 +15,15 @@ namespace nio2so.TSOTCP.City.TSO
     /// <summary>
     /// The <see cref="TSOCityServer"/> is a The Sims Online Pre-Alpha Voltron Server analog.
     /// <para>It is designed to work with an unmodified copy of The Sims Online Pre-Alpha.</para>
-    /// <para>It will by default host with a send/recv buffer allocated to be <see cref="TSO_Aries_SendRecvLimit"/></para>
+    /// <para>It will by default host with a send/recv buffer allocated to be <see cref="TSOVoltronConst.TSOAriesClientBufferLength"/></para>
     /// <para>To get the Client to connect to a <see cref="TSOCityServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
-    /// and you have modified your hosts file in System32/drivers/etc to include xo.max.ea.com</para>
+    /// and you have modified your hosts file in System32/drivers/etc in accordance with the niotso readme file.</para>
     /// </summary>
     public class TSOCityServer : TSOVoltronBasicServer
     {
         public TSOCityServer(int port, IPAddress ListenIP = null) : base(nameof(TSOCityServer), port, 5, ListenIP)
         {
-            SendAmount = ReceiveAmount = TSO_Aries_SendRecvLimit; // 1MB by default           
+            ClientBufferLength = TSOVoltronConst.TSOAriesClientBufferLength; // edit const to change this setting
             CachePackets = false; // massive memory pit here if true
             DisposePacketOnSent = true; // no more memory leaks :)
 
@@ -50,8 +50,6 @@ namespace nio2so.TSOTCP.City.TSO
 
             //Trigger tso factories to map using static constructor
             TSOFactoryBase.InitializeFactories();
-
-            var bps = BPSFileInterpreter.Interpret(@"E:\Games\TSO Pre-Alpha\packetlog.bps");
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;

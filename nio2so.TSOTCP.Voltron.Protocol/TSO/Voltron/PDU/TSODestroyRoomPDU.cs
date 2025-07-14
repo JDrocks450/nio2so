@@ -16,13 +16,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     public sealed class TSODestroyRoomPDU : TSOVoltronPacket
     {
         /// <summary>
-        /// The name of the Room
+        /// The <see cref="TSORoomIDStruct"/>
         /// </summary>
-        [TSOVoltronString] public string RoomName { get; set; }
+        public TSORoomIDStruct RoomInfo { get; set; }
+        
         /// <summary>
-        /// Perhaps the session host or the person making the request to close the room?
+        /// Unknown
         /// </summary>
-        public TSOAriesIDStruct AriesID { get; set; }
+        [TSOVoltronString] public string ReasonText { get; set; }        
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU;
 
