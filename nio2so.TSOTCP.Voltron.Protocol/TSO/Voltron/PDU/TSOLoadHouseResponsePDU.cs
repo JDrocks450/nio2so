@@ -3,7 +3,7 @@
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
-    /// This PDU is not stubbed out by the Client and will raise an exception without reading the response body
+    /// This PDU is stubbed out by the Client and will raise an exception without reading the response body
     /// <c>WARNING:</c>
     /// <para>The TSOClient uses this PDU in a very interesting way. Therefore, in current spec, this packet type is never actually 
     /// sent to the Client, and <see cref="TSO_PreAlpha_VoltronPacketTypes.HOUSE_SIM_CONSTRAINTS_RESPONSE_PDU"/> will be sent 

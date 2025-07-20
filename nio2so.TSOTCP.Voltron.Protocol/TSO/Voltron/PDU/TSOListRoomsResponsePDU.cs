@@ -1,9 +1,6 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
-using static nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.TSOUpdateRoomPDU;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {

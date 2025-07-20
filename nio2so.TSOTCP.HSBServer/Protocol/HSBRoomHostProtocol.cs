@@ -37,8 +37,7 @@ namespace nio2so.TSOTCP.HSBServer.Protocol
         public void LOAD_HOUSE_RESPONSE_PDU(TSOVoltronPacket PDU)
         {
             //HOST PROTOCOL SHOULD ALWAYS TELL THE CLIENT THIS
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.
-            RespondWith(new TSOOccupantArrivedPDU(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName));
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(TSOVoltronConst.MyHouseID)); // dictate what lot to load here.            
         }
     }
 }

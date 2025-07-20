@@ -25,18 +25,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// </summary>
         /// <param name="RoomName"></param>
         /// <param name="HostName"></param>
-        public TSODestroyRoomResponsePDU(TSOStatusReasonStruct StatusReason, string RoomName, string HostName)
+        public TSODestroyRoomResponsePDU(TSOStatusReasonStruct StatusReason, TSORoomIDStruct RoomID)
         {
             this.StatusReason = StatusReason;
-            this.RoomName = RoomName;
-            this.HostName = HostName;
+            this.RoomID = RoomID;
             MakeBodyFromProperties();
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_RESPONSE_PDU;
         
         public TSOStatusReasonStruct StatusReason { get; set; }
-        public string RoomName { get; set; }
-        public string HostName { get; set; }
+        public TSORoomIDStruct RoomID { get; set; }
     }
 }

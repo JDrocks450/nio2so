@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace nio2so.Database.Types
 {
+    [Serializable]
     public class UserInfo
     {
         public UserInfo()
@@ -36,6 +38,7 @@ namespace nio2so.Database.Types
         /// <summary>
         /// A <see cref="UserInfo"/> default value for the creator of this project, me :)
         /// </summary>
+        [JsonIgnore]
         public static UserInfo Bloaty => new(1, "Bloaty", new() { 1337 });
     }
 }

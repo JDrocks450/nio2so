@@ -20,8 +20,7 @@ namespace nio2so.TSOTCP.HSBServer
     public class HSBHouseServer : TSOVoltronBasicServer
     {
         public HSBHouseServer(int port, IPAddress ListenIP = null) : base(nameof(HSBHouseServer), port, 5, ListenIP)
-        {
-            SendAmount = ReceiveAmount = ClientBufferLength; // 1MB by default           
+        {          
             CachePackets = false; // massive memory pit here if true
             DisposePacketOnSent = true; // no more memory leaks :)
 

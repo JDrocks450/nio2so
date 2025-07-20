@@ -1,0 +1,6 @@
+@nio2so.DataService.API_HostAddress = http://localhost:5231
+
+# GET ACCOUNTS TEST
+GET {{nio2so.DataService.API_HostAddress}}/api/users/1234
+Accept: application/json
+###

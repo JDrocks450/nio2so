@@ -225,10 +225,26 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //Get the avatar who is trying to leave and destroy the room behind them
             uint RoomID = ((ITSONumeralStringStruct)destroyRoomPDU.RoomInfo)?.NumericID ?? 0;
             if (RoomID == 0)
-                ;// throw new InvalidDataException($"{nameof(DESTROY_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
+                throw new InvalidDataException($"{nameof(DESTROY_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
 
-            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, myRoom.Name, myRoom.PhoneNumber));                      
             RespondWith(new TSOUpdateRoomPDU(1, TSORoomInfoStruct.NoRoom));
+            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, new(myRoom.PhoneNumber,myRoom.Name)));
+            
+            return;
+
+            //**tried these
+            RespondWith(new TSODetachFromRoomPDU(new TSORoomIDStruct(myRoom.PhoneNumber,myRoom.Name)));
+            
+            var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
+                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
+                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_UnloadHouse,
+                    TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
+                )
+            {
+                SenderSessionID = new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)
+            };
+            kClientConnectedMsg.MakeBodyFromProperties();
+            RespondWith(kClientConnectedMsg);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
@@ -256,7 +272,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
 
             // TELL THE CLIENT TO START THE HOST PROTOCOL
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));            
 
             //get the lot
             LotTest? thisLot = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID);
@@ -281,7 +297,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //tell the client to join this new room
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, roomInfo);
-            RespondWith(updateRoomPDU);
+            RespondWith(updateRoomPDU);            
 
             //**INVOKE THE HSB
             if (HSBSession.HSB_Activated)
@@ -306,7 +322,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void CHAT_MSG_PDU(TSOVoltronPacket PDU)
         {
             var msg = (TSOChatMessagePDU)PDU;
-            RespondWith(PDU);
+            RespondWith(msg);
             //RespondWith(new TSOChatMessageFailedPDU(msg.Message));
         }
     }

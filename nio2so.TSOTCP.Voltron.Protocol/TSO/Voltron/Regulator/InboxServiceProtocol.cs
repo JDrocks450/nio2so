@@ -21,16 +21,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             TSOFlashMessagePDU messagePDU = (TSOFlashMessagePDU)PDU;
             string[] strings = messagePDU.GetContentStrings();
-            
-            RespondWith(new TSOFlashMessageResponsePDU(messagePDU.RecipientID, messagePDU.PlayerInfo, messagePDU.PackedContent));
 
+            RespondWith(new TSOFlashMessageResponsePDU(messagePDU.RecipientID, messagePDU.PlayerInfo, messagePDU.PackedContent));
             RespondWith(
                 new TSOFlashMessagePDU(
                     new TSOPlayerInfoStruct(new TSOAriesIDStruct(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName)),
                     messagePDU.PlayerInfo.PlayerID, "please stop contacting me."
                 ));
-                
             return;
+            
             //DELETE MPS MESSAGE?
         }
     }

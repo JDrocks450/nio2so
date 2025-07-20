@@ -23,7 +23,17 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
             PopularityDelta = 1,
             ShardName = TestingConstraints.MyShardName,
             SimoleanDelta = 5000,
-            Simoleans = 20000
+            Simoleans = TestingConstraints.StaticFunds
+        };
+        public static AvatarDataPacketStructure SecondaryAvatar = new()
+        {
+            AvatarID = TestingConstraints.MyFriendAvatarID,
+            Name = TestingConstraints.MyFriendAvatarName,
+            Popularity = 5,
+            PopularityDelta = 1,
+            ShardName = TestingConstraints.MyShardName,
+            SimoleanDelta = 5000,
+            Simoleans = 0
         };
         public static AvatarDataPacketStructure Empty = new()
         {
@@ -42,9 +52,9 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
             {
                 XElement AvatarData = new XElement(TSOCitySelectorAvatarDataElement);
                 MakePacket(Avatar, AvatarData);
-                RootElement.Add(AvatarData);
-                RootElement.Add(new XElement("Player-Active"));
+                RootElement.Add(AvatarData);                                
             }
+            RootElement.Add(new XElement("Player-Active"));
         }
     }
 }

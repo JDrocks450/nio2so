@@ -76,9 +76,8 @@
         //****
 
         //**PATHS
-        public const string WorkspaceDirectory = "/packets";
-        public const string AvatarDataDictionaryFileName = WorkspaceDirectory + "/db/avatardataservlet.json";
-        public const string UserAccountDictionaryFileName = WorkspaceDirectory + "/db/useraccounts.json";
+        public const string WorkspaceDirectory = @"C:\nio2so";
+        public const string DatabaseDirectory = WorkspaceDirectory + @"\db";
 
         public const string MyFriendAvatarName = "FriendlyBuddy";
 

@@ -44,6 +44,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public TSOAriesIDStruct RecipientID { get; set; } = TSOAriesIDStruct.Default;
         /// <summary>
         /// Packed <see cref="IsLetter"/>, <see cref="SentTime"/>, <see cref="LetterSenderName"/>, <see cref="LetterTitle"/>, and <see cref="MessageBody"/>
+        /// <para/>Note: This format is sometimes changed to have different amounts of packed strings, which makes this harder to formulate.
+        /// <para/>Joining a lot without a host on it will result in a <see cref="TSOFlashMessagePDU"/> being sent with only one string.
         /// </summary>
 
         [TSOVoltronString]
@@ -85,25 +87,25 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// </summary>
         [IgnoreDataMember]
         [TSOVoltronIgnorable]
-        public string SentTime => GetContentStrings()[1];
+        public string? SentTime => GetContentStrings().ElementAtOrDefault(1);
         /// <summary>
         /// Letter sender name -- only available in letters
         /// </summary>
         [IgnoreDataMember]
         [TSOVoltronIgnorable]
-        public string LetterSenderName => GetContentStrings()[2];
+        public string? LetterSenderName => GetContentStrings().ElementAtOrDefault(2);
         /// <summary>
         /// Letter title -- only available in letters
         /// </summary>
         [IgnoreDataMember]
         [TSOVoltronIgnorable]
-        public string LetterTitle => GetContentStrings()[3];
+        public string? LetterTitle => GetContentStrings().ElementAtOrDefault(3);
         /// <summary>
         /// Message text, true for both SMS and Letter messages
         /// </summary>
         [IgnoreDataMember]
         [TSOVoltronIgnorable]
-        public string MessageBody => GetContentStrings()[4];
+        public string MessageBody => GetContentStrings().Last();
 
         /// <summary>
         /// Breaks down <see cref="PackedContent"/> into <see cref="EXPECTED_STRINGS"/> strings which can be accessed using properties
@@ -112,9 +114,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <exception cref="InvalidDataException"></exception>
         public string[] GetContentStrings()
         {
-            var strings = PackedContent.Split((char)0x01);
-            if (strings.Length != EXPECTED_STRINGS) 
-                throw new InvalidDataException($"Corrupted message content? Expected {EXPECTED_STRINGS} string(s) - got {strings.Length}");
+            var strings = PackedContent.Split((char)0x01);        
             return strings;
         }
 
