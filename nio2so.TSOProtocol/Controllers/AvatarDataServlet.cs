@@ -84,10 +84,10 @@ namespace nio2so.TSOProtocol.Controllers
         }
 
         /// <summary>
-        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>
+        /// <inheritdoc cref="nio2soDataServiceClient.GetAvatarProfileByAvatarID(AvatarIDToken)"/>
         /// </summary>
         /// <param name="AvatarID"></param>
-        /// <returns>On not found, returns null</returns>
+        /// <returns></returns>
         private Task<AvatarProfile?> DownloadAvatarProfile(AvatarIDToken AvatarID) => dataServiceClient.GetAvatarProfileByAvatarID(AvatarID);
 
         /// <summary>
