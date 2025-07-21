@@ -1,5 +1,6 @@
 ﻿using Microsoft.OpenApi.Any;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
@@ -10,7 +11,7 @@ namespace nio2so.DataService.API.Databases
         bool HasDefaultValues();
     }
 
-    internal class DataComponentDictionaryDataFile<T1, T2> : Dictionary<T1, T2>, IDatabaseComponentDataFile
+    internal class DataComponentDictionaryDataFile<T1, T2> : ConcurrentDictionary<T1, T2>, IDatabaseComponentDataFile
     {
         /// <summary>
         /// Checks if this <see cref="IDictionary{T1, T2}"/> has any content

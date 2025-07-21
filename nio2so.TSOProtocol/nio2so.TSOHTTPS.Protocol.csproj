@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release</Configurations>
@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\nio2so.Data.Common\nio2so.Data.Common.csproj" />
+    <ProjectReference Include="..\nio2so.Database\nio2so.DataService.Common.csproj" />
   </ItemGroup>
 
 </Project>

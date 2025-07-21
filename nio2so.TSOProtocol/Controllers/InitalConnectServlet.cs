@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using nio2so.DataService.Common.Tokens;
 using nio2so.Protocol.Data.Credential;
+using nio2so.TSOHTTPS.Protocol.Data;
 using nio2so.TSOProtocol.Packets.TSOXML;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 
@@ -13,6 +15,8 @@ namespace nio2so.Protocol.Controllers
     [Route("/cityselector")]
     public class InitialConnectServletController : ControllerBase
     {
+        private const string USER_AGENT = "SimsOnline";
+
         private readonly ILogger<InitialConnectServletController> _logger;
 
         public InitialConnectServletController(ILogger<InitialConnectServletController> logger)
@@ -23,12 +27,12 @@ namespace nio2so.Protocol.Controllers
         /// <summary>
         /// Will return User-Authorized, Patch-Result and Error-Message depending on whether this Client is valid.
         /// </summary>
-        /// <param name="Ticket"></param>
+        /// <param name="Ticket">The <see cref="UserToken"/> of the user</param>
         /// <param name="Version"></param>
         /// <returns></returns>
         [HttpGet("initial-connect.jsp")]
         public ActionResult Get(string Ticket, string Version)
-        {
+        {            
             _logger.LogInformation("TSOClient transitioning to the City Selector (Initial-Connect)");
             int function = 1; // function 1 will accept an incoming connection
             TSOXMLPacket? returnPacket = null;
@@ -41,10 +45,10 @@ namespace nio2so.Protocol.Controllers
             {
                 case 0: // PATCH RESULT
                     const string patchAddr = "https://nio2so.tso.ad.max.ea.com/patch1.0"; // web address, goes legit nowhere, used for debugging.
-                    returnPacket = new PatchResultPacket(new Uri(patchAddr), TSOSessionTicket.LoginDefault);
+                    returnPacket = new PatchResultPacket(new Uri(patchAddr), new TSOSessionTicket(Ticket));
                     break;
                 case 1: // GOOD 2 GO
-                    returnPacket = new UserAuthorizePacket();
+                    returnPacket = Authorize(Ticket);
                     break;
                 default: // ERROR
                     returnPacket = new ErrorMessagePacket(132, "Generic nio2so error.");
@@ -52,6 +56,13 @@ namespace nio2so.Protocol.Controllers
             }
             _logger.LogInformation($"CitySelector: InitConnect({function}) === \n {returnPacket} \n===");
             return Ok(returnPacket.ToString());
+        }
+
+        private UserAuthorizePacket Authorize(UserToken Token)
+        {
+            var remote = Request.HttpContext.Connection;
+            EntryLobby.Add(Token, remote.RemoteIpAddress, remote.RemotePort);
+            return new UserAuthorizePacket();
         }
     }
 }

@@ -42,7 +42,10 @@ namespace nio2so.DataService.API.Databases
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_baseDir));
             using FileStream fs = File.Create(_baseDir);
-            return JsonSerializer.SerializeAsync<T>(fs, DataFile);
+            lock (DataFile)
+            {
+                return JsonSerializer.SerializeAsync<T>(fs, DataFile);
+            }
         }
 
         protected abstract void CreateDefaultValues();

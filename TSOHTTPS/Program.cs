@@ -1,4 +1,7 @@
 
+using nio2so.Protocol.Controllers;
+using nio2so.TSOHTTPS.Protocol.Services;
+
 namespace TSOHTTPS
 {
     public class Program
@@ -8,7 +11,8 @@ namespace TSOHTTPS
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            builder.Services.AddHttpClient<nio2soDataServiceClient>();
+            builder.Services.AddMvc().AddApplicationPart(typeof(AuthLoginController).Assembly);
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
@@ -23,7 +27,7 @@ namespace TSOHTTPS
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseAuthorization();
 

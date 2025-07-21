@@ -10,13 +10,53 @@ namespace nio2so.DataService.API.Databases
 
         internal AccountsDataService() : base(ServerSettings.Current.AccountsFile)
         {
-
+            CreateDefaultValues();
         }
 
+        /// <summary>
+        /// Ensures these default static accounts are present in the <see cref="AccountsDataService"/>
+        /// </summary>
         protected override void CreateDefaultValues()
         {
-            DataFile.Add("bloaty", 1234);
-            DataFile.Add("friendly", 4321);
+            foreach (var account in ServerSettings.Current.StaticAccounts)            
+                EnsureAccount(account);
+            Save();
+        }
+
+        /// <summary>
+        /// Creates a new Account in the database and returns the <see cref="UserToken"/> of the newly created account
+        /// </summary>
+        /// <param name="UserName"></param>        
+        /// <returns></returns>
+        public UserToken CreateAccount(string UserName)
+        {
+            UserToken newToken = default;
+            int failcount = 0, failmax = 5;
+        retry:
+            if (failcount >= failmax) throw new Exception("Internal server error.");
+            do
+            {
+                newToken = UserToken.Create(UserName);
+            }
+            while (DataFile.ContainsKey(newToken)); // generate new unused key
+            if (!DataFile.TryAdd(UserName, newToken)) // added by another concurrent thread
+            {
+                failcount++; // retry with a fresh user account token
+                goto retry;
+            }
+            Save();
+            return newToken;
+        }
+
+        /// <summary>
+        /// Ensures an Account matches this <see cref="UserToken"/> in the database and returns if it was created or not
+        /// </summary>
+        /// </param>
+        /// <returns></returns>
+        public bool EnsureAccount(UserToken Token)
+        {
+            UserToken newToken = Token;
+            return DataFile.TryAdd(Token.UserName, newToken);
         }
 
         public UserToken GetUserTokenByUserName(string UserName)

@@ -34,7 +34,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
             foreach (var Shard in Shards)
             {
                 XElement ShardData = new XElement(TSOCitySelectorShardElement);
-                MakePacket(Shard, ShardData);
+                SerializeXML(Shard, ShardData);
                 RootElement.Add(ShardData);
             }
         }

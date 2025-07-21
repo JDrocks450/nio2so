@@ -1,44 +1,72 @@
-﻿using System;
+﻿using nio2so.DataService.Common.Tokens;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace nio2so.Database.Types
+namespace nio2so.DataService.Common.Types
 {
+    public interface ICopyable
+    {
+        /// <summary>
+        /// <see cref="ICopyable"/> implements a simple <b>Public Property</b> copy method using reflection
+        /// </summary>
+        /// <param name="Other"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        void Copy(ICopyable Other)
+        {
+            Type otherType = Other.GetType();
+            Type myType = GetType();
+            if (myType != otherType) throw new InvalidOperationException($"Attempted to copy {otherType.Name} to {myType.Name}");
+            foreach (var property in Other.GetType().GetProperties())
+                if (property.CanWrite && property.CanRead) property.SetValue(this, property.GetValue(Other)); // set onto this what value is on Other
+        }
+    }
+
     [Serializable]
-    public class UserInfo
+    public class UserInfo : ICopyable
     {
         public UserInfo()
         {
 
         }
 
-        public UserInfo(uint userId, string userName, HashSet<uint> avatars)
+        /// <summary>
+        /// Copy constructor that guarantees <see cref="UserAccountToken"/> will be <paramref name="UserToken"/>
+        /// </summary>
+        /// <param name="UserToken"></param>
+        /// <param name="Other"></param>
+        public UserInfo(UserToken UserToken, UserInfo Other) : this()
         {
-            UserId = userId;
-            UserName = userName;
-            Avatars = avatars;
+            Copy(Other);
+            UserAccountToken = UserToken;
+        }
+        /// <summary>
+        /// Creates a new <see cref="UserInfo"/> with <paramref name="avatars"/>
+        /// </summary>
+        /// <param name="UserToken"></param>
+        /// <param name="avatars"></param>
+        public UserInfo(UserToken UserToken, params uint[] avatars) : this()
+        {
+            UserAccountToken = UserToken;
+            Avatars = [..avatars];
         }
 
         /// <summary>
         /// The ID of this User's profile        
         /// </summary>
-        public uint UserId { get; set; }
-        /// <summary>
-        /// This User's UserName
-        /// </summary>
-        public string UserName { get; set; }
+        public UserToken UserAccountToken { get; set; }
         /// <summary>
         /// The IDs of avatars that belong to this User        
         /// </summary>
-        public HashSet<uint> Avatars { get; set; }
+        public AvatarIDToken[] Avatars { get; set; } = new AvatarIDToken[3];
 
         /// <summary>
-        /// A <see cref="UserInfo"/> default value for the creator of this project, me :)
+        /// <inheritdoc cref="ICopyable.Copy(ICopyable)"/>
         /// </summary>
-        [JsonIgnore]
-        public static UserInfo Bloaty => new(1, "Bloaty", new() { 1337 });
+        /// <param name="Other"></param>
+        public void Copy(UserInfo Other) => ((ICopyable)this).Copy(Other);
     }
 }

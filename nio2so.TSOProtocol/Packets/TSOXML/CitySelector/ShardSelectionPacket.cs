@@ -12,7 +12,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
 
         public ShardSelectionPacket(ShardSelectionStructure Shard) : base(TSOCitySelectorShardSelection)
         {
-            MakePacket(Shard);
+            SerializeXML(Shard);
         }
     }
 }

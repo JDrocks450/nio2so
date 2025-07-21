@@ -1,57 +1,23 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Types.Avatar;
 using System.Xml.Linq;
 
 namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
-{
-    public record struct AvatarDataPacketStructure(ulong AvatarID,
-                                                   string Name,
-                                                   long Simoleans,
-                                                   [property: TSOXMLElementName("Simolean-Delta")] long SimoleanDelta,
-                                                   byte Popularity,
-                                                   [property: TSOXMLElementName("Popularity-Delta")] byte PopularityDelta,
-                                                   [property: TSOXMLElementName("Shard-Name")] string ShardName) : ITSOXMLStructure;
-
+{ 
     public class AvatarDataPacket : TSOXMLPacket
     {
         public const string TSOCitySelectorAvatarDataBase = "The-Sims-Online", TSOCitySelectorAvatarDataElement = "Avatar-Data";
 
-        public static AvatarDataPacketStructure Default = new()
-        {
-            AvatarID = TestingConstraints.MyAvatarID,
-            Name = TestingConstraints.MyAvatarName,
-            Popularity = 5,
-            PopularityDelta = 1,
-            ShardName = TestingConstraints.MyShardName,
-            SimoleanDelta = 5000,
-            Simoleans = TestingConstraints.StaticFunds
-        };
-        public static AvatarDataPacketStructure SecondaryAvatar = new()
-        {
-            AvatarID = TestingConstraints.MyFriendAvatarID,
-            Name = TestingConstraints.MyFriendAvatarName,
-            Popularity = 5,
-            PopularityDelta = 1,
-            ShardName = TestingConstraints.MyShardName,
-            SimoleanDelta = 5000,
-            Simoleans = 0
-        };
-        public static AvatarDataPacketStructure Empty = new()
-        {
-            AvatarID = 0x0,
-            Name = "\0",
-            Popularity = 0,
-            PopularityDelta = 0,
-            ShardName = TestingConstraints.MyShardName,
-            SimoleanDelta = 0,
-            Simoleans = 0
-        };
+        public static AvatarProfile Default => new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName,TestingConstraints.StaticFunds,5000, 5, 1, TestingConstraints.MyShardName);
 
-        public AvatarDataPacket(params AvatarDataPacketStructure[] Avatars) : base(TSOCitySelectorAvatarDataBase)
+        public static AvatarProfile Empty = AvatarProfile.Empty;
+
+        public AvatarDataPacket(params AvatarProfile[] Profiles) : base(TSOCitySelectorAvatarDataBase)
         {
-            foreach (var Avatar in Avatars)
+            foreach (var Avatar in Profiles)
             {
                 XElement AvatarData = new XElement(TSOCitySelectorAvatarDataElement);
-                MakePacket(Avatar, AvatarData);
+                SerializeXML(Avatar, AvatarData);
                 RootElement.Add(AvatarData);                                
             }
             RootElement.Add(new XElement("Player-Active"));

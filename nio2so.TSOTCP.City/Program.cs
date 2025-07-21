@@ -19,7 +19,7 @@ namespace nio2so.TSOTCP.City
         static void Main(string[] args)
         {
             //CLEAR PREVIOUS PACKETS
-            string clearDirProcName = @"E:\packets\cleandir.bat";
+            string clearDirProcName = Path.Combine(TestingConstraints.WorkspaceDirectory, @"cleandir.bat");
             if (File.Exists(clearDirProcName))
             {
                 Process.Start(new ProcessStartInfo()

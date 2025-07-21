@@ -1,21 +1,27 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types.Avatar;
+using nio2so.TSOHTTPS.Protocol.Data;
+using nio2so.TSOHTTPS.Protocol.Services;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 
 namespace nio2so.TSOProtocol.Controllers
 {
     /// <summary>
-    /// This controller will handle requests to the CitySelector InitialConnect.jsp resource
+    /// This controller will handle requests to the CitySelector Avatar-Data.jsp resource
     /// </summary>
     [ApiController]
     [Route("/cityselector")]
     public class AvatarDataServletController : ControllerBase
     {
+        private readonly nio2soDataServiceClient dataServiceClient;
         private readonly ILogger<AvatarDataServletController> _logger;
 
-        public AvatarDataServletController(ILogger<AvatarDataServletController> logger)
+        public AvatarDataServletController(nio2soDataServiceClient dataServiceClient, ILogger<AvatarDataServletController> logger)
         {
+            this.dataServiceClient = dataServiceClient;
             _logger = logger;
         }
 
@@ -24,17 +30,78 @@ namespace nio2so.TSOProtocol.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("avatar-data.jsp")]
-        public ActionResult Get()
+        public async Task<ActionResult<string>> GetAsync()
         {
-            _logger.LogInformation("Client requests AvatarData...");
-            var avatarData = AvatarDataPacket.Default;
-            bool CASActivated = TestingConstraints.CASTestingMode;
-            var packetStr = new AvatarDataPacket(avatarData).ToString();
-            if (!System.IO.File.Exists(@$"E:\packets\avatar\avatar1337.charblob"))
-                packetStr = new AvatarDataPacket().ToString();
-            if (CASActivated) packetStr = new AvatarDataPacket().ToString();
-            _logger.LogInformation($"CitySelector: AvatarData() === \n {packetStr} \n===");
-            return Ok(packetStr);
+            if (!Identify(out UserToken User))
+                return BadRequest();
+
+            _logger.LogInformation($"{User} requests AvatarData...");
+
+            //**download user info avatar list from nio2so data service
+            AvatarIDToken[] avatars = await DownloadAvatarList(User);
+            //**download avatar profile for each avatar from nio2so dms
+            AvatarProfile[] avatarProfiles = await DownloadAvatarProfileListAsync(avatars);
+
+            _logger.LogInformation($"TSOHTTPS received {avatarProfiles.Length} AvatarProfiles from nio2so...");
+
+            //**build response
+            var packetStr = new AvatarDataPacket(avatarProfiles).ToString();
+
+            _logger.LogInformation($"CitySelector: {User} AvatarData() === \n {packetStr} \n===");
+            return packetStr;
+        }        
+
+        /// <summary>
+        /// Consults with the <see cref="EntryLobby"/> to find this connection's <see cref="UserToken"/>
+        /// </summary>
+        /// <param name="UserToken"></param>
+        /// <returns></returns>
+        private bool Identify(out UserToken UserToken)
+        {
+            _logger.LogInformation($"AvatarDataServlet is consulting with the lobby...");
+            UserToken = default;
+            var session = Request.HttpContext.Connection;
+            return EntryLobby.Serve(session.RemoteIpAddress, session.RemotePort, out UserToken);
+        }
+
+        /// <summary>
+        /// Gets all <see cref="AvatarProfile"/> data for the <paramref name="avatars"/> provided
+        /// </summary>
+        /// <param name="avatars"></param>
+        /// <returns></returns>
+        private async Task<AvatarProfile[]> DownloadAvatarProfileListAsync(AvatarIDToken[] avatars)
+        {
+            _logger.LogInformation($"{User} requests AvatarProfiles({avatars.Length})...");
+            List<AvatarProfile> returnList = new List<AvatarProfile>();
+            foreach (var avatar in avatars)
+            {
+                //**download data from nio2so data service
+                AvatarProfile? resp = await DownloadAvatarProfile(avatar);
+                if (resp != null)
+                    returnList.Add(resp);
+            }
+            return returnList.ToArray();
+        }
+
+        /// <summary>
+        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns>On not found, returns null</returns>
+        private Task<AvatarProfile?> DownloadAvatarProfile(AvatarIDToken AvatarID) => dataServiceClient.GetAvatarProfileByAvatarID(AvatarID);
+
+        /// <summary>
+        /// Download the list of avatars belonging to this <paramref name="UserAccount"/>
+        /// </summary>
+        /// <param name="UserAccount"></param>
+        /// <returns>On not found, returns empty list</returns>
+        private async Task<AvatarIDToken[]> DownloadAvatarList(UserToken UserAccount)
+        {
+            if (TestingConstraints.CASTestingMode) return [];
+
+            var responseBody = await dataServiceClient.GetUserInfoByUserToken(UserAccount);
+            if (responseBody == null) return [];
+            return responseBody.Avatars;
         }
     }
 }

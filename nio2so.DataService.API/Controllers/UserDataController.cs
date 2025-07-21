@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using nio2so.Database.Types;
 using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types;
 
 namespace nio2so.DataService.API.Controllers
 {
@@ -15,21 +15,22 @@ namespace nio2so.DataService.API.Controllers
             _logger = logger;
         }
 
-        // GET: api/<AccountsController>
+        // GET: api/users
         [HttpGet]
         public ActionResult Get()
         {
             return BadRequest("Please provide a UserToken.");
         }
 
-        // GET api/<AccountsController>/1337
-        [HttpGet("{userID}")]
-        public ActionResult<uint> Get(uint userID)
+        // GET api/<AccountsController>/bloaty@1
+        [HttpGet("{UserTokenString}")]
+        public ActionResult<UserInfo> Get(string UserTokenString)
         {
+            UserToken token = UserTokenString;
             UserInfo? info = null;
             try
             {
-                info = APIDataServices.UserDataService.GetUserInfoByUserToken(userID);
+                info = APIDataServices.UserDataService.GetUserInfoByUserToken(token);
             }
             catch (Exception ex)
             {
@@ -37,7 +38,7 @@ namespace nio2so.DataService.API.Controllers
             }
             if (info == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, "Requested resource could not be found.");
-            return Ok(info);
+            return info;
         }
     }
 }

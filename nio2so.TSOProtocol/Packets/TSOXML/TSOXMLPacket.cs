@@ -1,10 +1,13 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Reflection;
+using System.Text.Json.Serialization;
 using System.Xml.Linq;
 
 namespace nio2so.TSOProtocol.Packets.TSOXML
 {
     /// <summary>
     /// This Attribute can be applied to a Property to override the name it is given in the function <see cref="TSOXMLPacket.MakePacket(ITSOXMLStructure, XElement?)"/>
+    /// <para>Writing in an outside assembly? Use <see cref="JsonPropertyNameAttribute"/> instead.</para>
     /// </summary>
     [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     sealed class TSOXMLElementName : Attribute
@@ -13,9 +16,10 @@ namespace nio2so.TSOProtocol.Packets.TSOXML
         {
             this.ElementName = ElementName;
         }
-
+        
         public string ElementName { get; }
     }
+
     /// <summary>
     /// When making a TSOXMLStructure positional record, inherit from this to use the <see cref="TSOXMLPacket.MakePacket(ITSOXMLStructure, XElement?)"/> function
     /// </summary>
@@ -51,15 +55,16 @@ namespace nio2so.TSOProtocol.Packets.TSOXML
         /// </summary>
         /// <param name="structuredData">Elements can use the <see cref="TSOXMLElementName"/> attribute to customize their serialized name.</param>
         /// <param name="BaseNode"></param>
-        protected void MakePacket(ITSOXMLStructure structuredData, XElement? BaseNode = default)
+        protected void SerializeXML(object structuredData, XElement? BaseNode = default)
         {
             if (BaseNode == null) BaseNode = RootElement;
             foreach (var property in structuredData.GetType().GetProperties())
             {
-                string name = property.Name;
-                var attribute = property.GetCustomAttribute<TSOXMLElementName>();
-                if (attribute != null)
-                    name = attribute.ElementName;
+                //NAME
+                string name = property.Name; // set name to be property name
+                name = property.GetCustomAttribute<TSOXMLElementName>()?.ElementName ?? name; // attribute present, reset name to be attribute name
+                name = property.GetCustomAttribute<JsonPropertyNameAttribute>()?.Name ?? name; // attribute present, reset name to be attribute name again
+                //VALUE
                 object? myValue = property.GetValue(structuredData);
                 var newElement = new XElement(name, Convert.ToString(myValue ?? ""));
                 BaseNode.Add(newElement);

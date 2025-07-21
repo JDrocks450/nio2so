@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using nio2so.DataService.API.Databases;
+using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using System.Net;
 
@@ -11,6 +13,8 @@ namespace nio2so.DataService.API.Controllers
     [ApiController]
     public class AccountsController : ControllerBase
     {
+        private AccountsDataService service => APIDataServices.AccountService;
+
         // GET: api/<AccountsController>
         [HttpGet]
         public ActionResult Get()
@@ -18,14 +22,14 @@ namespace nio2so.DataService.API.Controllers
             return BadRequest("Please provide a username.");
         }
 
-        // GET api/<AccountsController>/1337
+        // GET api/<AccountsController>/bloaty#0001
         [HttpGet("{username}")]
-        public ActionResult<uint> Get(string username)
+        public ActionResult<N2AccountByUserNameQueryResult> Get(string username)
         {
             UserToken? token = null;
             try
             {
-                token = APIDataServices.AccountService.GetUserTokenByUserName(username);
+                token = service.GetUserTokenByUserName(username);
             }
             catch (Exception ex)
             {                
@@ -33,7 +37,7 @@ namespace nio2so.DataService.API.Controllers
             }
             if (token == null)
                 return StatusCode(StatusCodes.Status500InternalServerError, "Requested resource could not be found.");
-            return Ok(token.Value.TokenValue);
+            return new N2AccountByUserNameQueryResult(username, token.Value);
         }
 
         // POST api/<AccountsController>
@@ -43,17 +47,20 @@ namespace nio2so.DataService.API.Controllers
             throw new NotImplementedException("update");
         }
 
-        // PUT api/<AccountsController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-            throw new NotImplementedException("create");
+        // PUT api/<AccountsController>/bloaty
+        [HttpPut("{UserName}")]
+        public ActionResult Put(string UserName)
+        { // **create a new account**
+            service.CreateAccount(UserName);
+            return Created();
         }
 
-        // DELETE api/<AccountsController>/5
+        // DELETE api/<AccountsController>/bloaty, <code e.g. 123456>
         [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+        public void Delete(string UserName, string ChallengeCode)
+        { 
+            // will use a challenge code acquired by the server using some sort of confirmation dialog the user will type in to confirm account deletion
+            // not implemented
             throw new NotImplementedException("Delete");
         }
     }

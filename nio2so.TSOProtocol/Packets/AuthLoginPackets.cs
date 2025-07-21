@@ -132,7 +132,7 @@ namespace nio2so.Protocol.Packets
         public override string ToString()
         {
             string head = $"Valid={Valid.ToString().ToUpper()}\n" +
-                        $"Ticket=A{Ticket}";
+                        $"Ticket={Ticket}";
             return IsFailure switch
             {
                 true => head + $"\nreasoncode={ReasonCodeString ?? "INV-404"}\n" +

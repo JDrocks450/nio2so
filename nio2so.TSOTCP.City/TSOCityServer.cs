@@ -40,14 +40,6 @@ namespace nio2so.TSOTCP.City.TSO
 
         public override void Start()
         {
-            //PARSE TSO DATA DEFINITION DAT TO ROOT DIR
-            string datLocation = "/packets/datadefinition.json";
-            if (!File.Exists(datLocation))
-            {
-                var file = TSODataImporter.Import(@"E:\Games\TSO Pre-Alpha\TSO\TSOData_DataDefinition.dat");
-                File.WriteAllText(datLocation, file.ToString());
-            }
-
             //Trigger tso factories to map using static constructor
             TSOFactoryBase.InitializeFactories();
 
