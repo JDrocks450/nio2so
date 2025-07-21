@@ -16,10 +16,10 @@ namespace nio2so.TSOProtocol.Controllers
     [Route("/cityselector")]
     public class AvatarDataServletController : ControllerBase
     {
-        private readonly nio2soDataServiceClient dataServiceClient;
+        private readonly nio2soMVCDataServiceClient dataServiceClient;
         private readonly ILogger<AvatarDataServletController> _logger;
 
-        public AvatarDataServletController(nio2soDataServiceClient dataServiceClient, ILogger<AvatarDataServletController> logger)
+        public AvatarDataServletController(nio2soMVCDataServiceClient dataServiceClient, ILogger<AvatarDataServletController> logger)
         {
             this.dataServiceClient = dataServiceClient;
             _logger = logger;
@@ -84,7 +84,7 @@ namespace nio2so.TSOProtocol.Controllers
         }
 
         /// <summary>
-        /// <inheritdoc cref="nio2soDataServiceClient.GetAvatarProfileByAvatarID(AvatarIDToken)"/>
+        /// <inheritdoc cref="nio2soMVCDataServiceClient.GetAvatarProfileByAvatarID(AvatarIDToken)"/>
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>

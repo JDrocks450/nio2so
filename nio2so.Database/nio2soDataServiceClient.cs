@@ -1,14 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-using nio2so.DataService.Common.Queries;
+﻿using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http.Json;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.TSOHTTPS.Protocol.Services
 {
@@ -18,31 +12,23 @@ namespace nio2so.TSOHTTPS.Protocol.Services
     public class nio2soDataServiceClient
     {
         private readonly HttpClient _client;
-        private readonly IConfiguration _configuration;
-
-        /// <summary>
-        /// Requires <c>APIAddress</c> setting in appsettings.json to point to the nio2so api (data service)
-        /// </summary>
-        private Uri APIAddress => new Uri(_configuration.GetValue<string>("APIAddress"));
-
-        private HttpResponseMessage? _lastResponse;
-
+        private HttpResponseMessage? _lastResponse;        
+        
         /// <summary>
         /// Creates a new <see cref="nio2soDataServiceClient"/>
         /// <para><inheritdoc cref="APIAddress"/></para>
         /// </summary>
         /// <param name="client"></param>
         /// <param name="configuration"></param>
-        public nio2soDataServiceClient(HttpClient client, IConfiguration configuration)
+        public nio2soDataServiceClient(HttpClient client, Uri nio2soApiBaseAddress)
         {
             _client = client;
-            _configuration = configuration;
+            _client.BaseAddress = nio2soApiBaseAddress;
         }
 
         private async Task<T?> baseQueryGetAs<T>(string Query)
         {
-            var uri = new Uri(APIAddress, Query);
-            var response = _lastResponse = await _client.GetAsync(uri);
+            var response = _lastResponse = await _client.GetAsync(Query);
             if (response.IsSuccessStatusCode)
             {
                 return await response.Content.ReadFromJsonAsync<T>();               

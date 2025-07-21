@@ -18,25 +18,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
     [TSORegulator]
     internal class CityRoomClientProtocol : TSOProtocol
     {
-        /// <summary>
-        /// Uses the RoomServer in the <see cref="HSBSession"/> to figure out the incoming packet
-        /// </summary>
-        private void IncomingConsultHSB(ITSODataBlobPDU PDU)
-        {
-            if (PDU is TSOTransmitDataBlobPacket transmitPDU)
-                PDU = new TSOBroadcastDatablobPacket(transmitPDU);
-            if(PDU.SubMsgCLSID == TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)
-            {
-                if (PDU.DataBlobContentObject.GetAs<TSOStandardMessageContent>().kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)
-                {
-                    ;                                       
-                }
-            }
-            HSBSession.RoomServer?.SendPacket(HSBSession.CityServer, (TSOVoltronPacket)PDU);
-            if (HSBSession.RoomServer == null)
-                RespondTo((ITSOVoltronAriesMasterIDStructure)PDU, (TSOBroadcastDatablobPacket)PDU);
-        }       
-
         protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
         {
             RespondWith((TSOVoltronPacket)PDU);
@@ -49,12 +30,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         [TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)]
         public void OnStandardMessage(ITSODataBlobPDU PDU)
         {
-            if (HSBSession.RoomServer != null)
-            {
-                IncomingConsultHSB(PDU);
-                return;
-            }
-
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
                 PDU = new TSOBroadcastDatablobPacket(transmitPDU);
 #if true

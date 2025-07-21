@@ -29,8 +29,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
 
         protected TSORegulatorManager _regulatorManager;
 
-        public event EventHandler HSB_ImReady;
-
         public TSOServerTelemetryServer Telemetry { get; protected set; }
 
         /// <summary>
@@ -77,8 +75,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
                         //UPDATE_PLAYER_PDU
                         SubmitAriesFrame(ID, new TSOUpdatePlayerPDU(new TSOAriesIDStruct(uint.Parse(sessionData.User), TestingConstraints.MyAvatarName)));
-
-                        HSB_ImReady?.Invoke(this, null);
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:

@@ -23,11 +23,6 @@
         /// </summary>
         public const bool VerboseLogging = false;
 
-        //**Default Account
-        public const string LoginUsername = "bloaty";
-        public const string LoginPassword = "asdf";
-        //**
-
         /// <summary>
         /// What the ID for My House
         /// </summary>
@@ -82,14 +77,10 @@
         public const string MyFriendAvatarName = "FriendlyBuddy";
 
         //**TEST
-        public const bool HSB_Testing = false;
         /// <summary>
         /// Will set the server to always redirect a client into a seemingly offline testing lot
         /// <para/>Should be true if using the HSB test
         /// </summary>
         public const bool LOTTestingMode = false;
-
-        public const uint HSBHostID = 1220;
-        public const string HSBHostName = "HOUSEHSB";
     }
 }

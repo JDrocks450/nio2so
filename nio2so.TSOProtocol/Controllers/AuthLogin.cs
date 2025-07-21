@@ -15,10 +15,10 @@ namespace nio2so.Protocol.Controllers
     [Route("[controller]")]
     public class AuthLoginController : ControllerBase
     {
-        private readonly nio2soDataServiceClient dataServiceClient;
+        private readonly nio2soMVCDataServiceClient dataServiceClient;
         private readonly ILogger<AuthLoginController> _logger;
 
-        public AuthLoginController(nio2soDataServiceClient dataServiceClient, ILogger<AuthLoginController> logger)
+        public AuthLoginController(nio2soMVCDataServiceClient dataServiceClient, ILogger<AuthLoginController> logger)
         {
             this.dataServiceClient = dataServiceClient;
             _logger = logger;

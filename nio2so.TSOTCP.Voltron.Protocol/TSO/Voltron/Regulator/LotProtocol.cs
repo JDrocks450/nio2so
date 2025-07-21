@@ -297,25 +297,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //tell the client to join this new room
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, roomInfo);
-            RespondWith(updateRoomPDU);            
-
-            //**INVOKE THE HSB
-            if (HSBSession.HSB_Activated)
-            {
-
-                var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID,
-                    TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
-                )
-                {
-                    SenderSessionID = new TSOAriesIDStruct(TestingConstraints.HSBHostID, TestingConstraints.HSBHostName)
-                };
-                kClientConnectedMsg.MakeBodyFromProperties();
-                HSBSession.RoomServer?.SendPacket(Server,
-                        new TSOOccupantArrivedPDU(new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)));
-                HSBSession.RoomServer?.SendPacket(Server, kClientConnectedMsg);
-            }            
+            RespondWith(updateRoomPDU);                     
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
