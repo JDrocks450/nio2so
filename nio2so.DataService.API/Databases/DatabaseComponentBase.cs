@@ -10,6 +10,7 @@ namespace nio2so.DataService.API.Databases
     internal abstract class DatabaseComponentBase<T> where T : IDatabaseComponentDataFile, new()
     {
         private string _baseDir;
+        protected string BaseDirectory => Path.GetDirectoryName(_baseDir);
 
         protected T DataFile { get; set; }
 

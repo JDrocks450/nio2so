@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Tokens;
 using nio2so.Protocol.Data.Credential;
+using nio2so.TSOHTTPS.Protocol.Data;
+using nio2so.TSOHTTPS.Protocol.Services;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
 
 namespace nio2so.TSOProtocol.Controllers
@@ -13,11 +16,26 @@ namespace nio2so.TSOProtocol.Controllers
     [Route("/cityselector")]
     public class ShardSelectorServletController : ControllerBase
     {
+        private readonly nio2soMVCDataServiceClient dataService;
         private readonly ILogger<ShardSelectorServletController> _logger;
 
-        public ShardSelectorServletController(ILogger<ShardSelectorServletController> logger)
+        public ShardSelectorServletController(nio2soMVCDataServiceClient dataService, ILogger<ShardSelectorServletController> logger)
         {
+            this.dataService = dataService;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Consults with the <see cref="EntryLobby"/> to find this connection's <see cref="UserToken"/>
+        /// </summary>
+        /// <param name="UserToken"></param>
+        /// <returns></returns>
+        private bool Identify(out UserToken UserToken)
+        {
+            _logger.LogInformation($"ShardSelectorServlet is consulting with the lobby...");
+            UserToken = default;
+            var session = Request.HttpContext.Connection;
+            return EntryLobby.Serve(session.RemoteIpAddress, session.RemotePort, out UserToken); // REMOVE
         }
 
         /// <summary>
@@ -25,20 +43,27 @@ namespace nio2so.TSOProtocol.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("shard-selector.jsp")]
-        public ActionResult Get(string ShardName, string? AvatarID)
+        public async Task<ActionResult> Get(string ShardName, string? AvatarID)
         {
-            _logger.LogInformation("Client needs an available shard...");               
+            _logger.LogInformation("Client needs an available shard...");
+
+            if (!Identify(out UserToken UserToken))
+                return BadRequest();
+
             _logger.LogInformation($"CitySelector: ShardSelector({ShardName}, {AvatarID}) invoked by Client.");
             bool isCasReq = false;
-            ShardSelectionPacket? packet = null;            
+            ShardSelectionPacket? packet = null;
 
             if (AvatarID == null)
             { // ENTERING CAS!
-                AvatarID = TestingConstraints.CASAvatarID.ToString();
+                uint? uniqueRemote = await dataService.CreateNewAvatarFile(UserToken, "CAS_PREALPHA");
+                if (uniqueRemote.HasValue)
+                    AvatarID = uniqueRemote.ToString();
+                else throw new Exception("nio2so failed to create a new avatar ID!");
                 _logger.LogInformation($"CitySelector: Generated AvatarID {AvatarID} and forwarding Client to CAS.");
-                isCasReq = true;                
-            }         
-            else            
+                isCasReq = true;
+            }
+            else
                 _logger.LogInformation($"CitySelector: Sending to City ({ShardName})");
 
             if (!uint.TryParse(AvatarID, out uint PlayerID))

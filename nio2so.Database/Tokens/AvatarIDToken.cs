@@ -37,5 +37,9 @@ namespace nio2so.DataService.Common.Tokens
         {
             return new AvatarIDToken(val);
         }
+        public override string ToString()
+        {
+            return AvatarID.ToString();
+        }
     }
 }

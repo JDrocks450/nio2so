@@ -19,7 +19,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
     /// </summary>
     public interface ITSOProtocolRegulator
     {
-        ITSOServer Server { set; }
+        ITSOServer Server { get; set; }
         string RegulatorName { get; }
         /// <summary>
         /// Handles an incoming PDU.

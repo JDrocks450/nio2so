@@ -25,8 +25,8 @@ namespace nio2so.DataService.API.Databases
         protected override void CreateDefaultValues()
         {
             ServerSettings settings = ServerSettings.Current;
-            CreateUserInfoFile(settings.StaticAccounts[0], new UserInfo(new(), 1337));
-            CreateUserInfoFile(settings.StaticAccounts[1], new UserInfo(new(), 161 ));
+            CreateUserInfoFile(settings.StaticAccounts[0], new UserInfo(new()));
+            CreateUserInfoFile(settings.StaticAccounts[1], new UserInfo(new()));
         }
 
         /// <summary>
@@ -69,6 +69,29 @@ namespace nio2so.DataService.API.Databases
             if (DataFile.TryGetValue(UserID, out UserInfo? userInfo))
                 return userInfo ?? bugCheckHandler();
             throw new KeyNotFoundException($"The user {UserID} does not exist in nio2so.");
+        }
+        /// <summary>
+        /// Attempts to add an AvatarID to the User's account to use in SAS.
+        /// <para/>Please watch out for these failure conditions:
+        /// <list type="bullet">You have 3 avatars already</list>
+        /// <list type="bullet">Your account doesn't exist</list>
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="avatarID"></param>
+        /// <param name="AvatarIndex">The slot that the new avatar has been placed in.</param>
+        /// <returns>True when added successfully.</returns>
+        public bool AddAvatarToAccount(UserToken user, uint avatarID, out int AvatarIndex)
+        {
+            AvatarIndex = -1;
+            UserInfo userInfo = GetUserInfoByUserToken(user);
+            for (int i = 0; i < 3; i++)
+            {
+                AvatarIDToken existing = userInfo.Avatars[i];
+                if (existing != 0) continue;
+                userInfo.Avatars[i] = avatarID;
+                AvatarIndex = i;
+            }
+            return AvatarIndex != -1;
         }
     }
 }

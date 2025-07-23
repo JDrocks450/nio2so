@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using nio2so.DataService.Common;
 using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;

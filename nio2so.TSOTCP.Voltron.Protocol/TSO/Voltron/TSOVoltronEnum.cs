@@ -4402,6 +4402,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         /// </summary>
         GetBookmarks_Response = 0x3D8F9003,
         /// <summary>
+        /// Sent when the client wants to update their bookmarks list <c>TSOSetBookmarksRequest</c>
+        /// </summary>
+        SetBookmarks_Request = 0x9D920F06,                
+        /// <summary>
         /// Logs the remote console
         /// </summary>
         InsertGenericLog_Request = 0x3D03D5F7,
@@ -4465,7 +4469,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         BuyLotByAvatarID_Request = 0x1D8DD55A,
         BuyLotByAvatarID_Response = 0xBD8DDB9B,
         DebitCredit_Request = 0x7C24F627,
-        DebitCredit_Response = 0x3C24F6BC,
+        DebitCredit_Response = 0x3C24F6BC        
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.

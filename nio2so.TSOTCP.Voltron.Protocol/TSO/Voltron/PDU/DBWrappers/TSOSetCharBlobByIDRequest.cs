@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.DataService.Common.Types.Avatar;
+using nio2so.Formats.DB;
 using nio2so.Formats.Streams;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 

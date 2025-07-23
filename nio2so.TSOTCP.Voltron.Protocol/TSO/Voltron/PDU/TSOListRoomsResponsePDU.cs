@@ -21,7 +21,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// The amount of room objects added to this list
         /// </summary>
-        [TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] public uint Amount { get; set; } = 0;
+        [TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] [TSOVoltronArrayLength(nameof(Rooms))] public uint RoomCount { get; set; }
         
         /// <summary>
         /// Rooms that should be sent to the client
@@ -34,12 +34,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <param name="Rooms"></param>
         public TSOListRoomsResponsePDU(params TSORoomInfoStruct[] Rooms) : base()
         {
-            Amount = (uint)Rooms.Length;
-            this.Rooms = Rooms;
+            if (Rooms.Any())
+                this.Rooms = Rooms;
+            else this.Rooms = [TSORoomInfoStruct.NoRoom];
 
             MakeBodyFromProperties();
         }
 
-        public TSOListRoomsResponsePDU() : base() { }
+        public TSOListRoomsResponsePDU() : base() { MakeBodyFromProperties(); }
     }
 }

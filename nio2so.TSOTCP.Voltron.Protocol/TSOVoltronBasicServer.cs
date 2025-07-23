@@ -23,11 +23,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         public override int ReceiveAmount => ClientBufferLength;
         public override int SendAmount => ClientBufferLength;
 
-
         protected List<TSOVoltronPacket> _VoltronBacklog = new();
         List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
 
         protected TSORegulatorManager _regulatorManager;
+
+        public TSOServerServiceManager Services { get; private set; } = new();
 
         public TSOServerTelemetryServer Telemetry { get; protected set; }
 
@@ -42,7 +43,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 if (value) ServerPauseEvent.Set();
                 else ServerPauseEvent.Reset();
             }
-        }
+        }        
+
         protected ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
         protected bool _running = DefaultRunningState;
 

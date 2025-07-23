@@ -4,10 +4,8 @@
     public class TSOGetBookmarksRequest : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
-        /// <summary>
-        /// Needs further testing to confirm
-        /// </summary>
-        [TSOVoltronDBWrapperField] public uint ListType { get; set; }
+        
+        [TSOVoltronDBWrapperField] public TSO_PreAlpha_Categories ListType { get; set; }
 
         public TSOGetBookmarksRequest() : base()
         {

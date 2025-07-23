@@ -97,7 +97,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <returns>A value indicating successful deserialization</returns>
         /// <exception cref="CustomAttributeFormatException"></exception>
         /// <exception cref="NotImplementedException"></exception>
-        public static bool ReflectProperty(Stream Stream, PropertyInfo property, object? Instance)
+        public static bool ReflectProperty(Stream Stream, PropertyInfo property, object Instance)
         {
             Stream _bodyBuffer = Stream;
             //check if this property is the body array property
@@ -120,7 +120,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             
             if (property.PropertyType.IsArray)
             {
-                throw new NotImplementedException("Array reflection is not implemented yet!");
+                PropertyInfo? arrayLength = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
+                    .FirstOrDefault(y => y.GetCustomAttribute<TSOVoltronArrayLength>().ArrayPropertyName.ToLowerInvariant() == property.Name.ToLowerInvariant());
+                if (arrayLength == null)
+                    throw new InvalidDataException("ArrayLength property for this array was not found for the type: " + Instance.GetType().Name);
+                uint count = Convert.ToUInt32(arrayLength.GetValue(Instance));
+                Type arrayType = property.PropertyType.GetElementType();
+                Array arrayVal = Array.CreateInstance(arrayType, count);
+                for(int i = 0; i < count; i++)                
+                    arrayVal.SetValue(TryNumericTypes(Stream, arrayType),i);
+                property.SetValue(Instance, arrayVal);
+                return true;
             }
 
             //Numbers
@@ -148,6 +158,70 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                     property.SetValue(Instance, value);
                     return true;
                 }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="TryNumericTypes(Stream, PropertyInfo, object)"/>
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <param name="PropertyType"></param>
+        /// <param name="dataEndianMode"></param>
+        /// <returns></returns>
+        public static object TryNumericTypes(Stream Stream, Type PropertyType, Endianness dataEndianMode = Endianness.BigEndian)
+        {
+            bool readValue = true;
+
+            //fully evaluate enum types to base value type
+            while (PropertyType.IsEnum)
+                PropertyType = Enum.GetUnderlyingType(PropertyType);
+
+            //---NUMBERS
+            if (PropertyType == typeof(byte))
+            { // BYTE
+                return (byte)Stream.ReadBodyByte();
+            }
+            else if (PropertyType == typeof(bool))
+            { // TRUE FALSE
+                byte value = (byte)Stream.ReadBodyByte();
+                return value != 0;                
+            }
+            else if (PropertyType == typeof(ushort) || PropertyType == typeof(short))
+            { // INT16/U16 rewrite 07/08/25
+                if (PropertyType == typeof(ushort)) // uint16
+                    return Stream.ReadBodyUshort(dataEndianMode); // read in an unsigned short
+                else // int16
+                { // no it wasn't. previous solution sucked. read 2 bytes from body and convert to int16 like a normal human being.
+                    byte[] intBytes = new byte[2];
+                    Stream.ReadAtLeast(intBytes, 2);
+                    return ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt16(intBytes, 0);
+                        
+                }
+                return true;
+            }
+            else if (PropertyType == typeof(uint) || PropertyType == typeof(int))
+            {// INT32/U32 rewrite 07/08/25
+                if (PropertyType == typeof(uint)) // uint32
+                    return Stream.ReadBodyDword(dataEndianMode); // read in an unsigned int
+                else // int32
+                { // no it wasn't. previous solution sucked. read 4 bytes from body and convert to int32 like a normal human being.
+                    byte[] intBytes = new byte[4];
+                    Stream.ReadAtLeast(intBytes, 4);
+                    return
+                        ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt32(intBytes, 0);
+                }
+                return true;
+            }
+            else readValue = false;
+
+            if (readValue) return true;
+
+            if (PropertyType == typeof(DateTime))
+            { // DATE TIME does this even work for tso pre alpha.. lol?
+                uint fromPacket = Stream.ReadBodyDword();
+                var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
+                return value;                
             }
             return false;
         }

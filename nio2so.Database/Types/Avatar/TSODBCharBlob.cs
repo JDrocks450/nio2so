@@ -1,7 +1,7 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.Formats.DB
+namespace nio2so.DataService.Common.Types.Avatar
 {
     /// <summary>
     /// The decompressed payload of a <see cref="TSO_PreAlpha_DBActionCLSIDs.InsertNewCharBlob_Request"/> or a 

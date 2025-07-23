@@ -56,12 +56,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         private Dictionary<TSO_PreAlpha_MasterConstantsTable, VoltronDataBlobInvokationDelegate> dataBlobMap = new();
 
         protected TSOProtocolRegulatorResponse? CurrentResponse = null;
-        private ITSOServer _server;
+
+        private TSOServerServiceManager _serviceManager => Server.Services;
 
         /// <summary>
         /// The underlying <see cref="ITSOServer"/> instance used for sending/receiving PDUs/other network traffic
         /// </summary>
-        public ITSOServer Server { get => _server; set => _server = value; }
+        public ITSOServer Server { get; set; }
+
+        
+
         /// <summary>
         /// The name of this regulator
         /// </summary>
@@ -122,7 +126,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
         public virtual bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response)
         {
-            if (_server == null) throw new NullReferenceException("No server instance!!!");
+            if (Server == null) throw new NullReferenceException("No server instance!!!");
 
             Response = null;
             if (!databaseMap.TryGetValue((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID, out var action))
@@ -140,7 +144,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
         public virtual bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
         {
-            if (_server == null) throw new NullReferenceException("No server instance!!!");
+            if (Server == null) throw new NullReferenceException("No server instance!!!");
 
             Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>());
             switch (PDU.KnownPacketType)
@@ -169,7 +173,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             }
             Response = null;
             return false;
-        }        
+        }
+
+        /// <summary>
+        /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Service"></param>
+        /// <returns></returns>
+        protected bool TryGetService<T>(out T Service) where T : ITSOService => Server.Services.TryGet<T>(out Service);
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.

@@ -27,6 +27,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         private static List<LotTest> _lots = new() {
             new(TestingConstraints.BuyLotID,new(93, 135), TestingConstraints.MyHousePhoneNumber, TestingConstraints.MyHouseName, "The first house profile working in nio2so. Check out that cool thumbnail.") // ocean island
         };
+        private static HashSet<uint> _onlineLotIDs = new HashSet<uint>();
 
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOBuyLotByAvatarIDRequest"/>
@@ -250,17 +251,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
         public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
         {
-            TSORoomInfoStruct[] rooms = new TSORoomInfoStruct[_lots.Count];
+            HashSet<TSORoomInfoStruct> rooms = new();
             int i = 0;
-            foreach(var lot in _lots)
+            foreach(var ID in _lots.Select(x => x.ID)) // UPDATE LATER TO BE ONLINE LOTS
             {
-                rooms[i++] = new TSORoomInfoStruct(
+                var lot = _lots.First(x => x.ID == ID);
+                rooms.Add(new TSORoomInfoStruct(
                     new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
                     new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
-                    (uint)i+1
-                    );
+                    (uint)++i)
+                );
             }
-            RespondWith(new TSOListRoomsResponsePDU(rooms));
+            RespondWith(new TSOListRoomsResponsePDU(rooms.ToArray()));
             return;
             //test message pdu ... doesn't work
             RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")), "Testing"));
@@ -276,6 +278,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //get the lot
             LotTest? thisLot = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID);
+            _onlineLotIDs.Add(thisLot.ID); // set lot as ONLINE
 
             //get the phone number of the lot
             string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;

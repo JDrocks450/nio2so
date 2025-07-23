@@ -43,6 +43,9 @@ namespace nio2so.TSOTCP.City.TSO
             //Trigger tso factories to map using static constructor
             TSOFactoryBase.InitializeFactories();
 
+            //Startup Services
+            Services.Register(new nio2soVoltronDataServiceClient(new(@"https://localhost:7071/api/"))); // REGISTER THE NIO2SO DATA SERVICE
+
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
 

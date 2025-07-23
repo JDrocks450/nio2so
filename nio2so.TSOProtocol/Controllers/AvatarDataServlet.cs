@@ -61,7 +61,7 @@ namespace nio2so.TSOProtocol.Controllers
             _logger.LogInformation($"AvatarDataServlet is consulting with the lobby...");
             UserToken = default;
             var session = Request.HttpContext.Connection;
-            return EntryLobby.Serve(session.RemoteIpAddress, session.RemotePort, out UserToken);
+            return EntryLobby.Get(session.RemoteIpAddress, session.RemotePort, out UserToken);
         }
 
         /// <summary>
