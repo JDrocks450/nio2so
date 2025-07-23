@@ -20,19 +20,19 @@ namespace nio2so.DataService.API.Databases
         Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultThumbnailPath);
 
         /// <summary>
-        /// Returns the <see cref="TSODBCharBlob"/> for the given <see cref="AvatarIDToken"/> in binary
+        /// Returns the PNG Image for the given <see cref="HouseIDToken"/> in binary
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public Task<byte[]> GetCharBlobByAvatarID(HouseIDToken HouseID) => GetLibrary<FileObjectLibrary>("THUMBNAILS").GetDataByID(HouseID);
+        public Task<byte[]> GetThumbnailByHouseID(HouseIDToken HouseID) => GetLibrary<FileObjectLibrary>("THUMBNAILS").GetDataByID(HouseID);
         /// <summary>
-        /// Sets the <see cref="TSODBCharBlob"/> for the given <see cref="AvatarIDToken"/> in binary
+        /// Sets the PNG Image for the given <see cref="HouseIDToken"/> in binary
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public Task SetCharBlobByAvatarID(HouseIDToken HouseID, byte[] PNGStream, bool overwrite = true) =>
+        public Task SetThumbnailByHouseID(HouseIDToken HouseID, byte[] PNGStream, bool overwrite = true) =>
             GetLibrary<FileObjectLibrary>("THUMBNAILS").SetDataByIDToDisk(HouseID, PNGStream, overwrite);
     }
 }

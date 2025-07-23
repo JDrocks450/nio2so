@@ -24,6 +24,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         public void Dispose()
         {
             Client.Dispose();
-        }
+        }        
     }
 }

@@ -7,8 +7,9 @@ namespace nio2so.DataService.API
     /// </summary>
     internal static class APIDataServices
     {
-        public static AvatarDataService AvatarDataService { get; } = new AvatarDataService();
+        internal static AvatarDataService AvatarDataService { get; } = new AvatarDataService();
         internal static AccountsDataService AccountService { get; } = new AccountsDataService();
         internal static UserDataService UserDataService { get; } = new UserDataService();
+        internal static LotsDataService LotDataService { get; } = new LotsDataService();
     }
 }

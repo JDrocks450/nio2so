@@ -74,6 +74,10 @@ namespace nio2so.DataService.API.Controllers
         [HttpGet("{AvatarID}/profile")]
         public ActionResult<AvatarProfile> GetAvatarProfile(uint AvatarID) => 
             getByAvatarIDBase(avatarDataService.GetProfileByAvatarID, AvatarID);
+        // GET api/avatars/1337/name
+        [HttpGet("{AvatarID}/name")]
+        public ActionResult<string> GetAvatarNameByID(uint AvatarID) =>
+            getByAvatarIDBase(avatarDataService.GetNameByID, AvatarID);
 
         // GET api/avatars/1337/bookmarks?searchType=avatar
         [HttpGet("{AvatarID}/bookmarks")]

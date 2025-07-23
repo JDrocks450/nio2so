@@ -123,5 +123,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             Outgoing = null;
             return false;
         }
+
+        public T Get<T>()
+        {
+            foreach (var regulator in typeMap)
+                if (regulator.GetType() == typeof(T)) return (T)regulator;
+            throw new Exception($"Regulator {typeof(T).Name} is not found.");
+        }
     }
 }

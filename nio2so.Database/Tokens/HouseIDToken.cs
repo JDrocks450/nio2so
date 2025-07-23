@@ -19,19 +19,19 @@ namespace nio2so.DataService.Common.Tokens
             Utf8JsonWriter writer,
             HouseIDToken token,
             JsonSerializerOptions options) =>
-                writer.WriteNumberValue(token.AvatarID);
+                writer.WriteNumberValue(token.HouseID);
     }
 
     /// <summary>
     /// Represents the ID of an Avatar (named <see cref="UInt32"/> wrapper)
     /// </summary>
-    /// <param name="AvatarID"></param>
+    /// <param name="HouseID"></param>
     [JsonConverter(typeof(HouseIDTokenJsonConverter))]
-    public record struct HouseIDToken(uint AvatarID)
+    public record struct HouseIDToken(uint HouseID)
     {
         public static implicit operator uint(HouseIDToken ts)
         {
-            return ts.AvatarID;
+            return ts.HouseID;
         }
         public static implicit operator HouseIDToken(uint val)
         {
@@ -39,7 +39,7 @@ namespace nio2so.DataService.Common.Tokens
         }
         public override string ToString()
         {
-            return AvatarID.ToString();
+            return HouseID.ToString();
         }
     }
 }

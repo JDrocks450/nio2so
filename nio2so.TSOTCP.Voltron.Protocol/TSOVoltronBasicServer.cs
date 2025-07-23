@@ -4,6 +4,7 @@ using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using QuazarAPI;
 using QuazarAPI.Networking.Standard;
@@ -71,12 +72,31 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         //**Client is logging into Voltron!
                         var sessionData = TSOAriesClientSessionInfo.FromPacket(Data);
                         TSOTCPPacket.WriteAllPacketsToDisk([Data]);
-                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Discoveries, Name, $"User {sessionData.User} is logging into Voltron on nio2so!"));            
+
+                        if (!uint.TryParse(sessionData.User, out uint AvatarID))
+                        {
+                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"AvatarID {sessionData.User} is unknown and was disconnected."));
+                            Disconnect(ID);
+                            break;
+                        }
+                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name, $"AvatarID {sessionData.User} is logging into Voltron on nio2so!"));            
 
                         //HOST_ONLINE_PDU
                         SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
+
                         //UPDATE_PLAYER_PDU
-                        SubmitAriesFrame(ID, new TSOUpdatePlayerPDU(new TSOAriesIDStruct(uint.Parse(sessionData.User), TestingConstraints.MyAvatarName)));
+                        //Download player avatar name from data service.
+                        try
+                        {
+                            SubmitAriesFrame(ID, _regulatorManager.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName));
+                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
+                        }
+                        catch(Exception ex)
+                        {
+                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, ex.Message));
+                            Disconnect(ID);
+                            break;
+                        }
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:

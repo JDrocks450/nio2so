@@ -172,5 +172,16 @@ namespace nio2so.DataService.Common
             var response = await Client.PostAsync($"avatars/{AvatarID}/appearance",content);
             return response.IsSuccessStatusCode;
         }
+
+        /// <summary>
+        /// Downloads the PNG Image for the given <paramref name="HouseID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns>On not found, returns null</returns>
+        public Task<byte[]?> GetThumbnailByHouseID(HouseIDToken HouseID) =>
+            baseQueryGetOctet($"lots/{HouseID.HouseID}/thumbnail");
+
+        public Task<string?> GetAvatarNameByAvatarID(uint AvatarID) =>
+            baseQueryGetAs<string>($"avatars/{AvatarID}/name");
     }
 }

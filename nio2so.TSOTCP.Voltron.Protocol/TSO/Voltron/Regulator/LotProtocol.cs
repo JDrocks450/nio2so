@@ -124,7 +124,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void GetHouseThumbByID_Request(TSODBRequestWrapper PDU)
         {
             TSOGetHouseThumbByIDRequest req = (TSOGetHouseThumbByIDRequest)PDU;
-            RespondWith(new TSOGetHouseThumbByIDResponse(req.HouseID, File.ReadAllBytes(@"E:\packets\house\special.png")));
+
+            //**request from nio2so
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new InvalidOperationException("Tried to find the nio2so data service client, it is not present in the Services collection.");
+            //**download thumbnail
+            byte[] pngBytes = client.GetThumbnailByHouseID(req.HouseID).Result;
+            if (pngBytes == null)
+                throw new NullReferenceException(nameof(pngBytes));
+
+            RespondWith(new TSOGetHouseThumbByIDResponse(req.HouseID, pngBytes));
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>

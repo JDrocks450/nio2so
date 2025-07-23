@@ -21,13 +21,13 @@ namespace nio2so.DataService.API.Databases
 
         protected override void AddLibraries()
         {
-            string dir = ServerSettings.Current.AvatarInfoFile;
+            string fPath = ServerSettings.Current.AvatarInfoFile;
 
             Libraries.Add(ProfileLibName, 
-                new JSONDictionaryLibrary<uint, AvatarInfo>(dir, EnsureDefaultValues));
+                new JSONDictionaryLibrary<uint, AvatarInfo>(fPath, EnsureDefaultValues));
 
             Libraries.Add("BLOBS",
-                new FileObjectLibrary(Path.Combine(dir, charblob_folder), "avatar", "charblob", CharBlobNotFound));
+                new FileObjectLibrary(Path.Combine(Path.GetDirectoryName(fPath), charblob_folder), "avatar", "charblob", CharBlobNotFound));
 
             base.AddLibraries();
         }
@@ -63,6 +63,12 @@ namespace nio2so.DataService.API.Databases
             correctErrors(profile);
             return profile;
         }
+        /// <summary>
+        /// Returns the name of the Avatar with the given ID
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public string GetNameByID(AvatarIDToken AvatarID) => GetProfileByAvatarID(AvatarID).Name;
 
         /// <summary>
         /// Returns the <see cref="AvatarInfo.AvatarBookmarkInfo"/> for the given <paramref name="AvatarID"/>. Bookmarks are public info, like a follower list on social media **public info**
