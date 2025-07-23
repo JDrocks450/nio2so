@@ -2,6 +2,9 @@
 
 namespace nio2so.DataService.API
 {
+    /// <summary>
+    /// <code>Temporary solution ... subject to change to reflection strategy</code>
+    /// </summary>
     internal static class APIDataServices
     {
         public static AvatarDataService AvatarDataService { get; } = new AvatarDataService();

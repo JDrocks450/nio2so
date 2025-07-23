@@ -1,22 +1,30 @@
-﻿using nio2so.DataService.Common.Tokens;
+﻿using nio2so.DataService.API.Databases.Libraries;
+using nio2so.DataService.Common.Tokens;
 
 namespace nio2so.DataService.API.Databases
 {
     /// <summary>
     /// Validates Login Credentials and serves the UserToken for the user trying to login
     /// </summary>
-    internal class AccountsDataService : DatabaseComponentBase<DataComponentDictionaryDataFile<string,UserToken>>
-    {        
+    internal class AccountsDataService : DataServiceBase
+    {
+        private JSONDictionaryLibrary<string, UserToken> AccountsLibrary => GetLibrary<JSONDictionaryLibrary<string, UserToken>>("ACCOUNTS");
 
-        internal AccountsDataService() : base(ServerSettings.Current.AccountsFile)
+        internal AccountsDataService() : base()
         {
-            CreateDefaultValues();
+            
+        }
+
+        protected override void AddLibraries()
+        {
+            Libraries.Add("ACCOUNTS", new JSONDictionaryLibrary<string, UserToken>(ServerSettings.Current.AccountsFile, CreateDefaultValues));
+            base.AddLibraries();
         }
 
         /// <summary>
         /// Ensures these default static accounts are present in the <see cref="AccountsDataService"/>
         /// </summary>
-        protected override void CreateDefaultValues()
+        void CreateDefaultValues()
         {
             foreach (var account in ServerSettings.Current.StaticAccounts)            
                 EnsureAccount(account);
@@ -38,8 +46,8 @@ namespace nio2so.DataService.API.Databases
             {
                 newToken = UserToken.Create(UserName);
             }
-            while (DataFile.ContainsKey(newToken)); // generate new unused key
-            if (!DataFile.TryAdd(UserName, newToken)) // added by another concurrent thread
+            while (AccountsLibrary.ContainsKey(newToken)); // generate new unused key
+            if (!AccountsLibrary.TryAdd(UserName, newToken)) // added by another concurrent thread
             {
                 failcount++; // retry with a fresh user account token
                 goto retry;
@@ -56,12 +64,12 @@ namespace nio2so.DataService.API.Databases
         public bool EnsureAccount(UserToken Token)
         {
             UserToken newToken = Token;
-            return DataFile.TryAdd(Token.UserName, newToken);
+            return AccountsLibrary.TryAdd(Token.UserName, newToken);
         }
 
         public UserToken GetUserTokenByUserName(string UserName)
         {
-            if (DataFile.TryGetValue(UserName, out UserToken accID))
+            if (AccountsLibrary.TryGetValue(UserName, out UserToken accID))
                 return accID;
             throw new KeyNotFoundException($"The UserName {UserName} does not exist in nio2so.");
         }

@@ -17,7 +17,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// Not sure what this is used for yet, probably 0x00000000 most of the time?
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0xBAADF00D;
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x01;
         /// <summary>
         /// The <see cref="TSODBChar"/> data to send, in bytes
         /// </summary>

@@ -1,4 +1,5 @@
-﻿using nio2so.DataService.Common.Tokens;
+﻿using nio2so.DataService.API.Databases.Libraries;
+using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using System;
 using System.Collections.Generic;
@@ -13,20 +14,25 @@ namespace nio2so.DataService.API.Databases
     /// Serves Account information:
     /// <list type="bullet">What avatars you own</list>
     /// </summary>
-    internal class UserDataService : DatabaseComponentBase<DataComponentDictionaryDataFile<string, UserInfo>>
+    internal class UserDataService : DataServiceBase
     {
-        public HashSet<string> ReservedUserNames { get; set; }
+        public HashSet<string> ReservedUserNames { get; set; } = ["SYSTEM","RESERVED","NIO2SO","NIOTSO"];
 
-        internal UserDataService() : base(ServerSettings.Current.UsersFile)
+        private JSONDictionaryLibrary<string, UserInfo> UsersLibrary => GetLibrary<JSONDictionaryLibrary<string, UserInfo>>("USERS");
+
+        internal UserDataService() : base() { }
+
+        protected override void AddLibraries()
         {
-            CreateDefaultValues();
+            Libraries.Add("USERS", new JSONDictionaryLibrary<string, UserInfo>(ServerSettings.Current.UsersFile, CreateDefaultValues));
+            base.AddLibraries();
         }
 
-        protected override void CreateDefaultValues()
+        private void CreateDefaultValues()
         {
             ServerSettings settings = ServerSettings.Current;
-            CreateUserInfoFile(settings.StaticAccounts[0], new UserInfo(new()));
-            CreateUserInfoFile(settings.StaticAccounts[1], new UserInfo(new()));
+            CreateUserInfoFile(settings.StaticAccounts[0], out _); // ensure only
+            CreateUserInfoFile(settings.StaticAccounts[1], out _); // ensure only
         }
 
         /// <summary>
@@ -35,23 +41,17 @@ namespace nio2so.DataService.API.Databases
         /// <param name="UserAccount"></param>
         /// <param name="ExistingFile">If passed, will copy the properties from this parameter into the new <see cref="UserInfo"/> to update the existing file to be this new one.</param>
         /// <returns></returns>
-        public UserInfo CreateUserInfoFile(UserToken UserAccount, UserInfo? ExistingFile = null)
+        public bool CreateUserInfoFile(UserToken UserAccount, out UserInfo? NewAccount)
         {
-            UserInfo newFile;
-            if (ExistingFile != null)
-                newFile = new UserInfo(UserAccount, ExistingFile);
-            else newFile = new UserInfo(UserAccount);
+            UserInfo newFile = new(UserAccount);
+            NewAccount = null;
 
-            //add/update factory
-            DataFile.AddOrUpdate(UserAccount, newFile, 
-                delegate(string t, UserInfo existing) 
-                { 
-                    newFile.Copy(existing); // copy all existing properties to the new file **overwrite**
-                    return newFile; 
-                }
-            );
-            Save(); // save
-            return newFile;
+            //add/update
+            bool result = UsersLibrary.TryAdd(UserAccount, newFile);
+            if (result)
+                Save(); // save
+            NewAccount = newFile;
+            return result;
         }
         /// <summary>
         /// Returns the <see cref="UserInfo"/> file in the DB attached to this <paramref name="UserID"/>
@@ -61,13 +61,16 @@ namespace nio2so.DataService.API.Databases
         /// <exception cref="KeyNotFoundException"></exception>
         public UserInfo GetUserInfoByUserToken(UserToken UserID)
         {
-            UserInfo bugCheckHandler()
+            if (UsersLibrary.TryGetValue(UserID, out UserInfo? userInfo))
             {
-                Console.WriteLine($"UserInfo for {UserID} was null! Immediately creating a new file... this may indicate data has been lost.");
-                return CreateUserInfoFile(UserID);
+                if (userInfo == null)
+                {
+                    Console.WriteLine($"UserInfo for {UserID} was null! Immediately creating a new file... this may indicate data has been lost.");
+                    CreateUserInfoFile(UserID, out var NewUser);
+                    return NewUser;
+                }
+                return userInfo;
             }
-            if (DataFile.TryGetValue(UserID, out UserInfo? userInfo))
-                return userInfo ?? bugCheckHandler();
             throw new KeyNotFoundException($"The user {UserID} does not exist in nio2so.");
         }
         /// <summary>

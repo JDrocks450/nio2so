@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
@@ -9,21 +10,35 @@ namespace nio2so.DataService.API.Databases
     /// Serves Avatar information:
     /// <list type="bullet">Profile information of the Avatar shown in SAS</list>
     /// </summary>
-    internal class AvatarDataService : DatabaseComponentBase<DataComponentDictionaryDataFile<uint, AvatarInfo>>
+    internal class AvatarDataService : DataServiceBase
     {
         const string charblob_folder = @"charblob";
+        const string ProfileLibName = "PROFILES";
 
-        internal AvatarDataService() : 
-            base(ServerSettings.Current.AvatarInfoFile)
+        private JSONDictionaryLibrary<uint, AvatarInfo> ProfilesLibrary => GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(ProfileLibName);
+
+        internal AvatarDataService() : base() { }
+
+        protected override void AddLibraries()
         {
-            CreateDefaultValues();
+            string dir = ServerSettings.Current.AvatarInfoFile;
+
+            Libraries.Add(ProfileLibName, 
+                new JSONDictionaryLibrary<uint, AvatarInfo>(dir, EnsureDefaultValues));
+
+            Libraries.Add("BLOBS",
+                new FileObjectLibrary(Path.Combine(dir, charblob_folder), "avatar", "charblob", CharBlobNotFound));
+
+            base.AddLibraries();
         }
 
-        protected override void CreateDefaultValues()
+        void EnsureDefaultValues()
         {
             ServerSettings settings = ServerSettings.Current;
             // not needed
         }       
+
+        Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultCharblobPath);
 
         /// <summary>
         /// Returns the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>. The profile has no personal details and requires no validation **public info**
@@ -41,6 +56,7 @@ namespace nio2so.DataService.API.Databases
                         throw new InvalidDataException($"The returned AvatarProfile for {AvatarID} belongs to {Profile.AvatarID}...?");
                 }
             }
+            var DataFile = GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(ProfileLibName);
             if (!DataFile.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
             AvatarProfile profile = DataFile[AvatarID].Profile;
@@ -60,9 +76,9 @@ namespace nio2so.DataService.API.Databases
             {
                 // TODO
             }
-            if (!DataFile.ContainsKey(AvatarID))
+            if (!ProfilesLibrary.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
-            var bookmark = DataFile[AvatarID].BookmarkInfo;
+            var bookmark = ProfilesLibrary[AvatarID].BookmarkInfo;
             correctErrors(bookmark);
             return bookmark;
         }
@@ -75,9 +91,9 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         public bool SetBookmarksByAvatarID(AvatarIDToken AvatarID, IEnumerable<AvatarIDToken> Avatars)
         {
-            if (!DataFile.ContainsKey(AvatarID))
+            if (!ProfilesLibrary.ContainsKey(AvatarID))
                 return false;            
-            DataFile[AvatarID].BookmarkInfo.BookmarkAvatars = new(Avatars);
+            ProfilesLibrary[AvatarID].BookmarkInfo.BookmarkAvatars = new(Avatars);
             Save();
             return true;
         }
@@ -101,9 +117,9 @@ namespace nio2so.DataService.API.Databases
                 CharData.Unknown4 = 0;
                 CharData.Unknown6 = 0;
             }
-            if (!DataFile.ContainsKey(AvatarID))
+            if (!ProfilesLibrary.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
-            var file = DataFile[AvatarID].AvatarCharacter;
+            var file = ProfilesLibrary[AvatarID].AvatarCharacter;
             correctErrors(file);
             return file;
         }
@@ -116,9 +132,9 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         public bool SetCharacterByAvatarID(AvatarIDToken AvatarID, TSODBChar CharacterFile)
         {
-            if (!DataFile.ContainsKey(AvatarID))
+            if (!ProfilesLibrary.ContainsKey(AvatarID))
                 return false;
-            DataFile[AvatarID].AvatarCharacter = CharacterFile;
+            ProfilesLibrary[AvatarID].AvatarCharacter = CharacterFile;
             Save();
             return true;
         }
@@ -129,28 +145,15 @@ namespace nio2so.DataService.API.Databases
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public Task<byte[]> GetCharBlobByAvatarID(AvatarIDToken AvatarID)
-        {
-            string url = Path.Combine(BaseDirectory, charblob_folder, $"{AvatarID}.charblob");
-            if (!File.Exists(url))
-                throw new FileNotFoundException(url);
-            return File.ReadAllBytesAsync(url);
-        }
+        public Task<byte[]> GetCharBlobByAvatarID(AvatarIDToken AvatarID) => GetLibrary<FileObjectLibrary>("BLOBS").GetDataByID(AvatarID);
         /// <summary>
         /// Sets the <see cref="TSODBCharBlob"/> for the given <see cref="AvatarIDToken"/> in binary
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public Task SetCharBlobByAvatarID(AvatarIDToken AvatarID, byte[] CharBlobStream, bool overwrite = true)
-        {
-            Directory.CreateDirectory(Path.Combine(BaseDirectory, charblob_folder));
-            string url = Path.Combine(BaseDirectory, charblob_folder, $"{AvatarID}.charblob");
-            if (File.Exists(url) && !overwrite)
-                throw new InvalidOperationException(url + " already exists!");
-            File.Delete(url);
-            return File.WriteAllBytesAsync(url,CharBlobStream);
-        }
+        public Task SetCharBlobByAvatarID(AvatarIDToken AvatarID, byte[] CharBlobStream, bool overwrite = true) =>
+            GetLibrary<FileObjectLibrary>("BLOBS").SetDataByIDToDisk(AvatarID,CharBlobStream,overwrite);
 
         /// <summary>
         /// Creates a new <see cref="AvatarInfo"/> file with a new unique <see cref="AvatarIDToken"/>
@@ -167,7 +170,7 @@ namespace nio2so.DataService.API.Databases
                 int two = Random.Shared.Next(1, int.MaxValue);
                 AvatarID = Math.Min((uint)(one + two), uint.MaxValue);
             }
-            while (!DataFile.TryAdd(AvatarID, new AvatarInfo(user, AvatarID)
+            while (!ProfilesLibrary.TryAdd(AvatarID, new AvatarInfo(user, AvatarID)
             {                
                 CreatedUsing = method
             }));

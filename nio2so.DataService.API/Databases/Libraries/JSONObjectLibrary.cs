@@ -1,36 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 
-namespace nio2so.DataService.API.Databases
+namespace nio2so.DataService.API.Databases.Libraries
 {
-    internal abstract class DatabaseComponentBase<T> where T : IDatabaseComponentDataFile, new()
+    internal class JSONObjectLibrary<T> : IDataServiceLibrary where T : class, new()
     {
         private string _baseDir;
-        protected string BaseDirectory => Path.GetDirectoryName(_baseDir);
+        public string? BaseDirectory => Path.GetDirectoryName(_baseDir);
 
-        protected T DataFile { get; set; }
+        public T DataFile { get; set; }
+
+        private Action CreateDefaultValues;
 
         /// <summary>
         /// Creates a new <see cref="DatabaseComponentBase{T1, T2}"/> with the given home directory
         /// </summary>
         /// <param name="FilePath"></param>
-        protected DatabaseComponentBase(string FilePath, bool DelayedLoad = false)
+        public JSONObjectLibrary(string FilePath, Action EnsureDefaultValuesFunc, bool DelayedLoad = false)
         {
             _baseDir = FilePath;
             DataFile = new();
+            CreateDefaultValues = EnsureDefaultValuesFunc;
             if (DelayedLoad) return;
             Load().Wait();
         }
 
         public async Task Load()
         {
-            DataFile = await LoadDataFile<T>(_baseDir) ?? DataFile;
-            if (!DataFile.HasDefaultValues()) CreateDefaultValues();
+            DataFile = await LoadDataFile<T>(_baseDir) ?? DataFile;            
         }
+
+        public void InvokeEnsureDefaultValues() => CreateDefaultValues();
 
         public static async Task<T?> LoadDataFile<T>(string DBPath)
         {
@@ -45,10 +44,8 @@ namespace nio2so.DataService.API.Databases
             using FileStream fs = File.Create(_baseDir);
             lock (DataFile)
             {
-                return JsonSerializer.SerializeAsync<T>(fs, DataFile);
+                return JsonSerializer.SerializeAsync(fs, DataFile);
             }
         }
-
-        protected abstract void CreateDefaultValues();
     }
 }
