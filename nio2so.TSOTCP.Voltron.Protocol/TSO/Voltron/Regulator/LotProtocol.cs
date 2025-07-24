@@ -20,12 +20,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     /// </summary>
     [TSORegulator]
     public class LotProtocol : TSOProtocol
-    {
-        record LotTest(uint ID, LotPosition Position, string PhoneNumber, string Name, string Description)
-        {
-            public string Name { get; set; } = Name;
-            public string Description { get; set; } = Description;
-        }             
+    {    
         private static HashSet<uint> _onlineLotIDs = new HashSet<uint>();
 
         public LotProfile GetLotProfile(HouseIDToken HouseID)
@@ -309,14 +304,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             int i = 0;
             foreach(var ID in lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
             {
-                var lot = lots.First(x => x.HouseID == ID);
-                continue;
-
-                /* rooms.Add(new TSORoomInfoStruct(
+                var lot = GetLotProfile(ID);
+                rooms.Add(new TSORoomInfoStruct(
                     new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
                     new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
                     (uint)++i) 
-                );*/
+                );
             }
             RespondWith(new TSOListRoomsResponsePDU(rooms.ToArray()));
             return;
