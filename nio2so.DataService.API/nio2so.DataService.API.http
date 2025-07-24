@@ -1,6 +1,6 @@
 @nio2so.DataService.API_HostAddress = http://localhost:5231
 
 # GET ACCOUNTS TEST
-GET {{nio2so.DataService.API_HostAddress}}/api/avatars/1337/name
+GET {{nio2so.DataService.API_HostAddress}}/api/lots/purchase?AvatarID=1337&Phone=6548784&X=1&Y=1
 Accept: application/json
 ###

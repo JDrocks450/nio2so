@@ -1,6 +1,7 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.DB;
+using nio2so.DataService.Common.Types.Lot;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
@@ -21,7 +22,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The X location of the Lot on the grid
         /// </summary>
-        [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }    
+        [TSOVoltronDBWrapperField] public LotPosition LotPosition { get; set; }    
 
         public TSOBuyLotByAvatarIDRequest() : base() { }
     }

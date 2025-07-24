@@ -46,15 +46,6 @@
         /// </summary>
         public const bool CASTestingMode = false;        
         /// <summary>
-        /// Whenever you buy a lot, this is the ID for the lot.
-        /// </summary>
-        public const uint BuyLotID = MyHouseID; // 8481
-        public const uint BuyLotEndingFunds = 0xB00B;
-        /// <summary>
-        /// When entering CAS the Shard-Selector will generate an AvatarID -- you can set it here
-        /// </summary>
-        public const uint CASAvatarID = 161;
-        /// <summary>
         /// Set the UserAuth servlet to mark you as a CSR
         /// </summary>
         public const bool CSRUserAuth = false;
@@ -67,7 +58,7 @@
         /// <summary>
         /// The static amount of funds in your avatar's account
         /// </summary>
-        public const uint StaticFunds = 500000;
+        public const uint StartingFunds = 500000;
         //****
 
         //**PATHS

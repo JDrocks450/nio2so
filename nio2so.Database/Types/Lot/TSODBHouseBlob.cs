@@ -1,6 +1,6 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.Formats.DB
+namespace nio2so.DataService.Common.Types.Lot
 {
     /// <summary>
     /// A wrapper for the House Blob stream that is sent to the client for HouseBlob PDUs

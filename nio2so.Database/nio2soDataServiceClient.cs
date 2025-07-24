@@ -2,13 +2,14 @@
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Lot;
 using System.Net.Http.Json;
 using System.Text;
 
 namespace nio2so.DataService.Common
 {
     /// <summary>
-    /// Interface for interacting with the nio2so Data Service to make requests
+    /// Interface for interacting with the nio2so Data Service to make requests/responses
     /// </summary>
     public class nio2soDataServiceClient
     {
@@ -176,12 +177,48 @@ namespace nio2so.DataService.Common
         /// <summary>
         /// Downloads the PNG Image for the given <paramref name="HouseID"/>
         /// </summary>
-        /// <param name="AvatarID"></param>
+        /// <param name="HouseID"></param>
         /// <returns>On not found, returns null</returns>
         public Task<byte[]?> GetThumbnailByHouseID(HouseIDToken HouseID) =>
             baseQueryGetOctet($"lots/{HouseID.HouseID}/thumbnail");
 
-        public Task<string?> GetAvatarNameByAvatarID(uint AvatarID) =>
-            baseQueryGetAs<string>($"avatars/{AvatarID}/name");
+        /// <summary>
+        /// Returns the name of the avatar by the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public async Task<string> GetAvatarNameByAvatarID(AvatarIDToken AvatarID) =>
+            await (await httpGet($"avatars/{AvatarID}/name")).Content.ReadAsStringAsync();
+
+        /// <summary>
+        /// Returns a list of the <see cref="HouseIDToken"/> and <see cref="LotPosition"/> of all lots in this Shard
+        /// </summary>
+        /// <returns></returns>
+        public Task<N2GetLotListQueryResult?> GetAllLotProfiles() =>
+            baseQueryGetAs<N2GetLotListQueryResult>("lots/profiles");
+
+        /// <summary>
+        /// Returns a <see cref="LotProfile"/> by the given <see cref="HouseIDToken"/> <paramref name="HouseID"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        public Task<LotProfile?> GetLotProfileByHouseID(HouseIDToken HouseID) =>
+            baseQueryGetAs<LotProfile>($"lots/{HouseID}/profile");
+
+        /// <summary>
+        /// Changes a field on the <see cref="LotProfile"/> to be the new value
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        public Task<HttpResponseMessage> MutateLotProfileField(HouseIDToken HouseID, string Field, string Value) =>
+            baseQueryPostAs($"lots/{HouseID}/profile", Value, (nameof(Field), Field));
+
+        /// <summary>
+        /// Attempts to purchase a new slot in the map. Returns a <see cref="LotProfile"/> containing the new <see cref="HouseIDToken"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns>Null when purchasing was not successful.</returns>
+        public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, string Phone, uint X, uint Y) =>
+            baseQueryGetAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(Phone), Phone), (nameof(X), X), (nameof(Y), Y));
     }
 }

@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.DataService.Common.Types.Lot;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -33,7 +34,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <para/> This <b>needs</b> to be correct or else you will only get "Loading..." on the LotPage, for example
         /// </summary>
         [TSOVoltronDBWrapperField]
-        public TSODBLotPosition LotPosition { get; set; }
+        public LotPosition LotPosition { get; set; }
         /// <summary>
         /// The description of the lot
         /// </summary>
@@ -62,7 +63,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <param name="Owner"></param>
         /// <param name="Description"></param>
         /// <param name="Position"></param>
-        public TSOGetLotByID_Response(uint LotID, string Name, string Owner, string Description, TSODBLotPosition Position) :
+        public TSOGetLotByID_Response(uint LotID, string Name, string Owner, string Description, LotPosition Position) :
             base(
                     TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                     TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

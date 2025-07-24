@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.DataService.Common.Types.Lot;
+using nio2so.Formats.DB;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
@@ -20,7 +21,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The location of the house
         /// </summary>
-        [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }
+        [TSOVoltronDBWrapperField] public LotPosition LotPosition { get; set; }
         [TSOVoltronDBWrapperField] public uint Filler4 { get; set; } = 0x0E0F;
         [TSOVoltronDBWrapperField] public uint Filler5 { get; set; } = 0x1011;
         /// <summary>
@@ -39,7 +40,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <param name="NewHouseID">The ID of the house created</param>
         /// <param name="AccountFunds">The amount of money you have after buying the house</param>
         /// <param name="Position">The position on the map the new house is at</param>
-        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint AccountFunds, TSODBLotPosition Position) :
+        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint AccountFunds, LotPosition Position) :
             base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

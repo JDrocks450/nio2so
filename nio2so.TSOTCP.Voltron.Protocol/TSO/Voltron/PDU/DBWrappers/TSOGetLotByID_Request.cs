@@ -9,7 +9,7 @@
         /// <summary>
         /// The ID of the Lot we are requesting information on
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint Lot_DatabaseID { get; set; }
+        [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
 
         public TSOGetLotByID_Request() : base() { }
     }

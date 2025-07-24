@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Lot;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
@@ -136,7 +137,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
                 _ => ConsoleColor.Cyan
             };
-            Log($"{Time.ToLongTimeString()} - *VOLTRON_DATABASE* [{Direction}] {PDU.ToShortString()}");
+            Log($"{Time.ToLongTimeString()} - *VOLTRON_DATABASE* [{Direction}] {PDU.ToString()}");
 
             //**LOG PDU TO DISK
             if (Direction == NetworkTrafficDirections.INBOUND || Direction == NetworkTrafficDirections.OUTBOUND)
@@ -207,8 +208,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
         public void OnCharBlob(NetworkTrafficDirections Direction, uint AvatarID, TSODBCharBlob charBlob)
         {
             OnBlobBase(Direction, AvatarID, "Character File Stream");
-            //if (Direction == NetworkTrafficDirections.INBOUND)
-              //  TSOFactoryBase.Get<TSOAvatarFactory>().SetCharBlobByIDToDisk(AvatarID, charBlob);
         }
         private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, string Type)
         {
@@ -223,8 +222,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
         public void OnCharData(NetworkTrafficDirections Direction, uint AvatarID, TSODBChar CharData)
         {
             OnBlobBase(Direction, AvatarID, "Character Profile");
-            //if (Direction == NetworkTrafficDirections.INBOUND)
-              //  TSOFactoryBase.Get<TSOAvatarFactory>().SetCharByIDToDisk(AvatarID, CharData);
         }
 
         private void Log(string Message)

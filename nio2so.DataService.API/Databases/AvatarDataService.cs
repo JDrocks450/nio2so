@@ -114,8 +114,6 @@ namespace nio2so.DataService.API.Databases
             void correctErrors(TSODBChar CharData)
             {
                 // TODO
-                //CHEATS!!!
-                CharData.Funds = TestingConstraints.StaticFunds; // set beta funds level here
                 return;
                 CharData.Unknown1 = 0;
                 CharData.MyLotID = 1;
@@ -169,6 +167,7 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         public AvatarIDToken CreateNewAvatar(UserToken user, string method)
         {
+            AvatarInfo newInfo;
             uint AvatarID = 0;
             do
             {
@@ -176,15 +175,21 @@ namespace nio2so.DataService.API.Databases
                 int two = Random.Shared.Next(1, int.MaxValue);
                 AvatarID = Math.Min((uint)(one + two), uint.MaxValue);
             }
-            while (!ProfilesLibrary.TryAdd(AvatarID, new AvatarInfo(user, AvatarID)
+            while (!ProfilesLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID)
             {                
                 CreatedUsing = method
             }));
+            newInfo.AvatarCharacter.Funds = TestingConstraints.StartingFunds;
             Save();
             //add the avatar to this account
             if (!APIDataServices.UserDataService.AddAvatarToAccount(user, AvatarID, out _))
                 throw new InvalidOperationException("Tried to link an avatar to an account that is full.");
             return AvatarID;
+        }
+
+        public bool DebitCreditTransaction(int AccountChange)
+        {
+            return true;
         }
     }
 }

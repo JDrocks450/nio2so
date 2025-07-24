@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Types.Lot;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 
@@ -27,7 +28,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 
         public uint Create()
         {
-            uint NewHouseID = TestingConstraints.BuyLotID;
+            uint NewHouseID = TestingConstraints.MyHouseID;
             byte[] data = OnFileNotFound();
             SetHouseBlobByIDToDisk(NewHouseID, new(data));
             return NewHouseID;

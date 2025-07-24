@@ -8,7 +8,7 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
     {
         public const string TSOCitySelectorAvatarDataBase = "The-Sims-Online", TSOCitySelectorAvatarDataElement = "Avatar-Data";
 
-        public static AvatarProfile Default => new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName,TestingConstraints.StaticFunds,5000, 5, 1, TestingConstraints.MyShardName);
+        public static AvatarProfile Default => new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName,TestingConstraints.StartingFunds,5000, 5, 1, TestingConstraints.MyShardName);
 
         public static AvatarProfile Empty = AvatarProfile.Empty;
 

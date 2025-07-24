@@ -1,10 +1,17 @@
-﻿using nio2so.DataService.API.Databases.Libraries;
+﻿using Microsoft.AspNetCore.Mvc;
+using nio2so.Data.Common.Testing;
+using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types;
+using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Lot;
 
 namespace nio2so.DataService.API.Databases
 {
     internal class LotsDataService : DataServiceBase
     {
+        JSONDictionaryLibrary<uint, LotInfo> LotsLibrary => GetLibrary<JSONDictionaryLibrary<uint, LotInfo>>("LOTS");
+
         public LotsDataService() : base()
         {
 
@@ -13,11 +20,26 @@ namespace nio2so.DataService.API.Databases
         protected override void AddLibraries()
         {
             ServerSettings settings = ServerSettings.Current;
+
             Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DatabaseDirectory, "thumbs"),
                 "thumb", "png", GetDefaultThumbnail));
+
+            Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.LotInfoFile, EnsureDefaultLots));
+
+            base.AddLibraries();
         }
 
         Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultThumbnailPath);
+
+        void EnsureDefaultLots()
+        {
+            ServerSettings settings = ServerSettings.Current;
+
+            // add the static lots to the database and skip if existing
+            foreach(var lot in settings.StaticLots)
+                LotsLibrary.TryAdd(lot.HouseID, new LotInfo() { Profile = lot });
+            Save();
+        }
 
         /// <summary>
         /// Returns the PNG Image for the given <see cref="HouseIDToken"/> in binary
@@ -34,5 +56,83 @@ namespace nio2so.DataService.API.Databases
         /// <exception cref="KeyNotFoundException"></exception>
         public Task SetThumbnailByHouseID(HouseIDToken HouseID, byte[] PNGStream, bool overwrite = true) =>
             GetLibrary<FileObjectLibrary>("THUMBNAILS").SetDataByIDToDisk(HouseID, PNGStream, overwrite);
+        /// <summary>
+        /// Returns the <see cref="LotProfile"/> with the given <see cref="HouseIDToken"/> <paramref name="HouseID"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public LotProfile GetLotProfileByLotID(HouseIDToken HouseID)
+        {
+            if (!LotsLibrary.ContainsKey(HouseID))
+                throw new KeyNotFoundException($"The HouseID: {HouseID} was not found in the data service.");
+            return LotsLibrary[HouseID].Profile;
+        }
+        /// <summary>
+        /// Gets all lots in this database
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<LotProfile> GetLots() => LotsLibrary.Select(x => x.Value.Profile);
+        /// <summary>
+        /// Changes a field on the <see cref="LotProfile"/> by <paramref name="houseID"/>
+        /// </summary>
+        /// <param name="houseID"></param>
+        /// <param name="field"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public bool SetLotProfileFields(HouseIDToken houseID, string field, string value)
+        {
+            field = field.ToLowerInvariant();
+            var profile = GetLotProfileByLotID(houseID);
+
+            switch (field)
+            {
+                case "name":
+                    profile.Name = value;
+                    Save();
+                    return true;
+                case "description":
+                    profile.Description = value;
+                    Save();
+                    return true;
+                default: return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to purchase the new lot for the provided <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarProfile"></param>
+        /// <param name="LotPhoneNumber"></param>
+        /// <param name="Position"></param>
+        /// <param name="NewLotProfile"></param>
+        /// <returns></returns>
+        public bool TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, TSODBChar AvatarProfile, string LotPhoneNumber, LotPosition Position, out LotProfile? NewLotProfile)
+        {
+            HouseIDToken HouseID;
+            NewLotProfile = null;
+
+            if (AvatarProfile.Funds <= ServerSettings.Current.LotPurchasePrice)
+                return false; // Refused! You're broke!
+
+            if (LotsLibrary.Values.Any(x => x.Profile.PhoneNumber == LotPhoneNumber))
+                return false; // Refused! Someone lives here!
+
+            do
+            {
+                int one = Random.Shared.Next(100, int.MaxValue);
+                int two = Random.Shared.Next(1, int.MaxValue);
+                HouseID = Math.Min((uint)(one + two), uint.MaxValue);
+            }
+            while (!LotsLibrary.TryAdd(HouseID, new LotInfo()
+            {
+                Profile = NewLotProfile = new(HouseID, AvatarID, Position, LotPhoneNumber, $"{AvatarProfile.AvatarName}'s House", 
+                $"Created on {DateTime.Now.ToShortDateString()}.\n\nEnter a cool description here...")
+            }));
+
+            AvatarProfile.Funds -= ServerSettings.Current.LotPurchasePrice;
+            Save(); // save the db
+            return NewLotProfile != null;
+        }
     }
 }

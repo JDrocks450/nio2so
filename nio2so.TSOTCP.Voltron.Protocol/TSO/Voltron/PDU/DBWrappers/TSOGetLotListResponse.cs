@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.DB;
+﻿using nio2so.DataService.Common.Types.Lot;
+using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
@@ -32,7 +33,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <summary>
         /// The X component of the lot's Location
         /// </summary>
-        [TSOVoltronDBWrapperField] public TSODBLotPosition LotPosition { get; set; }
+        [TSOVoltronDBWrapperField] public LotPosition LotPosition { get; set; }
         /// <summary>
         /// <i>Unknown</i>
         /// </summary>
@@ -63,7 +64,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// </summary>
         public TSOGetLotListResponse() : base() { }
 
-        public TSOGetLotListResponse(uint LotID, TSODBLotPosition Position) : base(
+        public TSOGetLotListResponse(uint LotID, LotPosition Position) : base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
                 TSO_PreAlpha_DBActionCLSIDs.GetLotList_Response

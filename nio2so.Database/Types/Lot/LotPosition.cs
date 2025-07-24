@@ -1,13 +1,13 @@
-﻿namespace nio2so.Formats.DB
+﻿namespace nio2so.DataService.Common.Types.Lot
 {
     /// <summary>
     /// A Grid Position in the TSO World View
     /// <code>uint X, uint Y</code>
     /// </summary>
-    public class TSODBLotPosition
+    public class LotPosition
     {
-        public TSODBLotPosition() { }
-        public TSODBLotPosition(uint x, uint y) : this()
+        public LotPosition() { }
+        public LotPosition(uint x, uint y) : this()
         {
             X = x;
             Y = y;

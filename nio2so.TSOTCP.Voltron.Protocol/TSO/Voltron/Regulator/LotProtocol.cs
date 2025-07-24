@@ -1,4 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Lot;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
@@ -18,16 +21,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator]
     public class LotProtocol : TSOProtocol
     {
-        record LotTest(uint ID, TSODBLotPosition Position, string PhoneNumber, string Name, string Description)
+        record LotTest(uint ID, LotPosition Position, string PhoneNumber, string Name, string Description)
         {
             public string Name { get; set; } = Name;
             public string Description { get; set; } = Description;
         }             
-
-        private static List<LotTest> _lots = new() {
-            new(TestingConstraints.BuyLotID,new(93, 135), TestingConstraints.MyHousePhoneNumber, TestingConstraints.MyHouseName, "The first house profile working in nio2so. Check out that cool thumbnail.") // ocean island
-        };
         private static HashSet<uint> _onlineLotIDs = new HashSet<uint>();
+
+        public LotProfile GetLotProfile(HouseIDToken HouseID)
+        {
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+            LotProfile? item = client.GetLotProfileByHouseID(HouseID).Result;
+            if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
+            return item;
+        }
 
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOBuyLotByAvatarIDRequest"/>
@@ -39,7 +47,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void BuyLotByAvatarID_Request(TSODBRequestWrapper PDU)
         {
             TSOBuyLotByAvatarIDRequest lotPurchasePDU = (TSOBuyLotByAvatarIDRequest)PDU;
-            
+
+            //attempt to purchase this lot
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+
+            LotProfile? newLotProfile = client.AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
+                lotPurchasePDU.LotPhoneNumber,lotPurchasePDU.LotPosition.X,lotPurchasePDU.LotPosition.Y).Result;
+
             //create failed packet
             void Failure() =>            
                 RespondTo(PDU, new TSOBuyLotByAvatarIDFailedResponse());                                   
@@ -47,18 +62,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //create success packet
             void Success()
             {
-                long? NewID = TestingConstraints.BuyLotID + (_lots.Count);//TSOFactoryBase.Get<TSOHouseFactory>()?.Create();
-                if (!NewID.HasValue) throw new NullReferenceException("Factory could not be mapped or there was an error creating a house.");
-                TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse((uint)NewID.Value,
-                                                                          TestingConstraints.BuyLotEndingFunds,
-                                                                          lotPurchasePDU.LotPosition);
+                //download my character data to get funds after the transaction
+                TSODBChar myCharacterProfile = client.GetCharacterFileByAvatarID(lotPurchasePDU.AvatarID).Result;
+
+                TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse(newLotProfile.HouseID,myCharacterProfile.Funds,newLotProfile.Position);
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
-                    $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {NewID} Location: {lotPurchasePDU.LotPosition} String: {lotPurchasePDU.LotPhoneNumber}"));
-                _lots.Add(new((uint)NewID, lotPurchasePDU.LotPosition, lotPurchasePDU.LotPhoneNumber, $"{PDU.SenderSessionID.MasterID}'s Place", "Please enter a description for your new property."));
+                    $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {newLotProfile.HouseID} Location: {newLotProfile.Position} String: {newLotProfile.PhoneNumber}"));
                 RespondTo(PDU, buyPDU);
             }
 
-            Success();
+            if (newLotProfile == null) // no response from server 
+            {
+                Failure();
+                return;
+            }
+            Success(); // server responded with new lot
         }
 
         /// <summary>
@@ -88,9 +106,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request)]
         public void GetLotList_Request(TSODBRequestWrapper PDU)
         {
+            //download lot profiles from data service
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+            var result = client.GetAllLotProfiles().Result;
+
             //send one packet for every lot in the world view
-            foreach(var lot in _lots)
-                RespondTo(PDU, new TSOGetLotListResponse(lot.ID, lot.Position));
+            foreach(var lot in result.Lots)
+                RespondTo(PDU, new TSOGetLotListResponse(lot.HouseID, lot.Position));
 
             // ** You can send this PDU as many times as needed for each house to add to the map **
             //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
@@ -105,15 +128,20 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         { // Gets information on the house with the LotID provided
             TSOGetLotByID_Request req = (TSOGetLotByID_Request)PDU;
 
-            //get data
-            LotTest? item = _lots.FirstOrDefault(lot => lot.ID == req.Lot_DatabaseID);
-            if (item == null) throw new InvalidDataException($"LotID {req.Lot_DatabaseID} doesn't exist.");
+            //download lot profile from data service
+            LotProfile lot = GetLotProfile(req.HouseID);
+
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+
+            //download avatar name
+            string? avatarName = client.GetAvatarNameByAvatarID(lot.OwnerAvatar).Result;
 
             //send requested data
-            RespondWith(new TSOGetLotByID_Response(req.Lot_DatabaseID, item.Name, "bisquick", item.Description, item.Position));
+            RespondWith(new TSOGetLotByID_Response(req.HouseID, lot.Name, avatarName, lot.Description, lot.Position));
             
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
-                $"GetLotByID_Request: ID: {req.Lot_DatabaseID}"));
+                $"GetLotByID_Request: ID: {req.HouseID}"));
         }
         /// <summary>
         /// Handles when a Client requests the PNG thumbnail image for a lot.
@@ -145,7 +173,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void GetHouseLeaderByLotID_Request(TSODBRequestWrapper PDU)
         {
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
-            RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, TestingConstraints.MyAvatarID));
+
+            //CHANGE LATER**********
+
+            //download lot profiles from data service
+            LotProfile lot = GetLotProfile(HouseID);
+            //********
+
+            RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, lot.OwnerAvatar));
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseBlobByIDRequest"/>
@@ -193,7 +228,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetLotByIDRequest"/>
-        /// <para/>Responds with nothing. Saves the <see cref="TSODBHouseBlob"/> to file by its <c>HouseID</c>
+        /// <para/>Responds with nothing. Saves the new fields to the data service
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -203,13 +238,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         { // client is giving us lot profile data
             TSOSetLotByIDRequest req = (TSOSetLotByIDRequest)PDU;
 
-            //get data
-            LotTest? item = _lots.FirstOrDefault(lot => lot.ID == req.LotID);
-            if (item == null) throw new InvalidDataException($"LotID {req.LotID} doesn't exist.");
-
+            //get nio2so client
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+            
             //set data
-            item.Name = req.LotName;
-            item.Description = req.LotDescription;            
+            bool nameSuccessful = client.MutateLotProfileField(req.LotID, "name", req.LotName).Result.IsSuccessStatusCode;
+            bool descSuccessful = client.MutateLotProfileField(req.LotID, "description", req.LotDescription).Result.IsSuccessStatusCode;
 
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"SetLotByID_Request: ID: {req.LotID}"));
@@ -229,8 +264,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
         public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
         {
+            uint HouseID = TestingConstraints.MyHouseID;
+
+            //get default house
+            LotProfile lot = GetLotProfile(HouseID);
+
             var destroyRoomPDU = (TSODestroyRoomPDU)PDU;
-            var myRoom = _lots[0];
+            LotProfile myRoom = lot;
 
             //Get the avatar who is trying to leave and destroy the room behind them
             uint RoomID = ((ITSONumeralStringStruct)destroyRoomPDU.RoomInfo)?.NumericID ?? 0;
@@ -260,19 +300,27 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
         public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
         {
+            //download all lots from data service ... change later to be rooms
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new NullReferenceException("nio2so data service client could not be found.");
+            var lots = client.GetAllLotProfiles().Result.Lots;
+
             HashSet<TSORoomInfoStruct> rooms = new();
             int i = 0;
-            foreach(var ID in _lots.Select(x => x.ID)) // UPDATE LATER TO BE ONLINE LOTS
+            foreach(var ID in lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
             {
-                var lot = _lots.First(x => x.ID == ID);
-                rooms.Add(new TSORoomInfoStruct(
+                var lot = lots.First(x => x.HouseID == ID);
+                continue;
+
+                /* rooms.Add(new TSORoomInfoStruct(
                     new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
                     new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
-                    (uint)++i)
-                );
+                    (uint)++i) 
+                );*/
             }
             RespondWith(new TSOListRoomsResponsePDU(rooms.ToArray()));
             return;
+
             //test message pdu ... doesn't work
             RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")), "Testing"));
         }
@@ -283,11 +331,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
 
             // TELL THE CLIENT TO START THE HOST PROTOCOL
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));            
+            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
 
             //get the lot
-            LotTest? thisLot = _lots.FirstOrDefault(x => x.ID == roomPDU.HouseID);
-            _onlineLotIDs.Add(thisLot.ID); // set lot as ONLINE
+            LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
+            
+            // set lot as ONLINE
+            _onlineLotIDs.Add(thisLot.HouseID); 
 
             //get the phone number of the lot
             string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
