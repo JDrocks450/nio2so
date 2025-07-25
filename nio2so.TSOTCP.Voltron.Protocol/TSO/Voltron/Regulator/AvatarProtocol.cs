@@ -3,6 +3,7 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
@@ -256,7 +257,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             var relPDU = (TSOGetRelationshipsByIDRequest)PDU;
             uint avatarID = relPDU.AvatarID;
-            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID, TestingConstraints.MyFriendAvatarID));
+            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID));
+        }
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetReversedRelationshipsByID_Request)]
+        public void GetReversedRelationshipsByID_Request(TSODBRequestWrapper PDU)
+        {
+            var relPDU = (TSOGetReversedRelationshipsByIDRequest)PDU;
+            uint avatarID = relPDU.AvatarID;
+            RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU)]

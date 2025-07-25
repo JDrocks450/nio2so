@@ -4353,6 +4353,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         /// <para/> Not implemented
         /// </summary>
         GetRelationshipsByID_Response = 0x9BF972CB,
+        GetReversedRelationshipsByID_Request = 0xBCE15F48,
+        GetReversedRelationshipsByID_Response = 0xFCE16032,
         /// <summary>
         /// Gets the list of lot IDs that are added to the World Map
         /// </summary>
@@ -4404,7 +4406,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         /// <summary>
         /// Sent when the client wants to update their bookmarks list <c>TSOSetBookmarksRequest</c>
         /// </summary>
-        SetBookmarks_Request = 0x9D920F06,                
+        SetBookmarks_Request = 0x9D920F06,
         /// <summary>
         /// Logs the remote console
         /// </summary>
@@ -4469,7 +4471,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         BuyLotByAvatarID_Request = 0x1D8DD55A,
         BuyLotByAvatarID_Response = 0xBD8DDB9B,
         DebitCredit_Request = 0x7C24F627,
-        DebitCredit_Response = 0x3C24F6BC        
+        DebitCredit_Response = 0x3C24F6BC,        
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.

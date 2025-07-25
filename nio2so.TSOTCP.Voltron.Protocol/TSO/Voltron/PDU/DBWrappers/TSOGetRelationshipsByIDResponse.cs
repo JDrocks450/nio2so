@@ -4,17 +4,26 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
 {
     /// <summary>
-    /// Needs revisiting, this format is not correct.
+    /// Structure works
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetRelationshipsByID_Response)]
     public class TSOGetRelationshipsByIDResponse : TSODBRequestWrapper
     {
+        public record TSORelationshipStructure
+        {            
+            public uint Param1 { get; set; } = 1; // unknown -- seems to indicate friendship or enemy?
+            public uint FirstLevel { get; set; } = 1337; // avatarID
+            public uint SecondLevel { get; set; } = 161; // avatarID
+            public uint ThirdLevel { get; set; } = 0; // avatarID
+            public uint Param2 { get; set; } = 1; // unknown
+        }
+
         /// <summary>
         /// The Avatar that is being asked about relationships for
         /// </summary>
         [TSOVoltronDBWrapperField] public uint AvatarID { get; set; }
-        [TSOVoltronDBWrapperField] public uint NumEntries { get; set; }
-        [TSOVoltronDBWrapperField][TSOVoltronBodyArray] public byte[] RelationshipAvatarIDs { get; set; }
+        [TSOVoltronDBWrapperField] public uint StatusCode { get; set; }
+        [TSOVoltronDBWrapperField] public TSORelationshipStructure Test { get; set; } = new();
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
@@ -33,19 +42,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
             )
         {
             this.AvatarID = AvatarID;
-            NumEntries = (uint)FriendAvatarIDs.Length;
-            RelationshipAvatarIDs = new byte[sizeof(uint) * NumEntries];
-
-            int index = -1;
-            foreach (uint aID in FriendAvatarIDs)
-            {
-                index++;
-                byte[] aIdBytes = EndianBitConverter.Big.GetBytes(aID);
-                RelationshipAvatarIDs[index * sizeof(uint)] = aIdBytes[0];
-                RelationshipAvatarIDs[index * sizeof(uint) + 1] = aIdBytes[1];
-                RelationshipAvatarIDs[index * sizeof(uint) + 2] = aIdBytes[2];
-                RelationshipAvatarIDs[index * sizeof(uint) + 3] = aIdBytes[3];
-            }
             MakeBodyFromProperties();
         }
     }

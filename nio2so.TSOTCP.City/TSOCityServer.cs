@@ -5,6 +5,7 @@ using nio2so.Formats.BPS;
 using nio2so.Formats.TSOData;
 using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using System.Net;
@@ -45,6 +46,7 @@ namespace nio2so.TSOTCP.City.TSO
 
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(@"https://localhost:7071/api/"))); // REGISTER THE NIO2SO DATA SERVICE
+            Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;

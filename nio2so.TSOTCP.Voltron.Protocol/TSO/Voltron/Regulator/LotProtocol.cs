@@ -4,6 +4,7 @@ using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
@@ -30,6 +31,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             LotProfile? item = client.GetLotProfileByHouseID(HouseID).Result;
             if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
             return item;
+        }
+        public TSOAriesIDStruct GetAvatarIDStruct(AvatarIDToken AvatarID)
+        {
+            var client = GetService<nio2soVoltronDataServiceClient>();
+            return new(AvatarID, client.GetAvatarNameByAvatarID(AvatarID).Result);
         }
 
         /// <summary>
@@ -76,7 +82,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetRoommateInfoByLotIDRequest"/>
-        /// <para/> For testing purposes, is always hardcoded to respond <see cref="TestingConstraints.MyAvatarID"/> is the owner, and <see cref="TestingConstraints.MyFriendAvatarID"/> is a roommate
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -88,13 +93,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (HouseID == 0)
                 return; // Seems to be mistaken to send in this scenario
 
-            RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID,
-                TestingConstraints.MyAvatarID,
-                TestingConstraints.MyFriendAvatarID));
+            //**download roommates from data service
+            if (!TryGetService(out nio2soVoltronDataServiceClient client))
+                throw new NullReferenceException("nio2so client was not found.");
+            IEnumerable<AvatarIDToken>? roommates = (client.GetRoommatesByHouseID(HouseID)?.Result);
+            //**
+            if (roommates == null) throw new NullReferenceException($"HouseID: {HouseID} was not found.");
+
+            RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID,roommates.Select(x=>(uint)x).ToArray()));
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSO_PreAlpha_DBActionCLSIDs.GetLotList_Request"/>
-        /// <para/>Responds with a new <see cref="TSOGetLotListResponse"/> with <see cref="TestingConstraints.BuyLotID"/> at the last clicked position on the map
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -147,7 +156,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void GetHouseThumbByID_Request(TSODBRequestWrapper PDU)
         {
             TSOGetHouseThumbByIDRequest req = (TSOGetHouseThumbByIDRequest)PDU;
-
+            if (req.HouseID == 0) return;
             //**request from nio2so
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
                 throw new InvalidOperationException("Tried to find the nio2so data service client, it is not present in the Services collection.");
@@ -160,7 +169,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
-        /// <para/>Responds with a new <see cref="TSOGetHouseLeaderByIDResponse"/> with <see cref="TestingConstraints.MyAvatarID"/>
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -179,7 +187,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseBlobByIDRequest"/>
-        /// <para/>Responds with a new <see cref="TSOGetHouseBlobByIDResponse"/> with the <see cref="TSODBHouseBlob"/> requested by its <c>HouseID</c>
+        /// <para/>Responds with a new <see cref="TSOGetHouseBlobByIDResponse"/> with the <see cref="TSODBHouseBlob"/> requested by its <see cref="TSOGetHouseBlobByIDRequest.HouseID"/>
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -274,22 +282,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             RespondWith(new TSOUpdateRoomPDU(1, TSORoomInfoStruct.NoRoom));
             RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, new(myRoom.PhoneNumber,myRoom.Name)));
-            
-            return;
-
-            //**tried these
-            RespondWith(new TSODetachFromRoomPDU(new TSORoomIDStruct(myRoom.PhoneNumber,myRoom.Name)));
-            
-            var kClientConnectedMsg = new TSOBroadcastDatablobPacket(
-                    TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
-                    new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_UnloadHouse,
-                    TSOVoltronSerializer.Serialize(new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)))
-                )
-            {
-                SenderSessionID = new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)
-            };
-            kClientConnectedMsg.MakeBodyFromProperties();
-            RespondWith(kClientConnectedMsg);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
@@ -307,7 +299,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 var lot = GetLotProfile(ID);
                 rooms.Add(new TSORoomInfoStruct(
                     new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
-                    new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // change this later
+                    GetAvatarIDStruct(lot.OwnerAvatar), // change this later
                     (uint)++i) 
                 );
             }
@@ -323,14 +315,22 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             var roomPDU = (TSOLotEntryRequestPDU)PDU;
 
-            // TELL THE CLIENT TO START THE HOST PROTOCOL
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
+            //identify client
+            nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
+            if (clientSessionService.CurrentClient == null)
+                throw new InvalidOperationException("Cannot identify who sent this packet to Voltron.");
 
             //get the lot
             LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
-            
-            // set lot as ONLINE
-            _onlineLotIDs.Add(thisLot.HouseID); 
+
+            if (thisLot.OwnerAvatar == ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID)
+            { // Initiate the host protocol
+                // TELL THE CLIENT TO START THE HOST PROTOCOL
+                RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
+
+                // set lot as ONLINE
+                _onlineLotIDs.Add(thisLot.HouseID);
+            }
 
             //get the phone number of the lot
             string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
@@ -345,9 +345,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //create the roominfo struct
             TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new (phoneNumber, RoomName),
-                ownerVector: new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName), // m_ownerID
+                ownerVector: GetAvatarIDStruct(thisLot.OwnerAvatar), // m_ownerID
                 currentOccupants: occupants, maxOccupants: 10, isLocked: false,
-                roomHostInformation: admins
+                AdminList: admins
             );
 
             //tell the client to join this new room

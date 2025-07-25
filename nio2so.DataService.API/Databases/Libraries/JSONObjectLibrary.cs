@@ -35,7 +35,7 @@ namespace nio2so.DataService.API.Databases.Libraries
         {
             if (!File.Exists(DBPath)) return default;
             using FileStream fs = File.OpenRead(DBPath);
-            return await JsonSerializer.DeserializeAsync<T>(fs);
+            return await JsonSerializer.DeserializeAsync<T>(fs, ServerSettings.Current.SerializationOptions);
         }
 
         public Task Save()

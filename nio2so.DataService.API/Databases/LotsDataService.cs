@@ -22,7 +22,7 @@ namespace nio2so.DataService.API.Databases
         {
             ServerSettings settings = ServerSettings.Current;
 
-            Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DatabaseDirectory, "thumbs"),
+            Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DatabaseDirectory, "thumbnails"),
                 "thumb", "png", GetDefaultThumbnail));
 
             Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.LotInfoFile, EnsureDefaultLots));
@@ -48,7 +48,8 @@ namespace nio2so.DataService.API.Databases
         /// <param name="HouseID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public Task<byte[]> GetThumbnailByHouseID(HouseIDToken HouseID) => GetLibrary<FileObjectLibrary>("THUMBNAILS").GetDataByID(HouseID);
+        public Task<byte[]> GetThumbnailByHouseID(HouseIDToken HouseID) => 
+            GetLibrary<FileObjectLibrary>("THUMBNAILS").GetDataByID(HouseID);
         /// <summary>
         /// Sets the PNG Image for the given <see cref="HouseIDToken"/> in binary
         /// </summary>
@@ -135,6 +136,20 @@ namespace nio2so.DataService.API.Databases
             Save(); // save the db
             return NewLotProfile != null;
         }
+
+        /// <summary>
+        /// Returns a list of all roommates (owner included) by the given <see cref="HouseIDToken"/> <paramref name="HouseID"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public IEnumerable<AvatarIDToken> GetRoommatesByHouseID(HouseIDToken HouseID)
+        {
+            if (!LotsLibrary.TryGetValue(HouseID, out LotInfo? info))
+                throw new KeyNotFoundException(HouseID.ToString());
+            return info.GetRoommates();
+        }
+
         /// <summary>
         /// Gets the <see cref="HouseIDToken"/> that this <paramref name="AvatarID"/> is a member of (roommate, owner)
         /// </summary>

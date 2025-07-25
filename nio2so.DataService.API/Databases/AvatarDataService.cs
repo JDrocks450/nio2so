@@ -120,11 +120,13 @@ namespace nio2so.DataService.API.Databases
                 CharData.MyLotID = APIDataServices.LotDataService.GetRoommateHouseIDByAvatarID(AvatarID) ?? 0;
 
                 // TODO
-                return;
-                CharData.Unknown1 = 0;
-                CharData.Unknown3 = 0;
-                CharData.Unknown4 = 0;
-                CharData.Unknown6 = 0;
+                if (AvatarID == 161)
+                {
+                    CharData.Unknown1 = 0;
+                    CharData.Unknown3 = 0;
+                    CharData.Unknown4 = 0;
+                    CharData.Unknown6 = 0;
+                }
             }
             if (!AvatarsLibrary.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));

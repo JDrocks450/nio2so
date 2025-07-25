@@ -23,11 +23,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
                            uint currentOccupants,                           
                            uint maxOccupants = MAX_OCCUPANTS,
                            bool isLocked = false,
-                           params TSOAriesIDStruct[] roomHostInformation)                           
+                           params TSOAriesIDStruct[] AdminList)                           
         {            
             RoomLocationInfo = StageID = roomLocationInfo;
             OwnerVector = ownerVector;
-            AdminList = roomHostInformation;
+            this.AdminList = AdminList;
             CurrentOccupants = currentOccupants;
             MaxOccupants = maxOccupants;
             IsLocked = isLocked;

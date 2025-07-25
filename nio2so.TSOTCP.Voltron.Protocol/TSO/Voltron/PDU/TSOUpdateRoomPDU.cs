@@ -1,7 +1,4 @@
-﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
-using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
@@ -16,30 +13,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         public TSOUpdateRoomPDU() : base() { }
 
         /// <summary>
-        /// Creates a new <see cref="TSOUpdateRoomPDU"/> with the given information
-        /// </summary>
-        /// <param name="roomID"></param>
-        /// <param name="lotPhoneNumber"></param>
-        /// <param name="roomName"></param>
-        /// <param name="lotOwnerInformation"></param>
-        /// <param name="Admins"></param>
-        public TSOUpdateRoomPDU(uint roomID, string lotPhoneNumber, string roomName, 
-            TSOAriesIDStruct lotOwnerInformation,
-            params TSOAriesIDStruct[] Admins)
-        {
-            RoomID = roomID;
-            NewRoomInfo = new(new TSORoomIDStruct(lotPhoneNumber, roomName),
-                lotOwnerInformation, 1, TSORoomInfoStruct.MAX_OCCUPANTS, false, Admins);
-
-            MakeBodyFromProperties();
-        }
-        /// <summary>
-        /// <inheritdoc cref="TSOUpdateRoomPDU(uint, string, string, TSOAriesIDStruct, TSOAriesIDStruct[])"/>                    
+        /// Creates a new <see cref="TSOUpdateRoomPDU"/> with the given information                   
         /// </summary>
         /// <param name="RoomID"></param>
         /// <param name="RoomInfo"></param>
         /// <param name="DataStartByte"></param>
-        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, byte DataStartByte = 0x01)
+        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, byte DataStartByte = 0x00)
         {
             this.RoomID = RoomID;
             this.DataStartByte = DataStartByte;

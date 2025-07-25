@@ -221,6 +221,13 @@ namespace nio2so.DataService.Common
         public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, string Phone, uint X, uint Y) =>
             baseQueryGetAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(Phone), Phone), (nameof(X), X), (nameof(Y), Y));
         /// <summary>
+        /// Attempts to purchase a new slot in the map. Returns a <see cref="LotProfile"/> containing the new <see cref="HouseIDToken"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns>Null when purchasing was not successful.</returns>
+        public Task<IEnumerable<AvatarIDToken>?> GetRoommatesByHouseID(HouseIDToken HouseID) =>
+            baseQueryGetAs<IEnumerable<AvatarIDToken>>($"lots/{HouseID}/roommates");
+        /// <summary>
         /// Searches for the given resource <paramref name="Type"/> exactly matching the given search <paramref name="Query"/>
         /// </summary>
         /// <returns></returns>

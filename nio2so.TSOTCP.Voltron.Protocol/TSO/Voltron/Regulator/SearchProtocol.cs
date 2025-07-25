@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
@@ -44,9 +45,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <returns></returns>
         public async Task<IEnumerable<TSOSearchResultStruct>> DoSearch(bool IsExactMatch, string searchTerm, TSO_PreAlpha_Categories category)
         { // Exact search
+            //**get nio2so data service client
             if (!TryGetService(out nio2soVoltronDataServiceClient client))
                 return Array.Empty<TSOSearchResultStruct>();
-
+            //**submit online api search query
             if (IsExactMatch)
                 return (await client.SubmitSearchExact(searchTerm, category.ToString())).ResultIDs.Select(x => new TSOSearchResultStruct(x.ID,x.Name));
             return (await client.SubmitSearch(searchTerm, category.ToString())).ResultIDs.Select(x => new TSOSearchResultStruct(x.ID, x.Name));

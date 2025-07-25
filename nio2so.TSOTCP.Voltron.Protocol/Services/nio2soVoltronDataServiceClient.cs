@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.TSOTCP.Voltron.Protocol
+namespace nio2so.TSOTCP.Voltron.Protocol.Services
 {
     /// <summary>
     /// The <see cref="nio2soDataServiceClient"/> but for use in <see cref="ITSOServer"/> 

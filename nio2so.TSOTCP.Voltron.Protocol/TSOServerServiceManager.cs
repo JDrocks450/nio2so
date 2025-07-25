@@ -40,6 +40,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             service = (T)s;
             return true;
         }
+        public T Get<T>() => (T)_services[typeof(T)];
         /// <summary>
         /// Removes the <see cref="ITSOService"/> by <see cref="Type"/>
         /// </summary>

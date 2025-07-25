@@ -182,6 +182,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <param name="Service"></param>
         /// <returns></returns>
         protected bool TryGetService<T>(out T Service) where T : ITSOService => Server.Services.TryGet<T>(out Service);
+        /// <summary>
+        /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Service"></param>
+        /// <returns></returns>
+        protected T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.

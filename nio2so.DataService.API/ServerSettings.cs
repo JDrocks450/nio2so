@@ -1,6 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Lot;
+using System.Text.Json;
 
 namespace nio2so.DataService.API
 {
@@ -10,6 +11,11 @@ namespace nio2so.DataService.API
     internal class ServerSettings
     {
         public static ServerSettings Current { get; } = new ServerSettings();
+
+        public JsonSerializerOptions SerializationOptions { get; set; } = new JsonSerializerOptions()
+        {
+            WriteIndented = true,
+        };
 
         public string WorkspaceDirectory { get; set; } = TestingConstraints.WorkspaceDirectory;
         public string DatabaseDirectory { get; set; } = TestingConstraints.DatabaseDirectory;

@@ -34,6 +34,10 @@ namespace nio2so.DataService.API.Controllers
         [HttpGet("{HouseID}/profile")]
         public ActionResult<LotProfile> GetLotProfile(uint HouseID) => GetObjectByID(lotsDataService.GetLotProfileByLotID, (HouseIDToken)HouseID);
 
+        // GET api/lots/1338/roommates
+        [HttpGet("{HouseID}/roommates")]
+        public ActionResult<IEnumerable<AvatarIDToken>> GetRoommatesByHouseID(uint HouseID) => GetObjectByID(lotsDataService.GetRoommatesByHouseID, (HouseIDToken)HouseID);
+
         // GET api/lots/1338/profile?field=name
         [HttpPost("{HouseID}/profile")]
         public ActionResult MutateProfile(uint HouseID, [FromQuery] string Field, [FromBody] string Value)
@@ -57,7 +61,7 @@ namespace nio2so.DataService.API.Controllers
         }
 
         // GET api/lots/1338/thumbnail
-        [HttpGet("{id}/thumbnail")]
+        [HttpGet("{HouseID}/thumbnail")]
         public async Task Get(uint HouseID)
         {
             try

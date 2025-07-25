@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
@@ -88,7 +89,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         //Download player avatar name from data service.
                         try
                         {
-                            SubmitAriesFrame(ID, _regulatorManager.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName));
+                            //download the player's name from data service.
+                            var UpdatePlayerPDU = _regulatorManager.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);  
+                            //attempt to find the client session service
+                            if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
+                            { // not added to this server, cannot continue.
+                                Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"Could not find the ClientSessionService! Disconnecting..."));
+                                Disconnect(ID);
+                                break;
+                            }
+                            //add this connection to the session service .. this identifies the player by incoming PDU
+                            sessionService.AddClient(ID,new(AvatarID,AvatarName));
+                            //send the update player PDU to the client
+                            SubmitAriesFrame(ID, UpdatePlayerPDU);
                             Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
                         }
                         catch(Exception ex)
@@ -101,6 +114,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
                     {
+                        //refer to client session service to get this client's connection
+                        nio2soClientSessionService sessionService = Services.Get<nio2soClientSessionService>();
+                        if (!sessionService.TryIdentify(ID, out _)) // this sets the CurrentClient property
+                            throw new InvalidDataException($"Could not identify client: {ID}");
+
                         //GET VOLTRON PACKETS OUT OF DATA BUFFER
                         var packets = TSOVoltronPacket.ParseAllPackets(Data);
                         _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
@@ -141,6 +159,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
 #else
                         CloseAriesFrame(ID);
 #endif
+                        sessionService.ClearClientProperty(); // clear current connection property in the session service
                     }
                     break;
             }
