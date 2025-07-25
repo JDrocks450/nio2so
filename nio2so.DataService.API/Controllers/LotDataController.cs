@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using nio2so.Data.Common.Testing;
 using nio2so.DataService.API.Databases;
@@ -12,28 +13,15 @@ namespace nio2so.DataService.API.Controllers
 {
     [Route("api/lots")]
     [ApiController]
-    public class LotDataController : ControllerBase
+    public class LotDataController : DataServiceControllerBase
     {
+        private ILogger<LotDataController> logger;
+
         LotsDataService lotsDataService => APIDataServices.LotDataService;
 
-        private ActionResult<T> getByLotIDBase<T>(Func<HouseIDToken, T> QueryFunction, HouseIDToken HouseID)
+        public LotDataController(ILogger<LotDataController> Logger) : base()
         {
-            T? objectData = default;
-            try
-            {
-                objectData = QueryFunction(HouseID);
-            }
-            catch (KeyNotFoundException ke)
-            {
-                return NotFound(HouseID);
-            }
-            catch (FileNotFoundException fe)
-            {
-                return NotFound(HouseID);
-            }
-            if (objectData == null)
-                return NotFound(HouseID);
-            return objectData;
+            logger = Logger;
         }
 
         // GET api/lots/profiles
@@ -44,7 +32,7 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/lots/1338/profile
         [HttpGet("{HouseID}/profile")]
-        public ActionResult<LotProfile> GetLotProfile(uint HouseID) => getByLotIDBase(lotsDataService.GetLotProfileByLotID, HouseID);
+        public ActionResult<LotProfile> GetLotProfile(uint HouseID) => GetObjectByID(lotsDataService.GetLotProfileByLotID, (HouseIDToken)HouseID);
 
         // GET api/lots/1338/profile?field=name
         [HttpPost("{HouseID}/profile")]
@@ -75,10 +63,7 @@ namespace nio2so.DataService.API.Controllers
             try
             {
                 byte[] png = await lotsDataService.GetThumbnailByHouseID(HouseID);
-
-                Response.Headers.Add(HeaderNames.ContentType, "image/png");
-                Response.StatusCode = 200;
-                await Response.Body.WriteAsync(png);
+                await MIMEResponse(png, "image/png", 200);
             }
             catch (Exception ex)
             {

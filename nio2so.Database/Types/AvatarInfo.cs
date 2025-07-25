@@ -1,6 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Search;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace nio2so.DataService.Common.Types
 {
-    public class AvatarInfo
+    public class AvatarInfo : ISearchableItem
     {
         public AvatarInfo() { }
         public AvatarInfo(UserToken accountOwner, AvatarIDToken AvatarID) : this()
@@ -34,6 +35,10 @@ namespace nio2so.DataService.Common.Types
         /// The ID of this Avatar
         /// </summary>
         public AvatarIDToken AvatarID { get; set; }
+        /// <summary>
+        /// The name of the avatar, from the <see cref="AvatarCharacter"/>
+        /// </summary>
+        public string AvatarName => AvatarCharacter.AvatarName;
         /// <summary>
         /// The amount of friends this avatar has
         /// </summary>
@@ -61,5 +66,7 @@ namespace nio2so.DataService.Common.Types
         /// The <see cref="TSODBChar"/> file attached to this avatar
         /// </summary>
         public TSODBChar AvatarCharacter { get; set; } = new();
+
+        IEnumerable<string> ISearchableItem.SearchableKeywords => [AvatarName,AvatarCharacter.AvatarDescription];
     }
 }

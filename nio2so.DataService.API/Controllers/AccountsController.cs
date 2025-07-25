@@ -11,9 +11,16 @@ namespace nio2so.DataService.API.Controllers
 {
     [Route("api/account")]
     [ApiController]
-    public class AccountsController : ControllerBase
+    public class AccountsController : DataServiceControllerBase
     {
+        private readonly ILogger<AccountsController> logger;
+
         private AccountsDataService service => APIDataServices.AccountService;
+
+        public AccountsController(ILogger<AccountsController> Logger) : base()
+        {
+            logger = Logger;
+        }
 
         // GET: api/<AccountsController>
         [HttpGet]

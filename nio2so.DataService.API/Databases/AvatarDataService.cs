@@ -1,8 +1,10 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.API.Controllers;
 using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Search;
 
 namespace nio2so.DataService.API.Databases
 {
@@ -10,12 +12,12 @@ namespace nio2so.DataService.API.Databases
     /// Serves Avatar information:
     /// <list type="bullet">Profile information of the Avatar shown in SAS</list>
     /// </summary>
-    internal class AvatarDataService : DataServiceBase
+    internal class AvatarDataService : DataServiceBase, ISearchable<uint>
     {
         const string charblob_folder = @"charblob";
-        const string ProfileLibName = "PROFILES";
+        const string AvatarLibName = "AVATARS";
 
-        private JSONDictionaryLibrary<uint, AvatarInfo> ProfilesLibrary => GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(ProfileLibName);
+        private JSONDictionaryLibrary<uint, AvatarInfo> AvatarsLibrary => GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(AvatarLibName);
 
         internal AvatarDataService() : base() { }
 
@@ -23,7 +25,7 @@ namespace nio2so.DataService.API.Databases
         {
             string fPath = ServerSettings.Current.AvatarInfoFile;
 
-            Libraries.Add(ProfileLibName, 
+            Libraries.Add(AvatarLibName, 
                 new JSONDictionaryLibrary<uint, AvatarInfo>(fPath, EnsureDefaultValues));
 
             Libraries.Add("BLOBS",
@@ -56,7 +58,7 @@ namespace nio2so.DataService.API.Databases
                         throw new InvalidDataException($"The returned AvatarProfile for {AvatarID} belongs to {Profile.AvatarID}...?");
                 }
             }
-            var DataFile = GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(ProfileLibName);
+            var DataFile = GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(AvatarLibName);
             if (!DataFile.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
             AvatarProfile profile = DataFile[AvatarID].Profile;
@@ -82,9 +84,9 @@ namespace nio2so.DataService.API.Databases
             {
                 // TODO
             }
-            if (!ProfilesLibrary.ContainsKey(AvatarID))
+            if (!AvatarsLibrary.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
-            var bookmark = ProfilesLibrary[AvatarID].BookmarkInfo;
+            var bookmark = AvatarsLibrary[AvatarID].BookmarkInfo;
             correctErrors(bookmark);
             return bookmark;
         }
@@ -97,34 +99,38 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         public bool SetBookmarksByAvatarID(AvatarIDToken AvatarID, IEnumerable<AvatarIDToken> Avatars)
         {
-            if (!ProfilesLibrary.ContainsKey(AvatarID))
+            if (!AvatarsLibrary.ContainsKey(AvatarID))
                 return false;            
-            ProfilesLibrary[AvatarID].BookmarkInfo.BookmarkAvatars = new(Avatars);
+            AvatarsLibrary[AvatarID].BookmarkInfo.BookmarkAvatars = new(Avatars);
             Save();
             return true;
         }
         /// <summary>
         /// Returns the <see cref="TSODBChar"/> for the given <paramref name="AvatarID"/>. This is vital to the social aspect of the game. **public info**
+        /// <para/>This will reevaluate fields on the <see cref="TSODBChar"/> and save the updated values to the disk.
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
         public TSODBChar GetCharacterByAvatarID(AvatarIDToken AvatarID)
         {
-            void correctErrors(TSODBChar CharData)
+            void Reevaluate(TSODBChar CharData)
             {
+                //**get updated lot membership value
+                CharData.MyLotID = APIDataServices.LotDataService.GetRoommateHouseIDByAvatarID(AvatarID) ?? 0;
+
                 // TODO
                 return;
                 CharData.Unknown1 = 0;
-                CharData.MyLotID = 1;
                 CharData.Unknown3 = 0;
                 CharData.Unknown4 = 0;
                 CharData.Unknown6 = 0;
             }
-            if (!ProfilesLibrary.ContainsKey(AvatarID))
+            if (!AvatarsLibrary.ContainsKey(AvatarID))
                 throw new KeyNotFoundException(nameof(AvatarID));
-            var file = ProfilesLibrary[AvatarID].AvatarCharacter;
-            correctErrors(file);
+            var file = AvatarsLibrary[AvatarID].AvatarCharacter;
+            Reevaluate(file);
+            Save();
             return file;
         }
 
@@ -136,9 +142,9 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         public bool SetCharacterByAvatarID(AvatarIDToken AvatarID, TSODBChar CharacterFile)
         {
-            if (!ProfilesLibrary.ContainsKey(AvatarID))
+            if (!AvatarsLibrary.ContainsKey(AvatarID))
                 return false;
-            ProfilesLibrary[AvatarID].AvatarCharacter = CharacterFile;
+            AvatarsLibrary[AvatarID].AvatarCharacter = CharacterFile;
             Save();
             return true;
         }
@@ -175,7 +181,7 @@ namespace nio2so.DataService.API.Databases
                 int two = Random.Shared.Next(1, int.MaxValue);
                 AvatarID = Math.Min((uint)(one + two), uint.MaxValue);
             }
-            while (!ProfilesLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID)
+            while (!AvatarsLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID)
             {                
                 CreatedUsing = method
             }));
@@ -191,5 +197,8 @@ namespace nio2so.DataService.API.Databases
         {
             return true;
         }
+
+        public IDictionary<uint,string> SearchExact(string QueryString) => AvatarsLibrary.SearchExact(QueryString);
+        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);
     }
 }

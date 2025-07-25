@@ -16,21 +16,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// </summary>
         /// <param name="PDU"></param>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SearchExactMatch_Request)]
-        public void SearchExactMatch_Request(TSODBRequestWrapper PDU)
-        { // Exact search
-            UnifiedSearchHandler((TSOSearchRequest)PDU);
-        }
+        public void SearchExactMatch_Request(TSODBRequestWrapper PDU) => UnifiedSearchHandler((TSOSearchRequest)PDU).Wait();
 
         /// <summary>
         /// Handles an incoming <see cref="TSOSearchRequest"/> PDU request
         /// </summary>
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.Search_Request)]
-        public void SearchWildcard_Request(TSODBRequestWrapper PDU)
-        { // Broadly search
-            UnifiedSearchHandler((TSOSearchRequest)PDU);
-        }
+        public void SearchWildcard_Request(TSODBRequestWrapper PDU) => UnifiedSearchHandler((TSOSearchRequest)PDU).Wait();
 
-        private void UnifiedSearchHandler(TSOSearchRequest SearchPDU)
+        private async Task UnifiedSearchHandler(TSOSearchRequest SearchPDU)
         {
             //determine if we're exactly searching or broadly searching based on incoming data from the remote connection
             bool IsExactMatch = SearchPDU is TSOExactSearchRequest;
@@ -38,7 +32,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             string searchTerm = searchPDU.SearchQuery;
             TSO_PreAlpha_Categories category = searchPDU.SearchCategory;
             //SEARCH
-            TSOSearchResultStruct[] results = DoSearch(IsExactMatch, searchTerm, category).ToArray();
+            TSOSearchResultStruct[] results = (await DoSearch(IsExactMatch, searchTerm, category)).ToArray();
             RespondWith(IsExactMatch ? new TSOExactSearchResponse(searchTerm, category, results) : new TSOSearchResponse(searchTerm, category, results));
         }
 
@@ -48,17 +42,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <param name="searchTerm"></param>
         /// <param name="category"></param>
         /// <returns></returns>
-        public IEnumerable<TSOSearchResultStruct> DoSearch(bool IsExactMatch, string searchTerm, TSO_PreAlpha_Categories category)
+        public async Task<IEnumerable<TSOSearchResultStruct>> DoSearch(bool IsExactMatch, string searchTerm, TSO_PreAlpha_Categories category)
         { // Exact search
-            switch (category)
-            {
-                case TSO_PreAlpha_Categories.Avatar:
-                    yield return new TSOSearchResultStruct(TestingConstraints.MyFriendAvatarID, TestingConstraints.MyFriendAvatarName);
-                    break;
-                case TSO_PreAlpha_Categories.House:
-                    yield return new TSOSearchResultStruct(TestingConstraints.MyHouseID, TestingConstraints.MyHouseName);
-                    break;
-            }
+            if (!TryGetService(out nio2soVoltronDataServiceClient client))
+                return Array.Empty<TSOSearchResultStruct>();
+
+            if (IsExactMatch)
+                return (await client.SubmitSearchExact(searchTerm, category.ToString())).ResultIDs.Select(x => new TSOSearchResultStruct(x.ID,x.Name));
+            return (await client.SubmitSearch(searchTerm, category.ToString())).ResultIDs.Select(x => new TSOSearchResultStruct(x.ID, x.Name));
         }
     }
 }

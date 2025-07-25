@@ -1,9 +1,12 @@
-﻿using System.Collections;
+﻿using nio2so.DataService.API.Controllers;
+using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types.Search;
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 
 namespace nio2so.DataService.API.Databases.Libraries
 {
-    internal sealed class JSONDictionaryLibrary<T1, T2> : JSONObjectLibrary<Dictionary<T1, T2>>, IDictionary<T1,T2> where T1 : notnull
+    internal sealed class JSONDictionaryLibrary<T1, T2> : JSONObjectLibrary<Dictionary<T1, T2>>, IDictionary<T1,T2>, ISearchable<T1> where T1 : notnull
     {
         public Dictionary<T1, T2> Dictionary => DataFile;
 
@@ -11,6 +14,30 @@ namespace nio2so.DataService.API.Databases.Libraries
             base(FilePath, EnsureDefaultValuesFunc, DelayedLoad)
         {
 
+        }
+
+        public IDictionary<T1, string> SearchExact(string QueryString) => 
+            searchBase(QueryString, 10, (string keyword) => keyword.Trim().Equals(QueryString.Trim(), StringComparison.OrdinalIgnoreCase));
+        public IDictionary<T1, string> SearchBroad(string QueryString, int MaxResults) => 
+            searchBase(QueryString, MaxResults, (string keyword) => keyword.Trim().Contains(QueryString.Trim(), StringComparison.OrdinalIgnoreCase));
+
+        IDictionary<T1, string> searchBase(string QueryString, int MaxResults, Func<string, bool> MatchingFunction)
+        {
+            Dictionary<T1, string> results = new();
+            foreach (var item in this)
+            {
+                if (results.Count >= MaxResults) break;
+                if (item.Value is not ISearchableItem searchItem) continue;
+                foreach (var keyword in searchItem.SearchableKeywords)
+                {
+                    if (MatchingFunction(keyword))
+                    {
+                        results.Add(item.Key, searchItem.SearchableKeywords.ElementAt(0));
+                        break;
+                    }
+                }
+            }
+            return results;
         }
 
         #region DICTIONARY
@@ -79,6 +106,8 @@ namespace nio2so.DataService.API.Databases.Libraries
         {
             return ((IEnumerable)Dictionary).GetEnumerator();
         }
+
+        
         #endregion
     }
 }

@@ -220,5 +220,17 @@ namespace nio2so.DataService.Common
         /// <returns>Null when purchasing was not successful.</returns>
         public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, string Phone, uint X, uint Y) =>
             baseQueryGetAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(Phone), Phone), (nameof(X), X), (nameof(Y), Y));
+        /// <summary>
+        /// Searches for the given resource <paramref name="Type"/> exactly matching the given search <paramref name="Query"/>
+        /// </summary>
+        /// <returns></returns>
+        public async Task<N2SearchQueryResult> SubmitSearchExact(string Query, string Type) =>
+            await baseQueryGetAs<N2SearchQueryResult>($"search/{Type}/exact",(nameof(Query),Query)) ?? new(Query, Type, []);
+        /// <summary>
+        /// Searches for the given resource <paramref name="Type"/> broadly matching the given search <paramref name="Query"/>
+        /// </summary>
+        /// <returns></returns>
+        public async Task<N2SearchQueryResult> SubmitSearch(string Query, string Type) =>
+            await baseQueryGetAs<N2SearchQueryResult>($"search/{Type}", (nameof(Query), Query)) ?? new(Query, Type, []);
     }
 }

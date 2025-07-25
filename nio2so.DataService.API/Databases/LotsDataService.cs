@@ -5,10 +5,11 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
+using nio2so.DataService.Common.Types.Search;
 
 namespace nio2so.DataService.API.Databases
 {
-    internal class LotsDataService : DataServiceBase
+    internal class LotsDataService : DataServiceBase, ISearchable<uint>
     {
         JSONDictionaryLibrary<uint, LotInfo> LotsLibrary => GetLibrary<JSONDictionaryLibrary<uint, LotInfo>>("LOTS");
 
@@ -134,5 +135,24 @@ namespace nio2so.DataService.API.Databases
             Save(); // save the db
             return NewLotProfile != null;
         }
+        /// <summary>
+        /// Gets the <see cref="HouseIDToken"/> that this <paramref name="AvatarID"/> is a member of (roommate, owner)
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public HouseIDToken? GetRoommateHouseIDByAvatarID(AvatarIDToken AvatarID)
+        {
+            lock (LotsLibrary)
+            {
+                foreach(var house in LotsLibrary)
+                {
+                    if (house.Value.GetRoommates().Contains(AvatarID)) return house.Key;
+                }
+                return null;
+            }
+        }
+
+        public IDictionary<uint, string> SearchExact(string QueryString) => LotsLibrary.SearchExact(QueryString);
+        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => LotsLibrary.SearchBroad(QueryString, MaxResults);
     }
 }
