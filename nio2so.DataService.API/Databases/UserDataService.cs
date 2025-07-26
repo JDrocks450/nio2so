@@ -28,7 +28,7 @@ namespace nio2so.DataService.API.Databases
             base.AddLibraries();
         }
 
-        private void CreateDefaultValues()
+        async Task CreateDefaultValues()
         {
             ServerSettings settings = ServerSettings.Current;
             CreateUserInfoFile(settings.StaticAccounts[0], out _); // ensure only

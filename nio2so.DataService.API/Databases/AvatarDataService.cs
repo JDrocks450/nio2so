@@ -34,10 +34,38 @@ namespace nio2so.DataService.API.Databases
             base.AddLibraries();
         }
 
-        void EnsureDefaultValues()
+        async Task EnsureDefaultValues()
         {
             ServerSettings settings = ServerSettings.Current;
             // not needed
+            AvatarsLibrary.Add(1337, new AvatarInfo(settings.StaticAccounts[0], 1337)
+            {
+                AvatarCharacter = new()
+                {
+                    AvatarName = "bisquick",
+                    AvatarDescription = "default value",
+                    Funds = TestingConstraints.StartingFunds,
+                    MyLotID = TestingConstraints.MyHouseID
+                },
+                RelationshipInfo = new()
+                {
+                    Outgoing = new() { { 161, new(1337,161,-1,-1)} }
+                }
+            });
+            AvatarsLibrary.Add(161, new AvatarInfo(settings.StaticAccounts[1], 161)
+            {
+                AvatarCharacter = new()
+                {
+                    AvatarName = "FriendlyBuddy",
+                    AvatarDescription = "default value",
+                    Funds = TestingConstraints.StartingFunds,
+                    MyLotID = 0
+                },
+                RelationshipInfo = new()
+                {
+                    Outgoing = new() { { 1337, new(161, 1337, 1, 1) } }
+                }
+            });
         }       
 
         Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultCharblobPath);
@@ -71,6 +99,37 @@ namespace nio2so.DataService.API.Databases
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         public string GetNameByID(AvatarIDToken AvatarID) => GetProfileByAvatarID(AvatarID).Name;
+
+        /// <summary>
+        /// Returns the <see cref="AvatarInfo.AvatarRelationshipInfo"/> for the given <paramref name="AvatarID"/>. Relationships are public info, the friendship web exists. **public info**
+        /// <para/>This is how the <paramref name="AvatarID"/> feels about other sims.
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public IEnumerable<AvatarRelationship> GetRelationshipsByAvatarID(AvatarIDToken AvatarID)
+        {
+            if (!AvatarsLibrary.ContainsKey(AvatarID))
+                throw new KeyNotFoundException(nameof(AvatarID));
+            var relationships = AvatarsLibrary[AvatarID].RelationshipInfo;            
+            return relationships.Outgoing.Values;
+        }
+        /// <summary>
+        /// Returns the reverse <see cref="AvatarInfo.AvatarRelationshipInfo"/> for the given <paramref name="AvatarID"/>. Relationships are public info, the friendship web exists. **public info**
+        /// <para/>This is how other sims feel about the <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
+        public IEnumerable<AvatarRelationship> GetReverseRelationshipsByAvatarID(AvatarIDToken AvatarID)
+        {
+            foreach(var avatarFile in AvatarsLibrary)
+            {
+                if (!avatarFile.Value.RelationshipInfo.Outgoing.TryGetValue(AvatarID, out var Relationship))
+                    continue;
+                yield return Relationship;
+            }
+        }
 
         /// <summary>
         /// Returns the <see cref="AvatarInfo.AvatarBookmarkInfo"/> for the given <paramref name="AvatarID"/>. Bookmarks are public info, like a follower list on social media **public info**
@@ -201,6 +260,6 @@ namespace nio2so.DataService.API.Databases
         }
 
         public IDictionary<uint,string> SearchExact(string QueryString) => AvatarsLibrary.SearchExact(QueryString);
-        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);
+        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);        
     }
 }

@@ -13,6 +13,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// </summary>
     [Serializable] public sealed record TSOStatusReasonStruct
     {
+        public enum PlayerStatuses : uint
+        {
+            Online = 0x0,
+            Offline = 0x01,
+            LetterOnly = 0x21,
+        }
 
         /// <summary>
         /// Creates a new <see cref="TSOStatusReasonStruct"/>
@@ -41,7 +47,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         public string ReasonText { get; set; } = "";
 
         [IgnoreDataMember]
-        public static TSOStatusReasonStruct Success => new();
+        public static TSOStatusReasonStruct Online => new((uint)PlayerStatuses.Online, "");
+        [IgnoreDataMember]
+        public static TSOStatusReasonStruct Offline => new((uint)PlayerStatuses.Offline,PlayerStatuses.Offline.ToString());
         [IgnoreDataMember]
         public static TSOStatusReasonStruct? Default => new(TSOVoltronConst.ResponsePDU_DefaultStatusCode,
             TSOVoltronConst.ResponsePDU_DefaultReasonText);

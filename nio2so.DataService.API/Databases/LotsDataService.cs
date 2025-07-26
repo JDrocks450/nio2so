@@ -32,14 +32,14 @@ namespace nio2so.DataService.API.Databases
 
         Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultThumbnailPath);
 
-        void EnsureDefaultLots()
+        Task EnsureDefaultLots()
         {
             ServerSettings settings = ServerSettings.Current;
 
             // add the static lots to the database and skip if existing
             foreach(var lot in settings.StaticLots)
                 LotsLibrary.TryAdd(lot.HouseID, new LotInfo() { Profile = lot });
-            Save();
+            return Save();
         }
 
         /// <summary>

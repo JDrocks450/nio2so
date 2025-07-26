@@ -4,6 +4,6 @@
     {
         Task Load();
         Task Save();
-        void InvokeEnsureDefaultValues();
+        Task InvokeEnsureDefaultValues();
     }
 }

@@ -10,7 +10,7 @@ namespace nio2so.DataService.API.Databases.Libraries
     {
         public Dictionary<T1, T2> Dictionary => DataFile;
 
-        public JSONDictionaryLibrary(string FilePath, Action EnsureDefaultValuesFunc, bool DelayedLoad = false) :
+        public JSONDictionaryLibrary(string FilePath, Func<Task> EnsureDefaultValuesFunc, bool DelayedLoad = false) :
             base(FilePath, EnsureDefaultValuesFunc, DelayedLoad)
         {
 

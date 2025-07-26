@@ -107,6 +107,6 @@ namespace nio2so.DataService.API.Databases.Libraries
 
         Task IDataServiceLibrary.Save() { return Task.CompletedTask; }
 
-        void IDataServiceLibrary.InvokeEnsureDefaultValues() { }
+        async Task IDataServiceLibrary.InvokeEnsureDefaultValues() { }
     }
 }

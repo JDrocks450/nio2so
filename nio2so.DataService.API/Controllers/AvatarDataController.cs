@@ -59,6 +59,19 @@ namespace nio2so.DataService.API.Controllers
             return BadRequest();
         }
 
+        // GET api/avatars/1337/bookmarks?searchType=avatar
+        [HttpGet("{AvatarID}/relationships")]
+        public ActionResult<N2RelationshipsByAvatarIDQueryResult> GetAvatarRelationships(uint AvatarID, [FromQuery] string direction)
+        {
+            direction = direction.ToLowerInvariant().Trim();
+            Func<AvatarIDToken, IEnumerable<AvatarRelationship>> func = (direction == "outgoing") ? avatarDataService.GetRelationshipsByAvatarID : avatarDataService.GetReverseRelationshipsByAvatarID;
+            ActionResult <IEnumerable<AvatarRelationship>> result = GetObjectByID(func, (AvatarIDToken)AvatarID);
+            if (result.Result is not null) return result.Result;
+            IEnumerable<AvatarRelationship>? relationshipInfo = result.Value;
+            if (relationshipInfo == default) return NotFound(AvatarID);
+            return new N2RelationshipsByAvatarIDQueryResult(AvatarID,direction,relationshipInfo);
+        }
+
         // GET api/avatars/1337/char
         [HttpGet("{AvatarID}/char")]
         public ActionResult<TSODBChar> GetCharacterFileByAvatarID(uint AvatarID) => 

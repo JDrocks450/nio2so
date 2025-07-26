@@ -24,11 +24,11 @@ namespace nio2so.DataService.API.Databases
         /// <summary>
         /// Ensures these default static accounts are present in the <see cref="AccountsDataService"/>
         /// </summary>
-        void CreateDefaultValues()
+        Task CreateDefaultValues()
         {
             foreach (var account in ServerSettings.Current.StaticAccounts)            
                 EnsureAccount(account);
-            Save();
+            return Save();
         }
 
         /// <summary>

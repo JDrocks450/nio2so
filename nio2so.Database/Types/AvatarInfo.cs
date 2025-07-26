@@ -24,7 +24,26 @@ namespace nio2so.DataService.Common.Types
         /// </summary>
         public class AvatarBookmarkInfo
         {
+            public AvatarBookmarkInfo()
+            {
+            }
+
+            public AvatarBookmarkInfo(params AvatarIDToken[] Avatars) : this()
+            {
+                BookmarkAvatars = [.. Avatars];
+            }
+
             public HashSet<AvatarIDToken> BookmarkAvatars { get; set; } = new();
+        }
+        /// <summary>
+        /// Stores information on Outgoing Relationships for an individual avatar
+        /// </summary>
+        public class AvatarRelationshipInfo
+        {
+            /// <summary>
+            /// Maps an Outgoing relationship by the recipient Avatar
+            /// </summary>
+            public Dictionary<uint, AvatarRelationship> Outgoing { get; set; } = new();
         }
 
         /// <summary>
@@ -61,6 +80,11 @@ namespace nio2so.DataService.Common.Types
         /// A store of bookmarks added for this avatar
         /// </summary>
         public AvatarBookmarkInfo BookmarkInfo { get; set; } = new();
+
+        /// <summary>
+        /// A store of relationships added for this avatar
+        /// </summary>
+        public AvatarRelationshipInfo RelationshipInfo { get; set; } = new();
 
         /// <summary>
         /// The <see cref="TSODBChar"/> file attached to this avatar

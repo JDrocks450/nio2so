@@ -25,10 +25,10 @@ namespace nio2so.DataService.API.Databases
 
         protected T GetLibrary<T>(string Name) where T : class, IDataServiceLibrary => (T)Libraries[Name];
 
-        protected void Save()
+        protected async Task Save()
         {
             foreach (var library in Libraries)
-                library.Value.Save();
+                await library.Value.Save();
         }
     }
 }

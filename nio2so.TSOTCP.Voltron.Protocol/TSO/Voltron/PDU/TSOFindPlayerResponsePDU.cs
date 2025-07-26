@@ -5,14 +5,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU)]
     public class TSOFindPlayerResponsePDU : TSOVoltronPacket
-    {
-        public enum PlayerStatuses
-        {
-            Online = 0x0,
-            Offline = 0x01,
-            LetterOnly = 0x21,
-        }
-
+    {        
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU;
 
         public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Success;

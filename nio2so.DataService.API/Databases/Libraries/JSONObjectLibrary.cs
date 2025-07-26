@@ -9,13 +9,13 @@ namespace nio2so.DataService.API.Databases.Libraries
 
         public T DataFile { get; set; }
 
-        private Action CreateDefaultValues;
+        private Func<Task> CreateDefaultValues;
 
         /// <summary>
         /// Creates a new <see cref="DatabaseComponentBase{T1, T2}"/> with the given home directory
         /// </summary>
         /// <param name="FilePath"></param>
-        public JSONObjectLibrary(string FilePath, Action EnsureDefaultValuesFunc, bool DelayedLoad = false)
+        public JSONObjectLibrary(string FilePath, Func<Task> EnsureDefaultValuesFunc, bool DelayedLoad = false)
         {
             _baseDir = FilePath;
             DataFile = new();
@@ -29,7 +29,7 @@ namespace nio2so.DataService.API.Databases.Libraries
             DataFile = await LoadDataFile<T>(_baseDir) ?? DataFile;            
         }
 
-        public void InvokeEnsureDefaultValues() => CreateDefaultValues();
+        public Task InvokeEnsureDefaultValues() => CreateDefaultValues();
 
         public static async Task<T?> LoadDataFile<T>(string DBPath)
         {

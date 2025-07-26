@@ -14,4 +14,8 @@
     <Folder Include="Exceptions\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Queries\N2GetRelationshipsByAvatarIDQueryResult.cs" />
+  </ItemGroup>
+
 </Project>

@@ -257,14 +257,28 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             var relPDU = (TSOGetRelationshipsByIDRequest)PDU;
             uint avatarID = relPDU.AvatarID;
-            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID));
+
+            //**get relationships from the dataservice
+            nio2soVoltronDataServiceClient client =  GetService<nio2soVoltronDataServiceClient>();
+            var relationships = client.GetOutgoingRelationshipsByAvatarID(avatarID).Result;
+            if (relationships == default)
+                throw new KeyNotFoundException($"AvatarID: {avatarID} was not found in the relationships data service.");
+
+            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID, relationships.Relationships.ToArray()));
         }
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetReversedRelationshipsByID_Request)]
         public void GetReversedRelationshipsByID_Request(TSODBRequestWrapper PDU)
         {
             var relPDU = (TSOGetReversedRelationshipsByIDRequest)PDU;
             uint avatarID = relPDU.AvatarID;
-            RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID));
+
+            //**get relationships from the dataservice
+            nio2soVoltronDataServiceClient client = GetService<nio2soVoltronDataServiceClient>();
+            var relationships = client.GetIncomingRelationshipsByAvatarID(avatarID).Result;
+            if (relationships == default)
+                throw new KeyNotFoundException($"AvatarID: {avatarID} was not found in the relationships data service.");
+
+            RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID, relationships.Relationships.ToArray()));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU)]
@@ -277,7 +291,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     formattedPacket.RequestedPlayer.AriesID.IndexOf("A ") + 2), out uint AvatarID))
                 {
                     formattedPacket.RequestedPlayer.MasterID = TestingConstraints.MyFriendAvatarName;
-                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID)));
+                    var status = Struct.TSOStatusReasonStruct.Online;
+                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID), status));
                     TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
                         RegulatorName, $"FIND PLAYER: {AvatarID}"));
                     return;

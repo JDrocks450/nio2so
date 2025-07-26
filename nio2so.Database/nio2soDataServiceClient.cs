@@ -239,5 +239,17 @@ namespace nio2so.DataService.Common
         /// <returns></returns>
         public async Task<N2SearchQueryResult> SubmitSearch(string Query, string Type) =>
             await baseQueryGetAs<N2SearchQueryResult>($"search/{Type}", (nameof(Query), Query)) ?? new(Query, Type, []);
+        /// <summary>
+        /// Gets how the <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> feels about other avatars
+        /// </summary>
+        /// <returns></returns>
+        public async Task<N2RelationshipsByAvatarIDQueryResult?> GetOutgoingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
+            await baseQueryGetAs<N2RelationshipsByAvatarIDQueryResult>($"avatars/{AvatarID}/relationships", ("direction", "outgoing"));
+        /// <summary>
+        /// Gets how the other avatars feel about <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> 
+        /// </summary>
+        /// <returns></returns>
+        public async Task<N2RelationshipsByAvatarIDQueryResult?> GetIncomingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
+            await baseQueryGetAs<N2RelationshipsByAvatarIDQueryResult>($"avatars/{AvatarID}/relationships", ("direction", "incoming"));
     }
 }

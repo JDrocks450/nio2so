@@ -4471,7 +4471,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         BuyLotByAvatarID_Request = 0x1D8DD55A,
         BuyLotByAvatarID_Response = 0xBD8DDB9B,
         DebitCredit_Request = 0x7C24F627,
-        DebitCredit_Response = 0x3C24F6BC,        
+        DebitCredit_Response = 0x3C24F6BC,
+        DeleteRelationship_Request = 0xFD161152,
+        DeleteRelationship_Response = 0xFD16117F,
     }
     /// <summary>
     /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.
