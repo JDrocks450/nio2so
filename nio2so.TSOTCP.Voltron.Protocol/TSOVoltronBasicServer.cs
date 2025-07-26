@@ -232,6 +232,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                             foreach (var packet in Response.ResponsePackets)
                                 defaultSend(packet);
                         }
+                        if (Response.ResponsePackets != null) // ADD SESSION TO SENDQUEUE
+                        {
+                            foreach (var packet in Response.SessionPackets)
+                            {
+                                uint sendID = packet.Session;
+                                Debug_LogSendPDU(sendID, packet.Packet, NetworkTrafficDirections.CREATED);
+                                SubmitAriesFrame(sendID, packet.Packet);
+                            }
+                        }
                         Handled = true;
                     }
                 }
@@ -315,21 +324,5 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// <param name="Verb"></param>
         private void Debug_LogSendPDU(uint ID, TSOVoltronPacket PDU, NetworkTrafficDirections Direction) =>
             Telemetry.OnVoltronPacket(Direction, DateTime.Now, PDU, ID);
-
-        /// <summary>
-        /// Sends a <see cref="TSOVoltronPacket"/> in a new <see cref="TSOTCPPacket"/> from a DIFFERENT server.
-        /// </summary>
-        /// <param name="Sender"></param>
-        /// <param name="PDU"></param>
-        public void SendPacket(ITSOServer Sender, TSOVoltronPacket PDU)
-        {
-            if (Sender != null)
-                if (Sender == this) return;
-            SubmitAriesFrame(_clientInfo.First().Key, PDU);
-            if (Sender != null)
-                Telemetry?.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    nameof(TSOVoltronBasicServer),
-                    $"Passed {PDU} from {Sender.GetType().Name} to {GetType().Name}"));
-        }
     }
 }

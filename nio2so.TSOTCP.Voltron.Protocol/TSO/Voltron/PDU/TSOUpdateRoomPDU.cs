@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
@@ -18,10 +19,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <param name="RoomID"></param>
         /// <param name="RoomInfo"></param>
         /// <param name="DataStartByte"></param>
-        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, byte DataStartByte = 0x00)
+        public TSOUpdateRoomPDU(uint RoomID, TSORoomInfoStruct RoomInfo, params TSOAriesIDStruct[] Occupants)
         {
             this.RoomID = RoomID;
-            this.DataStartByte = DataStartByte;
+            if (Occupants.Any())
+            {
+                OccupantListFollows = true;
+                OccupantList = Occupants;
+            }
             NewRoomInfo = RoomInfo;
             MakeBodyFromProperties();
         }
@@ -30,10 +35,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// The RoomID of the Room
         /// </summary>
         public uint RoomID { get; set; }
-        public byte DataStartByte { get; set; } = 0x01;
+        public bool OccupantListFollows { get; set; } = false;
         /// <summary>
         /// The new <see cref="TSORoomInfoStruct"/> the client should update itself to a be a member of
         /// </summary>
         public TSORoomInfoStruct NewRoomInfo { get; set; }
+        /// <summary>
+        /// <inheritdoc cref="TSOVoltronArrayLength"/>
+        /// </summary>
+        [TSOVoltronArrayLength(nameof(OccupantList))]
+        public ushort OccupantListCount { get; set; }
+        /// <summary>
+        /// A list of user <see cref="TSOAriesIDStruct"/> in this room
+        /// </summary>
+        public TSOAriesIDStruct[] OccupantList { get; set; } = new TSOAriesIDStruct[0];
     }
 }

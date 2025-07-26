@@ -280,8 +280,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (RoomID == 0)
                 throw new InvalidDataException($"{nameof(DESTROY_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
 
-            RespondWith(new TSOUpdateRoomPDU(1, TSORoomInfoStruct.NoRoom));
-            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Success, new(myRoom.PhoneNumber,myRoom.Name)));
+            RespondWith(new TSOUpdateRoomPDU(134, TSORoomInfoStruct.NoRoom));
+            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Online, new(myRoom.PhoneNumber,myRoom.Name)));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
@@ -322,19 +322,20 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
             //get the lot
             LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
+            bool hosting = false;
 
             if (thisLot.OwnerAvatar == ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID)
             { // Initiate the host protocol
                 // TELL THE CLIENT TO START THE HOST PROTOCOL
                 RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
-
+                hosting = true;
                 // set lot as ONLINE
                 _onlineLotIDs.Add(thisLot.HouseID);
             }
 
             //get the phone number of the lot
             string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
-            
+
             //Update which room they're in currently
             string LotName = thisLot?.Name ?? "BloatyLand";
             string RoomName = LotName;
@@ -344,15 +345,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             uint occupants = (uint)admins.Length;
 
             //create the roominfo struct
-            TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new (phoneNumber, RoomName),
+            TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new(phoneNumber, RoomName),
                 ownerVector: GetAvatarIDStruct(thisLot.OwnerAvatar), // m_ownerID
                 currentOccupants: occupants, maxOccupants: 10, isLocked: false,
                 AdminList: admins
             );
 
             //tell the client to join this new room
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(1, roomInfo);
-            RespondWith(updateRoomPDU);                     
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo, admins);
+            RespondWith(updateRoomPDU);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]

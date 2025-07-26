@@ -4,7 +4,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     public abstract class TSOVoltronBasicResponsePacket : TSOVoltronPacket
     {
-        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Success;
+        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Online;
         public bool Value { get; set; } = true;
         
         protected TSOVoltronBasicResponsePacket() : this(true) { }

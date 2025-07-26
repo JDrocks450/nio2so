@@ -1,9 +1,11 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
@@ -132,7 +134,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!databaseMap.TryGetValue((TSO_PreAlpha_DBActionCLSIDs)PDU.TSOSubMsgCLSID, out var action))
                 return false;
 
-            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>());
+            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<(uint, TSOVoltronPacket)>());
             action.Invoke(PDU);
             return true;
         }
@@ -146,7 +148,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             if (Server == null) throw new NullReferenceException("No server instance!!!");
 
-            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>());
+            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<(uint, TSOVoltronPacket)>());
             switch (PDU.KnownPacketType)
             {
                 case TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU:
@@ -211,6 +213,28 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             );
             ResponsePacket.MakeBodyFromProperties();
             RespondWith(ResponsePacket);
+        }
+        /// <summary>
+        /// Queues this <paramref name="Packet"/> to be sent to the <paramref name="QuazarID"/> at the end of this Aries frame
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="QuazarID"></param>
+        /// <param name="Packet"></param>
+        protected void SendTo<T>(uint QuazarID, T Packet) where T : TSOVoltronPacket => ((List<(uint,TSOVoltronPacket)>)CurrentResponse.SessionPackets).Add((QuazarID,Packet));
+        /// <summary>
+        /// Attempts to locate the <paramref name="VoltronID"/> and if successful, sends this <paramref name="Packet"/> to that connection at the end of this Aries frame.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="VoltronID"></param>
+        /// <param name="Packet"></param>
+        /// <returns></returns>
+        protected bool TrySendTo<T>(TSOAriesIDStruct VoltronID, T Packet) where T : TSOVoltronPacket
+        {
+            //**find the client session service
+            nio2soClientSessionService sessionService = GetService<nio2soClientSessionService>();
+            if (!sessionService.TryReverseSearch(VoltronID, out uint Session)) return false;
+            SendTo(Session, Packet);
+            return true;
         }
         /// <summary>
         /// Puts this packet to the end of the current <see cref="ITSOServer"/> Receive Queue

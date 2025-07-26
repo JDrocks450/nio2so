@@ -26,6 +26,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
             CurrentClient = VoltronID;
             return result;
         }
+        public bool TryReverseSearch(TSOAriesIDStruct VoltronID, out uint QuazarID)
+        {
+            QuazarID = 0;
+            var result = _sessions.Where(x => ((ITSONumeralStringStruct)x.Value).NumericID == ((ITSONumeralStringStruct)VoltronID).NumericID);
+            if (!result.Any()) return false;
+            QuazarID = result.First().Key;
+            return true;    
+        }
         public void ClearClientProperty() => CurrentClient = null;
         public TSOAriesIDStruct? CurrentClient { get; private set; }
 

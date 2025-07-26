@@ -11,7 +11,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
     /// <param name="ResponsePackets"> These are packets that the server should send to the client in response to the incoming data </param>
     /// <param name="InsertionPackets"> These are packets that should be immediately inserted into the Server receive queue for processing </param>
     /// <param name="EnqueuePackets"> These are packets that should be added to the end of the Server's receive queue for processing </param>
-    public record TSOProtocolRegulatorResponse(IEnumerable<TSOVoltronPacket> ResponsePackets, IEnumerable<TSOVoltronPacket> InsertionPackets, IEnumerable<TSOVoltronPacket> EnqueuePackets);
+    /// <param name="SessionPackets"> These are packets that will be sent to the Quazar Session ID (connection) you select.</param>
+    public record TSOProtocolRegulatorResponse(
+        IEnumerable<TSOVoltronPacket> ResponsePackets, 
+        IEnumerable<TSOVoltronPacket> InsertionPackets, 
+        IEnumerable<TSOVoltronPacket> EnqueuePackets,
+        IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets);
 
     /// <summary>
     /// Inheritors of this class will handle incoming PDUs (and DB Requests).

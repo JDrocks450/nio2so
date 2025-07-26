@@ -24,7 +24,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
             MakeBodyFromProperties();
         }
 
-        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Success;
+        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Online;
         public bool WasPersisted { get; set; } = false;
         public uint StatusCode { get; set; } = 0x0;
         /// <summary>

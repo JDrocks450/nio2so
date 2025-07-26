@@ -15,8 +15,5 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         TSOServerTelemetryServer Telemetry { get; }
         
         public bool IsRunning { get; set; }
-        
-
-        void SendPacket(ITSOServer cityServer, TSOVoltronPacket PDU);
     }
 }

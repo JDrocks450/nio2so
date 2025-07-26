@@ -8,7 +8,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     {        
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_RESPONSE_PDU;
 
-        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Success;
+        public TSOStatusReasonStruct StatusReason { get; set; } = TSOStatusReasonStruct.Online;
 
         public TSORoomInfoStruct RoomInfo { get; set; } = TSORoomInfoStruct.NoRoom;
 
@@ -25,10 +25,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <inheritdoc cref="TSOFindPlayerResponsePDU()"/> with the <paramref name="PlayerID"/> and <paramref name="Status"/> provided
         /// </summary>
         /// <param name="PlayerID"></param>
-        /// <param name="Status">If default, will respond <see cref="TSOStatusReasonStruct.Success"/></param>
+        /// <param name="Status">If default, will respond <see cref="TSOStatusReasonStruct.Online"/></param>
         public TSOFindPlayerResponsePDU(TSOAriesIDStruct PlayerID, TSOStatusReasonStruct? Status = default) : this()
         {
-            if (Status == default) Status = TSOStatusReasonStruct.Success;
+            if (Status == default) Status = TSOStatusReasonStruct.Online;
             StatusReason = Status;                     
             PlayerInfo = new(PlayerID,1,true);
             MakeBodyFromProperties();

@@ -27,7 +27,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         {            
             RoomLocationInfo = StageID = roomLocationInfo;
             OwnerVector = ownerVector;
-            this.AdminList = AdminList;
+            if (AdminList.Any())
+            {
+                this.AdminList = AdminList;
+                AdminListEnabled = true;
+            }
             CurrentOccupants = currentOccupants;
             MaxOccupants = maxOccupants;
             IsLocked = isLocked;
@@ -93,7 +97,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// A list of Admin <see cref="TSOAriesIDStruct"/> in this room
         /// </summary>
         public TSOAriesIDStruct[] AdminList { get; set; } = new TSOAriesIDStruct[0];
-        public byte DataStartByte3 { get; set; } = 0x01;
+        public bool AdminListEnabled { get; set; } = false;
         /// <summary>
         /// <inheritdoc cref="AdminListCount"/>
         /// </summary>
@@ -103,7 +107,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// Unsure what this is used for.
         /// </summary>
         public TSOAriesIDStruct[] AdmitList { get; set; } = new TSOAriesIDStruct[0];
-        public byte DataStartByte4 { get; set; } = 0x01;
+        public bool AdmitListEnabled { get; set; } = false;
         /// <summary>
         /// <inheritdoc cref="AdminListCount"/>
         /// </summary>
@@ -113,6 +117,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// Unsure what this is used for.
         /// </summary>
         public TSOAriesIDStruct[] DenyList { get; set; } = new TSOAriesIDStruct[0];
-        public byte EndByte { get; set; } = 0x01;
+        public bool DenyListEnabled { get; set; } = false;
     }
 }
