@@ -146,6 +146,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"GetLotByID_Request: ID: {req.HouseID}"));
+
+            TSOListOccupantsResponsePDU occupantsPDU = new TSOListOccupantsResponsePDU(new(lot.PhoneNumber,lot.Name), 
+                new TSOPlayerInfoStruct(new(lot.OwnerAvatar,"bisquick")),
+                new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")));
+            RespondWith(occupantsPDU);
         }
         /// <summary>
         /// Handles when a Client requests the PNG thumbnail image for a lot.
@@ -166,6 +171,26 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new NullReferenceException(nameof(pngBytes));
 
             RespondWith(new TSOGetHouseThumbByIDResponse(req.HouseID, pngBytes));
+        }
+        /// <summary>
+        /// Handles when a Client requests to update the PNG thumbnail image for a lot using <see cref="TSOSetThumbnailByIDRequest"/>
+        /// </summary>
+        /// <param name="PDU"></param>
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetHouseThumbByID_Request)]
+        public async void SetHouseThumbByID_Request(TSODBRequestWrapper PDU)
+        {
+            TSOSetThumbnailByIDRequest req = (TSOSetThumbnailByIDRequest)PDU;
+            if (req.HouseID == 0) return;
+            //**request the nio2so client
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
+                throw new InvalidOperationException("Tried to find the nio2so data service client, it is not present in the Services collection.");
+            
+            byte[] pngBytes = req.PNGBytes;
+            if (pngBytes == null)
+                throw new NullReferenceException(nameof(pngBytes));
+
+            //**upload thumbnail
+            await client.SetHouseThumbnailByID(req.HouseID, pngBytes);
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
@@ -323,15 +348,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //get the lot
             LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
             bool hosting = false;
-
-            if (thisLot.OwnerAvatar == ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID)
-            { // Initiate the host protocol
-                // TELL THE CLIENT TO START THE HOST PROTOCOL
-                RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
-                hosting = true;
-                // set lot as ONLINE
-                _onlineLotIDs.Add(thisLot.HouseID);
-            }
+            uint joiningAvatarID = ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID ?? 0;
+            if (joiningAvatarID == 0)
+                throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
 
             //get the phone number of the lot
             string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
@@ -340,20 +359,45 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             string LotName = thisLot?.Name ?? "BloatyLand";
             string RoomName = LotName;
 
+            //**join failed
+            bool successfulJoin = true;
+            if (!successfulJoin)
+            {
+                uint errorCode = 0;
+                RespondWith(new TSOJoinRoomFailedPDU(10, "", new(phoneNumber, RoomName)));
+                return;
+            }
+
+            if (true)//thisLot.OwnerAvatar == ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID)
+            { // Initiate the host protocol
+                // TELL THE CLIENT TO START THE HOST PROTOCOL
+                RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
+                hosting = true;
+                // set lot as ONLINE
+                _onlineLotIDs.Add(thisLot.HouseID);
+            }                              
+
             //create a list of admins
             var admins = new TSOAriesIDStruct[] { new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName) };
             uint occupants = (uint)admins.Length;
 
             //create the roominfo struct
             TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new(phoneNumber, RoomName),
-                ownerVector: GetAvatarIDStruct(thisLot.OwnerAvatar), // m_ownerID
+                ownerVector: GetAvatarIDStruct(thisLot.OwnerAvatar.AvatarID), // m_ownerID
                 currentOccupants: occupants, maxOccupants: 10, isLocked: false,
                 AdminList: admins
-            );
+            );            
 
+            //**join succeeded
             //tell the client to join this new room
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo, admins);
+            TSOJoinRoomPDU joinPDU = new TSOJoinRoomPDU(roomInfo.RoomLocationInfo, "bloatytime3!");
+            RespondWith(joinPDU);
+
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo, true);
             RespondWith(updateRoomPDU);
+
+            TSOListOccupantsResponsePDU occupantsPDU = new TSOListOccupantsResponsePDU(roomInfo.RoomLocationInfo, new TSOPlayerInfoStruct(admins[0]));
+            RespondWith(occupantsPDU);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]

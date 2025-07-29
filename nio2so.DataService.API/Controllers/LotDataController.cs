@@ -62,7 +62,7 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/lots/1338/thumbnail
         [HttpGet("{HouseID}/thumbnail")]
-        public async Task Get(uint HouseID)
+        public async Task GetThumbnail(uint HouseID)
         {
             try
             {
@@ -73,6 +73,18 @@ namespace nio2so.DataService.API.Controllers
             {
                 Response.StatusCode = 500;                
             }
+        }
+
+        // POST api/lots/1338/thumbnail
+        [HttpPost("{HouseID}/thumbnail")]
+        public async Task<ActionResult> PostThumbnail(uint HouseID)
+        {
+            if ((Request?.ContentLength ?? 0) == 0) return BadRequest("No request/content!!");
+            if (Request.ContentType != "image/png") return BadRequest("MIME type accepted: image/png.");            
+            byte[] pngBytes = new byte[Request.ContentLength.Value];
+            await Request.Body.ReadExactlyAsync(pngBytes);
+            await lotsDataService.SetThumbnailByHouseID(HouseID, pngBytes);
+            return Ok();
         }
 
         // POST api/<LotDataController>

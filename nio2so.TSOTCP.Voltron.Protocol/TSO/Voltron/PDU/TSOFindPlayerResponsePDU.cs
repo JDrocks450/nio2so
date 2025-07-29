@@ -30,7 +30,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         {
             if (Status == default) Status = TSOStatusReasonStruct.Online;
             StatusReason = Status;                     
-            PlayerInfo = new(PlayerID,1,true);
+            PlayerInfo = new(PlayerID,0,false);
             MakeBodyFromProperties();
         }
     }

@@ -8,6 +8,7 @@ using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System.Reflection.Metadata;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
@@ -35,8 +36,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //get tsodbchar object
-            TSODBChar? charData = dataServiceClient.GetCharacterFileByAvatarID(avatarID).Result;      
-            
+            TSODBChar? charData = dataServiceClient.GetCharacterFileByAvatarID(avatarID).Result;
+
+            charData.Unknown1 = charData.Unknown6 = charData.Unknown4 = charData.Unknown3 = 1;
+
             if (charData == null)
                 throw new NullReferenceException($"{avatarID} not found in nio2so data service");
 
@@ -285,24 +288,24 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void FIND_PLAYER_PDU(TSOVoltronPacket PDU)
         {
             var formattedPacket = (TSOFindPlayerPDU)PDU;
-            if (!string.IsNullOrWhiteSpace(formattedPacket?.RequestedPlayer?.AriesID))
-            {
-                if (uint.TryParse(formattedPacket.RequestedPlayer.AriesID.Substring(
-                    formattedPacket.RequestedPlayer.AriesID.IndexOf("A ") + 2), out uint AvatarID))
-                {
-                    formattedPacket.RequestedPlayer.MasterID = TestingConstraints.MyFriendAvatarName;
-                    var status = Struct.TSOStatusReasonStruct.Online;
-                    RespondWith(new TSOFindPlayerResponsePDU(new(formattedPacket.RequestedPlayer.AriesID, formattedPacket.RequestedPlayer.MasterID), status));
-                    TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                        RegulatorName, $"FIND PLAYER: {AvatarID}"));
-                    return;
-                }
-                TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                        RegulatorName, $"FIND PLAYER: ERROR! {formattedPacket.RequestedPlayer.AriesID} ???"));
-                return;
-            }
+            uint AvatarID = (formattedPacket?.RequestedPlayer as ITSONumeralStringStruct)?.NumericID ?? 0;
+            if (AvatarID == 0)
+                goto error;
+
+            //**download name
+            nio2soVoltronDataServiceClient client = GetService<nio2soVoltronDataServiceClient>();
+            string? name = client.GetAvatarNameByAvatarID(AvatarID).Result;
+
+            if (name == null)
+                goto error;
+
+            var status = Struct.TSOStatusReasonStruct.Offline;
+            RespondWith(new TSOFindPlayerResponsePDU(new(AvatarID, name), status));
+            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName, $"FIND PLAYER: {AvatarID}"));                
+            return;
+        error:
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                        RegulatorName, $"FIND PLAYER: ERROR! ARIES ID WAS NULL!"));
+                                    RegulatorName, $"FIND PLAYER: ERROR! ARIES ID WAS NULL!"));
         }
 
         public override bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)

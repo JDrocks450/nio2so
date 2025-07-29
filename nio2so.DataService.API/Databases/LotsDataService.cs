@@ -56,6 +56,14 @@ namespace nio2so.DataService.API.Databases
         /// <param name="HouseID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
+        public Task GetThumbnailByHouseID(HouseIDToken HouseID, byte[] PNGBytes) =>
+            GetLibrary<FileObjectLibrary>("THUMBNAILS").SetDataByIDToDisk(HouseID,PNGBytes);
+        /// <summary>
+        /// Sets the PNG Image for the given <see cref="HouseIDToken"/> in binary
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        /// <exception cref="KeyNotFoundException"></exception>
         public Task SetThumbnailByHouseID(HouseIDToken HouseID, byte[] PNGStream, bool overwrite = true) =>
             GetLibrary<FileObjectLibrary>("THUMBNAILS").SetDataByIDToDisk(HouseID, PNGStream, overwrite);
         /// <summary>
