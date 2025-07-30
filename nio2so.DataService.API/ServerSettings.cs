@@ -23,6 +23,8 @@ namespace nio2so.DataService.API
         public string UsersFile { get; set; } = TestingConstraints.DatabaseDirectory + @"\users.json";
         public string AvatarInfoFile { get; set; } = TestingConstraints.DatabaseDirectory + @"\avatarinfo.json";
         public string LotInfoFile { get; set; } = TestingConstraints.DatabaseDirectory + @"\lotinfo.json";
+        public string LotCreationIndexFile { get; set; } = TestingConstraints.DatabaseDirectory + @"\LCID.json";
+        public string AvatarCreationIndexFile { get; set; } = TestingConstraints.DatabaseDirectory + @"\ACID.json";
 
         public string ConstantsDirectory { get; set; } = Path.Combine(Current?.WorkspaceDirectory ?? TestingConstraints.WorkspaceDirectory, "const");
 

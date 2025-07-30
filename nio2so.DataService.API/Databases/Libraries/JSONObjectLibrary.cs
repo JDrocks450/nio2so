@@ -15,11 +15,11 @@ namespace nio2so.DataService.API.Databases.Libraries
         /// Creates a new <see cref="DatabaseComponentBase{T1, T2}"/> with the given home directory
         /// </summary>
         /// <param name="FilePath"></param>
-        public JSONObjectLibrary(string FilePath, Func<Task> EnsureDefaultValuesFunc, bool DelayedLoad = false)
+        public JSONObjectLibrary(string FilePath, Func<Task>? EnsureDefaultValuesFunc = default, bool DelayedLoad = false)
         {
             _baseDir = FilePath;
             DataFile = new();
-            CreateDefaultValues = EnsureDefaultValuesFunc;
+            CreateDefaultValues = EnsureDefaultValuesFunc ?? (() => Task.CompletedTask);
             if (DelayedLoad) return;
             Load().Wait();
         }

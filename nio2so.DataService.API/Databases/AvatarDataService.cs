@@ -25,11 +25,14 @@ namespace nio2so.DataService.API.Databases
         {
             string fPath = ServerSettings.Current.AvatarInfoFile;
 
+            //avatar database
             Libraries.Add(AvatarLibName, 
                 new JSONDictionaryLibrary<uint, AvatarInfo>(fPath, EnsureDefaultValues));
-
+            //**folder of charblobs, database
             Libraries.Add("BLOBS",
                 new FileObjectLibrary(Path.Combine(Path.GetDirectoryName(fPath), charblob_folder), "avatar", "charblob", CharBlobNotFound));
+            //**avatar creation index** taken from The Sims 2 with its Sim Creation Index idea
+            Libraries.Add("AVATAR CREATION INDEX", new JSONCreationIndex(ServerSettings.Current.AvatarCreationIndexFile));
 
             base.AddLibraries();
         }
@@ -82,7 +85,8 @@ namespace nio2so.DataService.API.Databases
             {
                 if (Profile.AvatarID != AvatarID)
                 {
-                    if (Profile.AvatarID != 0)
+                    if (Profile.AvatarID != 0) // TODO: implement handler for this? this could theoretically only happen by human intervention.. in which perhaps it is intentional?
+                                               // this would be useful for moving avatar from one shard to another.
                         throw new InvalidDataException($"The returned AvatarProfile for {AvatarID} belongs to {Profile.AvatarID}...?");
                 }
             }
@@ -236,11 +240,11 @@ namespace nio2so.DataService.API.Databases
         {
             AvatarInfo newInfo;
             uint AvatarID = 0;
+
+            JSONCreationIndex lib = GetLibrary<JSONCreationIndex>("AVATAR CREATION INDEX");
             do
             {
-                int one = Random.Shared.Next(100, int.MaxValue);
-                int two = Random.Shared.Next(1, int.MaxValue);
-                AvatarID = Math.Min((uint)(one + two), uint.MaxValue);
+                AvatarID = lib.GetNextID(AvatarsLibrary);
             }
             while (!AvatarsLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID)
             {                

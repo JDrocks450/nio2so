@@ -22,10 +22,13 @@ namespace nio2so.DataService.API.Databases
         {
             ServerSettings settings = ServerSettings.Current;
 
+            //thumbnail database
             Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DatabaseDirectory, "thumbnails"),
                 "thumb", "png", GetDefaultThumbnail));
-
+            //lot database
             Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.LotInfoFile, EnsureDefaultLots));
+            //**creation index for lot IDs
+            Libraries.Add("LOT CREATION INDEX", new JSONCreationIndex(settings.LotCreationIndexFile));
 
             base.AddLibraries();
         }
@@ -110,6 +113,18 @@ namespace nio2so.DataService.API.Databases
         }
 
         /// <summary>
+        /// Uses the Lot Creation Index to get the next available ID and returns it
+        /// <para/>Is not reserved until <see cref="TryPurchaseLotByAvatarID(AvatarIDToken, TSODBChar, string, LotPosition, out LotProfile?)"/> is called (which in turn will call this)
+        /// <para/>Every time this is rolled, the Lot Creation Index is incremented to the next ID
+        /// </summary>
+        /// <returns></returns>
+        public HouseIDToken GetNextID()
+        {
+            JSONCreationIndex lib = GetLibrary<JSONCreationIndex>("LOT CREATION INDEX");
+            return lib.GetNextID(LotsLibrary);
+        }
+
+        /// <summary>
         /// Tries to purchase the new lot for the provided <paramref name="AvatarID"/>
         /// </summary>
         /// <param name="AvatarProfile"></param>
@@ -129,14 +144,12 @@ namespace nio2so.DataService.API.Databases
                 return false; // Refused! Someone lives here!
 
             do
-            {
-                int one = Random.Shared.Next(100, int.MaxValue);
-                int two = Random.Shared.Next(1, int.MaxValue);
-                HouseID = Math.Min((uint)(one + two), uint.MaxValue);
+            { // set houseid to next ID
+                HouseID = GetNextID();
             }
             while (!LotsLibrary.TryAdd(HouseID, new LotInfo()
             {
-                Profile = NewLotProfile = new(HouseID, AvatarID, Position, LotPhoneNumber, $"{AvatarProfile.AvatarName}'s House", 
+                Profile = NewLotProfile = new(HouseID, AvatarID, Position, LotPhoneNumber, $"{AvatarProfile.AvatarName}'s House",
                 $"Created on {DateTime.Now.ToShortDateString()}.\n\nEnter a cool description here...")
             }));
 
