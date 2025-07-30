@@ -63,6 +63,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol
 
         protected void OnIncomingAriesFrameCallback(uint ID, TSOTCPPacket Data)
         {
+            ServerPauseEvent.WaitOne(); // FORCE SINGLE THREADED FOR RIGHT NOW
+            ServerPauseEvent.Reset();
+
             //**Telemetry
             Telemetry.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, Data);
 
@@ -123,9 +126,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         var packets = TSOVoltronPacket.ParseAllPackets(Data);
                         _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
                         while (_VoltronBacklog.Count > 0)
-                        { // Work through all incoming PDUs
-                            ServerPauseEvent.WaitOne();
-
+                        { // Work through all incoming PDUs                            
                             var packet = _VoltronBacklog[0];
                             _VoltronBacklog.RemoveAt(0);
 
@@ -150,19 +151,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                                     $"{ex.Message}"));
                             }
                         }
-                        bool disconnecting = false;
-#if MAKEMANY
-                        //MAKE ARIES FRAME WITH MANY VOlTRON PACKETS
-                        var ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(packetSendQueue);
-                        ariesPacket.WritePacketToDisk(false);
-                        Send(ID, ariesPacket);
-#else
                         CloseAriesFrame(ID);
-#endif
                         sessionService.ClearClientProperty(); // clear current connection property in the session service
                     }
                     break;
             }
+            ServerPauseEvent.Set();
             Data.Dispose();
         }
 
@@ -254,8 +248,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         private void CloseAriesFrame(uint ID)
         {
             bool disconnecting = false;
-            foreach (var voltronPacket in packetSendQueue)
+            while (packetSendQueue.Any())
             {
+                var voltronPacket = packetSendQueue.First();
+                packetSendQueue.Remove(voltronPacket);
+
                 if (voltronPacket is TSOClientBye) disconnecting = true; // When sending the BYE_PDU we should disconnect from the Server cleanly.
                 SubmitAriesFrame(ID, voltronPacket);
             }

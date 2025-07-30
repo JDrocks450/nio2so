@@ -37,6 +37,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
         public void ClearClientProperty() => CurrentClient = null;
         public TSOAriesIDStruct? CurrentClient { get; private set; }
 
+        public IEnumerable<TSOAriesIDStruct> DebugGetClients() => _sessions.Values;
+
         public void Dispose()
         {
             

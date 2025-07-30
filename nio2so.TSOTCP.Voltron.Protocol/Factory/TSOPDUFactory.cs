@@ -58,7 +58,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
             cTSOVoltronpacket = CreatePacketObjectByPacketType((TSO_PreAlpha_VoltronPacketTypes)VPacketType, Stream);
             Stream.Seek(startPosition, SeekOrigin.Begin);
             byte[] temporaryBuffer = new byte[Size];
-            Stream.ReadExactly(temporaryBuffer, 0, (int)Size);
+            Stream.ReadExactly(temporaryBuffer, 0, (int)Math.Min(Stream.Length,(int)Size));
             if (cTSOVoltronpacket == null)
             {
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Errors,

@@ -2,15 +2,14 @@
 {
     /// <summary>
     /// Response packet to <see cref="TSO_PreAlpha_MasterConstantsTable.GZCLSID_cDBGetHouseLeaderByLotID_Request"/>
-    /// that indicates to the remote party what the 'leader' of this House is. The Owner basically, could also indicate
-    /// who the host of the simulation room is.
+    /// that indicates to the remote party what the 'leader' of this House is. Indicates who the host of the simulation room is.
     /// </summary>    
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Response)]
     public class TSOGetHouseLeaderByIDResponse : TSODBRequestWrapper
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
-        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x1;
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x0;
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
@@ -32,6 +31,7 @@
         {
             this.HouseID = HouseID;
             this.LeaderID = LeaderID;
+            Filler = LeaderID;
 
             MakeBodyFromProperties();
         }

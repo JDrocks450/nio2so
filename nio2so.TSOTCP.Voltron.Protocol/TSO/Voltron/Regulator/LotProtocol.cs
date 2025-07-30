@@ -345,10 +345,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (clientSessionService.CurrentClient == null)
                 throw new InvalidOperationException("Cannot identify who sent this packet to Voltron.");
 
+            //identify voltron client id
+            TSOAriesIDStruct joiningClient = clientSessionService.CurrentClient;
+
             //get the lot
             LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
             bool hosting = false;
-            uint joiningAvatarID = ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID ?? 0;
+            uint joiningAvatarID = ((ITSONumeralStringStruct)joiningClient).NumericID ?? 0;
             if (joiningAvatarID == 0)
                 throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
 
@@ -359,8 +362,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             string LotName = thisLot?.Name ?? "BloatyLand";
             string RoomName = LotName;
 
-            //**join failed
             bool successfulJoin = true;
+
+            // if i am a visitor
+            // ask host if I can join
+            if (thisLot.OwnerAvatar != joiningAvatarID)
+                successfulJoin = TrySendTo(new TSOAriesIDStruct(thisLot.OwnerAvatar,""), new TSOOccupantArrivedPDU(clientSessionService.CurrentClient));
+
+            //**join failed            
             if (!successfulJoin)
             {
                 uint errorCode = 0;
@@ -368,7 +377,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 return;
             }
 
-            if (true)//thisLot.OwnerAvatar == ((ITSONumeralStringStruct)clientSessionService.CurrentClient).NumericID)
+            if (thisLot.OwnerAvatar == joiningAvatarID)
             { // Initiate the host protocol
                 // TELL THE CLIENT TO START THE HOST PROTOCOL
                 RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
@@ -394,7 +403,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             RespondWith(joinPDU);
 
             TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo, true);
-            RespondWith(updateRoomPDU);
+            RespondWith(updateRoomPDU);            
 
             TSOListOccupantsResponsePDU occupantsPDU = new TSOListOccupantsResponsePDU(roomInfo.RoomLocationInfo, new TSOPlayerInfoStruct(admins[0]));
             RespondWith(occupantsPDU);

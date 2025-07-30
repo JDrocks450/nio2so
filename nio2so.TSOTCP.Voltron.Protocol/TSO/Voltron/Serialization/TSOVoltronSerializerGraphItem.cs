@@ -76,7 +76,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         public void Add(TSOVoltronSerializerGraphItem item)
         {
             if (item == null)
-                ;
+                return;
             ((ICollection<TSOVoltronSerializerGraphItem>)_graph).Add(item);
         }
 

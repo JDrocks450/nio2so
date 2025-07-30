@@ -144,7 +144,7 @@ namespace nio2so.DataService.API.Databases
                 return false; // Refused! Someone lives here!
 
             do
-            { // set houseid to next ID
+            { // set houseid to next ID and update creation index
                 HouseID = GetNextID();
             }
             while (!LotsLibrary.TryAdd(HouseID, new LotInfo()

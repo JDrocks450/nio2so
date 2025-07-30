@@ -3,6 +3,7 @@ using nio2so.Formats.DB;
 using nio2so.Formats.Util.Endian;
 using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
@@ -31,8 +32,19 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
         public void OnStandardMessage(ITSODataBlobPDU PDU)
         {
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
-                PDU = new TSOBroadcastDatablobPacket(transmitPDU);
-#if true
+            {
+                TrySendTo(transmitPDU.DestinationSessionID, new TSOBroadcastDatablobPacket(transmitPDU));
+                return;
+            }
+            if (PDU is TSOBroadcastDatablobPacket broadcastPDU)
+            {
+                var sessions = GetService<nio2soClientSessionService>();
+                foreach(var client in sessions.DebugGetClients())
+                {
+                    TrySendTo(client, broadcastPDU);
+                }
+            }
+#if false
             var stdMessagePDU = PDU.DataBlobContentObject.GetAs<TSOStandardMessageContent>();
             if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)
             {

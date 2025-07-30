@@ -442,9 +442,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <returns></returns>
         public static TSOVoltronSerializerGraphItem[] GetLastGraph()
         {
-            var arr = _lastGraphItems.ToArray();
-            _lastGraphItems.Clear();
-            return arr;
+            if (TSOVoltronSerializer.SingleThreadedEnvironment)
+            {
+                var arr = _lastGraphItems.ToArray();
+                _lastGraphItems.Clear();
+                return arr;
+            }
+            return [];
         }
     }
 }

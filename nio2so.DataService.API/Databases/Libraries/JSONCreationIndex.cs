@@ -11,9 +11,9 @@ namespace nio2so.DataService.API.Databases.Libraries
         }
 
         /// <summary>
-        /// Uses the Lot Creation Index to get the next available ID and returns it
-        /// <para/>Is not reserved until <see cref="TryPurchaseLotByAvatarID(AvatarIDToken, TSODBChar, string, LotPosition, out LotProfile?)"/> is called (which in turn will call this)
-        /// <para/>Every time this is rolled, the Lot Creation Index is incremented to the next ID
+        /// Uses this <see cref="JSONCreationIndex"/> in conjunction with the <paramref name="DataSource"/> to get the next available ID and returns it
+        /// <para/>Is not reserved until you yourself add this key to the <paramref name="DataSource"/>
+        /// <para/>Every time this is rolled, this <see cref="JSONCreationIndex"/> is incremented to the next available ID
         /// </summary>
         /// <returns></returns>
         public uint GetNextID<T>(IDictionary<uint, T> DataSource)

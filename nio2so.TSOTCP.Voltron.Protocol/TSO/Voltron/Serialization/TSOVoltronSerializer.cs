@@ -14,6 +14,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         private static Stack<TSOVoltronSerializerGraphItem> _graphStack = new();
         private static TSOVoltronSerializerGraphItem? _lastGraphItem = null;
 
+        public static bool SingleThreadedEnvironment { get; set; } = false;
+
         /// <summary>
         /// Gets all <see cref="BindingFlags.Public"/> properties that don't have <see cref="TSOVoltronIgnorable"/> or <see cref="IgnoreDataMemberAttribute"/> 
         /// </summary>
@@ -35,6 +37,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         {
             void SetGraphItem(TSOVoltronSerializerGraphItem newItem)
             {
+                if (!SingleThreadedEnvironment) return;
                 if (!_graphStack.Any())
                 {
                     _graphStack.Push(newItem);
@@ -49,7 +52,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (Object is ITSOCustomSerialize serializable)
             {
                 byte[] customData = serializable.OnSerialize();
-                Stream.Write(customData);
+                Stream.Write(customData);               
                 SetGraphItem(new(Property, Object.GetType(), Object, $"Custom serialization technique ({customData.Length} bytes)"));
                 return;
             }
@@ -62,12 +65,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             SetGraphItem(new(Property, Object.GetType(), Object));
 
             foreach (var property in GetSerializableProperties(Object))
-            {               
+            {
                 //**serializable property
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, property, Object))
                     throw new ArgumentException($"Could not serialize: {property}");
-                foreach(var item in TSOVoltronSerializerCore.GetLastGraph())
-                    _graphStack.First().Add(item);
+                if (SingleThreadedEnvironment)
+                {
+                    foreach (var item in TSOVoltronSerializerCore.GetLastGraph())
+                        _graphStack.First().Add(item);
+                }
             }
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)
@@ -79,8 +85,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 if (!TSOVoltronSerializerCore.WriteProperty(Stream, distanceToEnd.Value, Object))
                     throw new ArgumentException($"Could not serialize: {distanceToEnd.Value}");
             }
-            _lastGraphItem = _graphStack.Pop();
-            
+            if (SingleThreadedEnvironment)
+                _lastGraphItem = _graphStack.Pop();
         }
         /// <summary>
         /// Serializes the given <paramref name="Object"/> to a Voltron data stream and writes it to a new <see cref="byte"/><c>[]</c>
