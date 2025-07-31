@@ -23,11 +23,5 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
         public const string HouseDataDirectory = WorkspaceDirectory + "/house";
         public const string AvatarDataDirectory = WorkspaceDirectory + "/avatar";
         //****
-
-        //****BETA TESTING
-        public const uint MyHouseID = TestingConstraints.MyHouseID; //0x053A; // 1338 // can be zero for testing as well
-        public const uint MyAvatarID = TestingConstraints.MyAvatarID; // 0x0539
-        public const string MyAvatarName = TestingConstraints.MyAvatarName;
-        //****
     }
 }

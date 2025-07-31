@@ -24,6 +24,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     {    
         private static HashSet<uint> _onlineLotIDs = new HashSet<uint>();
 
+        /// <summary>
+        /// Downloads the <see cref="LotProfile"/> for the given <paramref name="HouseID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
         public LotProfile GetLotProfile(HouseIDToken HouseID)
         {
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
@@ -32,11 +39,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
             return item;
         }
-        public TSOAriesIDStruct GetAvatarIDStruct(AvatarIDToken AvatarID)
-        {
-            var client = GetService<nio2soVoltronDataServiceClient>();
-            return new(AvatarID, client.GetAvatarNameByAvatarID(AvatarID).Result);
-        }
+        /// <summary>
+        /// <inheritdoc cref="AvatarProtocol.GetAvatarIDStruct(AvatarIDToken)"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetVoltronIDStruct(AvatarID);
 
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOBuyLotByAvatarIDRequest"/>
@@ -147,9 +155,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
                 $"GetLotByID_Request: ID: {req.HouseID}"));
 
-            TSOListOccupantsResponsePDU occupantsPDU = new TSOListOccupantsResponsePDU(new(lot.PhoneNumber,lot.Name), 
-                new TSOPlayerInfoStruct(new(lot.OwnerAvatar,"bisquick")),
-                new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")));
+            //use room protocol to list the people in the lot
+            GetRegulator<RoomProtocol>().GetOccupantsPDUByRoomID(req.HouseID, out TSOListOccupantsResponsePDU? occupantsPDU);
             RespondWith(occupantsPDU);
         }
         /// <summary>
@@ -192,24 +199,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //**upload thumbnail
             await client.SetHouseThumbnailByID(req.HouseID, pngBytes);
         }
-        /// <summary>
-        /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
-        /// </summary>
-        /// <param name="PDU"></param>
-        /// <exception cref="NullReferenceException"></exception>
-        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetHouseLeaderByLotID_Request)]
-        public void GetHouseLeaderByLotID_Request(TSODBRequestWrapper PDU)
-        {
-            uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
-
-            //CHANGE LATER**********
-
-            //download lot profiles from data service
-            LotProfile lot = GetLotProfile(HouseID);
-            //********
-
-            RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, lot.OwnerAvatar));
-        }
+        
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetHouseBlobByIDRequest"/>
         /// <para/>Responds with a new <see cref="TSOGetHouseBlobByIDResponse"/> with the <see cref="TSODBHouseBlob"/> requested by its <see cref="TSOGetHouseBlobByIDRequest.HouseID"/>
@@ -287,134 +277,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             throw new NotImplementedException();
             //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
-        }
-
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
-        public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
-        {
-            uint HouseID = TestingConstraints.MyHouseID;
-
-            //get default house
-            LotProfile lot = GetLotProfile(HouseID);
-
-            var destroyRoomPDU = (TSODestroyRoomPDU)PDU;
-            LotProfile myRoom = lot;
-
-            //Get the avatar who is trying to leave and destroy the room behind them
-            uint RoomID = ((ITSONumeralStringStruct)destroyRoomPDU.RoomInfo)?.NumericID ?? 0;
-            if (RoomID == 0)
-                throw new InvalidDataException($"{nameof(DESTROY_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
-
-            RespondWith(new TSOUpdateRoomPDU(134, TSORoomInfoStruct.NoRoom));
-            RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Online, new(myRoom.PhoneNumber,myRoom.Name)));
-        }
-
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]
-        public void LIST_ROOMS_PDU(TSOVoltronPacket PDU)
-        {
-            //download all lots from data service ... change later to be rooms
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new NullReferenceException("nio2so data service client could not be found.");
-            var lots = client.GetAllLotProfiles().Result.Lots;
-
-            HashSet<TSORoomInfoStruct> rooms = new();
-            int i = 0;
-            foreach(var ID in lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
-            {
-                var lot = GetLotProfile(ID);
-                rooms.Add(new TSORoomInfoStruct(
-                    new TSORoomIDStruct(lot.PhoneNumber, lot.Name),
-                    GetAvatarIDStruct(lot.OwnerAvatar), // change this later
-                    (uint)++i) 
-                );
-            }
-            RespondWith(new TSOListRoomsResponsePDU(rooms.ToArray()));
-            return;
-
-            //test message pdu ... doesn't work
-            RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")), "Testing"));
-        }
-
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU)]
-        public void LOT_ENTRY_REQUEST_PDU(TSOVoltronPacket PDU)
-        {
-            var roomPDU = (TSOLotEntryRequestPDU)PDU;
-
-            //identify client
-            nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
-            if (clientSessionService.CurrentClient == null)
-                throw new InvalidOperationException("Cannot identify who sent this packet to Voltron.");
-
-            //identify voltron client id
-            TSOAriesIDStruct joiningClient = clientSessionService.CurrentClient;
-
-            //get the lot
-            LotProfile thisLot = GetLotProfile(roomPDU.HouseID);
-            bool hosting = false;
-            uint joiningAvatarID = ((ITSONumeralStringStruct)joiningClient).NumericID ?? 0;
-            if (joiningAvatarID == 0)
-                throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
-
-            //get the phone number of the lot
-            string phoneNumber = thisLot?.PhoneNumber ?? TestingConstraints.MyHousePhoneNumber;
-
-            //Update which room they're in currently
-            string LotName = thisLot?.Name ?? "BloatyLand";
-            string RoomName = LotName;
-
-            bool successfulJoin = true;
-
-            // if i am a visitor
-            // ask host if I can join
-            if (thisLot.OwnerAvatar != joiningAvatarID)
-                successfulJoin = TrySendTo(new TSOAriesIDStruct(thisLot.OwnerAvatar,""), new TSOOccupantArrivedPDU(clientSessionService.CurrentClient));
-
-            //**join failed            
-            if (!successfulJoin)
-            {
-                uint errorCode = 0;
-                RespondWith(new TSOJoinRoomFailedPDU(10, "", new(phoneNumber, RoomName)));
-                return;
-            }
-
-            if (thisLot.OwnerAvatar == joiningAvatarID)
-            { // Initiate the host protocol
-                // TELL THE CLIENT TO START THE HOST PROTOCOL
-                RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID));
-                hosting = true;
-                // set lot as ONLINE
-                _onlineLotIDs.Add(thisLot.HouseID);
-            }                              
-
-            //create a list of admins
-            var admins = new TSOAriesIDStruct[] { new TSOAriesIDStruct(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName) };
-            uint occupants = (uint)admins.Length;
-
-            //create the roominfo struct
-            TSORoomInfoStruct roomInfo = new TSORoomInfoStruct(roomLocationInfo: new(phoneNumber, RoomName),
-                ownerVector: GetAvatarIDStruct(thisLot.OwnerAvatar.AvatarID), // m_ownerID
-                currentOccupants: occupants, maxOccupants: 10, isLocked: false,
-                AdminList: admins
-            );            
-
-            //**join succeeded
-            //tell the client to join this new room
-            TSOJoinRoomPDU joinPDU = new TSOJoinRoomPDU(roomInfo.RoomLocationInfo, "bloatytime3!");
-            RespondWith(joinPDU);
-
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo, true);
-            RespondWith(updateRoomPDU);            
-
-            TSOListOccupantsResponsePDU occupantsPDU = new TSOListOccupantsResponsePDU(roomInfo.RoomLocationInfo, new TSOPlayerInfoStruct(admins[0]));
-            RespondWith(occupantsPDU);
-        }
-
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
-        public void CHAT_MSG_PDU(TSOVoltronPacket PDU)
-        {
-            var msg = (TSOChatMessagePDU)PDU;
-            RespondWith(msg);
-            //RespondWith(new TSOChatMessageFailedPDU(msg.Message));
-        }
+        }        
     }
 }

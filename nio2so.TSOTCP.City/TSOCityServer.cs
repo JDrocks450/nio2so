@@ -34,9 +34,9 @@ namespace nio2so.TSOTCP.City.TSO
             else Telemetry = TSOServerTelemetryServer.Global;
 
             //**REGULATOR
-            _regulatorManager = new(this);
-            _regulatorManager.RegisterDefaultProtocols(); // register all TSOTCP.Voltron protocols
-            _regulatorManager.RegisterProtocols(GetType().Assembly); // register custom protocols
+            Regulators = new(this);
+            Regulators.RegisterDefaultProtocols(); // register all TSOTCP.Voltron protocols
+            Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
         }
 
         public override void Start()

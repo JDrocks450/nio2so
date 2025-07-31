@@ -13,6 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// </summary>
         TSOServerServiceManager Services { get; }
         TSOServerTelemetryServer Telemetry { get; }
+        TSORegulatorManager Regulators { get; }
         
         public bool IsRunning { get; set; }
     }

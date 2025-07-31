@@ -42,7 +42,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// The ID of the House we're getting information on
         /// </summary>
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; } = 0x0;
-        [TSOVoltronDBWrapperField][TSOVoltronArrayLength(nameof(Roommates))] public uint NumberOfRoommates { get; set; } = 0x01;
+        [TSOVoltronDBWrapperField][TSOVoltronArrayLength(nameof(Roommates))] public uint NumberOfRoommates { get; set; } = 0x0;
         [TSOVoltronDBWrapperField] public TSORoommate[] Roommates { get; set; } = new TSORoommate[0];
 
         /// <summary>

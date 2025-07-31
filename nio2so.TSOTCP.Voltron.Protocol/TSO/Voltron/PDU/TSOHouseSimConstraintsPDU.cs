@@ -25,6 +25,6 @@
             MakeBodyFromProperties();
         }
 
-        public uint HouseID { get; set; } = TSOVoltronConst.MyHouseID;
+        public uint HouseID { get; set; } = 0;
     }
 }

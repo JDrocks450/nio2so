@@ -176,7 +176,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
 
             //**PRETTY PRINT FOR MULTILINE
             var time = Entry.Time ?? DateTime.Now;
-            var message = Entry.Content;
+            var message = $"{Entry.Content}";
             var header = $"--- {time} ";
             var nmessage = Entry.Content.Contains('\n') ?
                 $"{header}{new string('-', CONSOLE_WIDTH - header.Length)} \n" +
@@ -226,7 +226,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
 
         private void Log(string Message)
         {
-            Message = $"{ServerName} - {Message}";
+            Message = $"[*THREAD: {Thread.CurrentThread.ManagedThreadId}*] {ServerName} - {Message}";
             Console.WriteLine(Message);
             if (!IsSysLogging) return;
             lock (this)

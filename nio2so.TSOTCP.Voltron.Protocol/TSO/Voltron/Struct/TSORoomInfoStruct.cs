@@ -1,6 +1,7 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
@@ -12,7 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     /// </summary>
     public record TSORoomInfoStruct
     {        
-        public const uint MAX_OCCUPANTS = 10;
+        public const uint MAX_OCCUPANTS = RoomProtocol.MAX_OCCUPANTS;
 
         public TSORoomInfoStruct()
         {
@@ -37,15 +38,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
             IsLocked = isLocked;
         }
 
-        [TSOVoltronIgnorable]
-        [IgnoreDataMember]        
-        public static TSORoomInfoStruct DebugSettings => new TSORoomInfoStruct()
-        {
-            RoomLocationInfo = new(TestingConstraints.MyHousePhoneNumber,TestingConstraints.MyHouseName),            
-            OwnerVector = new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName),
-            AdminList = [new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName)],
-            CurrentOccupants = 0x01,
-        };
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
         public static TSORoomInfoStruct NoRoom => new TSORoomInfoStruct(TSORoomIDStruct.Blank, new TSOAriesIDStruct("", ""),0);

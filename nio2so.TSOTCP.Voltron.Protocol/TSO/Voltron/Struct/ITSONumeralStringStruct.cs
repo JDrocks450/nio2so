@@ -69,5 +69,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <param name="Input"></param>
         /// <returns></returns>
         public static bool TryParseAriesID(string Input, out uint AriesID) => uint.TryParse(getParseString(Input), out AriesID);
+
+        public bool Equals(ITSONumeralStringStruct? Other) => ((Other?.NumericID ?? 0) == (NumericID ?? 0) && ((NumericID ?? 0) != 0) && ((Other?.NumericID ?? 0) != 0));
     }
 }

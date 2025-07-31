@@ -10,8 +10,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 {
     public class TSOBroadcastDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
-        public TSOAriesIDStruct CurrentSessionID { get; set; } = new();
-        public ushort Arg1 { get; set; } = 0x4101;
+        public TSOPlayerInfoStruct SenderInfo { get; set; }
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }
         public TSOGenericDataBlobContent DataBlobContentObject { get; set; } = new();
@@ -38,16 +37,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU;
         protected override TSOBroadcastDatablobPDUHeader Header { get; } = new();
 
-        public TSOAriesIDStruct SenderSessionID
+        public TSOPlayerInfoStruct SenderInfo
         {
-            get => Header.CurrentSessionID;
-            set => Header.CurrentSessionID = value;
+            get => Header.SenderInfo;
+            set => Header.SenderInfo = value;
         }
-        public ushort Arg1
-        {
-            get => Header.Arg1;
-            set => Header.Arg1 = value;
-        }
+        TSOAriesIDStruct ITSOVoltronAriesMasterIDStructure.SenderSessionID { get => SenderInfo.PlayerID; set => SenderInfo.PlayerID = value; }
         [TSOVoltronDistanceToEnd]
         public uint MessageLength
         {
@@ -67,7 +62,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
                 Header.DataBlobContentObject = value;
                 Header.DataBlobContentObject?.SetCLSID(SubMsgCLSID); // used for ToString() mainly
             }
-        }
+        }        
 
         /// <summary>
         /// This is the default, parameterless constuctor.
@@ -113,9 +108,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
         public TSOBroadcastDatablobPacket(TSOTransmitDataBlobPacket transmitPDU) :
             this(transmitPDU.SubMsgCLSID, transmitPDU.DataBlobContentObject.ContentBytes)
         {
-            SenderSessionID = transmitPDU.SenderSessionID;
-            Arg1 = transmitPDU.Arg1;
-
+            SenderInfo = transmitPDU.SenderInfo;
             MakeBodyFromProperties();
         }
 
@@ -136,14 +129,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
             var startPosition = BodyStream.Position;
             var avatarID = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
             var avatarName = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
-            ushort arg1 = BodyStream.ReadBodyUshort(Endianness.BigEndian);
+            byte badge = (byte)BodyStream.ReadBodyByte();
+            byte isAlertable = (byte)BodyStream.ReadBodyByte();
             uint msgSize = BodyStream.ReadBodyDword(Endianness.BigEndian);
             uint actionCLSID = BodyStream.ReadBodyDword();
             BodyStream.Seek(startPosition, SeekOrigin.Begin);
             return new()
             {
-                CurrentSessionID = new(avatarID, avatarName),
-                Arg1 = arg1,
+                SenderInfo = new TSOPlayerInfoStruct(new TSOAriesIDStruct(avatarID, avatarName), badge, isAlertable == 1),
                 MessageLength = msgSize,
                 SubMsgCLSID = (TSO_PreAlpha_MasterConstantsTable)actionCLSID
             };

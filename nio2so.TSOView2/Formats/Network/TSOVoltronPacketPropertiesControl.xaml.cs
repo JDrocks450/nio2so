@@ -88,7 +88,7 @@ namespace nio2so.TSOView2.Formats.Network
         {
             if (_currentPDU == null) return;
 
-            TSOVoltronSerializer.SingleThreadedEnvironment = true;
+            TSOVoltronSerializer.CreatingSerializationGraphs = true;
 
             _currentPDU.MakeBodyFromProperties();
             var graph = _currentPDU.MySerializedGraph;

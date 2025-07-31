@@ -91,8 +91,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
             {
                 TSOVoltronPacket? cTSOVoltronpacket = default;
                 cTSOVoltronpacket = CreatePacketObjectFromDataBuffer(AriesPacket.BodyStream);
-                if (cTSOVoltronpacket != default)                
-                    packets.Add(cTSOVoltronpacket);                
+                if (cTSOVoltronpacket != default)
+                {
+                    cTSOVoltronpacket.SenderQuazarConnectionID = AriesPacket.ConnectionID;
+                    packets.Add(cTSOVoltronpacket);
+                }
             }
             while (!AriesPacket.IsBodyEOF);
             return packets;

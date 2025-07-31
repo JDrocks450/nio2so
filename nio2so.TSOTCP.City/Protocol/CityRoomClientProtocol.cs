@@ -16,35 +16,12 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 {
+
     [TSORegulator]
     internal class CityRoomClientProtocol : TSOProtocol
     {
-        protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
-        {
-            RespondWith((TSOVoltronPacket)PDU);
-            //IncomingConsultHSB(PDU);
-            return true;
-        }
-
-        TSOVoltronPacket donoPacket = null;
-
-        [TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)]
-        public void OnStandardMessage(ITSODataBlobPDU PDU)
-        {
-            if (PDU is TSOTransmitDataBlobPacket transmitPDU)
-            {
-                TrySendTo(transmitPDU.DestinationSessionID, new TSOBroadcastDatablobPacket(transmitPDU));
-                return;
-            }
-            if (PDU is TSOBroadcastDatablobPacket broadcastPDU)
-            {
-                var sessions = GetService<nio2soClientSessionService>();
-                foreach(var client in sessions.DebugGetClients())
-                {
-                    TrySendTo(client, broadcastPDU);
-                }
-            }
 #if false
+
             var stdMessagePDU = PDU.DataBlobContentObject.GetAs<TSOStandardMessageContent>();
             if (stdMessagePDU.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_RequestAvatarID)
             {
@@ -83,16 +60,16 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                         ));
                 else return;                    
             } 
-#endif
         }
+#endif
 
-        private TSOBroadcastDatablobPacket GetJoinResponse() =>        
+        private TSOBroadcastDatablobPacket GetJoinResponse() =>
             new TSOBroadcastDatablobPacket(
                     //new Struct.TSOAriesIDStruct("A 1337", ""),
                     TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
                     new TSOStandardMessageContent(TSO_PreAlpha_MasterConstantsTable.kMSGID_JoinHouseResponse,
                     new byte[4] { 0x00, 0x03, 0x4D, 0x61 })
-                );        
+                );
 
         private TSOBroadcastDatablobPacket GetHouseOccupants() =>
             //MESSAGE HOUSE OCCUPANTS
@@ -107,7 +84,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     BufferStartByte = 0x43
                 });
 
-        private TSOBroadcastDatablobPacket GetHouseData() => 
+        private TSOBroadcastDatablobPacket GetHouseData() =>
             new TSOBroadcastDatablobPacket(
                 //new Struct.TSOAriesIDStruct("A 1337", ""),
                 TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage,
@@ -117,7 +94,7 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                     BufferStartByte = 0x3F
                 }
             );
-        
+
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU)]
         public void LOAD_HOUSE_RESPONSE_PDU(TSOVoltronPacket PDU)
@@ -148,10 +125,10 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
             //when that happens
             if (houseID == 0)
             {
-                houseID = TSOVoltronConst.MyHouseID;
+                houseID = 0;
                 if (!TestingConstraints.LOTTestingMode)
                 {
-                    
+
                     return;
                 }
             }

@@ -7,7 +7,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
 {
     public class TSOTransmitDatablobPDUHeader : ITSOVoltronSpecializedPDUHeader
     {
-        public TSOAriesIDStruct SenderSessionID { get; set; } = new();
+        public TSOPlayerInfoStruct SenderInfo { get; set; } = new();
         public ushort Arg1 { get; set; } = 0x4101;
         public TSOAriesIDStruct DestinationSessionID { get; set; } = new();
         public uint MessageLength { get; set; }
@@ -29,16 +29,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
     public class TSOTransmitDataBlobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOTransmitDatablobPDUHeader>,
         ITSOVoltronAriesMasterIDStructure, ITSODataBlobPDU
     {
-        public TSOAriesIDStruct SenderSessionID
+        public TSOPlayerInfoStruct SenderInfo
         {
-            get => Header.SenderSessionID;
-            set => Header.SenderSessionID = value;
+            get => Header.SenderInfo;
+            set => Header.SenderInfo = value;
         }
-        public ushort Arg1
-        {
-            get => Header.Arg1;
-            set => Header.Arg1 = value;
-        }
+        TSOAriesIDStruct ITSOVoltronAriesMasterIDStructure.SenderSessionID { get => SenderInfo.PlayerID; set => SenderInfo.PlayerID = value; }
         public TSOAriesIDStruct DestinationSessionID
         {
             get => Header.DestinationSessionID;
@@ -67,7 +63,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU;
-        protected override TSOTransmitDatablobPDUHeader Header { get; } = new();
+        protected override TSOTransmitDatablobPDUHeader Header { get; } = new();        
 
         /// <summary>
         /// This is the default, parameterless constuctor.       

@@ -34,20 +34,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void CLIENT_ONLINE_PDU(TSOVoltronPacket PDU)
         {
             return;
+            /*
             uint avatarID = TSOVoltronConst.MyAvatarID;
             string avatarName = TSOVoltronConst.MyAvatarName;
-            RespondWith(new TSOUpdatePlayerPDU(new Struct.TSOAriesIDStruct(avatarID, avatarName)));
+            RespondWith(new TSOUpdatePlayerPDU(new Struct.TSOAriesIDStruct(avatarID, avatarName)));*/
         }
 
         internal TSOVoltronPacket VOLTRON_DMS_GetUpdatePlayerPDU(uint AvatarID, out string AvatarName)
         {
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new Exception("nio2so data service client could not be connected.");
-            AvatarProfile? name = client.GetAvatarProfileByAvatarID(AvatarID).Result;
-            if (name == null)
-                throw new NullReferenceException("nio2so could not find the requested AvatarName by ID.");
-            AvatarName = name.Name;
-            return new TSOUpdatePlayerPDU(new Struct.TSOAriesIDStruct(AvatarID,AvatarName));
+            Struct.TSOPlayerInfoStruct playerInfo = GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
+            AvatarName = playerInfo.PlayerID.MasterID;
+            return new TSOUpdatePlayerPDU(playerInfo);
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.BC_VERSION_LIST_PDU)]

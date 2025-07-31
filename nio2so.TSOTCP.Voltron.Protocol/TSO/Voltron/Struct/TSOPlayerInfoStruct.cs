@@ -20,7 +20,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <param name="playerID"></param>
         /// <param name="badge"></param>
         /// <param name="isAlertable"></param>
-        public TSOPlayerInfoStruct(TSOAriesIDStruct playerID, byte badge = 0x0, bool isAlertable = true)
+        public TSOPlayerInfoStruct(TSOAriesIDStruct playerID, byte badge = 0x0, bool isAlertable = true) : this()
         {
             PlayerID = playerID;
             Badge = badge;

@@ -2,6 +2,7 @@
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Collections;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using System.Collections.Concurrent;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
@@ -11,41 +12,72 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator("cTSOSplitBufferProtocol")]
     internal class SplitBufferPDUProtocol : TSOProtocol
     {
-        private TSOSplitBufferPDUCollection _SplitBufferPDUs = new();
-        /// <summary>
-        /// When merging a <see cref="TSOSplitBufferPDU"/> this stores what packet we're currently unpacking
-        /// </summary>
-        private TSOVoltronPacketHeader? _VoltronPacketHeader;
-        private uint _recvBytes = 0;
-        private int _recvPDUs = 0;
-        public bool IsUnpacking => _VoltronPacketHeader != null;
+        internal class SplitBufferPDUThreadContext : IDisposable
+        {
+            private TSOSplitBufferPDUCollection _SplitBufferPDUs = new();
+            /// <summary>
+            /// When merging a <see cref="TSOSplitBufferPDU"/> this stores what packet we're currently unpacking
+            /// </summary>
+            private TSOVoltronPacketHeader? _VoltronPacketHeader;
+            public uint _recvBytes = 0;
+            public int _recvPDUs = 0;
+            public bool IsUnpacking => _VoltronPacketHeader != null;
+
+            internal void DoProtocolOnThread(TSOVoltronPacket PDU, out TSOVoltronPacket? UnsplitPacket)
+            {
+                UnsplitPacket = null;
+
+                _recvPDUs++;
+                var splitBuffer = (TSOSplitBufferPDU)PDU;
+                if (!IsUnpacking)
+                { // START UNPACKING                    
+                    _VoltronPacketHeader = TSOVoltronPacket.ReadVoltronHeader(splitBuffer.DataBuffer);
+                    _recvBytes = 0;
+                }
+                _recvBytes += splitBuffer.SplitBufferPayloadSize;
+                _SplitBufferPDUs.Add(splitBuffer);
+
+                if (_recvBytes >= _VoltronPacketHeader.PDUPayloadSize || splitBuffer.EOF)
+                { // all packets received. dispose and reset
+                    UnsplitPacket = TSOPDUFactory.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);             
+                    //remember to dispose later :) !
+                }
+            }
+
+            public void Dispose()
+            {
+                _SplitBufferPDUs?.Dispose();
+                _SplitBufferPDUs = new();
+                _VoltronPacketHeader = null;
+                _recvBytes = 0;
+                _recvPDUs = 0;
+            }
+        }
+
+        private readonly ConcurrentDictionary<int, SplitBufferPDUThreadContext> _threads = new();
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
         public void DoProtocol(TSOVoltronPacket PDU)
         {
-            _recvPDUs++;
-            var splitBuffer = (TSOSplitBufferPDU)PDU;
-            if (!IsUnpacking)
-            { // START UNPACKING                    
-                _VoltronPacketHeader = TSOVoltronPacket.ReadVoltronHeader(splitBuffer.DataBuffer);
-                _recvBytes = 0;
+            int ID = Thread.CurrentThread.ManagedThreadId;
+            void CreateContext(int ThreadID)
+            {
+                _threads.TryAdd(ThreadID, new());
             }
-            _recvBytes += splitBuffer.SplitBufferPayloadSize;            
-            _SplitBufferPDUs.Add(splitBuffer);
-
-            if (_recvBytes >= _VoltronPacketHeader.PDUPayloadSize || splitBuffer.EOF)
-            { // all packets received. dispose and reset
-                var enclosedPDU = TSOPDUFactory.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);
-                InsertOne(enclosedPDU);
+            if (!_threads.ContainsKey(ID))
+                CreateContext(ID);
+            if (!_threads.TryGetValue(ID, out SplitBufferPDUThreadContext? context) || context == null)
+                throw new Exception($"{nameof(TSOSplitBufferPDU)} cannot create a new context for the thread: {ID}");
+            context.DoProtocolOnThread(PDU, out TSOVoltronPacket? DesplitPDU);
+            if (DesplitPDU != null)
+            { // decompressed a PDU ... insert it into this voltron aries frame
+                InsertOne(DesplitPDU);
 
                 TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    RegulatorName, $"Inserted the {enclosedPDU}\n\nFrom {_recvPDUs} {nameof(TSOSplitBufferPDU)}s ... ({_recvBytes} bytes)"));
+                    RegulatorName, $"Inserted the {DesplitPDU}\n\nFrom {context._recvPDUs} {nameof(TSOSplitBufferPDU)}s ... ({context._recvBytes} bytes)"));
 
-                _SplitBufferPDUs.Dispose();
-                _SplitBufferPDUs = new();
-                _VoltronPacketHeader = null;
-                _recvBytes = 0;
-                _recvPDUs = 0;                
+                context.Dispose();
+                _threads.TryRemove(ID, out _);
             }
         }
     }

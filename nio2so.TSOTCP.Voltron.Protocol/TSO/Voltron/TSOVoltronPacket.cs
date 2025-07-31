@@ -25,6 +25,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 
     public interface ITSOVoltron
     {
+        /// <summary>
+        /// The ID of the connection to the Quazar server who sent this packet
+        /// <para/>If null, this packet was manually created/not received from the Quazar server
+        /// </summary>
+        uint? SenderQuazarConnectionID { get; set; }
+
         void MakeBodyFromProperties();
         int ReflectFromBody(Stream BodyStream);
         int ReflectFromBody(byte[] BodyData);
@@ -32,21 +38,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
 
     public abstract class TSOVoltronPacket : ExtendedBufferOperations, ITSOVoltron
     {
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public uint? SenderQuazarConnectionID { get; set; } = null;
         public virtual string FriendlyPDUName => GetType().Name;
         public abstract ushort VoltronPacketType { get; }
-#if DEBUG
-        /// <summary>
-        /// DEBUG! Used when you want to manually change the <see cref="VoltronPacketType"/>
-        /// <para/>Note: This will not ship in Release builds and only works for Serialization.
-        /// </summary>
-        public ushort? Debug_OverrideMyVoltronPacketType { get; set; } = null;
-#endif
+
         public TSO_PreAlpha_VoltronPacketTypes KnownPacketType => (TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType;
         public uint PayloadSize { get; protected set; }
 
         /// <summary>
-        /// Public-Parameterless constructure to allow the framework to work correctly. 
-        /// <para>I HIGHLY recommend you use <see cref="FromAriesPacket{T}(TSOTCPPacket)"/> with a destination type. I worked hard on it.</para>
+        /// Public-Parameterless constructor to allow the framework to work correctly. 
+        /// <para>It is HIGHLY recommend you use <see cref="ParseAllPackets(TSOTCPPacket)"/> with a destination type. I worked hard on it.</para>
         /// </summary>
         public TSOVoltronPacket() { }
 
@@ -79,10 +82,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             AllocateBody(2);  //clear old data...!         
 
             ushort voltronPacketType = VoltronPacketType;
-#if DEBUG
-            if (Debug_OverrideMyVoltronPacketType.HasValue)
-                voltronPacketType = Debug_OverrideMyVoltronPacketType.Value;
-#endif
+
             if (VoltronPacketType == 0x00)
                 throw new InvalidDataException($"{nameof(voltronPacketType)} is 0x00! This cannot be -- no packet should ever leave without a type.");
 
@@ -277,6 +277,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             }
             return true;
         }
+
         /// <summary>
         /// Gets all the properties which are eligible for encoding into the packet body
         /// <para/>Eligible Properties are ones that meet the following conditions:
@@ -290,7 +291,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(
                 //Hard-Coded absolutely avoided names
-                x => x.Name != "VoltronPacketType" && x.Name != "FriendlyPDUName" &&
+                x => x.Name != nameof(VoltronPacketType) && x.Name != nameof(FriendlyPDUName) && x.Name != nameof(SenderQuazarConnectionID) &&
                 //Filter out all low-level properties that should not be encoded
                 x.DeclaringType != typeof(TSOVoltronPacket) && x.DeclaringType != typeof(ExtendedBufferOperations) &&
                 //Filter out any properties declared with TSOVoltronIgnorable

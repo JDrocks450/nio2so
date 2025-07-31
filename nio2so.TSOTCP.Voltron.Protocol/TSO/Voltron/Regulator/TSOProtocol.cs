@@ -191,6 +191,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <param name="Service"></param>
         /// <returns></returns>
         protected T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
+        /// <summary>
+        /// Tries to get the requested <typeparamref name="T"/> other <see cref="ITSOProtocolRegulator"/> from the <see cref="ITSOServer"/> that this regulator is attached to
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        protected T GetRegulator<T>() where T : ITSOProtocolRegulator => Server.Regulators.Get<T>();
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
@@ -232,10 +238,30 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             //**find the client session service
             nio2soClientSessionService sessionService = GetService<nio2soClientSessionService>();
-            if (!sessionService.TryReverseSearch(VoltronID, out uint Session)) return false;
+            if (!sessionService.TryReverseSearch(VoltronID, out uint Session))
+            {
+#if DEBUG
+                throw new Exception($"[DEBUG] {nameof(TrySendTo)} FAILED. Tried to send to {VoltronID} was not connected to Voltron.");
+#endif
+                return false;
+            }
             SendTo(Session, Packet);
             return true;
         }
+        /// <summary>
+        /// Broadcasts the <typeparamref name="T"/> <paramref name="Packet"/> to <b>all</b> connected clients to this server.
+        /// <para/>I shouldn't have to say this, but use this cautiously.
+        /// <paramref name="ExcludeQuazarIDs"/>A list of Quazar Connection IDs to NOT send this packet to.
+        /// </summary>
+        protected void BroadcastToServer<T>(T Packet, params uint[] ExcludeQuazarIDs) where T : TSOVoltronPacket
+        {
+            //**find the client session service
+            nio2soClientSessionService sessionService = GetService<nio2soClientSessionService>();
+            foreach (uint QuazarID in sessionService.GetConnectedQuazarIDs())
+                if(!ExcludeQuazarIDs.Contains(QuazarID))
+                    SendTo(QuazarID, Packet);
+        }
+
         /// <summary>
         /// Puts this packet to the end of the current <see cref="ITSOServer"/> Receive Queue
         /// <para/>This works by using the <see cref="TSOProtocolRegulatorResponse"/> which is used by internal logic in <see cref="ITSOServer"/> implementations

@@ -20,6 +20,25 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     internal class AvatarProtocol : TSOProtocol
     {
         /// <summary>
+        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID)
+        {
+            if (AvatarID == 0)
+                throw new InvalidDataException($"AvatarID that was supplied to {nameof(GetVoltronIDStruct)} was invalid: {AvatarID}");
+            var client = GetService<nio2soVoltronDataServiceClient>();
+            return new(AvatarID, client.GetAvatarNameByAvatarID(AvatarID).Result);
+        }
+        public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetPlayerInfoStruct((VoltronID as ITSONumeralStringStruct)?.NumericID ?? 0);        
+        public TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID)
+        {
+            TSOAriesIDStruct VoltronID = GetVoltronIDStruct(AvatarID);
+            return new TSOPlayerInfoStruct(VoltronID,0x41,true);
+        }
+
+        /// <summary>
         /// Handles a <see cref="TSOGetCharByIDRequest"/> PDU and returns the <see cref="TSODBChar"/> data item for this player using the <see cref="nio2soVoltronDataServiceClient"/>
         /// </summary>
         /// <param name="PDU"></param>
@@ -292,15 +311,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (AvatarID == 0)
                 goto error;
 
-            //**download name
-            nio2soVoltronDataServiceClient client = GetService<nio2soVoltronDataServiceClient>();
-            string? name = client.GetAvatarNameByAvatarID(AvatarID).Result;
-
-            if (name == null)
-                goto error;
-
-            var status = Struct.TSOStatusReasonStruct.Offline;
-            RespondWith(new TSOFindPlayerResponsePDU(new(AvatarID, name), status));
+            var status = Struct.TSOStatusReasonStruct.Online;
+            RespondWith(new TSOFindPlayerResponsePDU(GetPlayerInfoStruct(AvatarID), status));
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName, $"FIND PLAYER: {AvatarID}"));                
             return;
         error:
@@ -346,6 +358,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (success)
                 return success;
             return base.HandleIncomingPDU(PDU, out Response);
-        }
+        }        
     }
 }

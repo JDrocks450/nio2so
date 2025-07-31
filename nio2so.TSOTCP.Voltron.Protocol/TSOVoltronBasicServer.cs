@@ -25,13 +25,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         public override int ReceiveAmount => ClientBufferLength;
         public override int SendAmount => ClientBufferLength;
 
-        protected List<TSOVoltronPacket> _VoltronBacklog = new();
-        List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
-
-        protected TSORegulatorManager _regulatorManager;
-
+        public TSORegulatorManager Regulators { get; protected set; }
         public TSOServerServiceManager Services { get; private set; } = new();
-
         public TSOServerTelemetryServer Telemetry { get; protected set; }
 
         /// <summary>
@@ -64,7 +59,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         protected void OnIncomingAriesFrameCallback(uint ID, TSOTCPPacket Data)
         {
             ServerPauseEvent.WaitOne(); // FORCE SINGLE THREADED FOR RIGHT NOW
-            ServerPauseEvent.Reset();
+            //ServerPauseEvent.Reset();
 
             //**Telemetry
             Telemetry.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, Data);
@@ -83,7 +78,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                             Disconnect(ID);
                             break;
                         }
-                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name, $"AvatarID {sessionData.User} is logging into Voltron on nio2so!"));            
+                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name, $"AvatarID {sessionData.User} is logging into Voltron on nio2so!"));
 
                         //HOST_ONLINE_PDU
                         SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
@@ -93,7 +88,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         try
                         {
                             //download the player's name from data service.
-                            var UpdatePlayerPDU = _regulatorManager.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);  
+                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);
                             //attempt to find the client session service
                             if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
                             { // not added to this server, cannot continue.
@@ -102,12 +97,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                                 break;
                             }
                             //add this connection to the session service .. this identifies the player by incoming PDU
-                            sessionService.AddClient(ID,new(AvatarID,AvatarName));
+                            sessionService.AddClient(ID, new(AvatarID, AvatarName));
                             //send the update player PDU to the client
                             SubmitAriesFrame(ID, UpdatePlayerPDU);
                             Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
                         }
-                        catch(Exception ex)
+                        catch (Exception ex)
                         {
                             Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, ex.Message));
                             Disconnect(ID);
@@ -116,48 +111,78 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
-                    {
-                        //refer to client session service to get this client's connection
-                        nio2soClientSessionService sessionService = Services.Get<nio2soClientSessionService>();
-                        if (!sessionService.TryIdentify(ID, out _)) // this sets the CurrentClient property
-                            throw new InvalidDataException($"Could not identify client: {ID}");
-
-                        //GET VOLTRON PACKETS OUT OF DATA BUFFER
-                        var packets = TSOVoltronPacket.ParseAllPackets(Data);
-                        _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
-                        while (_VoltronBacklog.Count > 0)
-                        { // Work through all incoming PDUs                            
-                            var packet = _VoltronBacklog[0];
-                            _VoltronBacklog.RemoveAt(0);
-
-                            Debug_LogSendPDU(ID, packet, NetworkTrafficDirections.INBOUND); // DEBUG LOGGING
-
-                            try
-                            {
-                                bool _handled = false; // DICTATES WHETHER HANDLER WAS SUCCESSFUL
-                                var returnPackets = OnIncomingVoltronPacket(ID, packet, ref _handled);
-                                if (!_handled)
-                                { // HANDLER FAILED
-                                    Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, "Voltron Handler",
-                                        $"Handling {packet.KnownPacketType} Voltron packet was not successful."));
-                                    continue;
-                                }
-                                packetSendQueue.AddRange(returnPackets); // ADD TO SEND QUEUE
-                            }
-                            catch (Exception ex)
-                            {
-                                Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, "Voltron Handler",
-                                        $"Handling the {packet.KnownPacketType} Voltron packet resulted in an error. \n" +
-                                    $"{ex.Message}"));
-                            }
-                        }
-                        CloseAriesFrame(ID);
-                        sessionService.ClearClientProperty(); // clear current connection property in the session service
-                    }
+                    //**all code contained here should be consider thread independent (no references to shared resources that aren't thread-safe)
+                    BeginVoltronFrame_Threaded(ID, Data);
                     break;
             }
             ServerPauseEvent.Set();
             Data.Dispose();
+        }
+
+        private void BeginVoltronFrame_Threaded(uint QuazarID, TSOTCPPacket IncomingAriesPacket)
+        {
+            uint ID = QuazarID;
+
+            List<TSOVoltronPacket> _VoltronBacklog = new();
+            List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
+
+            // Sends the current packetSendQueue in a TSOAriesPacket
+            void CloseAriesFrame(uint ID)
+            {
+                bool disconnecting = false;
+                while (packetSendQueue.Any())
+                {
+                    var voltronPacket = packetSendQueue.First();
+                    packetSendQueue.Remove(voltronPacket);
+
+                    if (voltronPacket is TSOClientBye) disconnecting = true; // When sending the BYE_PDU we should disconnect from the Server cleanly.
+                    SubmitAriesFrame(ID, voltronPacket);
+                }
+                packetSendQueue.Clear();
+                _VoltronBacklog.Clear();
+
+                if (disconnecting)
+                    Disconnect(ID, SocketError.Disconnecting);
+            }
+
+            //refer to client session service to get this client's connection
+            nio2soClientSessionService sessionService = Services.Get<nio2soClientSessionService>();
+            if (!sessionService.TryIdentify(ID, out _)) // this ensures services can identify this client if needed
+            {
+                throw new InvalidDataException($"Could not identify client: {ID}");
+                Disconnect(ID, SocketError.Disconnecting); // disconnect this unknown client
+            }
+
+            //GET VOLTRON PACKETS OUT OF DATA BUFFER
+            var packets = TSOVoltronPacket.ParseAllPackets(IncomingAriesPacket);
+            _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
+            while (_VoltronBacklog.Count > 0)
+            { // Work through all incoming PDUs ... list can change foreach would be unsafe here                           
+                var packet = _VoltronBacklog[0];
+                _VoltronBacklog.RemoveAt(0); // pop
+
+                Debug_LogSendPDU(ID, packet, NetworkTrafficDirections.INBOUND); // DEBUG LOGGING
+
+                try
+                {
+                    bool _handled = false; // DICTATES WHETHER HANDLER WAS SUCCESSFUL
+                    var returnPackets = OnIncomingVoltronPacket(ref _VoltronBacklog, ID, packet, ref _handled); // handle pdu
+                    if (!_handled)
+                    { // HANDLER FAILED
+                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, "Voltron Handler",
+                            $"Handling {packet.KnownPacketType} Voltron packet was not successful."));
+                        continue;
+                    }
+                    packetSendQueue.AddRange(returnPackets); // ADD TO SEND QUEUE
+                }
+                catch (Exception ex)
+                {
+                    Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, "Voltron Handler",
+                            $"Handling the {packet.KnownPacketType} Voltron packet resulted in an error. \n" +
+                        $"{ex.Message}"));
+                }
+            }
+            CloseAriesFrame(ID);
         }
 
         /// <summary>
@@ -169,7 +194,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// <param name="Packet"></param>
         /// <param name="Handled"></param>
         /// <returns></returns>
-        private IEnumerable<TSOVoltronPacket> OnIncomingVoltronPacket(uint ID, TSOVoltronPacket Packet, ref bool Handled)
+        private IEnumerable<TSOVoltronPacket> OnIncomingVoltronPacket(ref List<TSOVoltronPacket> VoltronBacklog, uint ID, TSOVoltronPacket Packet, ref bool Handled)
         {
             List<TSOVoltronPacket> packets = new();
             void defaultSend(TSOVoltronPacket packetToSend)
@@ -187,7 +212,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         if (dbPacket == default) break;
                         var clsID = (TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID;
                         //Handle DB request packets here and enqueue the response packets into the return value of this function.
-                        if (!_regulatorManager.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
+                        if (!Regulators.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
                             returnValue == null)
                         { // handle failed!
                             Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Discoveries, "TSODBRequestWrapper Handler",
@@ -207,19 +232,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             // TRY USING THE REGULATOR MANAGER TO HANDLE THIS PACKET
             if (!Handled)
             { // INVOKE THE SERVER-SIDE REGULATOR MANAGER
-                if (_regulatorManager.HandleIncomingPDU(Packet, out TSOProtocolRegulatorResponse Response))
+                if (Regulators.HandleIncomingPDU(Packet, out TSOProtocolRegulatorResponse Response))
                 { // REGULATOR HANDLED
                     if (Response != null)
                     {
                         if (Response.InsertionPackets != null) // ADD INSERTIONS TO BACKLOG
                         {
                             foreach (var packet in Response.InsertionPackets)
-                                _VoltronBacklog.Insert(0, packet);
+                                VoltronBacklog.Insert(0, packet);
                         }
                         if (Response.EnqueuePackets != null) // ADD INSERTIONS TO BACKLOG
                         {
                             foreach (var packet in Response.EnqueuePackets)
-                                _VoltronBacklog.Add(packet);
+                                VoltronBacklog.Add(packet);
                         }
                         if (Response.ResponsePackets != null) // ADD RESPONSE TO SENDQUEUE
                         {
@@ -240,27 +265,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 }
             }
             return packets;
-        }
-
-        /// <summary>
-        /// Takes the Outgoing Packets i
-        /// </summary>
-        private void CloseAriesFrame(uint ID)
-        {
-            bool disconnecting = false;
-            while (packetSendQueue.Any())
-            {
-                var voltronPacket = packetSendQueue.First();
-                packetSendQueue.Remove(voltronPacket);
-
-                if (voltronPacket is TSOClientBye) disconnecting = true; // When sending the BYE_PDU we should disconnect from the Server cleanly.
-                SubmitAriesFrame(ID, voltronPacket);
-            }
-            packetSendQueue.Clear();
-            _VoltronBacklog.Clear();
-
-            if (disconnecting)
-                Disconnect(ID, SocketError.Disconnecting);
         }
 
         /// <summary>
@@ -287,7 +291,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 TSOTCPPacket ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(splitPDU);
                 if (ariesPacket.BodyLength > ClientBufferLength)
                 { // ERROR! Size too large!
-                    throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
+                    if (TestingConstraints.SplitBuffersPDUEnabled)
+                        throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
                 }
                 Send(ID, ariesPacket);
                 Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING for ARIES packets

@@ -14,15 +14,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// </summary>
         public TSOPlayerInfoStruct PlayerInfo { get; set; }
         /// <summary>
-        /// Creates a new <see cref="TSOUpdatePlayerPDU"/> and creates a new <see cref="TSOPlayerInfoStruct"/> using <paramref name="PlayerID"/>
-        /// </summary>
-        /// <param name="PlayerID"></param>
-        public TSOUpdatePlayerPDU(TSOAriesIDStruct PlayerID)
-        {
-            PlayerInfo = new(PlayerID);
-            MakeBodyFromProperties();
-        }
-        /// <summary>
         /// Creates a new <see cref="TSOUpdatePlayerPDU"/> with the given <see cref="TSOPlayerInfoStruct"/>
         /// </summary>
         /// <param name="PlayerID"></param>

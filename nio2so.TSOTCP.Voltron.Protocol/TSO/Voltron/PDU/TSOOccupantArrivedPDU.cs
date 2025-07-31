@@ -10,9 +10,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
     public class TSOOccupantArrivedPDU : TSOVoltronPacket
     {
         public TSOOccupantArrivedPDU() : base() { }
-        public TSOOccupantArrivedPDU(TSOAriesIDStruct PlayerID)
+        public TSOOccupantArrivedPDU(TSOPlayerInfoStruct PlayerInfo) : this()
         {
-            PlayerInfo = new(PlayerID);
+            this.PlayerInfo = PlayerInfo;
             MakeBodyFromProperties();
         }
         /// <summary>
