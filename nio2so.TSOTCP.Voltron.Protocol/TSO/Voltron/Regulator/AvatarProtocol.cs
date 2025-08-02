@@ -56,11 +56,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //get tsodbchar object
             TSODBChar? charData = dataServiceClient.GetCharacterFileByAvatarID(avatarID).Result;
-
-            charData.Unknown1 = charData.Unknown6 = charData.Unknown4 = charData.Unknown3 = 1;
-
+           
             if (charData == null)
                 throw new NullReferenceException($"{avatarID} not found in nio2so data service");
+            
+            charData.Unknown1 = charData.Unknown6 = charData.Unknown4 = charData.Unknown3 = 1338;
 
             RespondTo(PDU, new TSOGetCharByIDResponse(avatarID, charData));
         }
@@ -92,7 +92,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new NullReferenceException($"CharBlob {avatarID} is null and unhandled.");
             if (charBlob.AvatarID != avatarID) // oh no that's not good.
             {
-                if (charBlob.AvatarID == 0x1111FFFF) // oh phew this character never got a ID bestowed upon it
+                if (charBlob.AvatarID == 0x1111FFFF) // oh phew this character never got an ID bestowed upon it
                     charBlob.AvatarID = avatarID;
                 else throw new InvalidDataException($"AvatarID: {avatarID} requested, got {charBlob.AvatarID}'s data.");
             }
@@ -312,7 +312,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 goto error;
 
             var status = Struct.TSOStatusReasonStruct.Online;
-            RespondWith(new TSOFindPlayerResponsePDU(GetPlayerInfoStruct(AvatarID), status));
+            TSORoomInfoStruct currentRoom = GetRegulator<RoomProtocol>().GetRoomByPlayerID(AvatarID);
+            RespondWith(new TSOFindPlayerResponsePDU(GetPlayerInfoStruct(AvatarID), status, currentRoom));
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName, $"FIND PLAYER: {AvatarID}"));                
             return;
         error:

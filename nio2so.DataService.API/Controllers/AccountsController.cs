@@ -22,6 +22,12 @@ namespace nio2so.DataService.API.Controllers
             logger = Logger;
         }
 
+        bool CreateAccount(string username)
+        {
+            var newToken = service.CreateAccount(username);
+            return APIDataServices.UserDataService.CreateUserInfoFile(newToken, out _);
+        }
+
         // GET: api/<AccountsController>
         [HttpGet]
         public ActionResult Get()
@@ -36,10 +42,13 @@ namespace nio2so.DataService.API.Controllers
             UserToken? token = null;
             try
             {
+                if (!service.AccountExists(username))
+                    if (!CreateAccount(username))
+                        throw new InvalidOperationException("Could not create account/userfile for " + username);
                 token = service.GetUserTokenByUserName(username);
             }
             catch (Exception ex)
-            {                
+            {               
                 return StatusCode(StatusCodes.Status404NotFound, ex.Message);
             }
             if (token == null)

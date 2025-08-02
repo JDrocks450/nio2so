@@ -26,9 +26,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// </summary>
         /// <param name="PlayerID"></param>
         /// <param name="Status">If default, will respond <see cref="TSOStatusReasonStruct.Online"/></param>
-        public TSOFindPlayerResponsePDU(TSOPlayerInfoStruct PlayerInfo, TSOStatusReasonStruct? Status = default) : this()
+        public TSOFindPlayerResponsePDU(TSOPlayerInfoStruct PlayerInfo, TSOStatusReasonStruct? Status = default, TSORoomInfoStruct CurrentRoom = default) : this()
         {
             if (Status == default) Status = TSOStatusReasonStruct.Online;
+            if (CurrentRoom == default) CurrentRoom = TSORoomInfoStruct.NoRoom;
+            RoomInfo = CurrentRoom;
             StatusReason = Status;
             this.PlayerInfo = PlayerInfo;
             MakeBodyFromProperties();

@@ -61,7 +61,15 @@ namespace nio2so.DataService.Common.Types
         /// <summary>
         /// The IDs of avatars that belong to this User        
         /// </summary>
-        public AvatarIDToken[] Avatars { get; set; } = new AvatarIDToken[3];
+        public AvatarIDToken[] Avatars
+        {
+            get => _avatars; set
+            {
+                _avatars = value;
+                Array.Resize(ref _avatars, 3);
+            }
+        }
+        AvatarIDToken[] _avatars = new AvatarIDToken[3];
 
         /// <summary>
         /// <inheritdoc cref="ICopyable.Copy(ICopyable)"/>

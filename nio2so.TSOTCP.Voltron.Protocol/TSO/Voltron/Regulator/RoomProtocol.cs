@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
         private class RoomProtocolRoomInfo
         {
-            private readonly HashSet<TSOPlayerInfoStruct> occupants = new();
+            private HashSet<TSOPlayerInfoStruct> occupants = new();
 
             public RoomProtocolRoomInfo(TSORoomIDStruct roomID, TSOAriesIDStruct leaderID, uint lotID)
             {
@@ -45,12 +45,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             public uint OccupantsCount => (uint)occupants.Count;
             public uint MaxOccupants { get; set; } = MAX_OCCUPANTS;
             public bool IsLocked { get; set; } = false;
-            public IEnumerable<TSOAriesIDStruct> Admins => [LeaderID];
+            public IEnumerable<TSOAriesIDStruct> Admins => [new("??1337","bisquick")];
 
             public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, LeaderID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
 
             public bool AvatarJoin(TSOPlayerInfoStruct Player) => occupants.Add(Player);
             public IEnumerable<TSOAriesIDStruct> GetConnectedClients() => [.. occupants.Select(x => x.PlayerID)];
+            public void SetOccupants(params TSOPlayerInfoStruct[] Players) => occupants = [..Players];
         }
 
         private DateTime _reSyncTime = DateTime.MinValue;
@@ -105,6 +106,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     GetVoltronIDStruct(lot.OwnerAvatar), // change this later
                     houseID)
                 );
+                if (false && houseID == 1338)
+                {
+                    _roomsByHouseID[houseID].SetOccupants([GetPlayerInfoStruct(1337), GetPlayerInfoStruct(161)]);
+                    _playersInRooms[1337] = 1338;
+                    _playersInRooms[1337] = 161;
+                }
             }
         }
 
@@ -126,14 +133,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                     _playersInRooms[avatarID] = HouseID;
             }
             return result;
-        }
+        }        
 
-        void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU)
+        void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, bool ExcludeHost = false)
+        {
+            RoomProtocolRoomInfo roomInfo = _roomsByHouseID[HouseID];
+            BroadcastPDUToRoom(HouseID, PDU, ExcludeHost ? [roomInfo.LeaderAvatarID] : Array.Empty<uint>());
+        }
+        void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, params uint[] ExcludeAvatarIDs)
         {
             RoomProtocolRoomInfo roomInfo = _roomsByHouseID[HouseID];
             IEnumerable<TSOAriesIDStruct> clients = roomInfo.GetConnectedClients();
             foreach (var client in clients)
             {
+                if (ExcludeAvatarIDs.Contains((client as ITSONumeralStringStruct)?.NumericID ?? 0)) 
+                    continue;
                 TrySendTo(client, PDU);
             }
         }
@@ -151,6 +165,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <returns></returns>
         public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetVoltronIDStruct(AvatarID);
         public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(VoltronID);
+        public TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
+        public TSORoomInfoStruct GetRoomByPlayerID(uint AvatarID)
+        {
+            _playersInRooms.TryGetValue(AvatarID, out uint HouseID);
+            _roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInfo);
+            return roomInfo?.RoomInfo ?? TSORoomInfoStruct.NoRoom;
+        }
+
         /// <summary>
         /// Returns a <see cref="TSOListOccupantsResponsePDU"/> with the occupants of a given room.
         /// <para/>If the room given by <paramref name="HouseID"/> is offline, an empty response is created.
@@ -158,18 +180,48 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <param name="HouseID"></param>
         /// <param name="OccupantsPDU"></param>
         /// <returns></returns>
-        public bool GetOccupantsPDUByRoomID(uint HouseID, out TSOListOccupantsResponsePDU OccupantsPDU)
+        public TSOListOccupantsResponsePDU GetOccupantsPDUByRoomID(uint HouseID, out bool IsOnline)
         {
             //check if room is online
-            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInfo))
+            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInstance))
             { // online room
-                OccupantsPDU = new TSOListOccupantsResponsePDU(roomInfo.RoomID, roomInfo.Occupants.ToArray()); // respond with occupants
-                return true;
+                IsOnline =  true;
+                return new TSOListOccupantsResponsePDU(roomInstance.RoomID, roomInstance.Occupants.ToArray()); // respond with occupants
             }
             //**basic response
             var profile = GetLotProfile(HouseID); // download profile
-            //no occupants
-            OccupantsPDU = new TSOListOccupantsResponsePDU(new(profile.PhoneNumber, profile.Name));
+            //no occupants           
+            IsOnline = false;
+            return new TSOListOccupantsResponsePDU(new(profile.PhoneNumber, profile.Name));
+        }
+        /// <summary>
+        /// Returns a <see cref="TSOUpdateOccupantsPDU"/> with the occupants of a given room.
+        /// <para/>If the room given by <paramref name="HouseID"/> is offline, return false.
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <param name="OccupantsPDU"></param>
+        /// <returns></returns>
+        public bool UpdateOccupantsPDUByRoomID(uint HouseID, uint OmitAvatarID, out TSOUpdateOccupantsPDU? OccupantsPDU)
+        {
+            OccupantsPDU = default;
+            //check if room is online
+            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInstance))
+            { // online room
+                if (roomInstance.Occupants?.Any() ?? false)
+                {
+                    OccupantsPDU = new TSOUpdateOccupantsPDU(roomInstance.RoomInfo, roomInstance.Occupants.Where(x => (x.PlayerID as ITSONumeralStringStruct).NumericID != OmitAvatarID).ToArray()); // respond with occupants                
+                    return true;
+                }
+            }
+#if false
+            //**basic response
+            var profile = GetLotProfile(HouseID); // download profile
+
+            OccupantsPDU = new TSOUpdateOccupantsPDU(new TSORoomInfoStruct(
+                new(profile.PhoneNumber, profile.Name),new(profile.OwnerAvatar,""), 2),
+                [GetPlayerInfoStruct(1338),GetPlayerInfoStruct(161)]); // respond with occupants
+            return true;
+#endif
             return false;
         }
 
@@ -179,34 +231,57 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// will never automatically ask again if this is true.
         /// </summary>
         private void NotifyLotsOnline() => BroadcastToServer(new TSOListRoomsResponsePDU([.. _roomsByHouseID.Select(x => x.Value.RoomInfo)]));
+        private void NotifyLotOccupants()
+        {
+            foreach(var onlineLot in _roomsByHouseID)
+                if (UpdateOccupantsPDUByRoomID(onlineLot.Key,0, out TSOUpdateOccupantsPDU? OccupantsPDU))
+                    BroadcastToServer(OccupantsPDU);
+        }
 
         protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
         {
-            RespondWith((TSOVoltronPacket)PDU);
+            OnStandardMessage(PDU);
             return true;
         }
 
         [TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)]
         public void OnStandardMessage(ITSODataBlobPDU PDU)
         {
-            void Activate() { } 
+            void Activate(uint avatarID) {
+                if (!_playersInRooms.TryGetValue(avatarID, out uint HouseID))
+                    throw new InvalidOperationException($"AvatarID {avatarID} is not in a room, yet is sending a broadcast PDU.");
+                var roomInfo = _roomsByHouseID[HouseID];
+
+                TSOListOccupantsResponsePDU occupantsPDU = GetOccupantsPDUByRoomID(roomInfo.LotID, out _);
+                BroadcastPDUToRoom(roomInfo.LotID, occupantsPDU);
+
+                //**tell the joiner AND host the new list of players currently in this room            
+                if (UpdateOccupantsPDUByRoomID(roomInfo.LotID,0, out TSOUpdateOccupantsPDU? HostOccupantsPDU))                
+                    BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU);
+            }
+            
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
             {
                 TrySendTo(transmitPDU.DestinationSessionID, new TSOBroadcastDatablobPacket(transmitPDU));
                 return;
             }
             if (PDU is TSOBroadcastDatablobPacket broadcastPDU)
-            {
-                if (broadcastPDU.DataBlobContentObject.TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage, out ITSODataBlobContentObject? obj))
-                    if ((obj as TSOStandardMessageContent).kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived)
-                        Activate();
+            {                
                 TSOAriesIDStruct sender = broadcastPDU.SenderInfo.PlayerID;
                 uint avatarID = (sender as ITSONumeralStringStruct)?.NumericID ?? 0;
                 if (avatarID == 0)
                     throw new InvalidDataException($"AvatarID sending a broadcast PDU is {avatarID}, ARIESID: {sender}");
                 if (!_playersInRooms.TryGetValue(avatarID, out uint HouseID))
                     throw new InvalidOperationException($"AvatarID {avatarID} is not in a room, yet is sending a broadcast PDU.");
-                BroadcastPDUToRoom(HouseID, broadcastPDU);
+                var roomInfo = _roomsByHouseID[HouseID];
+                if (avatarID != roomInfo.LeaderAvatarID)
+                    BroadcastPDUToRoom(HouseID, broadcastPDU, avatarID);
+                else 
+                    BroadcastPDUToRoom(HouseID, broadcastPDU);
+
+                if (broadcastPDU.DataBlobContentObject.TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage, out ITSODataBlobContentObject? obj))
+                    if ((obj as TSOStandardMessageContent).kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived)
+                        Activate(avatarID);
             }
         }
 
@@ -229,6 +304,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             SyncRoomsWithLotDataService();
             NotifyLotsOnline();
+            //NotifyLotOccupants();
             return;
 
             //test message pdu ... doesn't work
@@ -267,12 +343,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSORoomIDStruct roomIDStruct = roomInfo?.RoomID ?? new(phoneNumber, RoomName);
 
             bool successfulJoin = false;
+            bool hosting = false;
 
             // check if i am a visitor
             if (thisLot.OwnerAvatar != joiningAvatarID)
             {   // ask host if I can join and ensure the lot is ONLINE
                 if (isOnline)
                 {
+                    //idk if this is valid here
+                    RespondWith(new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
                     //get the host of the lot voltron ID
                     TSOAriesIDStruct hostID = roomInfo.LeaderID;
                     successfulJoin = AvatarJoinRoom(thisLot.HouseID, joiningClient, false);
@@ -282,15 +361,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             else if (thisLot.OwnerAvatar == joiningAvatarID)
             { // Initiate the host protocol
                 //ADD ROOM TO PROTOCOL
-                AddRoom(new RoomProtocolRoomInfo(roomIDStruct, joiningClient, thisLot.HouseID));
+                var createRoomInfo = new RoomProtocolRoomInfo(roomIDStruct, joiningClient, thisLot.HouseID);
+                AddRoom(createRoomInfo);
                 successfulJoin = true;
                 if (successfulJoin) // TELL THE CLIENT TO START THE HOST PROTOCOL   
                 {
+                    //RespondWith(new TSOCreateRoomResponsePDU(createRoomInfo.RoomID));
                     RespondWith(new TSOHouseSimConstraintsResponsePDU(roomPDU.HouseID)); // transition to lot view as Host
                     successfulJoin = AvatarJoinRoom(thisLot.HouseID, joiningClient, true); // join this avatar into the new room
                 }
                 //**list of online rooms (or data about the room) has changed ... tell everyone.
                 NotifyLotsOnline();
+                hosting = true;               
             }
 
             //**join failed            
@@ -304,19 +386,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             // refresh the room value after the dust settles
             if (!_roomsByHouseID.TryGetValue(roomPDU.HouseID, out roomInfo) && roomInfo == null)
                 throw new InvalidOperationException("Joining is not possible due to an unknown error"); // cannot continue if this is null
+            //**tell the joiner AND host the new list of players currently in this room            
+            if (UpdateOccupantsPDUByRoomID(roomInfo.LotID, joiningAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
+            {
+                RespondWith(HostOccupantsPDU);
+                BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU, joiningAvatarID);
+            }    
 
             //**join succeeded
             //tell the client to join this new room
-            TSOJoinRoomPDU joinPDU = new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!");
-            RespondWith(joinPDU);
-
             //**set the room the client is in to be this new one
-            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0, roomInfo.RoomInfo, true);
-            RespondWith(updateRoomPDU);
+            TSOUpdateRoomPDU updateRoomPDU = new TSOUpdateRoomPDU(0xFFFFFFFF, roomInfo.RoomInfo, true);
+            RespondWith(updateRoomPDU);            
 
-            //**tell the joiner AND host the new list of players currently in this room
-            GetOccupantsPDUByRoomID(roomPDU.HouseID, out TSOListOccupantsResponsePDU occupantsPDU);
-            BroadcastPDUToRoom(thisLot.HouseID, occupantsPDU);
+            TSOListOccupantsResponsePDU occupantsPDU = GetOccupantsPDUByRoomID(roomPDU.HouseID, out _);
+            RespondWith(occupantsPDU);           
         }
         
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
@@ -340,6 +424,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             var msg = (TSOChatMessagePDU)PDU;            
             BroadcastToServer(msg);
             //RespondWith(new TSOChatMessageFailedPDU(msg.Message));
-        }
+        }        
     }
 }

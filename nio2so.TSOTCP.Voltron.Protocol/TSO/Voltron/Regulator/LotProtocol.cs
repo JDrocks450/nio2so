@@ -149,15 +149,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //download avatar name
             string? avatarName = client.GetAvatarNameByAvatarID(lot.OwnerAvatar).Result;
 
+            //use room protocol to list the people in the lot
+            TSOListOccupantsResponsePDU? occupantsPDU = GetRegulator<RoomProtocol>().GetOccupantsPDUByRoomID(req.HouseID, out bool IsOnline);            
+            RespondWith(occupantsPDU);
+
             //send requested data
             RespondWith(new TSOGetLotByID_Response(req.HouseID, lot.Name, avatarName, lot.Description, lot.Position));
             
             TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Warnings, RegulatorName,
-                $"GetLotByID_Request: ID: {req.HouseID}"));
-
-            //use room protocol to list the people in the lot
-            GetRegulator<RoomProtocol>().GetOccupantsPDUByRoomID(req.HouseID, out TSOListOccupantsResponsePDU? occupantsPDU);
-            RespondWith(occupantsPDU);
+                $"GetLotByID_Request: ID: {req.HouseID}"));            
         }
         /// <summary>
         /// Handles when a Client requests the PNG thumbnail image for a lot.

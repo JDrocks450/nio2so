@@ -5,7 +5,11 @@ namespace nio2so.TSOProtocol.Packets.TSOXML.CitySelector
 {
     public enum ShardLocation
     {
-        PUBLIC, PRIVATE       
+        PUBLIC,
+        /// <summary>
+        /// "dev-tuning"
+        /// </summary>
+        DEV_TUNING, PRIVATE       
     }
 
     public enum ShardStatusReason

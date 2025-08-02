@@ -73,5 +73,7 @@ namespace nio2so.DataService.API.Databases
                 return accID;
             throw new KeyNotFoundException($"The UserName {UserName} does not exist in nio2so.");
         }
+
+        public bool AccountExists(string UserName) => AccountsLibrary.ContainsKey(UserName);
     }
 }

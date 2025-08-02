@@ -17,7 +17,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// Unsure what this is supposed to be, I think it is the city name
         /// </summary>
-        [TSOVoltronString] public string ServiceID { get; set; } = "Blazing Falls";
+        [TSOVoltronString] public string ServiceID { get; set; } = "";
         /// <summary>
         /// The amount of room objects added to this list
         /// </summary>

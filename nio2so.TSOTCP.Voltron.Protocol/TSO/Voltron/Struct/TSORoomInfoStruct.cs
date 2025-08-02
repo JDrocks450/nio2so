@@ -73,7 +73,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <summary>
         /// Unsure what this does
         /// </summary>
-        public byte RoomType { get; set; } = 0x01;
+        public byte RoomType { get; set; } = 0x0;
 
         /// <summary>
         /// Not sure what groups mean right now but it is the ID of the group

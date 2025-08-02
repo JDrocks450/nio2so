@@ -82,20 +82,29 @@ namespace nio2so.TSOTCP.Voltron.Protocol
 
                         //HOST_ONLINE_PDU
                         SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
+                        
+                        //attempt to find the client session service   
+                        if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
+                        { // not added to this server, cannot continue.
+                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"Could not find the ClientSessionService! Disconnecting..."));
+                            Disconnect(ID);
+                            break;
+                        }
+
+                        //Check if loading into CAS
+                        if (AvatarID == 0)
+                        { // loading into CAS
+                            sessionService.AddClientInCAS(ID);
+                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): User entering CAS."));
+                            break;
+                        }
 
                         //UPDATE_PLAYER_PDU
                         //Download player avatar name from data service.
                         try
                         {
                             //download the player's name from data service.
-                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);
-                            //attempt to find the client session service
-                            if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
-                            { // not added to this server, cannot continue.
-                                Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"Could not find the ClientSessionService! Disconnecting..."));
-                                Disconnect(ID);
-                                break;
-                            }
+                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);                                                     
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
                             //send the update player PDU to the client
@@ -148,9 +157,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             //refer to client session service to get this client's connection
             nio2soClientSessionService sessionService = Services.Get<nio2soClientSessionService>();
             if (!sessionService.TryIdentify(ID, out _)) // this ensures services can identify this client if needed
-            {
-                throw new InvalidDataException($"Could not identify client: {ID}");
-                Disconnect(ID, SocketError.Disconnecting); // disconnect this unknown client
+            { // is this client in cas?
+                if (!sessionService.IsInCAS(ID))
+                { // not in CAS either, disconnect.
+                    throw new InvalidDataException($"Could not identify client: {ID}");
+                    Disconnect(ID, SocketError.Disconnecting); // disconnect this unknown client
+                }
+                //is in CAS, proceed.
             }
 
             //GET VOLTRON PACKETS OUT OF DATA BUFFER
@@ -251,7 +264,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                             foreach (var packet in Response.ResponsePackets)
                                 defaultSend(packet);
                         }
-                        if (Response.ResponsePackets != null) // ADD SESSION TO SENDQUEUE
+                        if (Response.SessionPackets != null) // ADD SESSION TO SENDQUEUE
                         {
                             foreach (var packet in Response.SessionPackets)
                             {

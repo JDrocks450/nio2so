@@ -15,7 +15,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
     public class nio2soClientSessionService : ITSOService
     {
         private readonly ConcurrentDictionary<uint, TSOAriesIDStruct> _sessions = new();
+        private readonly HashSet<uint> _casClients = new();
 
+        public bool AddClientInCAS(uint QuazarID) => _casClients.Add(QuazarID);
         public void AddClient(uint QuazarID, TSOAriesIDStruct VoltronID)
         {
             if (QuazarID == 0)
@@ -24,6 +26,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
                 _sessions[QuazarID] = VoltronID;
         }
         public bool RemoveClient(uint QuazarID, out TSOAriesIDStruct? VoltronID) => _sessions.TryRemove(QuazarID, out VoltronID);
+        public bool IsInCAS(uint QuazarID) => _casClients.Contains(QuazarID);
         public bool TryIdentify(uint QuazarID, out TSOAriesIDStruct? VoltronID)
         {
             bool result = _sessions.TryGetValue(QuazarID, out VoltronID);

@@ -40,7 +40,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
                     TSO_PreAlpha_DBActionCLSIDs.GetCharByID_Response
                 )
         {
-            this.AvatarID = AvatarID;
+            this.AvatarID = AvatarID;            
             CharProfile = CharData;
 
             MakeBodyFromProperties();
