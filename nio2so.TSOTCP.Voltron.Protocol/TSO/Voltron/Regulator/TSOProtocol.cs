@@ -248,6 +248,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             SendTo(Session, Packet);
             return true;
         }
+        /// <summary>
+        /// <inheritdoc cref="TrySendTo{T}(TSOAriesIDStruct, T)"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="AvatarID"></param>
+        /// <param name="Packet"></param>
+        /// <returns></returns>
         protected bool TrySendTo<T>(uint AvatarID, T Packet) where T : TSOVoltronPacket => TrySendTo(new TSOAriesIDStruct(AvatarID,""), Packet);
         /// <summary>
         /// Broadcasts the <typeparamref name="T"/> <paramref name="Packet"/> to <b>all</b> connected clients to this server.

@@ -72,6 +72,6 @@
         /// Will set the server to always redirect a client into a seemingly offline testing lot
         /// <para/>Should be true if using the HSB test
         /// </summary>
-        public const bool LOTTestingMode = false;
+        public const uint HSBAutoJoinHouseID = 1339;
     }
 }

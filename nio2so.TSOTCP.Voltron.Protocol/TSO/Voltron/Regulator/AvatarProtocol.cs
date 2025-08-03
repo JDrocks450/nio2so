@@ -59,8 +59,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
            
             if (charData == null)
                 throw new NullReferenceException($"{avatarID} not found in nio2so data service");
-            
-            charData.Unknown1 = charData.Unknown6 = charData.Unknown4 = charData.Unknown3 = 1338;
+
+            //charData.Unknown1 = charData.Unknown6 = charData.Unknown4 = charData.Unknown3 = 1338;
+            charData.Unknown1 = 0x00;
+            charData.Unknown3 = 0x01;
+            charData.Unknown4 = 0x6F38D0FC;
+            charData.Unknown6 = 0xBAADF00D;
 
             RespondTo(PDU, new TSOGetCharByIDResponse(avatarID, charData));
         }

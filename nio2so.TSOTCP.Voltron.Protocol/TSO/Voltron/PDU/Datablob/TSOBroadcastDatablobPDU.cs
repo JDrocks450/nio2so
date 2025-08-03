@@ -87,12 +87,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob
         /// <param name="Payload"></param>
         public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID,
             ITSODataBlobContentObject? ContentObject = default,
-            uint MessageLength = 0xFFFFFFFF)
+            TSOPlayerInfoStruct Sender = null)
         {
             this.SubMsgCLSID = SubMsgCLSID;
             DataBlobContentObject = new TSOGenericDataBlobContent(ContentObject);
 
-            this.MessageLength = MessageLength;
+            SenderInfo = Sender;
             MakeBodyFromProperties();
         }
         public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, byte[] ContentBytes)

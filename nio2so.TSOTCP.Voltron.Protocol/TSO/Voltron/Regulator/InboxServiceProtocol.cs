@@ -35,7 +35,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             {
                 RespondWith(new TSOFlashMessageResponsePDU(messagePDU.RecipientID, messagePDU.PlayerInfo, messagePDU.PackedContent));
                 return;
-            }
+            }            
             //handle client no longer connected to Voltron below with FlashMsgFailed response pdu.
         }
     }

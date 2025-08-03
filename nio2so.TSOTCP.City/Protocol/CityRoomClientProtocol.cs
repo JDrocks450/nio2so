@@ -93,48 +93,6 @@ namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
                 {
                     BufferStartByte = 0x3F
                 }
-            );
-
-
-        [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_RESPONSE_PDU)]
-        public void LOAD_HOUSE_RESPONSE_PDU(TSOVoltronPacket PDU)
-        {
-            /* From niotso:                  hello, fatbag - bisquick :]
-             * TODO: It is known that sending HouseSimConstraintsResponsePDU (before the
-            ** GetCharBlobByID response and other packets) is necessary for the game to post
-            ** kMSGID_LoadHouse and progress HouseLoadRegulator from kStartedState to kLoadingState.
-            ** However, the game appears to never send HouseSimConstraintsPDU to the server at
-            ** any point.
-            **
-            ** The question is:
-            ** Is there a packet that we can send to the game to have it send us
-            ** HouseSimConstraintsPDU?
-            ** Actually, (in New & Improved at least), manually sending a kMSGID_LoadHouse packet
-            ** to the client (in an RSGZWrapperPDU) will cause the client to send
-            ** HouseSimConstraintsPDU to the server.
-            ** It is not known at this point if that is the "correct" thing to do.
-            **
-            ** So, for now, we will send the response packet to the game, without it having explicitly
-            ** sent us a request packet--just like (in response to HostOnlinePDU) the game sends us a
-            ** LoadHouseResponsePDU without us ever having sent it a LoadHousePDU. ;)
-            */
-
-            var houseID = ((TSOLoadHouseResponsePDU)PDU).HouseID;
-
-            //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
-            //when that happens
-            if (houseID == 0)
-            {
-                houseID = 0;
-                if (!TestingConstraints.LOTTestingMode)
-                {
-
-                    return;
-                }
-            }
-
-            //im in a lot -- send it the lot im supposed to be in
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(houseID)); // dictate what lot to load here.                       
-        }
+            );        
     }
 }

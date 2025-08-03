@@ -10,7 +10,7 @@ namespace nio2so.Formats.Streams
     /// <para/>Sample Header: <c>01 000000AE 000000A9 ...</c>
     /// <para/>Which is Endian (0x01), Decompressed Size, Compressed Size
     /// <para/>This is usually immediately followed by Compressed Size again in a different
-    /// Endian then 10 FB for the RefPack magic number.
+    /// Endian then <c>0x10FB</c> for the RefPack magic number.
     /// </summary>
     public class TSOSerializableStream
     {
