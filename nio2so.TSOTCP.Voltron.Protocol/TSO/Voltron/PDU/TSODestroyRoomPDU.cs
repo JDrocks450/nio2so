@@ -18,7 +18,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         /// <summary>
         /// The <see cref="TSORoomIDStruct"/>
         /// </summary>
-        public TSORoomIDStruct RoomInfo { get; set; }
+        public TSORoomIDStruct RoomID { get; set; }
         
         /// <summary>
         /// Unknown

@@ -36,5 +36,5 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
         
         public TSOStatusReasonStruct StatusReason { get; set; }
         public TSORoomIDStruct RoomID { get; set; }
-    }
+    }    
 }

@@ -4,7 +4,7 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
 {
     /// <summary>
-    /// <code>Unverified!</code>
+    /// Sent to a Host of a room when a new TSOClient joins their session
     /// </summary>
     [TSOVoltronPDU(TSO_PreAlpha_VoltronPacketTypes.OCCUPANT_ARRIVED_PDU)]
     public class TSOOccupantArrivedPDU : TSOVoltronPacket

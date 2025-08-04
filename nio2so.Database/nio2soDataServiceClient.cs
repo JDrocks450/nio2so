@@ -235,8 +235,8 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns>Null when purchasing was not successful.</returns>
-        public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, string Phone, uint X, uint Y) =>
-            GetQueryAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(Phone), Phone), (nameof(X), X), (nameof(Y), Y));
+        public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, uint HouseID, uint X, uint Y) =>
+            GetQueryAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(HouseID), HouseID), (nameof(X), X), (nameof(Y), Y));
         /// <summary>
         /// Attempts to purchase a new slot in the map. Returns a <see cref="LotProfile"/> containing the new <see cref="HouseIDToken"/>
         /// </summary>

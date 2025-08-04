@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
 
         public uint Create()
         {
-            uint NewHouseID = TestingConstraints.MyHouseID;
+            uint NewHouseID = TestingConstraints.MyHouseLotID;
             byte[] data = OnFileNotFound();
             SetHouseBlobByIDToDisk(NewHouseID, new(data));
             return NewHouseID;

@@ -40,8 +40,7 @@ namespace nio2so.DataService.API
         /// </summary>
         public LotProfile[] StaticLots { get; } =
         {
-            new(TestingConstraints.MyHouseID, TestingConstraints.MyAvatarID, new(93, 135), TestingConstraints.MyHousePhoneNumber,
-                TestingConstraints.MyHouseName, "Welcome to the castle.")
+            new(TestingConstraints.MyHouseLotID, TestingConstraints.MyAvatarID, new(93, 135), TestingConstraints.MyHouseName, "Welcome to the castle.")                
         };
 
         public string DefaultCharblobPath { get; set; } = Path.Combine(Current?.ConstantsDirectory ?? Path.Combine(Current?.WorkspaceDirectory ?? TestingConstraints.WorkspaceDirectory, "const"), "default_charblob.charblob");

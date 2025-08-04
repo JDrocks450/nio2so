@@ -283,5 +283,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// </summary>
         /// <param name="InsertionPacket"></param>
         protected void InsertOne(TSOVoltronPacket InsertionPacket) => ((List<TSOVoltronPacket>)CurrentResponse.InsertionPackets).Add(InsertionPacket);
+        /// <summary>
+        /// Logs the console from this <see cref="TSORegulator"/> with the message you provide
+        /// </summary>
+        /// <param name="Message"></param>
+        /// <param name="Caption"></param>
+        /// <param name="Severity"></param>
+        protected void LogConsole(string Message, string Caption = "", TSOServerTelemetryServer.LogSeverity Severity = TSOServerTelemetryServer.LogSeverity.Message) => 
+            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName, $"[{Caption ?? ""}] {Message}"));
     }
 }

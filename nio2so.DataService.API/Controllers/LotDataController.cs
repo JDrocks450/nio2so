@@ -49,10 +49,10 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/lots/purchase?AvatarID=1337&Phone=6548784&X=1&Y=1
         [HttpGet("purchase")]
-        public ActionResult<LotProfile> AvatarPurchaseLotByID(uint AvatarID, string Phone, uint X, uint Y)
+        public ActionResult<LotProfile> AvatarPurchaseLotByID(uint AvatarID, uint HouseID, uint X, uint Y)
         {
             var character = APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
-            if (lotsDataService.TryPurchaseLotByAvatarID(AvatarID, character, Phone, new LotPosition(X, Y), out LotProfile? NewLot))
+            if (lotsDataService.TryPurchaseLotByAvatarID(AvatarID, HouseID, character, new LotPosition(X, Y), out LotProfile? NewLot))
             {
                 APIDataServices.AvatarDataService.SetCharacterByAvatarID(AvatarID, character);
                 return NewLot;

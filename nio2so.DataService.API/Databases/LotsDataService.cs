@@ -118,44 +118,42 @@ namespace nio2so.DataService.API.Databases
         /// <para/>Every time this is rolled, the Lot Creation Index is incremented to the next ID
         /// </summary>
         /// <returns></returns>
-        public HouseIDToken GetNextID()
+        public void UpdateHouseCreationIndex(HouseIDToken HouseID)
         {
             JSONCreationIndex lib = GetLibrary<JSONCreationIndex>("LOT CREATION INDEX");
-            return lib.GetNextID(LotsLibrary);
+            lib.PushBack(HouseID);
         }
 
         /// <summary>
         /// Tries to purchase the new lot for the provided <paramref name="AvatarID"/>
         /// </summary>
         /// <param name="AvatarProfile"></param>
-        /// <param name="LotPhoneNumber"></param>
         /// <param name="Position"></param>
         /// <param name="NewLotProfile"></param>
         /// <returns></returns>
-        public bool TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, TSODBChar AvatarProfile, string LotPhoneNumber, LotPosition Position, out LotProfile? NewLotProfile)
+        public bool TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, HouseIDToken HouseID, TSODBChar AvatarProfile, LotPosition Position, out LotProfile? NewLotProfile)
         {
-            HouseIDToken HouseID;
             NewLotProfile = null;
 
             if (AvatarProfile.Funds <= ServerSettings.Current.LotPurchasePrice)
                 return false; // Refused! You're broke!
 
-            if (LotsLibrary.Values.Any(x => x.Profile.PhoneNumber == LotPhoneNumber))
+            if (LotsLibrary.ContainsKey(HouseID))
                 return false; // Refused! Someone lives here!
 
-            do
-            { // set houseid to next ID and update creation index
-                HouseID = GetNextID();
-            }
-            while (!LotsLibrary.TryAdd(HouseID, new LotInfo()
+            bool result = LotsLibrary.TryAdd(HouseID, new LotInfo()
             {
-                Profile = NewLotProfile = new(HouseID, AvatarID, Position, LotPhoneNumber, $"{AvatarProfile.AvatarName}'s House",
+                Profile = NewLotProfile = new(HouseID, AvatarID, Position, $"{AvatarProfile.AvatarName}'s House",
                 $"Created on {DateTime.Now.ToShortDateString()}.\n\nEnter a cool description here...")
-            }));
+            });
 
-            AvatarProfile.Funds -= ServerSettings.Current.LotPurchasePrice;
+            if (result)
+            {
+                AvatarProfile.Funds -= ServerSettings.Current.LotPurchasePrice;
+                UpdateHouseCreationIndex(HouseID);
+            }
             Save(); // save the db
-            return NewLotProfile != null;
+            return result;
         }
 
         /// <summary>

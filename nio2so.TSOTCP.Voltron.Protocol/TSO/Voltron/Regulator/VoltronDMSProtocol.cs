@@ -30,9 +30,18 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             LogMessage("Client is saying Bye! Disconnecting after frame...");
             RespondWith(bye_pdu);
         }
+        /// <summary>
+        /// A TSOClient is logging into Voltron
+        /// </summary>
+        /// <param name="PDU"></param>
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.CLIENT_ONLINE_PDU)]
         public void CLIENT_ONLINE_PDU(TSOVoltronPacket PDU)
         {
+            if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out Struct.TSOAriesIDStruct? VoltronID))
+            {
+                GetRegulator<RoomProtocol>().AvatarPurgePreviousSession(VoltronID, out string error);
+                LogConsole($"AvatarPurgePreviousSession(): AvatarID: {VoltronID.AvatarID}:" + error);
+            }
             return;
             /*
             uint avatarID = TSOVoltronConst.MyAvatarID;

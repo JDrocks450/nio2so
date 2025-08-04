@@ -19,14 +19,12 @@ namespace nio2so.DataService.Common.Types.Lot
         /// </summary>
         /// <param name="houseID"></param>
         /// <param name="position"></param>
-        /// <param name="phoneNumber"></param>
         /// <param name="name"></param>
         /// <param name="description"></param>
-        public LotProfile(HouseIDToken houseID, AvatarIDToken Owner, LotPosition position, string phoneNumber, string name, string description)
+        public LotProfile(HouseIDToken houseID, AvatarIDToken Owner, LotPosition position, string name, string description)
         {
             HouseID = houseID;
             Position = position;
-            PhoneNumber = phoneNumber;
             Name = name;
             Description = description;
             OwnerAvatar = Owner;
@@ -39,10 +37,6 @@ namespace nio2so.DataService.Common.Types.Lot
         /// The position in the MapView this lot belongs at
         /// </summary>
         public LotPosition Position { get; set; } = new();
-        /// <summary>
-        /// Packed <see cref="Position"/> used to uniquely identify this lot and determine its location
-        /// </summary>
-        public string PhoneNumber { get; set; } = "";
         /// <summary>
         /// The name of this House
         /// </summary>

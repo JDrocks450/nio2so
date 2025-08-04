@@ -10,11 +10,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
     public record TSOAriesIDStruct : ITSONumeralStringStruct
     {
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
-        public string AriesID { get; set; } = "";
+        public string AriesID { get; set; } = "";        
+
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
         public string MasterID
         {
-            get => ((ITSONumeralStringStruct)this).FormatSpecifier + _masterID.Replace(((ITSONumeralStringStruct)this).FormatSpecifier, "");
+            get => ((ITSONumeralStringStruct)this).FormatSpecifier + (string.IsNullOrEmpty(((ITSONumeralStringStruct)this).FormatSpecifier) ? _masterID : _masterID.Replace(((ITSONumeralStringStruct)this).FormatSpecifier, ""));
             set => _masterID = value;
         }
 
@@ -24,11 +25,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         /// <summary>
         /// Creates a new <see cref="TSOAriesIDStruct"/> using the <see cref="FormatIDString(uint, string)"/> function to create an AriesID for you by an ID
         /// </summary>
-        /// <param name="AriesID"></param>
+        /// <param name="AvatarID"></param>
         /// <param name="MasterID"></param>
-        public TSOAriesIDStruct(uint AriesID, string MasterID) : this()
+        public TSOAriesIDStruct(uint AvatarID, string MasterID) : this()
         {
-            this.AriesID = ITSONumeralStringStruct.FormatIDString(AriesID);
+            ((ITSONumeralStringStruct)this).NumericID = AvatarID;
             this.MasterID = MasterID;
         }
         /// <summary>
@@ -49,7 +50,15 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct
         [TSOVoltronIgnorable]
         internal static TSOAriesIDStruct Default => new TSOAriesIDStruct() { AriesID = "", MasterID = "" };
 
+        string ITSONumeralStringStruct.FormatSpecifier => "??";
         string ITSONumeralStringStruct.IDString { get => AriesID; set => AriesID = value; }
         string ITSONumeralStringStruct.NameString { get => MasterID; set => MasterID = value; }
+        /// <summary>
+        /// Helper property that evaluates to:
+        /// <code>(this as ITSONumeralStringStruct)?.NumericID ?? 0</code>
+        /// </summary>
+        [IgnoreDataMember]
+        [TSOVoltronIgnorable]
+        public uint AvatarID => (this as ITSONumeralStringStruct)?.NumericID ?? 0;
     }
 }

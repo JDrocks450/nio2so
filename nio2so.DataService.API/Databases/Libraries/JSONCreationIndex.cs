@@ -26,11 +26,16 @@ namespace nio2so.DataService.API.Databases.Libraries
             else newID = StartingValue;
             do
             { // increment up once
-                DataFile.Add(++newID); // update lot creation index
+                PushBack(++newID);
             }
-            while (DataSource.ContainsKey(newID)); // see if this is an available ID
-            Save();
+            while (DataSource.ContainsKey(newID)); // see if this is an available ID            
             return newID;
+        }
+
+        internal void PushBack(uint ID)
+        {
+            DataFile.Add(ID); // update lot creation index
+            Save().Wait();
         }
     }
 }

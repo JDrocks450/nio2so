@@ -61,8 +61,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
                 throw new NullReferenceException("nio2so data service client could not be found.");
 
+            uint HouseID = uint.Parse(lotPurchasePDU.HouseIDString);
+
             LotProfile? newLotProfile = client.AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
-                lotPurchasePDU.LotPhoneNumber,lotPurchasePDU.LotPosition.X,lotPurchasePDU.LotPosition.Y).Result;
+                HouseID,lotPurchasePDU.LotPosition.X,lotPurchasePDU.LotPosition.Y).Result;
 
             //create failed packet
             void Failure() =>            
@@ -76,7 +78,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 
                 TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse(newLotProfile.HouseID,myCharacterProfile.Funds,newLotProfile.Position);
                 TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
-                    $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {newLotProfile.HouseID} Location: {newLotProfile.Position} String: {newLotProfile.PhoneNumber}"));
+                    $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {newLotProfile.HouseID} Location: {newLotProfile.Position}"));
                 RespondTo(PDU, buyPDU);
             }
 

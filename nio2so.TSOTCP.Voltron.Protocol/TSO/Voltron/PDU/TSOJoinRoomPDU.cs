@@ -23,7 +23,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU
             Password = password;
         }
 
-        public TSORoomIDStruct RoomID { get; set; } = new("","");
+        public TSORoomIDStruct RoomID { get; set; } = new(0,"");
         public string Password { get; set; } = "";
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.JOIN_ROOM_PDU;
     }

@@ -26,9 +26,8 @@
         /// <summary>
         /// What the ID for My House
         /// </summary>
-        public const uint MyHouseID = 0x053A; // 1338 // can be zero for testing as well
         public const string MyHouseName = "First House";
-        public const string MyHousePhoneNumber = "6094983";
+        public const uint MyHouseLotID = 6094983;
         /// <summary>
         /// What the ID for my Avatar is
         /// </summary>
@@ -69,9 +68,9 @@
 
         //**TEST
         /// <summary>
-        /// Will set the server to always redirect a client into a seemingly offline testing lot
+        /// Will set the server to always redirect a client into the HSB mode (hosting a lot without an avatar there)
         /// <para/>Should be true if using the HSB test
         /// </summary>
-        public const uint HSBAutoJoinHouseID = 1339;
+        public const uint HSBAutoJoinHouseID = MyHouseLotID;
     }
 }

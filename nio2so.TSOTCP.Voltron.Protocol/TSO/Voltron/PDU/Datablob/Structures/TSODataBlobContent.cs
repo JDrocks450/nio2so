@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System.Reflection;
 using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -11,6 +12,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures
     /// </summary>
     public interface ITSODataBlobPDU
     {
+        TSOPlayerInfoStruct SenderInfo { get; }
         TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }
         TSOGenericDataBlobContent DataBlobContentObject { get; set; }
     }

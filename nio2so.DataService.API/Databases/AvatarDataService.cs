@@ -48,7 +48,7 @@ namespace nio2so.DataService.API.Databases
                     AvatarName = "bisquick",
                     AvatarDescription = "default value",
                     Funds = TestingConstraints.StartingFunds,
-                    MyLotID = TestingConstraints.MyHouseID
+                    MyLotID = TestingConstraints.MyHouseLotID
                 },
                 RelationshipInfo = new()
                 {
