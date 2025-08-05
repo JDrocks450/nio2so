@@ -6,6 +6,7 @@ using nio2so.DataService.Common.Types.Avatar;
 using nio2so.TSOHTTPS.Protocol.Data;
 using nio2so.TSOHTTPS.Protocol.Services;
 using nio2so.TSOProtocol.Packets.TSOXML.CitySelector;
+using static nio2so.DataService.Common.HTTPServiceClientBase;
 
 namespace nio2so.TSOProtocol.Controllers
 {
@@ -76,9 +77,9 @@ namespace nio2so.TSOProtocol.Controllers
             foreach (var avatar in avatars)
             {
                 //**download data from nio2so data service
-                AvatarProfile? resp = await DownloadAvatarProfile(avatar);
-                if (resp != null)
-                    returnList.Add(resp);
+                HTTPServiceResult<AvatarProfile> resp = await DownloadAvatarProfile(avatar);
+                if (resp.IsSuccessful && resp.Result != null)
+                    returnList.Add(resp.Result);
             }
             return returnList.ToArray();
         }
@@ -88,7 +89,7 @@ namespace nio2so.TSOProtocol.Controllers
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>
-        private Task<AvatarProfile?> DownloadAvatarProfile(AvatarIDToken AvatarID) => dataServiceClient.GetAvatarProfileByAvatarID(AvatarID);
+        private Task<HTTPServiceResult<AvatarProfile>> DownloadAvatarProfile(AvatarIDToken AvatarID) => dataServiceClient.GetAvatarProfileByAvatarID(AvatarID);
 
         /// <summary>
         /// Download the list of avatars belonging to this <paramref name="UserAccount"/>
@@ -100,8 +101,8 @@ namespace nio2so.TSOProtocol.Controllers
             if (TestingConstraints.CASTestingMode) return [];
 
             var responseBody = await dataServiceClient.GetUserInfoByUserToken(UserAccount);
-            if (responseBody == null) return [];
-            return responseBody.Avatars;
+            if (!responseBody.IsSuccessful || responseBody.Result?.Avatars == default) return [];
+            return responseBody.Result.Avatars;
         }
     }
 }

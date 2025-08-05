@@ -199,16 +199,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Telemetry
             Global.OnConsoleLog(Entry);
         }
 
-        public void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob HouseBlob)
-        {
-            OnBlobBase(Direction, HouseID, "House File Stream");
-            if (Direction == NetworkTrafficDirections.INBOUND)
-                TSOFactoryBase.Get<TSOHouseFactory>().SetHouseBlobByIDToDisk(HouseID, HouseBlob);
-        }
-        public void OnCharBlob(NetworkTrafficDirections Direction, uint AvatarID, TSODBCharBlob charBlob)
-        {
-            OnBlobBase(Direction, AvatarID, "Character File Stream");
-        }
+        public void OnHouseBlob(NetworkTrafficDirections Direction, uint HouseID, TSODBHouseBlob HouseBlob) => OnBlobBase(Direction, HouseID, "House File Stream");
+        public void OnCharBlob(NetworkTrafficDirections Direction, uint AvatarID, TSODBCharBlob charBlob) => OnBlobBase(Direction, AvatarID, "Character File Stream");
         private void OnBlobBase(NetworkTrafficDirections Direction, uint ID, string Type)
         {
             Console.ForegroundColor = Direction switch

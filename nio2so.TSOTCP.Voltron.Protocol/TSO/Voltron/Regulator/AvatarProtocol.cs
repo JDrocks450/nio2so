@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.Formats.DB;
@@ -55,7 +56,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //get tsodbchar object
-            TSODBChar? charData = dataServiceClient.GetCharacterFileByAvatarID(avatarID).Result;
+            var result = dataServiceClient.GetCharacterFileByAvatarID(avatarID).Result;
+            if (!result.IsSuccessful || result.Result == default)
+                throw new InvalidOperationException(result.FailureReason);
+            TSODBChar charData = result.Result;
            
             if (charData == null)
                 throw new NullReferenceException($"{avatarID} not found in nio2so data service");
@@ -83,13 +87,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 throw new InvalidDataException(nameof(GetCharBlobByID_Request) + $"() AvatarID submitted was {avatarID}!");
 
             //**download the requested avatarID appearance data from nio2so
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
-                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //get charblob stream
-            byte[]? result = dataServiceClient.GetAvatarCharBlobByAvatarID(avatarID).Result;
-
-            if (result == null)
-                throw new InvalidDataException("nio2so Data Service returned an empty result!");
+            if(!TryDataServiceQuery(() => GetDataService().GetAvatarCharBlobByAvatarID(avatarID), out byte[]? result, out string error))
+                throw new InvalidDataException(error);
 
             TSODBCharBlob charBlob = TSOVoltronSerializer.Deserialize<TSODBCharBlob>(result);
             if (charBlob == null)
@@ -117,10 +117,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             if (avatarID == 0) return;
 
             //**download bookmarks from nio2so
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
-                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //get result from nio2so data service
-            DataService.Common.Queries.N2BookmarksByAvatarIDQueryResult? result = dataServiceClient.GetAvatarBookmarksByAvatarID(avatarID).Result;
+            if (!TryDataServiceQuery(() => GetDataService().GetAvatarBookmarksByAvatarID(avatarID), 
+                out DataService.Common.Queries.N2BookmarksByAvatarIDQueryResult? result, out string error))
+                throw new InvalidDataException(error);            
 
             uint[] avatarBookmarks;
             if (result == null) // server error
@@ -285,12 +285,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             uint avatarID = relPDU.AvatarID;
 
             //**get relationships from the dataservice
-            nio2soVoltronDataServiceClient client =  GetService<nio2soVoltronDataServiceClient>();
-            var relationships = client.GetOutgoingRelationshipsByAvatarID(avatarID).Result;
-            if (relationships == default)
-                throw new KeyNotFoundException($"AvatarID: {avatarID} was not found in the relationships data service.");
+            if (!TryDataServiceQuery(() => GetDataService().GetOutgoingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
+                throw new InvalidDataException(error);
 
-            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID, relationships.Relationships.ToArray()));
+            RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID, result.Relationships.ToArray()));
         }
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.GetReversedRelationshipsByID_Request)]
         public void GetReversedRelationshipsByID_Request(TSODBRequestWrapper PDU)
@@ -299,12 +297,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             uint avatarID = relPDU.AvatarID;
 
             //**get relationships from the dataservice
-            nio2soVoltronDataServiceClient client = GetService<nio2soVoltronDataServiceClient>();
-            var relationships = client.GetIncomingRelationshipsByAvatarID(avatarID).Result;
-            if (relationships == default)
-                throw new KeyNotFoundException($"AvatarID: {avatarID} was not found in the relationships data service.");
+            if (!TryDataServiceQuery(() => GetDataService().GetIncomingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
+                throw new InvalidDataException(error);
 
-            RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID, relationships.Relationships.ToArray()));
+            RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID, result.Relationships.ToArray()));
         }
 
         [TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes.FIND_PLAYER_PDU)]

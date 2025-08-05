@@ -7,6 +7,7 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using System.Threading;
+using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -52,9 +53,9 @@ namespace nio2so.DataService.API.Controllers
         }
         // POST api/avatars/1337/bookmarks?searchType=avatar
         [HttpPost("{AvatarID}/bookmarks")]
-        public ActionResult SetAvatarBookmarks(uint AvatarID, [FromQuery] string listType, [FromBody] N2BookmarksByAvatarIDQueryResult Data)
+        public async Task<ActionResult> SetAvatarBookmarks(uint AvatarID, [FromQuery] string listType, [FromBody] N2BookmarksByAvatarIDQueryResult Data)
         {
-            if (avatarDataService.SetBookmarksByAvatarID(Data.AvatarID, Data.Avatars))
+            if (await avatarDataService.SetBookmarksByAvatarID(Data.AvatarID, Data.Avatars))
                 return Ok();
             return BadRequest();
         }
@@ -74,16 +75,27 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/avatars/1337/char
         [HttpGet("{AvatarID}/char")]
-        public ActionResult<TSODBChar> GetCharacterFileByAvatarID(uint AvatarID) => 
-            GetObjectByID(avatarDataService.GetCharacterByAvatarID, (AvatarIDToken)AvatarID);
+        public Task<ActionResult<TSODBChar>> GetCharacterFileByAvatarID(uint AvatarID) => 
+            GetObjectByIDAsync(avatarDataService.GetCharacterByAvatarID, (AvatarIDToken)AvatarID);
 
         // POST api/avatars/1337/char
         [HttpPost("{AvatarID}/char")]
-        public ActionResult SetCharacterFileByAvatarID(uint AvatarID, [FromBody] TSODBChar CharacterFile)
+        public async Task<ActionResult> SetCharacterFileByAvatarIDAsync(uint AvatarID, [FromBody] TSODBChar CharacterFile)
         {
-            if (avatarDataService.SetCharacterByAvatarID(AvatarID, CharacterFile))
+            if (await avatarDataService.SetCharacterByAvatarID(AvatarID, CharacterFile))
                 return Ok();
             return BadRequest();
+        }
+        // GET api/avatars/1337/online
+        [HttpGet("{AvatarID}/online")]
+        public ActionResult<bool> GetAvatarIsOnlineByAvatarID(uint AvatarID) => GetObjectByID(avatarDataService.GetAvatarOnlineStatus, (AvatarIDToken)AvatarID);
+
+        // POST api/avatars/1337/online
+        [HttpPost("{AvatarID}/online")]
+        public async Task<ActionResult<bool>> GetAvatarIsOnlineByAvatarIDAsync(uint AvatarID, [FromQuery] bool IsOnline)
+        {
+            IsOnline = await avatarDataService.SetOnlineStatusByAvatarID(AvatarID, IsOnline);
+            return IsOnline;
         }
 
         /// <summary>
@@ -94,7 +106,7 @@ namespace nio2so.DataService.API.Controllers
         /// <returns></returns>
         // GET api/avatars/create
         [HttpGet("create")]
-        public ActionResult<uint> CreateNewAvatar([FromQuery] string user, [FromQuery] string method) => (uint)avatarDataService.CreateNewAvatar((UserToken)user, method);
+        public async Task<ActionResult<uint>> CreateNewAvatar([FromQuery] string user, [FromQuery] string method) => (uint)(await avatarDataService.CreateNewAvatar((UserToken)user, method));
 
         // GET api/avatars/1337/appearance
         [HttpGet("{AvatarID}/appearance")]

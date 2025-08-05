@@ -33,6 +33,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// The object value being encoded
         /// </summary>
         public object SerializedValue { get; set; }
+        /// <summary>
+        /// The amount of bytes written in this serialization frame
+        /// </summary>
+        public long ByteLength { get; set; }
 
         /// <summary>
         /// Creates a new <see cref="TSOVoltronSerializerGraphItem"/>
@@ -42,12 +46,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="SerializedValue">The object value being encoded</param>
         /// <param name="ValueStringFormat">This encoded value, in a string format that adds clarity to the user viewing
         /// this graph in an editor</param>
-        public TSOVoltronSerializerGraphItem(string? PropertyName, Type SerializedType, object SerializedValue, string? ValueStringFormat = null)
+        public TSOVoltronSerializerGraphItem(string? PropertyName, Type SerializedType, object SerializedValue, long byteLength, string? ValueStringFormat = null)
         {
             _graph = new();
             this.PropertyName = PropertyName ?? "";
             this.SerializedType = SerializedType;
             this.SerializedValue = SerializedValue;
+            ByteLength = byteLength;
             stringFormat = ValueStringFormat;
         }
         /// <summary>
@@ -57,8 +62,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// <param name="SerializedType"></param>
         /// <param name="SerializedValue"></param>
         /// <param name="ValueStringFormat"></param>
-        public TSOVoltronSerializerGraphItem(PropertyInfo? Property, Type SerializedType, object SerializedValue, string? ValueStringFormat = null) : 
-            this(Property?.Name, SerializedType, SerializedValue, ValueStringFormat)
+        public TSOVoltronSerializerGraphItem(PropertyInfo? Property, Type SerializedType, object SerializedValue, long ByteLength, string? ValueStringFormat = null) : 
+            this(Property?.Name, SerializedType, SerializedValue, ByteLength, ValueStringFormat)
         {
             if (Property != null)
                 AttachProperty(Property);  

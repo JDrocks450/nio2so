@@ -20,8 +20,11 @@
         [TSOVoltronDBWrapperField] public uint Arg2 { get; set; }
         [TSOVoltronDBWrapperField] public uint Arg3 { get; set; }
 
-        public TSOSetMoneyFieldsRequest()
+        public TSOSetMoneyFieldsRequest() : base(TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                                                 TSO_PreAlpha_kMSGs.kDBServiceRequestMsg,
+                                                 TSO_PreAlpha_DBActionCLSIDs.SetMoneyFields_Request)
         {
+            MakeBodyFromProperties();
         }
     }
 }

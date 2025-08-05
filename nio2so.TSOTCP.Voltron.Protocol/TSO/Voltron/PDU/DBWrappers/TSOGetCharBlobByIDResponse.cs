@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// Not sure, works with 0x01
         /// </summary>
         [TSOVoltronDBWrapperField]
-        public byte Filler { get; set; } = 0x01;
+        public byte Filler { get; set; } = 0x00;
         /// <summary>
         /// The size of the proceeding data from the end of this dword to the end of the payload
         /// </summary>

@@ -92,5 +92,10 @@ namespace nio2so.DataService.Common.Types
         public TSODBChar AvatarCharacter { get; set; } = new();
 
         IEnumerable<string> ISearchableItem.SearchableKeywords => [AvatarName,AvatarCharacter.AvatarDescription];
+
+        /// <summary>
+        /// Is this avatar online
+        /// </summary>
+        public bool IsOnline { get; set; }
     }
 }

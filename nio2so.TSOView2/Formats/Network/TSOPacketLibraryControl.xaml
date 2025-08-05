@@ -27,7 +27,12 @@
                         <ColumnDefinition Width="2*"/>
                     </Grid.ColumnDefinitions>
                     <DockPanel>
-                        <TextBlock Margin="0,0,0,5" DockPanel.Dock="Top" Grid.ColumnSpan="2">Navigation</TextBlock>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,5">
+                            <Button x:Name="GenerateAll" DockPanel.Dock="Right" Width="162" Click="GenerateAll_Click">
+                                Generate Documentation
+                            </Button>
+                            <TextBlock VerticalAlignment="Center" Grid.ColumnSpan="2">Navigation</TextBlock>
+                        </DockPanel>
                         <TreeView Name="NamespaceTypesListing">
 
                         </TreeView>

@@ -55,6 +55,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         [TSOVoltronBodyArray]
         public byte[] Garbage1 => TSOVoltronArrayFillFunction.TSOFillArray(new byte[50]);
 
+        public TSOGetLotByID_Response() :
+            base(
+                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
+                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
+                    TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response
+                )
+        {
+
+        }
+
         /// <summary>
         /// Creates a new <see cref="TSOGetLotByID_Response"/> with the given parameters
         /// </summary>
@@ -63,12 +73,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
         /// <param name="Owner"></param>
         /// <param name="Description"></param>
         /// <param name="Position"></param>
-        public TSOGetLotByID_Response(uint LotID, string Name, string Owner, string Description, LotPosition Position) :
-            base(
-                    TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
-                    TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-                    TSO_PreAlpha_DBActionCLSIDs.GetLotByID_Response
-                )
+        public TSOGetLotByID_Response(uint LotID, string Name, string Owner, string Description, LotPosition Position) : this()
         {
             this.LotID = LotID;
             LotName = Name;

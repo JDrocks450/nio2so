@@ -10,6 +10,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response)]
     public class TSOSetCharBlobByIDResponse : TSOGetCharBlobByIDResponse
     {
+        public TSOSetCharBlobByIDResponse() : base()
+        {
+            TSOSubMsgCLSID = TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Response;
+            MakeBodyFromProperties();
+        }
+
         /// <summary>
         /// Creates a new <see cref="TSOSetCharBlobByIDResponse"/> packet with the provided <see cref="TSODBCharBlob"/> payload
         /// </summary>

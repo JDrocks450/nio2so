@@ -9,13 +9,20 @@
     <TabControl>
         <TabItem Header="Format">
             <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="1*"/>
+                    <RowDefinition Height="1*"/>
+                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"/>
                     <ColumnDefinition Width="1*"/>
                 </Grid.ColumnDefinitions>
-                <TreeView Grid.ColumnSpan="2" Name="PDUPropertyTree">
-
+                <TreeView Grid.ColumnSpan="2" Name="PDUPropertyTree" Margin="0,0,0,2">
+            
                 </TreeView>
+                <TextBox x:Name="PreviewText" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,2,0,0">
+                    
+                </TextBox>
             </Grid>
         </TabItem>
     </TabControl>

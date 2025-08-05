@@ -1,5 +1,6 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Xml.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace nio2so.TSOView2.Formats.Network
 {
@@ -110,7 +112,7 @@ namespace nio2so.TSOView2.Formats.Network
             }
 
             NamespaceTypesListing.Items.Clear();
-            NamespaceTypesListing.Items.Add(root);
+            NamespaceTypesListing.Items.Add(root);            
         }    
 
         private bool DoSearchResult(Type Type)
@@ -128,14 +130,45 @@ namespace nio2so.TSOView2.Formats.Network
             try
             {
                 TypeNavigationToken typeNav = _selectableTypes[(TreeViewItem)sender];
-                Type type = typeNav.DisplayType;
-                var packet = (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName);
+                var packet = ActivateInstancePacket(typeNav);
+                if (packet == null)
+                    MessageBox.Show("This PDU is not available at this time.");
                 VoltronPacketProperties.DisplayPDU(packet, false);
             }
             catch(Exception exception)
             {               
                 MessageBox.Show(exception.Message,  exception.GetType().Name);
             }
+        }
+
+        private TSOVoltronPacket? ActivateInstancePacket(TypeNavigationToken typeNav)
+        {            
+            Type type = typeNav.DisplayType;
+            return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName);
+        }
+
+        private void GenerateAll_Click(object sender, RoutedEventArgs e)
+        {
+            TSOVoltronSerializer.CreatingSerializationGraphs = true;
+
+            StringBuilder builder = new();
+            foreach (var typenavigationItem in _selectableTypes.Values)
+            {
+                TSOVoltronPacket? instance = null;
+                try
+                {
+                    instance = ActivateInstancePacket(typenavigationItem);
+                }
+                catch { }
+                if (instance == null) continue;
+
+                instance.MakeBodyFromProperties();
+                var graph = instance.MySerializedGraph;
+                string text = TSOVoltronSerializer.GenerateSerializationSummary(graph, false, true);
+                builder.AppendLine(text);
+            }
+            GenerateAll.Content = "Copied!";
+            Clipboard.SetText(builder.ToString());
         }
 
         private void MainNavigationTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)

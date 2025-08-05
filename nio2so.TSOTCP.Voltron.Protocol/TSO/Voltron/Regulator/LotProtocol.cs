@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
@@ -13,6 +14,8 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Util;
+using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
@@ -33,9 +36,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <exception cref="InvalidDataException"></exception>
         public LotProfile GetLotProfile(HouseIDToken HouseID)
         {
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new NullReferenceException("nio2so data service client could not be found.");
-            LotProfile? item = client.GetLotProfileByHouseID(HouseID).Result;
+            if (!TryDataServiceQuery(() => GetDataService().GetLotProfileByHouseID(HouseID), out LotProfile? item, out string error))
+                throw new InvalidDataException(error);
             if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
             return item;
         }
@@ -55,39 +57,34 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Request)]
         public void BuyLotByAvatarID_Request(TSODBRequestWrapper PDU)
         {
+            void Failed(string error)
+            {
+                LogConsole(error, nameof(BuyLotByAvatarID_Request), TSOServerTelemetryServer.LogSeverity.Errors);
+                RespondTo(PDU, new TSOBuyLotByAvatarIDFailedResponse());
+            }
+
             TSOBuyLotByAvatarIDRequest lotPurchasePDU = (TSOBuyLotByAvatarIDRequest)PDU;
 
             //attempt to purchase this lot
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new NullReferenceException("nio2so data service client could not be found.");
-
             uint HouseID = uint.Parse(lotPurchasePDU.HouseIDString);
 
-            LotProfile? newLotProfile = client.AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
-                HouseID,lotPurchasePDU.LotPosition.X,lotPurchasePDU.LotPosition.Y).Result;
-
-            //create failed packet
-            void Failure() =>            
-                RespondTo(PDU, new TSOBuyLotByAvatarIDFailedResponse());                                   
-            
-            //create success packet
-            void Success()
-            {
-                //download my character data to get funds after the transaction
-                TSODBChar myCharacterProfile = client.GetCharacterFileByAvatarID(lotPurchasePDU.AvatarID).Result;
-
-                TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse(newLotProfile.HouseID,myCharacterProfile.Funds,newLotProfile.Position);
-                TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message, RegulatorName,
-                    $"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {newLotProfile.HouseID} Location: {newLotProfile.Position}"));
-                RespondTo(PDU, buyPDU);
-            }
-
-            if (newLotProfile == null) // no response from server 
-            {
-                Failure();
+            if (!TryDataServiceQuery(() => GetDataService().AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
+                HouseID, lotPurchasePDU.LotPosition.X, lotPurchasePDU.LotPosition.Y), out LotProfile? newLotProfile, out string error))
+            { //create failed packet
+                Failed(error);
                 return;
             }
-            Success(); // server responded with new lot
+
+            //create success packet
+            //download my character data to get funds after the transaction
+            if (!TryDataServiceQuery(() => GetDataService().GetCharacterFileByAvatarID(lotPurchasePDU.AvatarID), out TSODBChar? myCharacterProfile, out error))
+            { // failed to download character profile
+                throw new InvalidOperationException(error);
+            }
+
+            TSODBRequestWrapper buyPDU = new TSOBuyLotByAvatarIDResponse(newLotProfile.HouseID, myCharacterProfile.Funds, newLotProfile.Position);
+            LogConsole($"Lot Purchased: Owner: {lotPurchasePDU.AvatarID} HouseID: {newLotProfile.HouseID} Location: {newLotProfile.Position}");                
+            RespondTo(PDU, buyPDU);        
         }
 
         /// <summary>
@@ -104,9 +101,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 return; // Seems to be mistaken to send in this scenario
 
             //**download roommates from data service
-            if (!TryGetService(out nio2soVoltronDataServiceClient client))
-                throw new NullReferenceException("nio2so client was not found.");
-            IEnumerable<AvatarIDToken>? roommates = (client.GetRoommatesByHouseID(HouseID)?.Result);
+            if (!TryDataServiceQuery(() => GetDataService().GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))
+                  throw new InvalidDataException(error);
             //**
             if (roommates == null) throw new NullReferenceException($"HouseID: {HouseID} was not found.");
 
@@ -121,9 +117,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void GetLotList_Request(TSODBRequestWrapper PDU)
         {
             //download lot profiles from data service
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new NullReferenceException("nio2so data service client could not be found.");
-            var result = client.GetAllLotProfiles().Result;
+            if (!TryDataServiceQuery(() => GetDataService().GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
+                throw new InvalidDataException(error);
 
             //send one packet for every lot in the world view
             foreach(var lot in result.Lots)
@@ -172,10 +167,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             TSOGetHouseThumbByIDRequest req = (TSOGetHouseThumbByIDRequest)PDU;
             if (req.HouseID == 0) return;
             //**request from nio2so
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new InvalidOperationException("Tried to find the nio2so data service client, it is not present in the Services collection.");
             //**download thumbnail
-            byte[] pngBytes = client.GetThumbnailByHouseID(req.HouseID).Result;
+            if (!TryDataServiceQuery(() => GetDataService().GetThumbnailByHouseID(req.HouseID), out byte[]? pngBytes, out string error))
+                throw new InvalidDataException(error);
+            
             if (pngBytes == null)
                 throw new NullReferenceException(nameof(pngBytes));
 
@@ -216,10 +211,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             //__TESTING MODE__
             uint loadHouseID = HouseID;
             //**
-            //Read decompressed House Blob from disk
-            TSODBHouseBlob? houseBlob = TSOFactoryBase.Get<TSOHouseFactory>()?.GetHouseBlobByID(loadHouseID);
-            if (houseBlob == null)
+            //Read decompressed House Blob from data service
+            if (!TryDataServiceQuery(() => GetDataService().GetHouseBlobByHouseID(loadHouseID), out byte[]? houseBlobBytes, out string error))
+                throw new InvalidDataException(error);
+            if (houseBlobBytes == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");
+
+            TSODBHouseBlob houseBlob = TSOVoltronSerializer.Deserialize<TSODBHouseBlob>(houseBlobBytes);            
 
             var response = new TSOGetHouseBlobByIDResponse(HouseID, houseBlob, true);
             RespondTo(PDU, response);            
@@ -232,19 +230,21 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// <exception cref="NullReferenceException"></exception>
         // The Client is requesting to set the house data for this HouseID in the Database
         [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetHouseBlobByID_Request)]
-        public void SetHouseBlobByID_Request(TSODBRequestWrapper PDU)
+        public async void SetHouseBlobByID_Request(TSODBRequestWrapper PDU)
         { // client is giving us house blob data
             TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
 
             uint HouseID = housePDU.HouseID;
             if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
+                throw new InvalidDataException("Unable to read incoming HouseBlob data!");            
+            var housChunk = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
+            if (housChunk == null) // get hous chunk in the package
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
-            File.WriteAllBytes("E:\\refpack.dat", housePDU.HouseFileStream.StreamContents);
-            var blob = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
-            if (blob == null) // get hous chunk in the package
-                throw new InvalidDataException("Unable to read incoming HouseBlob data!");
-            // write decompressed to the hard drive
-            TSOServerTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(blob.Content));
+            // send decompressed houseblob to the data service
+            (bool Result, string Reason) = await GetDataService().SetHouseBlobByHouseID(HouseID, housChunk.Content);
+            if (!Result)
+                LogConsole(Reason, nameof(SetHouseBlobByID_Request), TSOServerTelemetryServer.LogSeverity.Errors);
+            TSOServerTelemetryServer.Global.OnHouseBlob(NetworkTrafficDirections.INBOUND, HouseID, new(housChunk.Content));
         }
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOSetLotByIDRequest"/>

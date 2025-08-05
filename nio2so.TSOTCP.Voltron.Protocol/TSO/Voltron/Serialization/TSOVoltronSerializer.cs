@@ -1,7 +1,9 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using QuazarAPI.Networking.Data;
+using System.Drawing;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
@@ -57,7 +59,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             {
                 byte[] customData = serializable.OnSerialize();
                 Stream.Write(customData);               
-                SetGraphItem(new(Property, Object.GetType(), Object, $"Custom serialization technique ({customData.Length} bytes)"));
+                SetGraphItem(new(Property, Object.GetType(), Object, customData.Length, $"Custom serialization technique ({customData.Length} bytes)"));
                 return;
             }
             // no-- proceed with default serialize    
@@ -66,7 +68,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
-            SetGraphItem(new(Property, Object.GetType(), Object));
+            var currentStackItem = new TSOVoltronSerializerGraphItem(Property, Object.GetType(), Object, 0);
+            long startLen = Stream.Position;
+            SetGraphItem(currentStackItem);
 
             foreach (var property in GetSerializableProperties(Object))
             {
@@ -79,6 +83,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                         _graphStack.First().Add(item);
                 }
             }
+            currentStackItem.ByteLength = Stream.Position - startLen;
             //Calculate size from index of the field to the end of the file plus size of property
             foreach (var distanceToEnd in distanceToEnds)
             {
@@ -190,6 +195,109 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             }
             CreatingSerializationGraphs = false;
             return GetLastGraph();
+        }
+
+        /// <summary>
+        /// Makes a serialized version of this object in string representation
+        /// </summary>
+        /// <param name="GraphRootNode"></param>
+        /// <returns></returns>
+        public static string GenerateSerializationSummary(TSOVoltronSerializerGraphItem GraphRootNode, bool ShowValues = true, bool AutoInitializeValues = true, bool RichText = true)
+        {
+            if (GraphRootNode == null) return "";
+            StringBuilder builder = new();
+            
+            int level = -1;
+            void PushString(TSOVoltronSerializerGraphItem CurrentItem)
+            {
+                builder.AppendLine();
+                for (int i = 0; i < level; i++)
+                {
+                    builder.Append("    ");
+                }
+                if (RichText)
+                {
+                    if (level == 0)
+                        builder.Append("## ");
+                }
+                if (level > 0)
+                    builder.Append(" * ");
+                //**error message
+                if (CurrentItem == null)
+                {
+                    builder.Append("ERROR: Serialization frame was null.");
+                    goto done;
+                }
+
+                void processAttributes(IEnumerable<Attribute> CustomAttributes)
+                {
+                    if (CustomAttributes == null)
+                        return;
+                    foreach (var attribute in CustomAttributes)
+                    {
+                        if (!attribute.GetType().FullName.Contains("nio2so")) continue;
+                        builder.Append($"[{attribute.GetType().Name}] ");
+                    }
+                }
+
+                //**add type label
+                void processType(Type type)
+                {
+                    processAttributes(type.GetCustomAttributes());
+
+                    bool arraySwitch = type.IsArray;
+                    //**name of type only
+                    if (type.IsArray)
+                        type = type.GetElementType() ?? typeof(object);
+                    builder.Append(type.Name);
+                    if (arraySwitch)
+                        builder.Append($"[{(ShowValues ? (CurrentItem.SerializedValue as Array)?.Length ?? 0 : "")}]");
+
+                }
+                processAttributes(CurrentItem?.PropertyInfo?.GetCustomAttributes());
+                processType(CurrentItem.SerializedType);
+                //**add name label
+                builder.Append(" " + CurrentItem.PropertyName);
+                //**add runtime value label (if applicable)
+                if (!ShowValues) goto done;
+
+                builder.Append(" = ");
+                builder.Append(CurrentItem.SerializedValueStringFormat ?? "default");
+            done:
+                builder.Append($" - {CurrentItem?.ByteLength ?? 0} bytes");
+                return;
+            }     
+
+            void ProcessOne(TSOVoltronSerializerGraphItem CurrentItem)
+            {
+                level++;
+                if (CurrentItem != null && CurrentItem.SerializedValue == null && AutoInitializeValues)
+                {
+                    if (CurrentItem.SerializedType.IsClass)
+                    {
+                        try
+                        {
+                            level++;
+                            CurrentItem.SerializedValue = Activator.CreateInstance(CurrentItem.SerializedType);
+                            TSOVoltronSerializer.Serialize(CurrentItem.SerializedValue);
+                            CurrentItem = TSOVoltronSerializer.GetLastGraph();
+                        }
+                        catch (MissingMethodException ex) {
+                            //builder.AppendLine($"\n{CurrentItem.PropertyName} - ERROR: {ex.Message}");
+                        }
+                    }
+                }
+                
+                PushString(CurrentItem);
+                
+                if (CurrentItem != null)
+                    foreach (var graphItem in CurrentItem)
+                        ProcessOne(graphItem);
+                level--;
+            }
+            ProcessOne(GraphRootNode);
+
+            return builder.ToString();
         }
 
         /// <summary>

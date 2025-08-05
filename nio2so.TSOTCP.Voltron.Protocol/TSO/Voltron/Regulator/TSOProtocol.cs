@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
@@ -6,13 +7,19 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+using System.Net.Sockets;
 using System.Reflection;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
 {
+    public interface ITSOProtocolHandlerAttribute
+    {
+        public uint ItemID { get; }
+    }
 
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-    public sealed class TSOProtocolHandler : Attribute
+    public sealed class TSOProtocolHandler : Attribute, ITSOProtocolHandlerAttribute
     {
         public TSOProtocolHandler(TSO_PreAlpha_VoltronPacketTypes packetType)
         {
@@ -20,9 +27,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
 
         public TSO_PreAlpha_VoltronPacketTypes PacketType { get; set; }
+
+        uint ITSOProtocolHandlerAttribute.ItemID => (uint)PacketType;
     }
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-    public sealed class TSOProtocolDatabaseHandler : Attribute
+    public sealed class TSOProtocolDatabaseHandler : Attribute, ITSOProtocolHandlerAttribute
     {
         public TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs DatabaseAction)
         {
@@ -30,9 +39,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
 
         public TSO_PreAlpha_DBActionCLSIDs ActionType { get; set; }
+        uint ITSOProtocolHandlerAttribute.ItemID => (uint)ActionType;
     }
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
-    public sealed class TSOProtocolDatablobHandler : Attribute
+    public sealed class TSOProtocolDatablobHandler : Attribute, ITSOProtocolHandlerAttribute
     {
         public TSOProtocolDatablobHandler(TSO_PreAlpha_MasterConstantsTable CLS_ID)
         {
@@ -40,6 +50,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         }
 
         public TSO_PreAlpha_MasterConstantsTable ActionType { get; set; }
+        uint ITSOProtocolHandlerAttribute.ItemID => (uint)ActionType;
     }
 
     /// <summary>
@@ -92,37 +103,51 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         /// </summary>
         private void MapMe()
         {
+            void DoMappingFunction<TAttribute, TDelegate>(MethodInfo Target, Func<uint, TDelegate, bool> TryAdd) 
+                where TAttribute : Attribute, ITSOProtocolHandlerAttribute
+                where TDelegate : Delegate
+            {
+                string message = "success.";
+                try
+                {
+                    var attribute = Target.GetCustomAttribute<TAttribute>();
+                    var packetType = attribute.ItemID;
+                    TDelegate action = Target.CreateDelegate<TDelegate>(this);
+                    bool result = TryAdd(packetType, action);
+                    if (result)
+                    {
+                        LogConsole($"MAPPED Handler {Target.Name}(PacketType: {packetType:X8})", typeof(TAttribute).Name);
+                        return;
+                    }
+                    else 
+                        message = $"{packetType} is already mapped!";
+                }
+                catch (Exception ex)
+                {
+                    message = ex.Message;
+                }
+                LogConsole($"FAILED {Target.Name}(): {message}", typeof(TAttribute).Name, TSOServerTelemetryServer.LogSeverity.Errors);
+            }
+
             voltronMap.Clear();
             foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolHandler>() != null))
             {
-                var attribute = function.GetCustomAttribute<TSOProtocolHandler>();
-                var packetType = attribute.PacketType;
-                VoltronInvokationDelegate action = function.CreateDelegate<VoltronInvokationDelegate>(this);
-                bool result = voltronMap.TryAdd(packetType, action);
-                if (result) TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    nameof(TSOProtocol), $"MAPPED {packetType} to handler {function.Name}"));
+                DoMappingFunction<TSOProtocolHandler,VoltronInvokationDelegate>(function, (uint VoltronPacketType, VoltronInvokationDelegate Delegate) => 
+                    voltronMap.TryAdd((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType,Delegate));
             }
 
             databaseMap.Clear();
             foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolDatabaseHandler>() != null))
             {
-                var attribute = function.GetCustomAttribute<TSOProtocolDatabaseHandler>();
-                var packetType = attribute.ActionType;
-                VoltronDatabaseInvokationDelegate action = function.CreateDelegate<VoltronDatabaseInvokationDelegate>(this);
-                bool result = databaseMap.TryAdd(packetType, action);
-                if (result) TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    nameof(TSOProtocol), $"MAPPED {packetType} to DB handler {function.Name}"));
+                DoMappingFunction<TSOProtocolDatabaseHandler, VoltronDatabaseInvokationDelegate>(function, (uint CLSID, VoltronDatabaseInvokationDelegate Delegate) =>
+                    databaseMap.TryAdd((TSO_PreAlpha_DBActionCLSIDs)CLSID, Delegate));
             }
 
             dataBlobMap.Clear();
             foreach (var function in GetType().GetMethods().Where(x => x.GetCustomAttribute<TSOProtocolDatablobHandler>() != null))
             {
-                var attribute = function.GetCustomAttribute<TSOProtocolDatablobHandler>();
-                var packetType = attribute.ActionType;
-                VoltronDataBlobInvokationDelegate action = function.CreateDelegate<VoltronDataBlobInvokationDelegate>(this);
-                bool result = dataBlobMap.TryAdd(packetType, action);
-                if (result) TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    nameof(TSOProtocol), $"MAPPED {packetType} to DATABLOB handler {function.Name}"));
+                DoMappingFunction<TSOProtocolDatablobHandler, VoltronDataBlobInvokationDelegate>(function, (uint ActionType, VoltronDataBlobInvokationDelegate Delegate) =>
+                    dataBlobMap.TryAdd((TSO_PreAlpha_MasterConstantsTable)ActionType, Delegate));
             }
         }
 
@@ -268,6 +293,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             foreach (uint QuazarID in sessionService.GetConnectedQuazarIDs())
                 if(!ExcludeQuazarIDs.Contains(QuazarID))
                     SendTo(QuazarID, Packet);
+        }
+        protected nio2soVoltronDataServiceClient GetDataService()
+        {
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
+                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
+            return dataServiceClient;
+        }
+        protected bool TryDataServiceQuery<T>(Func<Task<nio2soDataServiceClient.HTTPServiceResult<T>>> DataServiceQuery, out T? Result, out string FailureMessage)
+        {
+            var result = DataServiceQuery().Result;
+            FailureMessage = result.FailureReason;
+            Result = result.Result;
+            return result.IsSuccessful;
         }
 
         /// <summary>

@@ -27,6 +27,11 @@ namespace nio2so.DataService.Common.Types
         /// <para/>See: <see cref="Owner"/>
         /// </summary>
         public List<AvatarIDToken> Roommates { get; set; } = new();
+        /// <summary>
+        /// Dictates whether this house can be overwritten when the game is saved or not
+        /// </summary>
+        public bool IsReadOnly { get; set; } = false;
+
         IEnumerable<string> ISearchableItem.SearchableKeywords => [Profile.Name,Profile.Description];
 
         /// <summary>

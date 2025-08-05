@@ -56,10 +56,11 @@ namespace nio2so.TSOProtocol.Controllers
 
             if (AvatarID == null)
             { // ENTERING CAS!
-                uint? uniqueRemote = await dataService.CreateNewAvatarFile(UserToken, "CAS_PREALPHA");
-                if (uniqueRemote.HasValue)
+                DataService.Common.HTTPServiceClientBase.HTTPServiceResult<uint> queryResult = await dataService.CreateNewAvatarFile(UserToken, "CAS_PREALPHA");
+                uint? uniqueRemote = queryResult.Result;
+                if (queryResult.IsSuccessful)
                     AvatarID = uniqueRemote.ToString();
-                else throw new Exception("nio2so failed to create a new avatar ID!");
+                else throw new Exception(queryResult.FailureReason);
                 _logger.LogInformation($"CitySelector: Generated AvatarID {AvatarID} and forwarding Client to CAS.");
                 isCasReq = true;
             }

@@ -3,13 +3,32 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using static nio2so.DataService.Common.HTTPServiceClientBase;
 
 namespace nio2so.DataService.Common
 {
     public abstract class HTTPServiceClientBase
     {
+        public class HTTPServiceResult<T>
+        {
+            public HttpStatusCode StatusCode { get; set; }
+            public bool IsSuccessful => (200 >= (int)StatusCode) && ((int)StatusCode < 300);
+            public string FailureReason { get; set; } = "none set.";
+            public T? Result { get; set; }
+
+            public HTTPServiceResult(HttpStatusCode StatusCode, T? Result) {
+                this.StatusCode = StatusCode;
+                this.Result = Result;
+            }
+            public HTTPServiceResult(HttpStatusCode StatusCode, string? FailureReason, T? Result = default) : this(StatusCode,Result)
+            {
+                this.FailureReason = FailureReason ?? this.FailureReason;
+            }
+        }
+
         /// <summary>
         /// Creates a new <see cref="HTTPServiceClientBase"/>
         /// <para><inheritdoc cref="APIAddress"/></para>
@@ -48,32 +67,29 @@ namespace nio2so.DataService.Common
         public async Task<HttpResponseMessage> HttpGet(string Query, params (string Name, object Value)[] Parameters) => 
             LastResponse = await Client.GetAsync(BuildQueryString(Query, Parameters));
 
-        public async Task<T?> GetQueryAs<T>(string Query, params (string Name, object Value)[] Parameters)
+        async Task<HTTPServiceResult<T>> BaseGetQueryAs<T>(string Query, Func<HttpContent, Task<T>> BodyFunction, params (string Name, object Value)[] Parameters)
         {
             var response = await HttpGet(Query, Parameters);
+            string? failureReason = default;
+            T? result = default;
             if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadFromJsonAsync<T>();
-            }
+                result = await BodyFunction(response.Content);
             else
-            {
-                return default;
-            }
+                failureReason = await response.Content.ReadAsStringAsync();
+            failureReason = $"[{GetType().Name}] GET {BuildQueryString(Query, Parameters)}: ({(int)response.StatusCode} {response.StatusCode}) {failureReason}";
+            return new HTTPServiceResult<T>(response.StatusCode, failureReason, result);
         }
-        public async Task<byte[]?> GetQueryAsOctet(string Query, params (string Name, object Value)[] Parameters)
-        {
-            var response = await HttpGet(Query, Parameters);
-            if (response.IsSuccessStatusCode)
-            {
-                return await response.Content.ReadAsByteArrayAsync();
-            }
-            else
-            {
-                return default;
-            }
-        }
+
+        public Task<HTTPServiceResult<T>> GetQueryAs<T>(string Query, params (string Name, object Value)[] Parameters) => 
+            BaseGetQueryAs(Query, content => content.ReadFromJsonAsync<T>(), Parameters);
+        public Task<HTTPServiceResult<byte[]>> GetQueryAsOctet(string Query, params (string Name, object Value)[] Parameters) => 
+            BaseGetQueryAs(Query, content => content.ReadAsByteArrayAsync(), Parameters);
         public async Task<HttpResponseMessage> QueryPostAs<T>(string Query, T Post, params (string Name, object Value)[] Parameters) => 
             LastResponse = await Client.PostAsJsonAsync(BuildQueryString(Query, Parameters), Post);
+        public async Task<HttpResponseMessage> QueryPost(string Query, HttpContent Content, params (string Name, object Value)[] Parameters) =>
+            LastResponse = await Client.PostAsync(BuildQueryString(Query, Parameters), Content);
+        public async Task<HttpResponseMessage> QueryPostAsString(string Query, string PostContent, params (string Name, object Value)[] Parameters) =>
+            LastResponse = await Client.PostAsync(BuildQueryString(Query, Parameters), new StringContent(PostContent));
         public async Task<HttpResponseMessage> QueryPostAsOctet(string Query, byte[] OctetStream, string MIMEType, params (string Name, object Value)[] Parameters)
         {
             using MemoryStream ms = new(OctetStream);
@@ -104,26 +120,26 @@ namespace nio2so.DataService.Common
         public async Task<UserToken?> GetUserTokenByUserName(string UserName)
         {
             var response = await GetQueryAs<N2AccountByUserNameQueryResult>("account/" + UserName);
-            return response?.ServerUserToken;
+            return response?.Result?.ServerUserToken;
         }
         /// <summary>
         /// Downloads the <see cref="UserInfo"/> for the given <see cref="UserToken"/> <paramref name="Account"/>
         /// </summary>
         /// <param name="Account"></param>
         /// <returns></returns>
-        public Task<UserInfo?> GetUserInfoByUserToken(UserToken Account) => GetQueryAs<UserInfo>("users/" + Account);
+        public Task<HTTPServiceResult<UserInfo>> GetUserInfoByUserToken(UserToken Account) => GetQueryAs<UserInfo>("users/" + Account);
         /// <summary>
         /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<AvatarProfile?> GetAvatarProfileByAvatarID(AvatarIDToken AvatarID) => GetQueryAs<AvatarProfile>($"avatars/{AvatarID.AvatarID}/profile");
+        public Task<HTTPServiceResult<AvatarProfile>> GetAvatarProfileByAvatarID(AvatarIDToken AvatarID) => GetQueryAs<AvatarProfile>($"avatars/{AvatarID.AvatarID}/profile");
         /// <summary>
         /// Downloads the bookmarks for the given <paramref name="AvatarID"/>
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<N2BookmarksByAvatarIDQueryResult?> GetAvatarBookmarksByAvatarID(AvatarIDToken AvatarID) => 
+        public Task<HTTPServiceResult<N2BookmarksByAvatarIDQueryResult>> GetAvatarBookmarksByAvatarID(AvatarIDToken AvatarID) => 
             GetQueryAs<N2BookmarksByAvatarIDQueryResult>($"avatars/{AvatarID.AvatarID}/bookmarks",("listType","avatar"));
         
         /// <summary>
@@ -141,7 +157,7 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<TSODBChar?> GetCharacterFileByAvatarID(AvatarIDToken AvatarID) =>
+        public Task<HTTPServiceResult<TSODBChar>> GetCharacterFileByAvatarID(AvatarIDToken AvatarID) =>
             GetQueryAs<TSODBChar>($"avatars/{AvatarID.AvatarID}/char");
 
         /// <summary>
@@ -160,15 +176,15 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<uint?> CreateNewAvatarFile(UserToken User, string Method) =>
-            GetQueryAs<uint?>($"avatars/create", ("user", User), ("method", Method));
+        public Task<HTTPServiceResult<uint>> CreateNewAvatarFile(UserToken User, string Method) =>
+            GetQueryAs<uint>($"avatars/create", ("user", User), ("method", Method));
 
         /// <summary>
         /// Downloads the <see cref="TSODBCharBlob"/> for the given <paramref name="AvatarID"/>
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<byte[]?> GetAvatarCharBlobByAvatarID(AvatarIDToken AvatarID) =>
+        public Task<HTTPServiceResult<byte[]>> GetAvatarCharBlobByAvatarID(AvatarIDToken AvatarID) =>
             GetQueryAsOctet($"avatars/{AvatarID.AvatarID}/appearance");
 
         /// <summary>
@@ -184,13 +200,35 @@ namespace nio2so.DataService.Common
             var response = await Client.PostAsync($"avatars/{AvatarID}/appearance",content);
             return response.IsSuccessStatusCode;
         }
+        /// <summary>
+        /// Downloads the <see cref="TSODBHouseBlob"/> for the given <paramref name="HouseID"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns>On not found, returns null</returns>
+        public Task<HTTPServiceResult<byte[]>> GetHouseBlobByHouseID(HouseIDToken HouseID) =>
+            GetQueryAsOctet($"lots/{HouseID}/blob");
+
+        /// <summary>
+        /// Uploads the new <see cref="TSODBHouseBlob"/> for the given <paramref name="HouseID"/>
+        /// <para/>Please observe that a lot can be marked as ReadOnly, in which this will fail.
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns>On not found, returns null</returns>
+        public async Task<(bool Result, string Reason)> SetHouseBlobByHouseID(HouseIDToken HouseID, byte[] HouseBlobStream)
+        {
+            using MemoryStream stream = new MemoryStream(HouseBlobStream);
+            var content = new StreamContent(stream);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+            var response = await Client.PostAsync($"lots/{HouseID}/blob", content);
+            return (response.IsSuccessStatusCode, !response.IsSuccessStatusCode ? await response.Content.ReadAsStringAsync() : "");
+        }
 
         /// <summary>
         /// Downloads the PNG Image for the given <paramref name="HouseID"/>
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns>On not found, returns null</returns>
-        public Task<byte[]?> GetThumbnailByHouseID(HouseIDToken HouseID) =>
+        public Task<HTTPServiceResult<byte[]>> GetThumbnailByHouseID(HouseIDToken HouseID) =>
             GetQueryAsOctet($"lots/{HouseID.HouseID}/thumbnail");
         /// <summary>
         /// Uploads the PNG Image for the given <paramref name="HouseID"/>
@@ -211,7 +249,7 @@ namespace nio2so.DataService.Common
         /// Returns a list of the <see cref="HouseIDToken"/> and <see cref="LotPosition"/> of all lots in this Shard
         /// </summary>
         /// <returns></returns>
-        public Task<N2GetLotListQueryResult?> GetAllLotProfiles() =>
+        public Task<HTTPServiceResult<N2GetLotListQueryResult>> GetAllLotProfiles() =>
             GetQueryAs<N2GetLotListQueryResult>("lots/profiles");
 
         /// <summary>
@@ -219,7 +257,7 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        public Task<LotProfile?> GetLotProfileByHouseID(HouseIDToken HouseID) =>
+        public Task<HTTPServiceResult<LotProfile>> GetLotProfileByHouseID(HouseIDToken HouseID) =>
             GetQueryAs<LotProfile>($"lots/{HouseID}/profile");
 
         /// <summary>
@@ -235,38 +273,53 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns>Null when purchasing was not successful.</returns>
-        public Task<LotProfile?> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, uint HouseID, uint X, uint Y) =>
+        public Task<HTTPServiceResult<LotProfile>> AttemptToPurchaseLotByAvatarID(AvatarIDToken AvatarID, uint HouseID, uint X, uint Y) =>
             GetQueryAs<LotProfile>($"lots/purchase", (nameof(AvatarID),AvatarID), (nameof(HouseID), HouseID), (nameof(X), X), (nameof(Y), Y));
         /// <summary>
         /// Attempts to purchase a new slot in the map. Returns a <see cref="LotProfile"/> containing the new <see cref="HouseIDToken"/>
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns>Null when purchasing was not successful.</returns>
-        public Task<IEnumerable<AvatarIDToken>?> GetRoommatesByHouseID(HouseIDToken HouseID) =>
+        public Task<HTTPServiceResult<IEnumerable<AvatarIDToken>>> GetRoommatesByHouseID(HouseIDToken HouseID) =>
             GetQueryAs<IEnumerable<AvatarIDToken>>($"lots/{HouseID}/roommates");
         /// <summary>
         /// Searches for the given resource <paramref name="Type"/> exactly matching the given search <paramref name="Query"/>
         /// </summary>
         /// <returns></returns>
         public async Task<N2SearchQueryResult> SubmitSearchExact(string Query, string Type) =>
-            await GetQueryAs<N2SearchQueryResult>($"search/{Type}/exact",(nameof(Query),Query)) ?? new(Query, Type, []);
+            (await GetQueryAs<N2SearchQueryResult>($"search/{Type}/exact",(nameof(Query),Query))).Result ?? new(Query, Type, []);
         /// <summary>
         /// Searches for the given resource <paramref name="Type"/> broadly matching the given search <paramref name="Query"/>
         /// </summary>
         /// <returns></returns>
         public async Task<N2SearchQueryResult> SubmitSearch(string Query, string Type) =>
-            await GetQueryAs<N2SearchQueryResult>($"search/{Type}", (nameof(Query), Query)) ?? new(Query, Type, []);
+            (await GetQueryAs<N2SearchQueryResult>($"search/{Type}", (nameof(Query), Query))).Result ?? new (Query, Type, []);
         /// <summary>
         /// Gets how the <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> feels about other avatars
         /// </summary>
         /// <returns></returns>
-        public async Task<N2RelationshipsByAvatarIDQueryResult?> GetOutgoingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
+        public async Task<HTTPServiceResult<N2RelationshipsByAvatarIDQueryResult>> GetOutgoingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
             await GetQueryAs<N2RelationshipsByAvatarIDQueryResult>($"avatars/{AvatarID}/relationships", ("direction", "outgoing"));
         /// <summary>
         /// Gets how the other avatars feel about <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> 
         /// </summary>
         /// <returns></returns>
-        public async Task<N2RelationshipsByAvatarIDQueryResult?> GetIncomingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
+        public async Task<HTTPServiceResult<N2RelationshipsByAvatarIDQueryResult>> GetIncomingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
             await GetQueryAs<N2RelationshipsByAvatarIDQueryResult>($"avatars/{AvatarID}/relationships", ("direction", "incoming"));
+        /// <summary>
+        /// Returns the online status of the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<bool>> GetOnlineStatusByAvatarID(AvatarIDToken AvatarID) =>
+            GetQueryAs<bool>($"avatars/{AvatarID}/online");
+
+        /// <summary>
+        /// Sets the online status of the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
+        public Task<HttpResponseMessage> SetOnlineStatusByAvatarID(AvatarIDToken AvatarID, bool IsOnline) =>
+            QueryPostAsString($"avatars/{AvatarID}/online","", (nameof(IsOnline),IsOnline));
     }
 }

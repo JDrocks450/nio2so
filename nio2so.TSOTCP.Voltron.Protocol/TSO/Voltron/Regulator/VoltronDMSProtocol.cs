@@ -10,7 +10,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
     [TSORegulator]
     /// <summary>
     /// This protocol handles lower-level functions of the Voltron Data Service such as 
-    /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientByePDU"/>
+    /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientBye"/>
     /// </summary>
     internal class VoltronDMSProtocol : TSOProtocol
     {
@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         public void BYE_PDU(TSOVoltronPacket PDU)
         {
             var bye_pdu = (TSOClientBye)PDU;
-            LogMessage("Client is saying Bye! Disconnecting after frame...");
+            LogConsole("Client is saying Bye! Disconnecting after frame...");
             RespondWith(bye_pdu);
         }
         /// <summary>
@@ -39,8 +39,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out Struct.TSOAriesIDStruct? VoltronID))
             {
-                GetRegulator<RoomProtocol>().AvatarPurgePreviousSession(VoltronID, out string error);
+                //PURGE PREVIOUS SESSION IF NOT CAUGHT BY ON_DISCONNECT
+                GetRegulator<RoomProtocol>().AvatarPurgePlaySession(VoltronID, out string error);
                 LogConsole($"AvatarPurgePreviousSession(): AvatarID: {VoltronID.AvatarID}:" + error);
+                //SET ONLINE STATUS TO TRUE
+                if(GetDataService().SetOnlineStatusByAvatarID(VoltronID.AvatarID, true).Result.IsSuccessStatusCode) 
+                    LogConsole($"SetAvatarOnlineStatus(): AvatarID: {VoltronID.AvatarID} Value: {true}");
             }
             return;
             /*
@@ -48,8 +52,26 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
             string avatarName = TSOVoltronConst.MyAvatarName;
             RespondWith(new TSOUpdatePlayerPDU(new Struct.TSOAriesIDStruct(avatarID, avatarName)));*/
         }
+        /// <summary>
+        /// Logic to run when a TSOClient disconnects from Voltron
+        /// </summary>
+        internal void ON_DISCONNECT(uint QuazarID)
+        {
+            nio2soClientSessionService clientSession = GetService<nio2soClientSessionService>();
+            if(clientSession.RemoveClient(QuazarID, out Struct.TSOAriesIDStruct? VoltronID))
+            {
+                //SET ONLINE STATUS TO FALSE
+                if (GetDataService().SetOnlineStatusByAvatarID(VoltronID.AvatarID, true).Result.IsSuccessStatusCode)
+                    LogConsole($"SetAvatarOnlineStatus(): AvatarID: {VoltronID.AvatarID} Value: {false}");
+                LogConsole($"{nameof(ON_DISCONNECT)}(): AvatarID: {VoltronID.AvatarID} is leaving Voltron... bye-bye!", nameof(ON_DISCONNECT), TSOServerTelemetryServer.LogSeverity.Warnings);
+                // CLEAN THIS CLIENT OUT OF ANY ROOMS THEY'RE IN
+                GetRegulator<RoomProtocol>().AvatarPurgePlaySession(VoltronID, out string error);
+                LogConsole($"AvatarPurgePreviousSession(): AvatarID: {VoltronID.AvatarID}:" + error);
+            }
+            else LogConsole($"{nameof(ON_DISCONNECT)}(): QuaZarID: {QuazarID}(NO VOLTRON_ID!!) is leaving Voltron... cya!", nameof(ON_DISCONNECT), TSOServerTelemetryServer.LogSeverity.Errors);
+        }
 
-        internal TSOVoltronPacket VOLTRON_DMS_GetUpdatePlayerPDU(uint AvatarID, out string AvatarName)
+        internal TSOVoltronPacket GetUpdatePlayerPDU(uint AvatarID, out string AvatarName)
         {
             Struct.TSOPlayerInfoStruct playerInfo = GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
             AvatarName = playerInfo.PlayerID.MasterID;
@@ -61,12 +83,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         {
             TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)PDU;
             RespondWith(new TSOBCVersionListPDU(pdu.VersionString, "", 0x01));
-        }
-
-        private void LogMessage(string Message)
-        {
-            TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                RegulatorName, Message));
         }
     }
 }

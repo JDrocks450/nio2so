@@ -130,6 +130,11 @@ namespace nio2so.TSOView2.Formats.Network
 
             PDUPropertyTree.Items.Clear();
             PDUPropertyTree.Items.Add(rootNode);
+
+            _currentPDU.MakeBodyFromProperties();
+            graph = _currentPDU.MySerializedGraph;
+
+            PreviewText.Text = TSOVoltronSerializer.GenerateSerializationSummary(graph, ShowValues, AutoInitializeValues);
         }
 
         TextBlock GetCodeBlock(TSOVoltronSerializerGraphItem CurrentItem)

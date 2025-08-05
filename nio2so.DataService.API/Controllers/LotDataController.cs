@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 using nio2so.Data.Common.Testing;
@@ -40,24 +41,27 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/lots/1338/profile?field=name
         [HttpPost("{HouseID}/profile")]
-        public ActionResult MutateProfile(uint HouseID, [FromQuery] string Field, [FromBody] string Value)
+        public async Task<ActionResult> MutateProfile(uint HouseID, [FromQuery] string Field, [FromBody] string Value)
         {
-            if (lotsDataService.SetLotProfileFields(HouseID, Field, Value))
+            if (await lotsDataService.SetLotProfileFields(HouseID, Field, Value))
                 return Accepted();
             return Unauthorized(Field);
         }
 
         // GET api/lots/purchase?AvatarID=1337&Phone=6548784&X=1&Y=1
         [HttpGet("purchase")]
-        public ActionResult<LotProfile> AvatarPurchaseLotByID(uint AvatarID, uint HouseID, uint X, uint Y)
+        public async Task<ActionResult<LotProfile>> AvatarPurchaseLotByID(uint AvatarID, uint HouseID, uint X, uint Y)
         {
-            var character = APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
-            if (lotsDataService.TryPurchaseLotByAvatarID(AvatarID, HouseID, character, new LotPosition(X, Y), out LotProfile? NewLot))
+            Common.Types.Avatar.TSODBChar character = await APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
+            (bool Success, string Reason, LotProfile? NewLotProfile) = await lotsDataService.TryPurchaseLotByAvatarID(AvatarID, HouseID, character, new LotPosition(X, Y));
+            if (Success && NewLotProfile != default)
             {
-                APIDataServices.AvatarDataService.SetCharacterByAvatarID(AvatarID, character);
-                return NewLot;
+                Success = await APIDataServices.AvatarDataService.SetCharacterByAvatarID(AvatarID, character);
+                if (!Success)
+                    return BadRequest("Could not update the Avatar Character File for: " + AvatarID);
+                return NewLotProfile;
             }
-            return BadRequest();
+            return BadRequest(Reason);
         }
 
         // GET api/lots/1338/thumbnail
@@ -84,7 +88,34 @@ namespace nio2so.DataService.API.Controllers
             byte[] pngBytes = new byte[Request.ContentLength.Value];
             await Request.Body.ReadExactlyAsync(pngBytes);
             await lotsDataService.SetThumbnailByHouseID(HouseID, pngBytes);
-            return Ok();
+            return Accepted();
+        }
+
+        // GET api/houses/1338/blob
+        [HttpGet("{HouseID}/blob")]
+        public async Task GetHouseCharBlobAsync(uint HouseID) => 
+            await MIMEResponse((await GetObjectByIDAsync(lotsDataService.GetHouseBlobByHouseID, (HouseIDToken)HouseID)).Value);
+        // POST api/houses/1338/blob
+        [HttpPost("{HouseID}/blob")]
+        public async Task<ActionResult> SetHouseCharBlobAsync(uint HouseID)
+        {
+            if (Request.ContentType != "application/octet-stream")
+                return StatusCode(StatusCodes.Status406NotAcceptable);
+            byte[] Data = new byte[(int)Request.ContentLength];
+            await Request.Body.ReadExactlyAsync(Data);
+            try
+            {
+                await lotsDataService.SetHouseBlobByHouseID(HouseID, Data);
+            }
+            catch(KeyNotFoundException knf)
+            {
+                return NotFound(knf.Message);
+            }
+            catch(InvalidOperationException ioe)
+            {
+                return Unauthorized(ioe.Message);
+            }
+            return Accepted();
         }
 
         // POST api/<LotDataController>

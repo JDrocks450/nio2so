@@ -15,14 +15,14 @@ namespace nio2so.DataService.API
             }
             catch (KeyNotFoundException ke)
             {
-                return NotFound(ID);
+                return NotFound(ke.Message);
             }
             catch (FileNotFoundException fe)
             {
-                return NotFound(ID);
+                return NotFound(fe.Message);
             }
             if (objectData == null)
-                return NotFound(ID);
+                return NotFound($"{ID} was not found.");
             return objectData;
         }
         protected async Task<ActionResult<TResult>> GetObjectByIDAsync<TQuery, TResult>(Func<TQuery, Task<TResult>> QueryFunction, TQuery ID)
@@ -34,14 +34,14 @@ namespace nio2so.DataService.API
             }
             catch (KeyNotFoundException ke)
             {
-                return NotFound(ID);
+                return NotFound(ke.Message);
             }
             catch (FileNotFoundException fe)
             {
-                return NotFound(ID);
+                return NotFound(fe.Message);
             }
             if (objectData == null)
-                return NotFound(ID);
+                return NotFound($"{ID} was not found.");
             return objectData;
         }
         /// <summary>
@@ -57,6 +57,7 @@ namespace nio2so.DataService.API
             if (ContentBytes == null)
             {
                 Response.StatusCode = StatusCodes.Status404NotFound;
+                await Response.WriteAsync("The requested resource file could not be found.");
                 return;
             }
             Response.Headers.Add(HeaderNames.ContentType, MIMEString);

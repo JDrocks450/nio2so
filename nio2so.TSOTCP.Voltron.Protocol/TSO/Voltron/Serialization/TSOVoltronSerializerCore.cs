@@ -314,6 +314,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
         /// supported</returns>
         public static bool WriteProperty(Stream Stream, PropertyInfo property, object? Instance)
         {
+            long startLen = Stream.Position;
             _lastGraphItems.Clear();            
 
             bool hasAttrib = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type) != default;
@@ -341,7 +342,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
 
             if (SerializeValue == null) // handle NULLs!
             { // item is null -- handle this
-                _lastGraphItems.Push(new(property, property.PropertyType, null));
+                _lastGraphItems.Push(new(property, property.PropertyType, null, 0));
                 return true;
             }
 
@@ -357,8 +358,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (property.PropertyType == typeof(byte[]))
             {
                 Stream.EmplaceBody((byte[])SerializeValue);
-                _lastGraphItems.Push(new(property,
-                    typeof(byte[]), (byte[])SerializeValue, $"{((byte[])SerializeValue).Length} bytes."));
+                int length = ((byte[])SerializeValue).Length;
+                _lastGraphItems.Push(new(property, typeof(byte[]), (byte[])SerializeValue, length, $"{length} bytes directly."));
                 return true;
             }
 
@@ -368,12 +369,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 Array arr = (Array)property.GetValue(Instance);
                 int i = 0;
                 if (arr.Length <= 0)
-                    _lastGraphItems.Push(new(property, arr.GetType(), arr));
+                    _lastGraphItems.Push(new(property, arr.GetType(), arr, 0, "An empty array (0 bytes)"));
                 foreach (var item in arr)
                 {
                     if (!arr.GetType().GetElementType().IsClass) throw new NotImplementedException("Arrays with an element type that isn't a class isn't supported right now.");
+                    startLen = Stream.Position;
                     TSOVoltronSerializer.Serialize(Stream, item);
-                    _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item));
+                    _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item, (Stream.Position - startLen)));
                     i++;
                 }
                 return true;
@@ -405,7 +407,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
                 string valueString = SerializeValue.ToString();
                 if (property.PropertyType.IsEnum)                
                     valueString = Enum.GetName(property.PropertyType, SerializeValue) ?? valueString;                
-                _lastGraphItems.Push(new(property, PropertyType, SerializeValue, valueString));
+                _lastGraphItems.Push(new(property, PropertyType, SerializeValue, Stream.Position - startLen, valueString));
                 return true;
             }
             if (!hasAttrib) // AUTOSELECT
@@ -421,7 +423,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             else if (SerializeValue is string myStringValue)
             {
                 WriteString(Stream, myStringValue, type);
-                _lastGraphItems.Push(new(property, typeof(string), myStringValue, myStringValue));
+                _lastGraphItems.Push(new(property, typeof(string), myStringValue, Stream.Position - startLen, myStringValue));
                 return true;
             }
 
@@ -429,7 +431,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization
             if (PropertyType.IsClass)
             {
                 TSOVoltronSerializer.Serialize(Stream, SerializeValue, property);
-                _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property, PropertyType, SerializeValue));
+                _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property, PropertyType, SerializeValue, Stream.Position - startLen));
                 return true;
             }
 

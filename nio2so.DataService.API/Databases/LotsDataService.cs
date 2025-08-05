@@ -6,6 +6,7 @@ using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.DataService.Common.Types.Search;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.DataService.API.Databases
 {
@@ -29,10 +30,13 @@ namespace nio2so.DataService.API.Databases
             Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.LotInfoFile, EnsureDefaultLots));
             //**creation index for lot IDs
             Libraries.Add("LOT CREATION INDEX", new JSONCreationIndex(settings.LotCreationIndexFile));
+            //**library for houseblobs
+            Libraries.Add("HOUSEBLOBS", new FileObjectLibrary(settings.HouseBlobLibraryDirectory, "house", "houseblob", GetDefaultHouseBlob));
 
             base.AddLibraries();
         }
 
+        Task<byte[]> GetDefaultHouseBlob() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultHouseBlobPath);
         Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultThumbnailPath);
 
         Task EnsureDefaultLots()
@@ -93,7 +97,7 @@ namespace nio2so.DataService.API.Databases
         /// <param name="field"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        public bool SetLotProfileFields(HouseIDToken houseID, string field, string value)
+        public async Task<bool> SetLotProfileFields(HouseIDToken houseID, string field, string value)
         {
             field = field.ToLowerInvariant();
             var profile = GetLotProfileByLotID(houseID);
@@ -102,11 +106,11 @@ namespace nio2so.DataService.API.Databases
             {
                 case "name":
                     profile.Name = value;
-                    Save();
+                    await Save();
                     return true;
                 case "description":
                     profile.Description = value;
-                    Save();
+                    await Save();
                     return true;
                 default: return false;
             }
@@ -131,15 +135,16 @@ namespace nio2so.DataService.API.Databases
         /// <param name="Position"></param>
         /// <param name="NewLotProfile"></param>
         /// <returns></returns>
-        public bool TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, HouseIDToken HouseID, TSODBChar AvatarProfile, LotPosition Position, out LotProfile? NewLotProfile)
+        public async Task<(bool Success, string Reason, LotProfile? NewLotProfile)> TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, HouseIDToken HouseID, TSODBChar AvatarProfile, LotPosition Position)
         {
-            NewLotProfile = null;
+            LotProfile? NewLotProfile = null;
+            string Reason = "success.";
 
             if (AvatarProfile.Funds <= ServerSettings.Current.LotPurchasePrice)
-                return false; // Refused! You're broke!
+                return (false, "You don't have enough money.", null); // Refused! You're broke!
 
             if (LotsLibrary.ContainsKey(HouseID))
-                return false; // Refused! Someone lives here!
+                return (false, "That lot was just bought recently. Sorry!", null); // Refused! Someone lives here!
 
             bool result = LotsLibrary.TryAdd(HouseID, new LotInfo()
             {
@@ -149,11 +154,12 @@ namespace nio2so.DataService.API.Databases
 
             if (result)
             {
+                await GetLibrary<FileObjectLibrary>("HOUSEBLOBS").SetDataByIDToDisk(HouseID, await GetDefaultHouseBlob());
                 AvatarProfile.Funds -= ServerSettings.Current.LotPurchasePrice;
                 UpdateHouseCreationIndex(HouseID);
             }
-            Save(); // save the db
-            return result;
+            await Save(); // save the db
+            return (true, Reason, NewLotProfile);
         }
 
         /// <summary>
@@ -188,5 +194,26 @@ namespace nio2so.DataService.API.Databases
 
         public IDictionary<uint, string> SearchExact(string QueryString) => LotsLibrary.SearchExact(QueryString);
         public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => LotsLibrary.SearchBroad(QueryString, MaxResults);
+        /// <summary>
+        /// Saves the provided HouseBlob to the HOUSEBLOB library
+        /// </summary>
+        /// <param name="houseID"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public Task SetHouseBlobByHouseID(HouseIDToken houseID, byte[] data)
+        {
+            if (!LotsLibrary.TryGetValue(houseID, out LotInfo info))
+                throw new KeyNotFoundException(houseID + " is not found in the LotLibrary.");
+            if (info.IsReadOnly)
+                throw new InvalidOperationException(houseID + " is " + nameof(LotInfo.IsReadOnly) + " = true. Changes were not saved.");
+            return GetLibrary<FileObjectLibrary>("HOUSEBLOBS").SetDataByIDToDisk(houseID, data);
+        }
+        /// <summary>
+        /// Reads the HouseBlob in the HOUSEBLOB library at the <paramref name="houseID"/>
+        /// </summary>
+        /// <param name="houseID"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        public Task<byte[]> GetHouseBlobByHouseID(HouseIDToken houseID) => GetLibrary<FileObjectLibrary>("HOUSEBLOBS").GetDataByID(houseID);
     }
 }

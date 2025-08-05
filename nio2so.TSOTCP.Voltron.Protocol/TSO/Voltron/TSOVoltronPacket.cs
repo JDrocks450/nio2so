@@ -93,7 +93,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             //Index, PropertyInfo
             Dictionary<uint, PropertyInfo> distanceToEnds = new();
 
-            MySerializedGraph = new("", GetType(), this, ToShortString());
+            MySerializedGraph = new("", GetType(), this, 0, ToShortString());
 
             foreach (var property in GetPropertiesToCopy())
             {
@@ -101,7 +101,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
                 {
                     distanceToEnds.Add((uint)BodyPosition, property);
                     EmplaceBody(new byte[sizeof(uint)]); // fill with blank for now                    
-                    MySerializedGraph.Add(new TSOVoltronSerializerGraphItem(property, property.PropertyType, property.GetValue(this)));
+                    MySerializedGraph.Add(new TSOVoltronSerializerGraphItem(property, property.PropertyType, property.GetValue(this), 4));
                     continue;
                 }
                 if (!EmbedProperty(property))
@@ -120,6 +120,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron
             }
 
             ReevaluateSize();
+            MySerializedGraph.ByteLength = PayloadSize;
         }
 
         private bool EmbedProperty(PropertyInfo property) => TSOVoltronSerializerCore.WriteProperty(_bodyBuffer, property, this);

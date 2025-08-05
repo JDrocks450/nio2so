@@ -56,6 +56,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             Send(ID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
         }
 
+        protected override void OnClientDisconnect(uint ID)
+        {
+            base.OnClientDisconnect(ID);
+
+            //Update VoltronDMS
+            Regulators.Get<VoltronDMSProtocol>().ON_DISCONNECT(ID);
+        }
+
         protected void OnIncomingAriesFrameCallback(uint ID, TSOTCPPacket Data)
         {
             ServerPauseEvent.WaitOne(); // FORCE SINGLE THREADED FOR RIGHT NOW
@@ -104,7 +112,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         try
                         {
                             //download the player's name from data service.
-                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().VOLTRON_DMS_GetUpdatePlayerPDU(AvatarID, out string AvatarName);                                                     
+                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().GetUpdatePlayerPDU(AvatarID, out string AvatarName);                                                     
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
                             //send the update player PDU to the client

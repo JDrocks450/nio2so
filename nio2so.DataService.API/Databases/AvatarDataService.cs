@@ -14,7 +14,6 @@ namespace nio2so.DataService.API.Databases
     /// </summary>
     internal class AvatarDataService : DataServiceBase, ISearchable<uint>
     {
-        const string charblob_folder = @"charblob";
         const string AvatarLibName = "AVATARS";
 
         private JSONDictionaryLibrary<uint, AvatarInfo> AvatarsLibrary => GetLibrary<JSONDictionaryLibrary<uint, AvatarInfo>>(AvatarLibName);
@@ -30,7 +29,7 @@ namespace nio2so.DataService.API.Databases
                 new JSONDictionaryLibrary<uint, AvatarInfo>(fPath, EnsureDefaultValues));
             //**folder of charblobs, database
             Libraries.Add("BLOBS",
-                new FileObjectLibrary(Path.Combine(Path.GetDirectoryName(fPath), charblob_folder), "avatar", "charblob", CharBlobNotFound));
+                new FileObjectLibrary(ServerSettings.Current.AvatarBlobLibraryPath, "avatar", "charblob", CharBlobNotFound));
             //**avatar creation index** taken from The Sims 2 with its Sim Creation Index idea
             Libraries.Add("AVATAR CREATION INDEX", new JSONCreationIndex(ServerSettings.Current.AvatarCreationIndexFile));
 
@@ -160,12 +159,12 @@ namespace nio2so.DataService.API.Databases
         /// <param name="AvatarID"></param>
         /// <param name="Avatars"></param>
         /// <returns></returns>
-        public bool SetBookmarksByAvatarID(AvatarIDToken AvatarID, IEnumerable<AvatarIDToken> Avatars)
+        public async Task<bool> SetBookmarksByAvatarID(AvatarIDToken AvatarID, IEnumerable<AvatarIDToken> Avatars)
         {
             if (!AvatarsLibrary.ContainsKey(AvatarID))
                 return false;            
             AvatarsLibrary[AvatarID].BookmarkInfo.BookmarkAvatars = new(Avatars);
-            Save();
+            await Save();
             return true;
         }
         /// <summary>
@@ -175,7 +174,7 @@ namespace nio2so.DataService.API.Databases
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public TSODBChar GetCharacterByAvatarID(AvatarIDToken AvatarID)
+        public async Task<TSODBChar> GetCharacterByAvatarID(AvatarIDToken AvatarID)
         {
             void Reevaluate(TSODBChar CharData)
             {
@@ -195,7 +194,7 @@ namespace nio2so.DataService.API.Databases
                 throw new KeyNotFoundException(nameof(AvatarID));
             var file = AvatarsLibrary[AvatarID].AvatarCharacter;
             Reevaluate(file);
-            Save();
+            await Save();
             return file;
         }
 
@@ -205,12 +204,12 @@ namespace nio2so.DataService.API.Databases
         /// <param name="AvatarID"></param>
         /// <param name="Avatars"></param>
         /// <returns></returns>
-        public bool SetCharacterByAvatarID(AvatarIDToken AvatarID, TSODBChar CharacterFile)
+        public async Task<bool> SetCharacterByAvatarID(AvatarIDToken AvatarID, TSODBChar CharacterFile)
         {
             if (!AvatarsLibrary.ContainsKey(AvatarID))
                 return false;
             AvatarsLibrary[AvatarID].AvatarCharacter = CharacterFile;
-            Save();
+            await Save();
             return true;
         }
 
@@ -236,7 +235,7 @@ namespace nio2so.DataService.API.Databases
         /// <param name="user"></param>
         /// <param name="method"></param>
         /// <returns></returns>
-        public AvatarIDToken CreateNewAvatar(UserToken user, string method)
+        public async Task<AvatarIDToken> CreateNewAvatar(UserToken user, string method)
         {
             AvatarInfo newInfo;
             uint AvatarID = 0;
@@ -251,7 +250,7 @@ namespace nio2so.DataService.API.Databases
                 CreatedUsing = method
             }));
             newInfo.AvatarCharacter.Funds = TestingConstraints.StartingFunds;
-            Save();
+            await Save();
             //add the avatar to this account
             if (!APIDataServices.UserDataService.AddAvatarToAccount(user, AvatarID, out _))
                 throw new InvalidOperationException("Tried to link an avatar to an account that is full.");
@@ -262,8 +261,26 @@ namespace nio2so.DataService.API.Databases
         {
             return true;
         }
+        public bool GetAvatarOnlineStatus(AvatarIDToken AvatarID)
+        {
+            if (!AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
+                return info.IsOnline;
+            return false;
+        }
+        public async Task<bool> SetOnlineStatusByAvatarID(uint AvatarID, bool IsOnline)
+        {
+            if (!AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
+            {
+                info.IsOnline = IsOnline;
+                await Save();
+                return info.IsOnline;
+            }
+            return false;
+        }
 
         public IDictionary<uint,string> SearchExact(string QueryString) => AvatarsLibrary.SearchExact(QueryString);
-        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);        
+        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);
+
+        
     }
 }

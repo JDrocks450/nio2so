@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Lot;
@@ -93,11 +94,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
         private ConcurrentDictionary<uint, uint> _playersInRooms { get; } = new();
 
         /// <summary>
-        /// Clears this player from any rooms they may be in from a previous session that crashed or was force closed
+        /// Clears this player from any rooms they may be in from their play session (used when disconnecting/reconnecting)
         /// </summary>
         /// <param name="voltronID"></param>
         /// <exception cref="NotImplementedException"></exception>
-        public bool AvatarPurgePreviousSession(TSOAriesIDStruct? voltronID, out string FailureReason) => 
+        public bool AvatarPurgePlaySession(TSOAriesIDStruct? voltronID, out string FailureReason) => 
             ClientUpdateRoom_LeaveRoom(voltronID, out FailureReason);
         /// <summary>
         /// Creates a new <see cref="RoomProtocolRoomInfo"/> that is empty, uses the info from the given <paramref name="HouseID"/> and is lead by <paramref name="Leader"/>
@@ -165,12 +166,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 return; // too quick since last sync!
 
             //download all lots from data service ... change later to be rooms
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var client))
-                throw new NullReferenceException("nio2so data service client could not be found.");
-            var lots = client.GetAllLotProfiles().Result.Lots;
+            if (!TryDataServiceQuery(() => GetDataService().GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
+                throw new InvalidDataException(error);          
 
             int i = 0;
-            foreach (var houseID in lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
+            foreach (var houseID in result.Lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
             { // add the room if its not already in the list
                 CreateOrGetRoom(houseID,null,out _);
             }
@@ -504,7 +504,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator
                 roomIDStruct = new(thisLot.HouseID, RoomName);
 
                 //download the roommates of this house
-                var lotRoommates = GetService<nio2soVoltronDataServiceClient>().GetRoommatesByHouseID(HouseID).Result;
+                if (!TryDataServiceQuery(() => GetDataService().GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
+                    throw new InvalidDataException(error);
 
                 // check if i am one of those roommates (or the owner)
                 if ((lotRoommates != null && lotRoommates.Contains(joiningAvatarID)) || FORCE_ENTRY)
