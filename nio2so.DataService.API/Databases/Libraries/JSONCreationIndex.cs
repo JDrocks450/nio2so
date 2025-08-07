@@ -1,6 +1,4 @@
-﻿using nio2so.DataService.Common.Tokens;
-
-namespace nio2so.DataService.API.Databases.Libraries
+﻿namespace nio2so.DataService.API.Databases.Libraries
 {
     internal class JSONCreationIndex : JSONObjectLibrary<HashSet<uint>> 
     {

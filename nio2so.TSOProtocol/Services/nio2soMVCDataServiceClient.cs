@@ -1,10 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using nio2so.DataService.Common;
-using nio2so.DataService.Common.Queries;
-using nio2so.DataService.Common.Tokens;
-using nio2so.DataService.Common.Types;
-using nio2so.DataService.Common.Types.Avatar;
-using System.Net.Http.Json;
 
 namespace nio2so.TSOHTTPS.Protocol.Services
 {

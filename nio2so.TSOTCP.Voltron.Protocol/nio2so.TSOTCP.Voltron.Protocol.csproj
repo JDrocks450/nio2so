@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="TSO\Voltron\PDU\TSODBRequestWrapperOld.old" />
-    <None Remove="TSO\Voltron\Regulator\LotProtocol.cs~RF1e92def4.TMP" />
+    <None Remove="TSO\PDU\TSODBRequestWrapperOld.old" />
+    <None Remove="TSO\Regulator\LotProtocol.cs~RF1e92def4.TMP" />
   </ItemGroup>
 
   <ItemGroup>

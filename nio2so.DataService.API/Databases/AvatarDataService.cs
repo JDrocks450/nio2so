@@ -1,5 +1,4 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.DataService.API.Controllers;
 using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
@@ -208,6 +207,7 @@ namespace nio2so.DataService.API.Databases
         {
             if (!AvatarsLibrary.ContainsKey(AvatarID))
                 return false;
+            CharacterFile.Funds = AvatarsLibrary[AvatarID].AvatarCharacter.Funds;
             AvatarsLibrary[AvatarID].AvatarCharacter = CharacterFile;
             await Save();
             return true;
@@ -263,13 +263,13 @@ namespace nio2so.DataService.API.Databases
         }
         public bool GetAvatarOnlineStatus(AvatarIDToken AvatarID)
         {
-            if (!AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
+            if (AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
                 return info.IsOnline;
             return false;
         }
         public async Task<bool> SetOnlineStatusByAvatarID(uint AvatarID, bool IsOnline)
         {
-            if (!AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
+            if (AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
             {
                 info.IsOnline = IsOnline;
                 await Save();

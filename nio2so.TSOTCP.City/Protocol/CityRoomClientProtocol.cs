@@ -1,18 +1,7 @@
-﻿using nio2so.Data.Common.Testing;
-using nio2so.Formats.DB;
-using nio2so.Formats.Util.Endian;
-using nio2so.TSOTCP.Voltron.Protocol;
-using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.Services;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.Datablob;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator;
 
 namespace nio2so.TSOTCP.City.TSO.Voltron.Regulator
 {

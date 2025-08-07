@@ -2,12 +2,10 @@
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Regulator;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
-using QuazarAPI;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator;
 using QuazarAPI.Networking.Standard;
 using System.Net;
 using System.Net.Sockets;

@@ -3,7 +3,6 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Tokens;
 using nio2so.Protocol.Data.Credential;
 using nio2so.Protocol.Packets;

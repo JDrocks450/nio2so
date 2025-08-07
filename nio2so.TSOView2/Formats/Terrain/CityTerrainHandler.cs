@@ -1,9 +1,7 @@
-﻿using Microsoft.Win32;
-using nio2so.Formats.Terrain;
+﻿using nio2so.Formats.Terrain;
 using nio2so.TSOView2.FileDialog;
 using nio2so.TSOView2.Util;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 

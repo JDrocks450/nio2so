@@ -1,12 +1,6 @@
 ﻿using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.DataService.Common.Types.Search;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace nio2so.DataService.Common.Types
 {

@@ -1,8 +1,8 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
+using nio2so.TSOTCP.Voltron.Protocol.TSO;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Collections;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Collections;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
 using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.Factory

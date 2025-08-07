@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static nio2so.DataService.Common.Queries.N2SearchQueryResult;
+﻿using static nio2so.DataService.Common.Queries.N2SearchQueryResult;
 
 namespace nio2so.DataService.Common.Queries
 {

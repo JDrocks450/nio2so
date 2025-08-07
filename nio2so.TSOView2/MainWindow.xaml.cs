@@ -1,5 +1,4 @@
-﻿using nio2so.TSOView2.FileDialog;
-using nio2so.TSOView2.Formats;
+﻿using nio2so.TSOView2.Formats;
 using nio2so.TSOView2.Formats.Compressor;
 using nio2so.TSOView2.Formats.Network;
 using nio2so.TSOView2.Formats.Terrain;

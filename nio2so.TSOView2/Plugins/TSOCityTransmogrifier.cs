@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using nio2so.TSOView2.FileDialog;
+﻿using nio2so.TSOView2.FileDialog;
 using nio2so.TSOView2.Formats;
 using System;
 using System.Diagnostics;

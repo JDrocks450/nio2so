@@ -1,8 +1,4 @@
-﻿using nio2so.DataService.Common.Tokens;
-using System.Collections.Generic;
-using System.Reflection;
-
-namespace nio2so.DataService.API.Databases.Libraries
+﻿namespace nio2so.DataService.API.Databases.Libraries
 {
     /// <summary>
     /// A library serving files in a directory

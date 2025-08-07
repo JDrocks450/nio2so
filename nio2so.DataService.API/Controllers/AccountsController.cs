@@ -2,7 +2,6 @@
 using nio2so.DataService.API.Databases;
 using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
-using System.Net;
 
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860

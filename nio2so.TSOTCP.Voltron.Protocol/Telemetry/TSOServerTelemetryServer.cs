@@ -1,12 +1,11 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
-using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
+using nio2so.TSOTCP.Voltron.Protocol.TSO;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.Datablob.Structures;
 using QuazarAPI;
 using System.Diagnostics;
 

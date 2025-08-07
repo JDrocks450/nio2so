@@ -1,7 +1,6 @@
 ﻿using nio2so.DataService.Common.Types.Lot;
-using nio2so.Formats.DB;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
 using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.Factory

@@ -1,14 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.TSOTCP.City.TSO;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.Datablob.Structures;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.PDU.DBWrappers;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Struct;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 
 namespace nio2so.TSOTCP.City
 {

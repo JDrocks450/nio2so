@@ -1,6 +1,6 @@
 ﻿using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
+using nio2so.TSOTCP.Voltron.Protocol.TSO;
+using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;

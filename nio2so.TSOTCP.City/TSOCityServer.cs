@@ -1,13 +1,11 @@
 ﻿#define MAKEMANY
 #undef MAKEMANY
 
-using nio2so.Formats.BPS;
-using nio2so.Formats.TSOData;
 using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
+using nio2so.TSOTCP.Voltron.Protocol.TSO;
 using System.Net;
 
 namespace nio2so.TSOTCP.City.TSO

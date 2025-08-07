@@ -1,11 +1,5 @@
 ﻿using Microsoft.Win32;
-using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Voltron.Serialization;
-using System;
-using System.IO;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace nio2so.TSOView2.Formats.Network
 {

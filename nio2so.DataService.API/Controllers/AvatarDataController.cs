@@ -1,13 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.Net.Http.Headers;
 using nio2so.DataService.API.Databases;
 using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
-using System.Threading;
-using System.Threading.Tasks;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -92,11 +88,7 @@ namespace nio2so.DataService.API.Controllers
 
         // POST api/avatars/1337/online
         [HttpPost("{AvatarID}/online")]
-        public async Task<ActionResult<bool>> GetAvatarIsOnlineByAvatarIDAsync(uint AvatarID, [FromQuery] bool IsOnline)
-        {
-            IsOnline = await avatarDataService.SetOnlineStatusByAvatarID(AvatarID, IsOnline);
-            return IsOnline;
-        }
+        public async Task<ActionResult<bool>> SetAvatarIsOnlineByAvatarIDAsync(uint AvatarID, [FromQuery] bool IsOnline) => await avatarDataService.SetOnlineStatusByAvatarID(AvatarID, IsOnline);
 
         /// <summary>
         /// Creates a new Avatar, returns the <see cref="AvatarIDToken"/> of the newly created avatar, and takes in a method string describing what application is used to create the avatar

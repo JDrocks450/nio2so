@@ -6,7 +6,6 @@ using nio2so.DataService.Common.Types.Lot;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
-using static nio2so.DataService.Common.HTTPServiceClientBase;
 
 namespace nio2so.DataService.Common
 {
