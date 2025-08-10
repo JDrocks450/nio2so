@@ -3,7 +3,7 @@
 namespace nio2so.DataService.Common.Types.Avatar
 {
     /// <summary>
-    /// Structure for TSOHTTP(S) AvatarDataServlet. Contains basic profile information about an Avatar
+    /// Contains basic profile information about an Avatar -- version independent
     /// </summary>
     /// <param name="AvatarID">The ID of the Avatar in Voltron</param>
     /// <param name="Name">The Avatar's name</param>
@@ -15,10 +15,10 @@ namespace nio2so.DataService.Common.Types.Avatar
     public record AvatarProfile(uint AvatarID, 
         string Name,
         long Simoleans,
-        [property: JsonPropertyName("Simolean-Delta")] long SimoleanDelta, 
+        long SimoleanDelta, 
         byte Popularity, 
-        [property: JsonPropertyName("Popularity-Delta")] byte PopularityDelta,         
-        [property: JsonPropertyName("Shard-Name")] string ShardName)
+        byte PopularityDelta,         
+        string ShardName)
     {
         public static AvatarProfile Empty => new(0, "", 0, 0, 0, 0, "");
     }

@@ -1,4 +1,5 @@
-﻿using nio2so.TSOView2.Util;
+﻿using nio2so.Formats;
+using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -53,6 +54,16 @@ namespace nio2so.TSOView2.Controls
             PopulateImages(cityFolderAddress);
             InvalidateImageSlideshow();
 
+            //city ID
+            if (CurrentCityFolderAddress != null && CurrentCityFolderAddress.Contains('_')) 
+            {
+                string number = CurrentCityFolderAddress.Substring(CurrentCityFolderAddress.IndexOf('_') + 1);
+                if (ushort.TryParse(number, out ushort CityIndex))
+                {
+                    if (TSOStringProvider.TryGetCityName(CityIndex, out string? CityName) && CityName != default)
+                        CityNameLabel.Text = CityName;
+                }
+            }
             return true;
         }
 

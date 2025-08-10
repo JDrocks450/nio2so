@@ -4,11 +4,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.DataService.Common.Tokens;
-using nio2so.Protocol.Data.Credential;
-using nio2so.Protocol.Packets;
+using nio2so.TSOHTTPS.Protocol.Data.Credential;
+using nio2so.TSOHTTPS.Protocol.Packets;
 using nio2so.TSOHTTPS.Protocol.Services;
 
-namespace nio2so.Protocol.Controllers
+namespace nio2so.TSOHTTPS.Protocol.Controllers
 {
     [ApiController]
     [Route("[controller]")]
@@ -32,14 +32,14 @@ namespace nio2so.Protocol.Controllers
         {
             _logger.LogInformation("TSOClient attempting connection. ");            
 
-            var reason = await DoLogin(username, password, ServiceID, Version);
+            var reason = await AuthLogin(username, password, ServiceID, Version);
                                     
             string returnPacketText = reason.ToString();
             _logger.LogInformation($"TSOClient AuthRequestResponse =====\n{returnPacketText}\n=====");
             return returnPacketText;
         }
 
-        private async Task<AuthReasonPacket> DoLogin(string? username, string? password, int ServiceID, string? Version)
+        private async Task<AuthReasonPacket> AuthLogin(string? username, string? password, int ServiceID, string? Version)
         {
             AuthReasonPacket.AuthErrors errorCode = PreCheck(username, Version);
 

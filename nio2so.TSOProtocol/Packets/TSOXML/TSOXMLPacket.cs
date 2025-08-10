@@ -2,13 +2,13 @@
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
 
-namespace nio2so.TSOProtocol.Packets.TSOXML
+namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML
 {
     /// <summary>
     /// This Attribute can be applied to a Property to override the name it is given in the function <see cref="TSOXMLPacket.MakePacket(ITSOXMLStructure, XElement?)"/>
     /// <para>Writing in an outside assembly? Use <see cref="JsonPropertyNameAttribute"/> instead.</para>
     /// </summary>
-    [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
     sealed class TSOXMLElementName : Attribute
     {
         public TSOXMLElementName(string ElementName)
@@ -25,6 +25,14 @@ namespace nio2so.TSOProtocol.Packets.TSOXML
     public interface ITSOXMLStructure
     {
 
+    }
+
+    /// <summary>
+    /// Structure for TSOHTTP(S) AvatarDataServlet. Contains basic profile information about an Avatar
+    /// </summary>
+    public interface IVersionedPacketStructure : ITSOXMLStructure
+    {
+        IVersionedPacketStructure GetDefault();
     }
 
     /// <summary>

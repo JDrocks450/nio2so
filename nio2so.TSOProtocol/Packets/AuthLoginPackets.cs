@@ -1,6 +1,6 @@
-﻿using nio2so.Protocol.Data.Credential;
+﻿using nio2so.TSOHTTPS.Protocol.Data.Credential;
 
-namespace nio2so.Protocol.Packets
+namespace nio2so.TSOHTTPS.Protocol.Packets
 {
     public class AuthReasonPacket
     {

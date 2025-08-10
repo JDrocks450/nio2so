@@ -1,4 +1,4 @@
-﻿namespace nio2so.Protocol.Data.Credential
+﻿namespace nio2so.TSOHTTPS.Protocol.Data.Credential
 {
     /// <summary>
     /// Awarded by the Auth Server, is the session cookie for the current TSOClient.
