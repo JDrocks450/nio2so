@@ -1,9 +1,11 @@
-﻿using nio2so.Data.Common.Testing;
+﻿using Microsoft.AspNetCore.Mvc;
+using nio2so.Data.Common.Testing;
 using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Search;
+using System.Threading.Tasks;
 
 namespace nio2so.DataService.API.Databases
 {
@@ -181,7 +183,7 @@ namespace nio2so.DataService.API.Databases
                 CharData.MyLotID = APIDataServices.LotDataService.GetRoommateHouseIDByAvatarID(AvatarID) ?? 0;
 
                 // TODO
-                if (AvatarID == 161)
+                if (AvatarID == 9999)
                 {
                     CharData.Unknown1 = 0;
                     CharData.Unknown3 = 0;
@@ -256,11 +258,45 @@ namespace nio2so.DataService.API.Databases
                 throw new InvalidOperationException("Tried to link an avatar to an account that is full.");
             return AvatarID;
         }
-
-        public bool DebitCreditTransaction(int AccountChange)
+        /// <summary>
+        /// Adds (or subtracts) the <paramref name="AmountChange"/> from the account belonging to <paramref name="AvatarID"/> and returns their new account funds
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <param name="AmountChange"></param>
+        /// <returns></returns>
+        public Task<int> DebitCreditTransaction(AvatarIDToken AvatarID, int AmountChange) => StandardAccountTransactionByAvatarID(AvatarID, AmountChange, AccountTransactionTypes.ADD);
+        /// <summary>
+        /// Will accept the request to change the funds to be the new value and returns the new amount of money for this avatar
+        /// </summary>
+        /// <param name="avatarID"></param>
+        /// <param name="newFunds"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        public Task<int> SetFundsByAvatarID(AvatarIDToken AvatarID, int NewFunds) => StandardAccountTransactionByAvatarID(AvatarID, NewFunds, AccountTransactionTypes.SET);
+        enum AccountTransactionTypes
         {
-            return true;
+            NONE,
+            SET,
+            ADD
         }
+        async Task<int> StandardAccountTransactionByAvatarID(AvatarIDToken AvatarID, int Value, AccountTransactionTypes TransactionType)
+        {
+            if (AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
+            {
+                int newValue = info.AvatarCharacter.Funds;
+                switch (TransactionType)
+                {
+                    case AccountTransactionTypes.SET:
+                        newValue = info.AvatarCharacter.Funds = Value; break;
+                    case AccountTransactionTypes.ADD:
+                        newValue = info.AvatarCharacter.Funds += Value; break;
+                }
+                await Save();
+                return newValue;
+            }
+            throw new KeyNotFoundException(nameof(AvatarID));
+        }
+
         public bool GetAvatarOnlineStatus(AvatarIDToken AvatarID)
         {
             if (AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
@@ -279,8 +315,6 @@ namespace nio2so.DataService.API.Databases
         }
 
         public IDictionary<uint,string> SearchExact(string QueryString) => AvatarsLibrary.SearchExact(QueryString);
-        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);
-
-        
+        public IDictionary<uint, string> SearchBroad(string QueryString, int MaxResults) => AvatarsLibrary.SearchBroad(QueryString, MaxResults);        
     }
 }

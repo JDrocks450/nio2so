@@ -27,7 +27,7 @@ namespace nio2so.DataService.Common.Types.Avatar
         /// <summary>
         /// The amount of money this avatar has
         /// </summary>
-        public uint Funds { get; set; } = 0;
+        public int Funds { get; set; } = 0;
         public uint Unknown6 { get; set; } = 60;
 
         public TSODBChar() : base() { }

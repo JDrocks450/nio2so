@@ -198,7 +198,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 {
                     Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, "Voltron Handler",
                             $"Handling the {packet.KnownPacketType} Voltron packet resulted in an error. \n" +
-                        $"{ex.Message}"));
+                        $"{ex}"));
                 }
             }
             CloseAriesFrame(ID);

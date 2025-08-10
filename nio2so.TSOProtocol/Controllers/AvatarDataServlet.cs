@@ -76,6 +76,7 @@ namespace nio2so.TSOProtocol.Controllers
             List<AvatarProfile> returnList = new List<AvatarProfile>();
             foreach (var avatar in avatars)
             {
+                if (avatar == 0) continue;
                 //**download data from nio2so data service
                 HTTPServiceResult<AvatarProfile> resp = await DownloadAvatarProfile(avatar);
                 if (resp.IsSuccessful && resp.Result != null)

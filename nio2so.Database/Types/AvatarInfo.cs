@@ -2,6 +2,7 @@
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Search;
+using System.Text.Json.Serialization;
 
 namespace nio2so.DataService.Common.Types
 {
@@ -90,7 +91,9 @@ namespace nio2so.DataService.Common.Types
 
         /// <summary>
         /// Is this avatar online
+        /// <para/>Always set to false at runtime and the serialized value in the DB will be ignored when reloaded.
         /// </summary>
-        public bool IsOnline { get; set; }
+        [JsonIgnore]
+        public bool IsOnline { get; set; } = false;
     }
 }

@@ -7,6 +7,7 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Struct;
+using System.Reflection.Metadata;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 {
@@ -68,6 +69,39 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 
             RespondTo(PDU, new TSOGetCharByIDResponse(avatarID, charData));
         }
+
+        /// <summary>
+        /// The client is attempting to send us a modified <see cref="TSODBChar"/> object.
+        /// We will take the new data and upload it to the data service
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <exception cref="InvalidDataException"></exception>    
+        /// <exception cref="InvalidDataException"></exception>
+        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
+        public void SetCharByID_Request(TSODBRequestWrapper PDU)
+        {
+            var charPacket = (TSOSetCharByIDRequest)PDU;
+            var avatarID = charPacket.AvatarID;
+            if (avatarID == 0)
+                throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
+
+            TSODBChar charData = charPacket.CharProfile;
+            int NewFunds = charPacket.NewFunds;
+
+            //**upload the new appearance data to nio2so
+            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
+                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
+            //just upload the TSOCharBlob to nio2so
+            bool result = dataServiceClient.SetCharacterFileByAvatarID(avatarID, charData).Result;
+            //upload new funds amount
+            if (!result)
+                _ = dataServiceClient.SetFundsByAvatarID(avatarID,NewFunds);
+
+            //log this to disk
+            TSOServerTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);
+            RespondTo(PDU, new TSOSetCharByIDResponse(avatarID));
+        }
+
         /// <summary>
         /// Handles a <see cref="TSOGetCharBlobByIDRequest"/> PDU and returns the <see cref="TSODBCharBlob"/> data item for this player using the <see cref="nio2soVoltronDataServiceClient"/>
         /// </summary>
@@ -155,7 +189,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             var avatarID = ((TSOInsertCharBlobByIDRequest)PDU).AvatarID;
             if (avatarID == 0)
                 throw new InvalidDataException("You cannot provide zero as an AvatarID when sending a Client to CAS. " +
-                    "Give the Client an actual AvatarID. Ignoring this PDU.");
+                    "Give the Client an actual AvatarID next time. Ignoring this PDU.");
 
             //decompress enclosed stream into a TSODBCharBlob
             if (!((TSOInsertCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
@@ -163,17 +197,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             if (Blob.AvatarID != avatarID)
                 Blob.AvatarID = avatarID;
 
-            //**upload the new avatar appearance data to nio2so
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
-                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
-            //just upload the TSOCharBlob to nio2so
-            bool result = dataServiceClient.SetAvatarCharBlobByAvatarID(avatarID, TSOVoltronSerializer.Serialize(Blob)).Result;
-
-            if (!result)
-                throw new InvalidOperationException("nio2so Data Service refused the changes.");
-
-            //log this to disk
-            TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
+            UploadCharacterBlob(avatarID, Blob);
             RespondTo(PDU, new TSOInsertCharBlobByIDResponse(avatarID));
         }
 
@@ -188,16 +212,28 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
         {
             var avatarID = ((TSOSetCharBlobByIDRequest)PDU).AvatarID;
             if (avatarID == 0)
-                throw new InvalidDataException("Client provided AvatarID: 0 as the one to update which is not valid. Ignoring...");
+                throw new InvalidDataException($"Client provided AvatarID: {avatarID} which is not valid. Ignoring...");
 
             //decompress enclosed stream into a TSODBCharBlob
             if (!((TSOSetCharBlobByIDRequest)PDU).TryUnpack(out TSODBCharBlob? Blob) || Blob == null)
-                throw new InvalidDataException("Could not decompress this PDU into a TSODBCharBlob!!");
+                throw new InvalidDataException($"Could not decompress this PDU into a {nameof(TSODBCharBlob)}!!");
 
             if (Blob.AvatarID != avatarID)
                 throw new InvalidDataException("Submitted Character Blob from the server doesn't match the avatar we're modifying! Changes not saved...");
 
-            //**upload the new appearance data to nio2so
+            UploadCharacterBlob(avatarID,Blob);
+            RespondTo(PDU, new TSOSetCharBlobByIDResponse(avatarID,Blob));
+        }
+        /// <summary>
+        /// Standard function to upload the given <paramref name="Blob"/> for the <paramref name="avatarID"/> provided to the nio2so data service
+        /// </summary>
+        /// <param name="avatarID"></param>
+        /// <param name="Blob"></param>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
+        void UploadCharacterBlob(uint avatarID, TSODBCharBlob Blob)
+        {
+            //**upload the new avatar appearance data to nio2so
             if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             //just upload the TSOCharBlob to nio2so
@@ -206,38 +242,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             if (!result)
                 throw new InvalidOperationException("nio2so Data Service refused the changes.");
 
-            //log this to disk
-            TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);
-            RespondTo(PDU, new TSOSetCharBlobByIDResponse(avatarID, Blob));
+            //log this appearance to console log
+            TSOServerTelemetryServer.Global.OnCharBlob(NetworkTrafficDirections.INBOUND, avatarID, Blob);            
         }
-
-        /// <summary>
-        /// The client is attempting to send us a modified <see cref="TSODBChar"/> object.
-        /// We will take the new data and add it to our pseudo-database for later usage
-        /// </summary>
-        /// <param name="PDU"></param>
-        /// <exception cref="InvalidDataException"></exception>    
-        /// <exception cref="InvalidDataException"></exception>
-        [TSOProtocolDatabaseHandler(TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request)]
-        public void SetCharByID_Request(TSODBRequestWrapper PDU)
-        {
-            var charPacket = (TSOSetCharByIDRequest)PDU;
-            var avatarID = charPacket.AvatarID;
-            if (avatarID == 0)
-                throw new InvalidDataException($"{TSO_PreAlpha_DBActionCLSIDs.SetCharByID_Request} AvatarID: {avatarID}. ERROR!!!");
-
-            TSODBChar charData = charPacket.CharProfile;
-
-            //**upload the new appearance data to nio2so
-            if (!TryGetService<nio2soVoltronDataServiceClient>(out var dataServiceClient))
-                throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
-            //just upload the TSOCharBlob to nio2so
-            bool result = dataServiceClient.SetCharacterFileByAvatarID(avatarID, charData).Result;
-
-            //log this to disk
-            TSOServerTelemetryServer.Global.OnCharData(NetworkTrafficDirections.INBOUND, avatarID, charData);
-            RespondTo(PDU, new TSOSetCharByIDResponse(avatarID));
-        }
+       
         /// <summary>
         /// Invoked when the AvatarID embedded in the PDU should add/remove funds from their account
         /// </summary>

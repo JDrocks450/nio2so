@@ -30,10 +30,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
         public bool TryReverseSearch(TSOAriesIDStruct VoltronID, out uint QuazarID)
         {
             QuazarID = 0;
-            var result = _sessions.Where(x => ((ITSONumeralStringStruct)x.Value).NumericID == ((ITSONumeralStringStruct)VoltronID).NumericID);
-            if (!result.Any()) return false;
-            QuazarID = result.First().Key;
-            return true;    
+            lock (_sessions)
+            {
+                var result = _sessions.Where(x => ((ITSONumeralStringStruct)x.Value).NumericID == ((ITSONumeralStringStruct)VoltronID).NumericID);
+                if (!result.Any()) return false;
+                QuazarID = result.First().Key;
+                return true;
+            }             
         }
 
         /// <summary>

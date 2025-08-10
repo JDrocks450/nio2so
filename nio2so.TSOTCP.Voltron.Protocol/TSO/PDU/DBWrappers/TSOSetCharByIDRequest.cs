@@ -10,12 +10,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers
         [TSOVoltronDBWrapperField]
         public uint StatusCode { get; set; } = 0x0;
         /// <summary>
-        /// Currently unknown
+        /// The amount of funds this avatar should have when this packet was sent
         /// </summary>
         [TSOVoltronDBWrapperField]
-        public uint Arg1 { get; set; } = 0x0;
+        public int NewFunds { get; set; } = 0x0;
         /// <summary>
-        /// Currently unknown
+        /// Currently unknown -- seems to be BAADF00D
         /// </summary>
         [TSOVoltronDBWrapperField]
         public uint Arg2 { get; set; } = 0x0;

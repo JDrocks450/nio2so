@@ -4,6 +4,10 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers
 {
+    /// <summary>
+    /// Sent when a Client want to update the appearance of their Avatar
+    /// <para/>Seen after CAS and when an online house is closing
+    /// </summary>
     [TSOVoltronDBRequestWrapperPDU(TSO_PreAlpha_DBActionCLSIDs.SetCharBlobByID_Request)]
     public class TSOSetCharBlobByIDRequest : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {

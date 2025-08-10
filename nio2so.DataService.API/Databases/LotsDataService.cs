@@ -132,10 +132,12 @@ namespace nio2so.DataService.API.Databases
         /// <param name="Position"></param>
         /// <param name="NewLotProfile"></param>
         /// <returns></returns>
-        public async Task<(bool Success, string Reason, LotProfile? NewLotProfile)> TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, HouseIDToken HouseID, TSODBChar AvatarProfile, LotPosition Position)
+        public async Task<(bool Success, string Reason, LotProfile? NewLotProfile)> TryPurchaseLotByAvatarID(AvatarIDToken AvatarID, HouseIDToken HouseID, LotPosition Position)
         {
             LotProfile? NewLotProfile = null;
             string Reason = "success.";
+
+            TSODBChar AvatarProfile = await APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
 
             if (AvatarProfile.Funds <= ServerSettings.Current.LotPurchasePrice)
                 return (false, "You don't have enough money.", null); // Refused! You're broke!
@@ -151,8 +153,14 @@ namespace nio2so.DataService.API.Databases
 
             if (result)
             {
+                int lotPrice = ServerSettings.Current.LotPurchasePrice;
+                if (await APIDataServices.AvatarDataService.DebitCreditTransaction(AvatarID,-lotPrice) < 0)
+                {
+                    //**reversal**
+                    await APIDataServices.AvatarDataService.DebitCreditTransaction(AvatarID, lotPrice);
+                    return (false, "You don't have enough money anymore!", null); // Refused! You're now all of a sudden broke!
+                }
                 await GetLibrary<FileObjectLibrary>("HOUSEBLOBS").SetDataByIDToDisk(HouseID, await GetDefaultHouseBlob());
-                AvatarProfile.Funds -= ServerSettings.Current.LotPurchasePrice;
                 UpdateHouseCreationIndex(HouseID);
             }
             await Save(); // save the db

@@ -16,7 +16,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers
         /// <summary>
         /// The funds our Avatar is left with after buying this house
         /// </summary>
-        [TSOVoltronDBWrapperField] public uint NewFunds { get; set; }
+        [TSOVoltronDBWrapperField] public int NewFunds { get; set; }
         /// <summary>
         /// The location of the house
         /// </summary>
@@ -39,7 +39,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers
         /// <param name="NewHouseID">The ID of the house created</param>
         /// <param name="AccountFunds">The amount of money you have after buying the house</param>
         /// <param name="Position">The position on the map the new house is at</param>
-        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, uint AccountFunds, LotPosition Position) :
+        public TSOBuyLotByAvatarIDResponse(uint NewHouseID, int AccountFunds, LotPosition Position) :
             base(
                 TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
                 TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

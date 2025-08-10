@@ -82,6 +82,11 @@ namespace nio2so.DataService.API.Controllers
                 return Ok();
             return BadRequest();
         }
+
+        // POST api/avatars/1337/funds/set?Value=500000
+        [HttpPost("{AvatarID}/funds/set")]
+        public async Task<ActionResult<int>> SetFundsByAvatarID(uint AvatarID, int Value) => await avatarDataService.SetFundsByAvatarID(AvatarID, Value);
+
         // GET api/avatars/1337/online
         [HttpGet("{AvatarID}/online")]
         public ActionResult<bool> GetAvatarIsOnlineByAvatarID(uint AvatarID) => GetObjectByID(avatarDataService.GetAvatarOnlineStatus, (AvatarIDToken)AvatarID);

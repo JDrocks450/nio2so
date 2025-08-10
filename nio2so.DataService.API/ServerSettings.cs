@@ -48,6 +48,6 @@ namespace nio2so.DataService.API
         public string DefaultThumbnailPath { get; set; } = Path.Combine(Current?.ConstantsDirectory ?? Path.Combine(Current?.WorkspaceDirectory ?? TestingConstraints.WorkspaceDirectory, "const"), "default_thumbnail.png");        
         public string DefaultHouseBlobPath { get; set; } = Path.Combine(Current?.ConstantsDirectory ?? Path.Combine(Current?.WorkspaceDirectory ?? TestingConstraints.WorkspaceDirectory, "const"), "default_houseblob.houseblob");
         
-        public uint LotPurchasePrice { get; } = 2400;        
+        public int LotPurchasePrice { get; } = 2400;        
     }
 }

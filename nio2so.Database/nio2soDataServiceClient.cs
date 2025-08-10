@@ -171,6 +171,15 @@ namespace nio2so.DataService.Common
         }
 
         /// <summary>
+        /// Requests to set the <paramref name="AvatarID"/> account funds to be <paramref name="Value"/> and returns their account amount
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <param name="Value"></param>
+        /// <returns></returns>
+        public async Task<int> SetFundsByAvatarID(AvatarIDToken AvatarID, int Value) => 
+            await (await QueryPostAsString($"avatars/{AvatarID}/funds/set", null, (nameof(Value), Value))).Content.ReadFromJsonAsync<int>();
+
+        /// <summary>
         /// Creates a new Avatar File and returns the ID of the new Avatar
         /// </summary>
         /// <param name="AvatarID"></param>

@@ -57,7 +57,7 @@
         /// <summary>
         /// The static amount of funds in your avatar's account
         /// </summary>
-        public const uint StartingFunds = 500000;
+        public const int StartingFunds = 500000;
         //****
 
         //**PATHS

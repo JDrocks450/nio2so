@@ -49,15 +49,9 @@ namespace nio2so.DataService.API.Controllers
         [HttpGet("purchase")]
         public async Task<ActionResult<LotProfile>> AvatarPurchaseLotByID(uint AvatarID, uint HouseID, uint X, uint Y)
         {
-            Common.Types.Avatar.TSODBChar character = await APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
-            (bool Success, string Reason, LotProfile? NewLotProfile) = await lotsDataService.TryPurchaseLotByAvatarID(AvatarID, HouseID, character, new LotPosition(X, Y));
-            if (Success && NewLotProfile != default)
-            {
-                Success = await APIDataServices.AvatarDataService.SetCharacterByAvatarID(AvatarID, character);
-                if (!Success)
-                    return BadRequest("Could not update the Avatar Character File for: " + AvatarID);
-                return NewLotProfile;
-            }
+            (bool Success, string Reason, LotProfile? NewLotProfile) = await lotsDataService.TryPurchaseLotByAvatarID(AvatarID, HouseID, new LotPosition(X, Y));
+            if (Success && NewLotProfile != default)            
+                return NewLotProfile;            
             return BadRequest(Reason);
         }
 
