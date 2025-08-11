@@ -20,8 +20,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         public const string DiscoveriesDirectory = WorkspaceDirectory + "/discoveries";
         public const string AriesPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
         public const string VoltronPacketDirectory = WorkspaceDirectory + "/tsotcppackets";
-        public const string HouseDataDirectory = WorkspaceDirectory + "/house";
-        public const string AvatarDataDirectory = WorkspaceDirectory + "/avatar";
         //****
     }
 }

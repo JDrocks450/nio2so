@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Types;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
@@ -43,8 +44,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         protected ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
         protected bool _running = DefaultRunningState;
 
-        protected TSOVoltronBasicServer(string name, int port, uint backlog = 1, IPAddress ListenIP = null) :
-            base(name, port, backlog, ListenIP) { }
+        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings) :
+            base(Name, Settings.ServerPort, Settings.MaxConcurrentConnections, IPAddress.Parse(Settings.ServerIPAddress)) { }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)
         {

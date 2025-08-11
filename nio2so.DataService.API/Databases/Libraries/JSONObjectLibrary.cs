@@ -18,24 +18,33 @@ namespace nio2so.DataService.API.Databases.Libraries
         public JSONObjectLibrary(string FilePath, Func<Task>? EnsureDefaultValuesFunc = default, bool DelayedLoad = false)
         {
             _baseDir = FilePath;
+            if (FilePath.Contains('{'))
+                throw new Exception(FilePath + " is invalid.");
             DataFile = new();
             CreateDefaultValues = EnsureDefaultValuesFunc ?? (() => Task.CompletedTask);
-            if (DelayedLoad) return;
+            if (DelayedLoad) return;            
             Load().Wait();
         }
 
         public async Task Load()
         {
+            var options = new JsonSerializerOptions()
+            {
+                WriteIndented = true,
+                IndentCharacter = '\t',                
+            };
+            if (APIDataServices.ConfigService?.IsReady ?? false)
+                options = APIDataServices.ConfigService.GetCurrentSettings().SerializationOptions;
             DataFile = await LoadDataFile<T>(_baseDir) ?? DataFile;            
         }
 
         public Task InvokeEnsureDefaultValues() => CreateDefaultValues();
 
-        public static async Task<T?> LoadDataFile<T>(string DBPath)
+        public static async Task<T?> LoadDataFile<T>(string DBPath, JsonSerializerOptions? Options = default)
         {
             if (!File.Exists(DBPath)) return default;
             using FileStream fs = File.OpenRead(DBPath);
-            return await JsonSerializer.DeserializeAsync<T>(fs, ServerSettings.Current.SerializationOptions);
+            return await JsonSerializer.DeserializeAsync<T>(fs, Options);
         }
 
         public Task Save()

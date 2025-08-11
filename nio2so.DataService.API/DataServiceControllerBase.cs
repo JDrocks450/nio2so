@@ -1,10 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using nio2so.DataService.API.Databases;
 
 namespace nio2so.DataService.API
 {
     public abstract class DataServiceControllerBase : ControllerBase
     {
+        /// <summary>
+        /// Gets the global <see cref="DataServiceBase"/> <typeparamref name="T"/> attached to this <see cref="DataServiceControllerBase{T}"/>
+        /// </summary>
+        protected static T GetUnderlyingDataService<T>() where T : DataServiceBase => APIDataServices.GetDataService<T>();
+
         protected ActionResult<TResult> GetObjectByID<TQuery,TResult>(Func<TQuery, TResult> QueryFunction, TQuery ID)
         {
             TResult? objectData = default;

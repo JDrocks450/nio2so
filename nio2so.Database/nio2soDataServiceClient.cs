@@ -329,5 +329,13 @@ namespace nio2so.DataService.Common
         /// <returns></returns>
         public Task<HttpResponseMessage> SetOnlineStatusByAvatarID(AvatarIDToken AvatarID, bool IsOnline) =>
             QueryPostAsString($"avatars/{AvatarID}/online","", (nameof(IsOnline),IsOnline));
+
+        /// <summary>
+        /// Returns the online status of the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<bool>> GetServerStatus() =>
+            GetQueryAs<bool>($"configure/status");
     }
 }

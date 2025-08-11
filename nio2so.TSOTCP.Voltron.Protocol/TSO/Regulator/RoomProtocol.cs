@@ -1,6 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
+using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
@@ -640,11 +641,19 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 
             //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
             //when that happens
-            if (houseID == 0)
-            {
-                uint hsbLot = TestingConstraints.HSBAutoJoinHouseID;
-                if (hsbLot != 0 && !RoomIsOnline(hsbLot))
-                    houseID = hsbLot;
+            if (houseID == 0 && TestingConstraints.HSBAutoJoinHouse)
+            { // HSB testing mode, redirect to hosting a lot ... host the lot they own
+                if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
+                { // identified
+                    if (TryDataServiceQuery(() => GetDataService().GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure)) 
+                    { // download character file
+                        uint hsbLot = character.MyLotID; // set hosting lot to my owned lot
+                        if (hsbLot != 0 && !RoomIsOnline(hsbLot)) // check if the house is already online
+                            houseID = hsbLot;
+                    }
+                    else throw new InvalidDataException(failure);
+                }
+                else throw new Exception("Could not identify what Client sent this PDU.");
             }
             if (houseID == 0) return;
             ((TSOLoadHouseResponsePDU)PDU).HouseID = houseID;

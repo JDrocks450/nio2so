@@ -1,6 +1,8 @@
-﻿namespace nio2so.DataService.API.Databases.Libraries
+﻿using System.Text.Json;
+
+namespace nio2so.DataService.API.Databases.Libraries
 {
-    internal interface IDataServiceLibrary
+    public interface IDataServiceLibrary
     {
         Task Load();
         Task Save();

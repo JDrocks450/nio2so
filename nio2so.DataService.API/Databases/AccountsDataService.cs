@@ -17,7 +17,7 @@ namespace nio2so.DataService.API.Databases
 
         protected override void AddLibraries()
         {
-            Libraries.Add("ACCOUNTS", new JSONDictionaryLibrary<string, UserToken>(ServerSettings.Current.AccountsFile, CreateDefaultValues));
+            Libraries.Add("ACCOUNTS", new JSONDictionaryLibrary<string, UserToken>(CurrentSettings.DereferencePath(CurrentSettings.AccountsFile), CreateDefaultValues));
             base.AddLibraries();
         }
 
@@ -26,7 +26,7 @@ namespace nio2so.DataService.API.Databases
         /// </summary>
         Task CreateDefaultValues()
         {
-            foreach (var account in ServerSettings.Current.StaticAccounts)            
+            foreach (var account in CurrentSettings.StaticAccounts)            
                 EnsureAccount(account);
             return Save();
         }

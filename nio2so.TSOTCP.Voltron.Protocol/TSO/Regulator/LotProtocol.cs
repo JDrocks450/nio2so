@@ -90,7 +90,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             var roommatePDU = (TSOGetRoommateInfoByLotIDRequest)PDU;
             uint HouseID = roommatePDU.HouseID;
             if (HouseID == 0)
+            {
+                //respond with empty response
+                RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID, roommatePDU.SenderSessionID.AvatarID));
                 return; // Seems to be mistaken to send in this scenario
+            }
 
             //**download roommates from data service
             if (!TryDataServiceQuery(() => GetDataService().GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))

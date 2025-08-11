@@ -15,7 +15,7 @@ namespace nio2so.DataService.API.Controllers
     {
         private ILogger<AvatarDataController> logger;
 
-        private static AvatarDataService avatarDataService => APIDataServices.AvatarDataService;
+        private static AvatarDataService avatarDataService => GetUnderlyingDataService<AvatarDataService>();
 
         public AvatarDataController(ILogger<AvatarDataController> Logger) : base()
         {

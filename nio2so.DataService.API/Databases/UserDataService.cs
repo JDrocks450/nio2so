@@ -18,13 +18,13 @@ namespace nio2so.DataService.API.Databases
 
         protected override void AddLibraries()
         {
-            Libraries.Add("USERS", new JSONDictionaryLibrary<string, UserInfo>(ServerSettings.Current.UsersFile, CreateDefaultValues));
+            Libraries.Add("USERS", new JSONDictionaryLibrary<string, UserInfo>(CurrentSettings.DereferencePath(CurrentSettings.UsersFile), CreateDefaultValues));
             base.AddLibraries();
         }
 
         async Task CreateDefaultValues()
         {
-            ServerSettings settings = ServerSettings.Current;
+            ServerSettings settings = CurrentSettings;
             CreateUserInfoFile(settings.StaticAccounts[0], out _); // ensure only
             CreateUserInfoFile(settings.StaticAccounts[1], out _); // ensure only
         }

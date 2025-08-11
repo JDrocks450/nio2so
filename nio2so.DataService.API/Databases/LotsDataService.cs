@@ -18,27 +18,27 @@ namespace nio2so.DataService.API.Databases
 
         protected override void AddLibraries()
         {
-            ServerSettings settings = ServerSettings.Current;
+            ServerSettings settings = CurrentSettings;
 
             //thumbnail database
-            Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DatabaseDirectory, "thumbnails"),
+            Libraries.Add("THUMBNAILS", new FileObjectLibrary(Path.Combine(settings.DereferencePath(settings.DatabaseDirectory), "thumbnails"),
                 "thumb", "png", GetDefaultThumbnail));
             //lot database
-            Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.LotInfoFile, EnsureDefaultLots));
+            Libraries.Add("LOTS", new JSONDictionaryLibrary<uint, LotInfo>(settings.DereferencePath(settings.LotInfoFile), EnsureDefaultLots));
             //**creation index for lot IDs
-            Libraries.Add("LOT CREATION INDEX", new JSONCreationIndex(settings.LotCreationIndexFile));
+            Libraries.Add("LOT CREATION INDEX", new JSONCreationIndex(settings.DereferencePath(settings.LotCreationIndexFile)));
             //**library for houseblobs
-            Libraries.Add("HOUSEBLOBS", new FileObjectLibrary(settings.HouseBlobLibraryDirectory, "house", "houseblob", GetDefaultHouseBlob));
+            Libraries.Add("HOUSEBLOBS", new FileObjectLibrary(settings.DereferencePath(settings.HouseBlobLibraryDirectory), "house", "houseblob", GetDefaultHouseBlob));
 
             base.AddLibraries();
         }
 
-        Task<byte[]> GetDefaultHouseBlob() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultHouseBlobPath);
-        Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultThumbnailPath);
+        Task<byte[]> GetDefaultHouseBlob() => File.ReadAllBytesAsync(CurrentSettings.DereferencePath(CurrentSettings.DefaultHouseBlobPath));
+        Task<byte[]> GetDefaultThumbnail() => File.ReadAllBytesAsync(CurrentSettings.DereferencePath(CurrentSettings.DefaultThumbnailPath));
 
         Task EnsureDefaultLots()
         {
-            ServerSettings settings = ServerSettings.Current;
+            ServerSettings settings = CurrentSettings;
 
             // add the static lots to the database and skip if existing
             foreach(var lot in settings.StaticLots)
@@ -139,7 +139,7 @@ namespace nio2so.DataService.API.Databases
 
             TSODBChar AvatarProfile = await APIDataServices.AvatarDataService.GetCharacterByAvatarID(AvatarID);
 
-            if (AvatarProfile.Funds <= ServerSettings.Current.LotPurchasePrice)
+            if (AvatarProfile.Funds <= CurrentSettings.LotPurchasePrice)
                 return (false, "You don't have enough money.", null); // Refused! You're broke!
 
             if (LotsLibrary.ContainsKey(HouseID))
@@ -153,7 +153,7 @@ namespace nio2so.DataService.API.Databases
 
             if (result)
             {
-                int lotPrice = ServerSettings.Current.LotPurchasePrice;
+                int lotPrice = CurrentSettings.LotPurchasePrice;
                 if (await APIDataServices.AvatarDataService.DebitCreditTransaction(AvatarID,-lotPrice) < 0)
                 {
                     //**reversal**

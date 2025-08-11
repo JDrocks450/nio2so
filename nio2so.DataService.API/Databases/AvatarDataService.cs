@@ -23,23 +23,23 @@ namespace nio2so.DataService.API.Databases
 
         protected override void AddLibraries()
         {
-            string fPath = ServerSettings.Current.AvatarInfoFile;
+            string fPath = CurrentSettings.DereferencePath(CurrentSettings.AvatarInfoFile);
 
             //avatar database
             Libraries.Add(AvatarLibName, 
                 new JSONDictionaryLibrary<uint, AvatarInfo>(fPath, EnsureDefaultValues));
             //**folder of charblobs, database
             Libraries.Add("BLOBS",
-                new FileObjectLibrary(ServerSettings.Current.AvatarBlobLibraryPath, "avatar", "charblob", CharBlobNotFound));
+                new FileObjectLibrary(CurrentSettings.DereferencePath(CurrentSettings.AvatarBlobLibraryPath), "avatar", "charblob", CharBlobNotFound));
             //**avatar creation index** taken from The Sims 2 with its Sim Creation Index idea
-            Libraries.Add("AVATAR CREATION INDEX", new JSONCreationIndex(ServerSettings.Current.AvatarCreationIndexFile));
+            Libraries.Add("AVATAR CREATION INDEX", new JSONCreationIndex(CurrentSettings.DereferencePath(CurrentSettings.AvatarCreationIndexFile)));
 
             base.AddLibraries();
         }
 
         async Task EnsureDefaultValues()
         {
-            ServerSettings settings = ServerSettings.Current;
+            ServerSettings settings = CurrentSettings;
             // not needed
             AvatarsLibrary.Add(1337, new AvatarInfo(settings.StaticAccounts[0], 1337)
             {
@@ -71,7 +71,7 @@ namespace nio2so.DataService.API.Databases
             });
         }       
 
-        Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(ServerSettings.Current.DefaultCharblobPath);
+        Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(CurrentSettings.DereferencePath(CurrentSettings.DefaultCharblobPath));
 
         /// <summary>
         /// Returns the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>. The profile has no personal details and requires no validation **public info**

@@ -24,6 +24,8 @@
         public FileObjectLibrary(string baseDirectory, string itemName, string extension, Func<Task<byte[]>> onFileNotFound)
         {
             BaseDirectory = baseDirectory;
+            if (baseDirectory.Contains('{'))
+                throw new Exception(baseDirectory + " is invalid.");
             ItemName = itemName;
             Extension = extension;
             OnFileNotFound = onFileNotFound;

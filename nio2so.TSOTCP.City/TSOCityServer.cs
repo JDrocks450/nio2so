@@ -1,14 +1,17 @@
 ﻿#define MAKEMANY
 #undef MAKEMANY
 
+using nio2so.DataService.Common.Types;
 using nio2so.TSOTCP.Voltron.Protocol;
 using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO;
+using System.Configuration;
 using System.Net;
+using System.Net.Http.Json;
 
-namespace nio2so.TSOTCP.City.TSO
+namespace nio2so.TSOTCP.Voltron.Server
 {
 
     /// <summary>
@@ -20,7 +23,30 @@ namespace nio2so.TSOTCP.City.TSO
     /// </summary>
     public class TSOCityServer : TSOVoltronBasicServer
     {
-        public TSOCityServer(int port, IPAddress ListenIP = null) : base(nameof(TSOCityServer), port, 5, ListenIP)
+        /// <summary>
+        /// Uses the <see cref="LocalServerSettings.APIUrl"/> to download <see cref="VoltronServerSettings"/>
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<VoltronServerSettings?> DownloadSettings()
+        {
+            //API Url from local settings
+            string APIUrl = LocalServerSettings.Default.APIUrl;
+            using (HttpClient client = new HttpClient()
+            {
+                BaseAddress = new(APIUrl)
+            })
+            {
+                string APIVoltronQuery = LocalServerSettings.Default.APIVoltronSettingsQuery;
+                Console.WriteLine($"Downloading resource {APIUrl + APIVoltronQuery}");
+                return (await client.GetFromJsonAsync<VoltronServerSettings>(APIVoltronQuery));
+            }
+        }
+
+        /// <summary>
+        /// Creates a new <see cref="TSOCityServer"/> with the specified <see cref="VoltronServerSettings"/>
+        /// </summary>
+        /// <param name="Settings"></param>
+        public TSOCityServer(VoltronServerSettings Settings) : base(nameof(TSOCityServer), Settings)
         {
             ClientBufferLength = TSOVoltronConst.TSOAriesClientBufferLength; // edit const to change this setting
             CachePackets = false; // massive memory pit here if true
@@ -42,8 +68,11 @@ namespace nio2so.TSOTCP.City.TSO
             //Trigger tso factories to map using static constructor
             TSOFactoryBase.InitializeFactories();
 
+            //API Url from local settings
+            string APIUrl = LocalServerSettings.Default.APIUrl;
+
             //Startup Services
-            Services.Register(new nio2soVoltronDataServiceClient(new(@"https://localhost:7071/api/"))); // REGISTER THE NIO2SO DATA SERVICE
+            Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
 
             //HOOK EVENTS

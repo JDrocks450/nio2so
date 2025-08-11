@@ -3,9 +3,13 @@
 namespace nio2so.DataService.API.Databases
 {
 
-    internal abstract class DataServiceBase
+    public abstract class DataServiceBase
     {
         protected Dictionary<string, IDataServiceLibrary> Libraries { get; } = new();
+        /// <summary>
+        /// Gets the current <see cref="ServerSettings"/> instance from the <see cref="ConfigurationDataService"/> global instance in <see cref="APIDataServices"/>
+        /// </summary>
+        protected ServerSettings CurrentSettings => APIDataServices.ConfigService.GetCurrentSettings();
 
         protected DataServiceBase()
         {

@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="nio2so.TSOTCP.Voltron.Server" GeneratedClassName="LocalServerSettings">
+  <Profiles />
+  <Settings>
+    <Setting Name="APIUrl" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">https://localhost:7071/api/</Value>
+    </Setting>
+    <Setting Name="APIVoltronSettingsQuery" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">configure/settings/voltron</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>

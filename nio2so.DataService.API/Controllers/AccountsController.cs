@@ -13,8 +13,7 @@ namespace nio2so.DataService.API.Controllers
     public class AccountsController : DataServiceControllerBase
     {
         private readonly ILogger<AccountsController> logger;
-
-        private AccountsDataService service => APIDataServices.AccountService;
+        private AccountsDataService service => GetUnderlyingDataService<AccountsDataService>();
 
         public AccountsController(ILogger<AccountsController> Logger) : base()
         {
