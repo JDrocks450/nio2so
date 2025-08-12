@@ -55,11 +55,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         }
     }
     /// <summary>
-    /// Handles all regulators defined in this assembly. 
-    /// <para>When a <see cref="ITSOProtocolRegulator"/> has the attribute <see cref="TSORegulator"/>
-    /// it is added to this object's map of regulators.</para>
-    /// <para>Incoming packets will be tested against any of these regulators, and if any of them can handle 
-    /// the supplied packet, the response packets will be given back to the caller. </para>
+    /// Handles all regulators defined in a given assembly. See: <see cref="RegisterProtocols(Assembly, Type[])"/>"/>
+    /// <para>When a <see cref="ITSOProtocolRegulator"/> has the attribute <see cref="TSORegulator"/> it is added to this object's map of regulators.</para>    
+    /// <para>Incoming packets will be tested against all of these regulators, and if any of them can handle 
+    /// the supplied packet, the <see cref="TSOProtocolRegulatorResponse"/> will be given back to the caller. 
+    /// See: <see cref="HandleIncomingPDU(TSOVoltronPacket, out TSOProtocolRegulatorResponse)"/></para>
     /// </summary>
     public class TSORegulatorManager
     {
@@ -112,7 +112,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
                 }
             }
         }
-
+        /// <summary>
+        /// Passes the incoming PDU to all registered <see cref="ITSOProtocolRegulator"/> instances and returns a response if any of them could handle it.
+        /// </summary>
+        /// <param name="Incoming"></param>
+        /// <param name="Outgoing"></param>
+        /// <returns></returns>
         public bool HandleIncomingPDU(TSOVoltronPacket Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {
             foreach (var regulator in typeMap)
@@ -120,7 +125,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
             Outgoing = null;
             return false;
         }
-
+        /// <summary>
+        /// Passes the incoming <see cref="TSODBRequestWrapper"/> to all registered <see cref="ITSOProtocolRegulator"/> instances and returns a response if any of them could handle it.
+        /// </summary>
+        /// <param name="Incoming"></param>
+        /// <param name="Outgoing"></param>
+        /// <returns></returns>
         public bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
         {
             foreach (var regulator in typeMap)
@@ -128,7 +138,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
             Outgoing = null;
             return false;
         }
-
+        /// <summary>
+        /// Gets the <see cref="ITSOProtocolRegulator"/> by <see cref="Type"/> <typeparamref name="T"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public T Get<T>()
         {
             foreach (var regulator in typeMap)

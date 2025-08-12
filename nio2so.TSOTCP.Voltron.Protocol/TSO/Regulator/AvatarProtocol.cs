@@ -7,7 +7,6 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU.DBWrappers;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Struct;
-using System.Reflection.Metadata;
 
 namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 {

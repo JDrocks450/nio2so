@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿//If set, will activate code to show all cities as open shards in release builds of The Sims Online
+#define TSO_RELEASE_SHOW_ALL_SHARDS
+//#undef TSO_RELEASE_SHOW_ALL_SHARDS
+
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using nio2so.DataService.Common.Tokens;
 using nio2so.Formats;
@@ -10,7 +14,7 @@ using nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha;
 namespace nio2so.TSOHTTPS.Protocol.Controllers
 {
     /// <summary>
-    /// This controller will handle requests to the CitySelector InitialConnect.jsp resource
+    /// This controller will handle requests to the CitySelector <c>shard-status.jsp</c> resource
     /// </summary>
     [ApiController]
     [Route("/cityselector")]
@@ -24,7 +28,8 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
         }
 
         /// <summary>
-        /// 
+        /// Gets the current status of the shards added to this server network
+        /// <para/> Note: a client cannot get the status of shards without being a <see cref="EntryLobby.LobbyWaiter"/>
         /// </summary>
         /// <returns></returns>
         [HttpGet("shard-status.jsp")] 
@@ -39,6 +44,7 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
             //**get shard statuses from the version of the game we're using
             IVersionedPacketStructure shardStatus = GameVersion == TSOVersions.TSO_PreAlpha ? TSOPE_ShardStatusStructure.Default : ShardStatusStructure.Default;
             List<IVersionedPacketStructure> shards = new List<IVersionedPacketStructure>() { shardStatus };
+#if TSO_RELEASE_SHOW_ALL_SHARDS
             if (GameVersion != TSOVersions.TSO_PreAlpha)
             {
                 shards.Clear();
@@ -50,6 +56,7 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
                     shards.Add(new ShardStatusStructure(mapNames[index % mapNames.Length], map, (uint)map, map));
                 }
             }
+#endif
             //return shard statuses to client
             var packetStr = new ShardStatusPacket(shards.ToArray()).ToString();
             _logger.LogInformation($"CitySelector: ShardStatus() === \n {packetStr} \n===");

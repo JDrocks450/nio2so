@@ -14,7 +14,7 @@ using nio2so.TSOHTTPS.Protocol.Services;
 namespace nio2so.TSOHTTPS.Protocol.Controllers
 {
     /// <summary>
-    /// This controller will handle requests to the CitySelector InitialConnect.jsp resource
+    /// This controller will handle requests to the CitySelector <c>shard-selector.jsp</c> resource
     /// </summary>
     [ApiController]
     [Route("/cityselector")]
@@ -47,13 +47,25 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
 #endif
         }
 
+        /// <summary>
+        /// Release builds of The Sims Online
+        /// </summary>
+        /// <param name="ShardName"></param>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
         [HttpGet("app/ShardSelectorServlet")]
         public Task<ActionResult> GetShard_PlayTest(string ShardName, string? AvatarID) => ShardSelectorServlet(TSOVersions.TSO_PlayTest, ShardName, AvatarID);
+        /// <summary>
+        /// The Sims Online: Pre-Alpha clients
+        /// </summary>
+        /// <param name="ShardName"></param>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
         [HttpGet("shard-selector.jsp")]
         public Task<ActionResult> GetShard_PreAlpha(string ShardName, string? AvatarID) => ShardSelectorServlet(TSOVersions.TSO_PreAlpha, ShardName, AvatarID);
 
         /// <summary>
-        /// 
+        /// Returns an entry ticket to Voltron on a given server shard
         /// </summary>
         /// <returns></returns>        
         async Task<ActionResult> ShardSelectorServlet(TSOVersions Version, string ShardName, string? AvatarID)
@@ -82,14 +94,19 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
             //can we parse this avatarID?
             if (!uint.TryParse(AvatarID, out uint NAvatarID))
             {
-                string errorMsg = $"The AvatarID {AvatarID ?? "null"} you gave me isn't uh, A NUMBER?";
-                _logger.LogInformation("ERROR: " + errorMsg);
+                string errorMsg = $"The AvatarID {AvatarID ?? "null"} is invalid. (Not a number)";
+                _logger.LogError(errorMsg);
                 return Ok(new ErrorMessagePacket(1337, errorMsg));
             }
 
-            //connection details
-            string ConnectionAddress = "localhost:49";
-            TSOSessionTicket Ticket = TSOSessionTicket.CityDefault;
+            //connect to the data service to synchronize shard joining parameters
+            DataService.Common.HTTPServiceClientBase.HTTPServiceResult<DataService.Common.Types.VoltronServerSettings> result = await dataService.GetVoltronServiceSettings();
+            if (result == null || result.Result == null || !result.IsSuccessful)
+                throw new InvalidOperationException(result?.FailureReason ?? "Result of the query VoltronSettings was null.");
+
+            //connection details and new session ticket
+            string ConnectionAddress = result.Result.ServerConnectionAddress;
+            TSOSessionTicket Ticket = TSOSessionTicket.GetNext();
             uint ShardIndex = 1;
 
             //**respond with packet structure for selecting a shard

@@ -71,6 +71,6 @@
         /// Will set the server to always redirect a client into the HSB mode (hosting a lot without an avatar there)
         /// <para/>Should be true if using the HSB test
         /// </summary>
-        public const bool HSBAutoJoinHouse = true;
+        public const bool HSBAutoJoinHouse = false;
     }
 }

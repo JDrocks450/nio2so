@@ -8,11 +8,16 @@ using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
 using nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator;
 using QuazarAPI.Networking.Standard;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Protocol
 {
+    /// <summary>
+    /// A basic Voltron Server that handles the <see cref="TSOTCPPacket"/>s and <see cref="TSOVoltronPacket"/>s for The Sims Online Pre-Alpha.
+    /// </summary>
     public abstract class TSOVoltronBasicServer : QuazarServer<TSOTCPPacket>, ITSOServer
     {
         const bool DefaultRunningState = true;
@@ -24,7 +29,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         public override int ReceiveAmount => ClientBufferLength;
         public override int SendAmount => ClientBufferLength;
 
-        public TSORegulatorManager Regulators { get; protected set; }
+        /// <summary>
+        /// Manages all <see cref="ITSOProtocolRegulator"/>s registered to this server -- you can add custom regulators to the <see cref="TSOVoltronBasicServer"/> using this property.
+        /// </summary>
+        public TSORegulatorManager Regulators { get; }
+        /// <summary>
+        /// <inheritdoc cref="ITSOService"/>
+        /// </summary>
         public TSOServerServiceManager Services { get; private set; } = new();
         public TSOServerTelemetryServer Telemetry { get; protected set; }
 
@@ -39,13 +50,34 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 if (value) ServerPauseEvent.Set();
                 else ServerPauseEvent.Reset();
             }
-        }        
+        }
+        /// <summary>
+        /// Gets the assembly info of the nio2so Voltron Protocol used by this server.
+        /// </summary>
+        public static Assembly nio2soVoltronProtocolAssembly => typeof(TSOVoltronBasicServer).Assembly;
+        /// <summary>
+        /// Gets the version of the nio2so Voltron Protocol used by this server.
+        /// </summary>
+        public static FileVersionInfo nio2soVoltronProtocolVersion => FileVersionInfo.GetVersionInfo(nio2soVoltronProtocolAssembly.Location);
+        /// <summary>
+        /// String form of the <see cref="QuazarServer{T}.QuaZarProtocolVersion"/> and <see cref="nio2soVoltronProtocolVersion"/> used by this server.
+        /// </summary>
+        public static string ServerVersionInfoString => $"==={nameof(nio2soVoltronProtocolVersion)}===\n {nio2soVoltronProtocolVersion}\n" +
+                                                        $"==={nameof(QuaZarProtocolVersion)}===\n {QuaZarProtocolVersion}";
 
         protected ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
         protected bool _running = DefaultRunningState;
 
+        /// <summary>
+        /// Creates a new <see cref="TSOVoltronBasicServer"/> with the specified name and <see cref="VoltronServerSettings"/>.
+        /// </summary>
+        /// <param name="Name"></param>
+        /// <param name="Settings"></param>
         protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings) :
-            base(Name, Settings.ServerPort, Settings.MaxConcurrentConnections, IPAddress.Parse(Settings.ServerIPAddress)) { }
+            base(Name, Settings.ServerPort, Settings.MaxConcurrentConnections, IPAddress.Parse(Settings.ServerIPAddress))
+        {
+            Regulators = new(this);
+        }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)
         {

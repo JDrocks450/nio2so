@@ -1,5 +1,4 @@
-﻿using nio2so.Data.Common.Testing;
-using nio2so.DataService.Common.Tokens;
+﻿using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Search;
 using System.Text.Json.Serialization;
@@ -9,10 +8,11 @@ namespace nio2so.DataService.Common.Types
     public class AvatarInfo : ISearchableItem
     {
         public AvatarInfo() { }
-        public AvatarInfo(UserToken accountOwner, AvatarIDToken AvatarID) : this()
+        public AvatarInfo(UserToken accountOwner, AvatarIDToken AvatarID, string ShardName) : this()
         {
             AccountOwner = accountOwner;
-            this.AvatarID = AvatarID;            
+            this.AvatarID = AvatarID;
+            this.Shard = ShardName;
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace nio2so.DataService.Common.Types
         /// <summary>
         /// Which Shard this Avatar lives on
         /// </summary>
-        public string Shard { get; set; } = TestingConstraints.MyShardName;
+        public string Shard { get; set; } = "NULL";
         /// <summary>
         /// What service this avatar was created with
         /// </summary>

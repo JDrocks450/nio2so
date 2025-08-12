@@ -1,6 +1,3 @@
-using nio2so.DataService.API.Controllers;
-using nio2so.DataService.API.Databases;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

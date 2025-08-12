@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace nio2so.DataService.Common.Types.Avatar
+﻿namespace nio2so.DataService.Common.Types.Avatar
 {
     /// <summary>
     /// Contains basic profile information about an Avatar -- version independent

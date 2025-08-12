@@ -122,7 +122,7 @@ namespace nio2so.TSOHTTPS.Protocol.Packets
             return new AuthReasonPacket()
             {
                 Valid = false,
-                Ticket = TSOSessionTicket.Empty,
+                Ticket = TSOSessionTicket.Error,
                 ReasonCode = Error,
                 ReasonText = Text ?? "",
                 ReasonURL = URL ?? ""

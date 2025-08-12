@@ -1,5 +1,10 @@
-﻿namespace nio2so.TSOTCP.Voltron.Protocol
+﻿using nio2so.TSOTCP.Voltron.Protocol.TSO;
+
+namespace nio2so.TSOTCP.Voltron.Protocol
 {
+    /// <summary>
+    /// Services can be added to a <see cref="ITSOServer"/> which can then be used by <see cref="ITSOProtocolRegulator"/> instances
+    /// </summary>
     public interface ITSOService : IDisposable
     {
 

@@ -1,11 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using nio2so.Data.Common.Testing;
+﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Search;
-using System.Threading.Tasks;
 
 namespace nio2so.DataService.API.Databases
 {
@@ -41,7 +39,7 @@ namespace nio2so.DataService.API.Databases
         {
             ServerSettings settings = CurrentSettings;
             // not needed
-            AvatarsLibrary.Add(1337, new AvatarInfo(settings.StaticAccounts[0], 1337)
+            AvatarsLibrary.Add(1337, new AvatarInfo(settings.StaticAccounts[0], 1337, settings.VoltronSettings.ShardName)
             {
                 AvatarCharacter = new()
                 {
@@ -55,7 +53,7 @@ namespace nio2so.DataService.API.Databases
                     Outgoing = new() { { 161, new(1337,161,-1,-1)} }
                 }
             });
-            AvatarsLibrary.Add(161, new AvatarInfo(settings.StaticAccounts[1], 161)
+            AvatarsLibrary.Add(161, new AvatarInfo(settings.StaticAccounts[1], 161, settings.VoltronSettings.ShardName)
             {
                 AvatarCharacter = new()
                 {
@@ -247,7 +245,7 @@ namespace nio2so.DataService.API.Databases
             {
                 AvatarID = lib.GetNextID(AvatarsLibrary);
             }
-            while (!AvatarsLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID)
+            while (!AvatarsLibrary.TryAdd(AvatarID, newInfo = new AvatarInfo(user, AvatarID, CurrentSettings.VoltronSettings.ShardName)
             {                
                 CreatedUsing = method
             }));

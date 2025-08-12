@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using nio2so.Data.Common.Testing;
 using nio2so.DataService.API.Databases;
 using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
@@ -25,7 +24,7 @@ namespace nio2so.DataService.API.Controllers
         // GET api/lots/profiles
         [HttpGet("profiles")]
         public ActionResult<N2GetLotListQueryResult> GetAllLotProfiles() => 
-            new N2GetLotListQueryResult(TestingConstraints.MyShardName,
+            new N2GetLotListQueryResult(CurrentSettings.VoltronSettings.ShardName,
                 lotsDataService.GetLots().Select(x => new N2GetLotListQueryResult.LotListEntry(x.HouseID,x.Position)));        
 
         // GET api/lots/1338/profile

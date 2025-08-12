@@ -9,9 +9,9 @@
         {
             this.Ticket = Ticket;
         }
-        public static TSOSessionTicket LoginDefault => new TSOSessionTicket("N2-LOGIN-D");
-        public static TSOSessionTicket CityDefault => new TSOSessionTicket("N2-CITY-D");
-        public static TSOSessionTicket Empty => new TSOSessionTicket("0");
+        public static TSOSessionTicket Error => new TSOSessionTicket("0");
+        public static TSOSessionTicket GetNext() => new(Guid.NewGuid().ToString());
+
         public string Ticket { get; set; }
         public override string ToString() => Ticket;
     }

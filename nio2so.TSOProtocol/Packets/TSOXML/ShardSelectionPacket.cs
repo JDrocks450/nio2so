@@ -1,6 +1,4 @@
-﻿using nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha;
-
-namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML
+﻿namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML
 {
 
     public class ShardSelectionPacket : TSOXMLPacket

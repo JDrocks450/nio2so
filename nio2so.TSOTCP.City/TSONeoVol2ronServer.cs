@@ -7,21 +7,19 @@ using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO;
-using System.Configuration;
-using System.Net;
 using System.Net.Http.Json;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
 
     /// <summary>
-    /// The <see cref="TSOCityServer"/> is a The Sims Online Pre-Alpha Voltron Server analog.
+    /// The <see cref="TSONeoVol2ronServer"/> is a The Sims Online Pre-Alpha Voltron Server analog.
     /// <para>It is designed to work with an unmodified copy of The Sims Online Pre-Alpha.</para>
     /// <para>It will by default host with a send/recv buffer allocated to be <see cref="TSOVoltronConst.TSOAriesClientBufferLength"/></para>
-    /// <para>To get the Client to connect to a <see cref="TSOCityServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
+    /// <para>To get the Client to connect to a <see cref="TSONeoVol2ronServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
     /// and you have modified your hosts file in System32/drivers/etc in accordance with the niotso readme file.</para>
     /// </summary>
-    public class TSOCityServer : TSOVoltronBasicServer
+    public class TSONeoVol2ronServer : TSOVoltronBasicServer
     {
         /// <summary>
         /// Uses the <see cref="LocalServerSettings.APIUrl"/> to download <see cref="VoltronServerSettings"/>
@@ -43,10 +41,10 @@ namespace nio2so.TSOTCP.Voltron.Server
         }
 
         /// <summary>
-        /// Creates a new <see cref="TSOCityServer"/> with the specified <see cref="VoltronServerSettings"/>
+        /// Creates a new <see cref="TSONeoVol2ronServer"/> with the specified <see cref="VoltronServerSettings"/>
         /// </summary>
         /// <param name="Settings"></param>
-        public TSOCityServer(VoltronServerSettings Settings) : base(nameof(TSOCityServer), Settings)
+        public TSONeoVol2ronServer(VoltronServerSettings Settings) : base(Settings.ShardName, Settings)
         {
             ClientBufferLength = TSOVoltronConst.TSOAriesClientBufferLength; // edit const to change this setting
             CachePackets = false; // massive memory pit here if true
@@ -58,7 +56,6 @@ namespace nio2so.TSOTCP.Voltron.Server
             else Telemetry = TSOServerTelemetryServer.Global;
 
             //**REGULATOR
-            Regulators = new(this);
             Regulators.RegisterDefaultProtocols(); // register all TSOTCP.Voltron protocols
             Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
         }

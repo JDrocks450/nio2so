@@ -10,6 +10,10 @@ namespace nio2so.DataService.API
         /// Gets the global <see cref="DataServiceBase"/> <typeparamref name="T"/> attached to this <see cref="DataServiceControllerBase{T}"/>
         /// </summary>
         protected static T GetUnderlyingDataService<T>() where T : DataServiceBase => APIDataServices.GetDataService<T>();
+        /// <summary>
+        /// <inheritdoc cref="ConfigurationDataService.GetCurrentSettings"/>
+        /// </summary>
+        protected static ServerSettings CurrentSettings => APIDataServices.ConfigService.GetCurrentSettings();
 
         protected ActionResult<TResult> GetObjectByID<TQuery,TResult>(Func<TQuery, TResult> QueryFunction, TQuery ID)
         {

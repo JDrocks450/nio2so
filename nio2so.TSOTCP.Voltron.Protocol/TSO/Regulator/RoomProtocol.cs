@@ -665,7 +665,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             
             //**BASIC REWRITE OF ENTER_LOT TO REMOVE CERTAIN PDUS
             
-            //FILE OFFSET 0x1856 is the value in the .data section of the application storing the client type:
+            // FILE OFFSET 0x1856 is the value in the .data section of the application storing the client type:
             // 0x01 for HouseSimServer and 0x02 for TSOClient
             // 00469FE8 is the bit that controls hosting or not
 

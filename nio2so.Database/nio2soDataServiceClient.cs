@@ -331,11 +331,19 @@ namespace nio2so.DataService.Common
             QueryPostAsString($"avatars/{AvatarID}/online","", (nameof(IsOnline),IsOnline));
 
         /// <summary>
-        /// Returns the online status of the given <paramref name="AvatarID"/>
+        /// Returns the status of the nio2so data service
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HTTPServiceResult<bool>> GetServerStatus() =>
             GetQueryAs<bool>($"configure/status");
+
+        /// <summary>
+        /// Returns the status of the nio2so data service
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<VoltronServerSettings>> GetVoltronServiceSettings() => GetQueryAs<VoltronServerSettings>($"configure/settings/voltron");
+            
     }
 }

@@ -6,14 +6,15 @@ namespace nio2so.TSOTCP.Voltron.Server
 {
     internal class Program
     {
-        static TSOCityServer cityServer;
-
         static int Main(string[] args)
         {
+            //VersionInfo is a special color
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{Protocol.TSOVoltronBasicServer.ServerVersionInfoString}");
+
             //Init is a special color
             Console.ForegroundColor = ConsoleColor.Yellow;
 
-            Console.WriteLine("nio2so Voltron Server is starting up...\n");
             //CLEAR PREVIOUS PACKETS
             string clearDirProcName = Path.Combine(TestingConstraints.WorkspaceDirectory, @"cleandir.bat");
             if (File.Exists(clearDirProcName))
@@ -33,7 +34,7 @@ namespace nio2so.TSOTCP.Voltron.Server
             VoltronServerSettings? settings;
             try
             {
-                settings = TSOCityServer.DownloadSettings().Result;
+                settings = TSONeoVol2ronServer.DownloadSettings().Result;
                 if (settings == null)
                     throw new InvalidOperationException("Please check your LocalServerSettings.config file to ensure your API Data Service URL is accurate.\n" +
                         "Could not download " + nameof(VoltronServerSettings));
@@ -49,10 +50,16 @@ namespace nio2so.TSOTCP.Voltron.Server
             Console.ResetColor();
 
             //START THE CITY SERVER
-            cityServer = new TSOCityServer(settings); // 49000 for City Server || HouseSimServer testing is 49101            
+            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings); // 49000 for City Server || HouseSimServer testing is 49101            
             cityServer.Start();
 
-            while(Console.ReadLine() != "shutdown")
+            //Go is a special color
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} \"{cityServer.Name}\" is: ONLINE ({settings.ServerConnectionAddress}) and" +
+                $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n\n");
+            Console.ResetColor();
+
+            while (Console.ReadLine() != "shutdown")
             {
                 
             }
