@@ -48,6 +48,9 @@ namespace nio2so.DataService.API.Controllers
         // GET api/<ConfigurationController>/settings
         [HttpGet("settings")]
         public ActionResult<ServerSettings> GetServiceSettings() => dataService.GetCurrentSettings();
+        // GET api/<ConfigurationController>/settings/default
+        [HttpGet("settings/default")]
+        public ActionResult<ServerSettings> GetDefaultServiceSettings() => ServerSettings.Default;
 
         // POST api/<ConfigurationController>/settings
         [HttpPost("settings")]
@@ -70,5 +73,8 @@ namespace nio2so.DataService.API.Controllers
         // GET api/<ConfigurationController>/settings/voltron
         [HttpGet("settings/voltron")]
         public ActionResult<VoltronServerSettings> GetVoltronSettings() => dataService.GetCurrentSettings().VoltronSettings;
+        // GET api/<ConfigurationController>/settings/voltron/default
+        [HttpGet("settings/voltron/default")]
+        public ActionResult<VoltronServerSettings> GetDefaultVoltronSettings() => VoltronServerSettings.Default;
     }
 }

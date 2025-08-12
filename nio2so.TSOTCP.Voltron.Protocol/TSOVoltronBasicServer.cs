@@ -25,9 +25,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// <summary>
         /// The size of the ClientBuffer and SendBuffer for incoming and outgoing data
         /// </summary>
-        public ushort ClientBufferLength { get; set; } = TSOVoltronConst.TSOAriesClientBufferLength;
-        public override int ReceiveAmount => ClientBufferLength;
-        public override int SendAmount => ClientBufferLength;
+        public ushort ClientBufferLength => (ushort)Math.Max(SendAmount,ReceiveAmount);
 
         /// <summary>
         /// Manages all <see cref="ITSOProtocolRegulator"/>s registered to this server -- you can add custom regulators to the <see cref="TSOVoltronBasicServer"/> using this property.
@@ -73,10 +71,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="Settings"></param>
-        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings) :
-            base(Name, Settings.ServerPort, Settings.MaxConcurrentConnections, IPAddress.Parse(Settings.ServerIPAddress))
+        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer) :
+            base(new(Name, IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, Settings.EnableSSL, Settings.MaxConcurrentConnections)
+            {
+                CachePackets = false, // no memory leaks please
+                DisposePacketOnSent = true, // no memory leaks please
+                ReceiveAmount = Settings.TSOAriesClientBufferLength,
+                SendAmount = Settings.TSOAriesClientBufferLength
+            })
         {
             Regulators = new(this);
+            Telemetry = TelemetryServer;
         }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)

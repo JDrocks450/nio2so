@@ -43,6 +43,7 @@ namespace nio2so.TSOTCP.Voltron.Server
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine(ex);
+                File.WriteAllBytes("crashdump.log", System.Text.Encoding.UTF8.GetBytes(ex.ToString()));
                 return 1;
             }            
 
@@ -55,7 +56,7 @@ namespace nio2so.TSOTCP.Voltron.Server
 
             //Go is a special color
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} \"{cityServer.Name}\" is: ONLINE ({settings.ServerConnectionAddress}) and" +
+            Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({settings.ServerConnectionAddress}) and" +
                 $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n\n");
             Console.ResetColor();
 

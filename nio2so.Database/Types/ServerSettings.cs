@@ -16,6 +16,11 @@ namespace nio2so.DataService.API
         public const string DatabaseDirectoryToken = "{DatabaseDirectory}";
 
         /// <summary>
+        /// The default settings for a <see cref="ServerSettings"/> instance
+        /// </summary>
+        public static ServerSettings Default => new();
+
+        /// <summary>
         /// Settings that are downloaded by the Voltron Server when it is being initialized
         /// </summary>
         public VoltronServerSettings VoltronSettings { get; set; } = new();

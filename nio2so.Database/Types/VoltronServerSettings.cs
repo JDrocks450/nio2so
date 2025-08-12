@@ -9,6 +9,13 @@ namespace nio2so.DataService.Common.Types
     /// </summary>
     public record VoltronServerSettings
     {
+        /// <summary>
+        /// The default settings for a <see cref="VoltronServerSettings"/> instance
+        /// </summary>
+        public static VoltronServerSettings Default => new();
+        /// <summary>
+        /// The name of this Voltron Server shard -- default is <see cref="TestingConstraints.MyShardName"/>
+        /// </summary>
         public string ShardName { get; set; } = TestingConstraints.MyShardName;
         /// <summary>
         /// The Address the server will be listening on -- default is <c>localhost</c>
@@ -22,6 +29,14 @@ namespace nio2so.DataService.Common.Types
         /// The maximum amount of connected clients at a given time
         /// </summary>
         public uint MaxConcurrentConnections { get; set; } = 15;
+        /// <summary>
+        /// The size of the buffer that will be allocated for each client connection to Voltron for sending and receiving packets
+        /// </summary>
+        public ushort TSOAriesClientBufferLength { get; set; } = 0x200;
+        /// <summary>
+        /// Required certificate signing for builds after The Sims Online Pre-Alpha, not required for Pre-Alpha only
+        /// </summary>
+        public bool EnableSSL { get; set; } = false;
 
         /// <summary>
         /// Formatted as follows: 

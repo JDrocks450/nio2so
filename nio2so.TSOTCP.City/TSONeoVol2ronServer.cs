@@ -44,17 +44,9 @@ namespace nio2so.TSOTCP.Voltron.Server
         /// Creates a new <see cref="TSONeoVol2ronServer"/> with the specified <see cref="VoltronServerSettings"/>
         /// </summary>
         /// <param name="Settings"></param>
-        public TSONeoVol2ronServer(VoltronServerSettings Settings) : base(Settings.ShardName, Settings)
+        public TSONeoVol2ronServer(VoltronServerSettings Settings) : base(Settings.ShardName, Settings, 
+            TSOServerTelemetryServer.Global ?? new(Settings.ShardName, TSOVoltronConst.SysLogPath))
         {
-            ClientBufferLength = TSOVoltronConst.TSOAriesClientBufferLength; // edit const to change this setting
-            CachePackets = false; // massive memory pit here if true
-            DisposePacketOnSent = true; // no more memory leaks :)
-
-            //**TELEMETRY
-            if (TSOServerTelemetryServer.Global == null)
-                Telemetry = new(Name, TSOVoltronConst.SysLogPath);
-            else Telemetry = TSOServerTelemetryServer.Global;
-
             //**REGULATOR
             Regulators.RegisterDefaultProtocols(); // register all TSOTCP.Voltron protocols
             Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
