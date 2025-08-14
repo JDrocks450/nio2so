@@ -20,7 +20,7 @@ namespace nio2so.DataService.Common.Types
         /// <summary>
         /// The Address the server will be listening on -- default is <c>localhost</c>
         /// </summary>
-        public string ServerIPAddress { get; set; } = "127.0.0.1";
+        public string ServerIPAddress { get; set; } = "localhost";
         /// <summary>
         /// The Port the server will be listening on -- default is <see cref="TestingConstraints.City_ListenPort"/>
         /// </summary>
@@ -35,8 +35,15 @@ namespace nio2so.DataService.Common.Types
         public ushort TSOAriesClientBufferLength { get; set; } = 0x200;
         /// <summary>
         /// Required certificate signing for builds after The Sims Online Pre-Alpha, not required for Pre-Alpha only
+        /// <para/>True only if <see cref="SSLCertificatePassword"/> is set. Please ensure a valid certificate file voltron.pfx is in the working directory
         /// </summary>
-        public bool EnableSSL { get; set; } = false;
+        [JsonIgnore]
+        public bool EnableSSL => !string.IsNullOrWhiteSpace(SSLCertificatePassword) && SSLCertificatePassword.Length > 0;
+        /// <summary>
+        /// This is the password used to encrypt the SSL certificate file voltron.pfx
+        /// <para/><inheritdoc cref="EnableSSL"/>
+        /// </summary>
+        public string SSLCertificatePassword { get; set; } = "";
 
         /// <summary>
         /// Formatted as follows: 

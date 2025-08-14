@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
+using System.Security.Cryptography.X509Certificates;
 
 namespace nio2so.TSOTCP.Voltron.Protocol
 {
@@ -71,8 +72,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="Settings"></param>
-        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer) :
-            base(new(Name, IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, Settings.EnableSSL, Settings.MaxConcurrentConnections)
+        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer, X509Certificate2? SSLCertificate) :
+            base(new(Name, Settings.ServerIPAddress == "localhost" ? IPAddress.Loopback : IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, SSLCertificate, Settings.MaxConcurrentConnections)
             {
                 CachePackets = false, // no memory leaks please
                 DisposePacketOnSent = true, // no memory leaks please
@@ -195,7 +196,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 _VoltronBacklog.Clear();
 
                 if (disconnecting)
-                    Disconnect(ID, SocketError.Disconnecting);
+                    Disconnect(ID,null);
             }
 
             //refer to client session service to get this client's connection
@@ -205,7 +206,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 if (!sessionService.IsInCAS(ID))
                 { // not in CAS either, disconnect.
                     throw new InvalidDataException($"Could not identify client: {ID}");
-                    Disconnect(ID, SocketError.Disconnecting); // disconnect this unknown client
+                    Disconnect(ID, null); // disconnect this unknown client
                 }
                 //is in CAS, proceed.
             }

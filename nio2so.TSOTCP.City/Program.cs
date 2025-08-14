@@ -1,13 +1,20 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
     internal class Program
     {
+        private const string DisableCachingName = @"TestSwitch.LocalAppContext.DisableCaching";
+        private const string DontEnableSchUseStrongCryptoName = @"Switch.System.Net.DontEnableSchUseStrongCrypto";
         static int Main(string[] args)
         {
+            AppContext.SetSwitch(DisableCachingName, true);
+            AppContext.SetSwitch(DontEnableSchUseStrongCryptoName, true);
+
             //VersionInfo is a special color
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{Protocol.TSOVoltronBasicServer.ServerVersionInfoString}");
@@ -50,8 +57,36 @@ namespace nio2so.TSOTCP.Voltron.Server
             Console.WriteLine("\nStarting engines! Settings: " + settings);
             Console.ResetColor();
 
+            //OPEN SSL CERT IF ONE IS AVAILABLE
+            X509Certificate2? voltronCertificate = default;
+            string certFile = @"C:\nio2so\voltron.pfx";
+            if (settings.EnableSSL)
+            {
+                Console.WriteLine("SSL is enabled, loading certificate...");
+                //NIO2SO
+                if (File.Exists(certFile))
+                {
+                    var results = X509CertificateLoader.LoadPkcs12CollectionFromFile(certFile, settings.SSLCertificatePassword);
+                    voltronCertificate = results.First();
+                    Console.WriteLine($"Verified Certificate: {voltronCertificate.Verify()} Matches Hostname: {voltronCertificate.MatchesHostname(settings.ServerIPAddress)}");
+                }
+                //NIOTSO COMPATIBILITY
+                else if (File.Exists(@"c:\nio2so\cert.pem")) 
+                {
+                    var niotsoCert = X509Certificate2.CreateFromPemFile(@"c:\nio2so\cert.pem", @"c:\nio2so\key.pem");
+                    niotsoCert.GetRSAPrivateKey();                    
+                }
+                //failed to load cert
+                if (voltronCertificate == null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Could not load the certificate file. Please ensure voltron.pfx (or niotso cert.pem) is in the working directory. Disabling SSL...");
+                    Console.ResetColor();
+                }
+            }
+
             //START THE CITY SERVER
-            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings); // 49000 for City Server || HouseSimServer testing is 49101            
+            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings, voltronCertificate); // 49000 for City Server || HouseSimServer testing is 49101            
             cityServer.Start();
 
             //Go is a special color

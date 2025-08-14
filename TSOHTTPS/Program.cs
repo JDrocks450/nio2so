@@ -1,5 +1,6 @@
 using nio2so.TSOHTTPS.Protocol.Controllers;
 using nio2so.TSOHTTPS.Protocol.Services;
+using System.Net;
 
 namespace TSOHTTPS
 {
@@ -7,6 +8,11 @@ namespace TSOHTTPS
     {
         public static void Main(string[] args)
         {
+            System.Net.ServicePointManager.SecurityProtocol =
+               System.Net.SecurityProtocolType.Tls12 | 
+               SecurityProtocolType.Tls11 | 
+               SecurityProtocolType.Tls;
+
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
@@ -25,7 +31,7 @@ namespace TSOHTTPS
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }           
-
+            
             app.UseAuthorization();
 
             app.MapControllers();

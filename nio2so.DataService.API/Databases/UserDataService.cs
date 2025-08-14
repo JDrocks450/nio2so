@@ -87,6 +87,7 @@ namespace nio2so.DataService.API.Databases
                 if (existing != 0) continue;
                 userInfo.Avatars[i] = avatarID;
                 AvatarIndex = i;
+                break;
             }
             return AvatarIndex != -1;
         }
