@@ -7,6 +7,7 @@ using nio2so.TSOTCP.Voltron.Protocol.Factory;
 using nio2so.TSOTCP.Voltron.Protocol.Services;
 using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using nio2so.TSOTCP.Voltron.Protocol.TSO;
+using OpenSSL.X509;
 using System.Net.Http.Json;
 
 namespace nio2so.TSOTCP.Voltron.Server
@@ -44,8 +45,8 @@ namespace nio2so.TSOTCP.Voltron.Server
         /// Creates a new <see cref="TSONeoVol2ronServer"/> with the specified <see cref="VoltronServerSettings"/>
         /// </summary>
         /// <param name="Settings"></param>
-        public TSONeoVol2ronServer(VoltronServerSettings Settings) : base(Settings.ShardName, Settings, 
-            TSOServerTelemetryServer.Global ?? new(Settings.ShardName, TSOVoltronConst.SysLogPath))
+        public TSONeoVol2ronServer(VoltronServerSettings Settings, X509Certificate? ServerCertificate) : base(Settings.ShardName, Settings, 
+            TSOServerTelemetryServer.Global ?? new(Settings.ShardName, TSOVoltronConst.SysLogPath), ServerCertificate)
         {
             //**REGULATOR
             Regulators.RegisterDefaultProtocols(); // register all TSOTCP.Voltron protocols

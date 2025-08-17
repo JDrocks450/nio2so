@@ -159,7 +159,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
                 return; // too quick since last sync!
 
             //download all lots from data service ... change later to be rooms
-            if (!TryDataServiceQuery(() => GetDataService().GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
+            if (!TryDataServiceQuery(x => x.GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
                 throw new InvalidDataException(error);          
 
             int i = 0;
@@ -497,7 +497,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
                 roomIDStruct = new(thisLot.HouseID, RoomName);
 
                 //download the roommates of this house
-                if (!TryDataServiceQuery(() => GetDataService().GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
+                if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
                     throw new InvalidDataException(error);
 
                 // check if i am one of those roommates (or the owner)
@@ -645,7 +645,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             { // HSB testing mode, redirect to hosting a lot ... host the lot they own
                 if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
                 { // identified
-                    if (TryDataServiceQuery(() => GetDataService().GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure)) 
+                    if (TryDataServiceQuery(x => x.GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure)) 
                     { // download character file
                         uint hsbLot = character.MyLotID; // set hosting lot to my owned lot
                         if (hsbLot != 0 && !RoomIsOnline(hsbLot)) // check if the house is already online

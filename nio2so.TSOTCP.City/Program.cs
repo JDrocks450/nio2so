@@ -1,13 +1,22 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types;
+using OpenSSL.Crypto;
+using OpenSSL.X509;
 using System.Diagnostics;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
     internal class Program
     {
+        private const string DisableCachingName = @"TestSwitch.LocalAppContext.DisableCaching";
+        private const string DontEnableSchUseStrongCryptoName = @"Switch.System.Net.DontEnableSchUseStrongCrypto";
         static int Main(string[] args)
         {
+            //BOOTSTRAPPER CODE BEGINS HERE
+
+            AppContext.SetSwitch(DisableCachingName, true);
+            AppContext.SetSwitch(DontEnableSchUseStrongCryptoName, true);
+
             //VersionInfo is a special color
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{Protocol.TSOVoltronBasicServer.ServerVersionInfoString}");
@@ -50,14 +59,53 @@ namespace nio2so.TSOTCP.Voltron.Server
             Console.WriteLine("\nStarting engines! Settings: " + settings);
             Console.ResetColor();
 
+            //OPEN SSL CERT IF ONE IS AVAILABLE
+            X509Certificate? voltronCertificate = default;
+            string certPath = @".\cert.pem";
+
+            if (settings.SSLEnabled)
+            {
+                Console.WriteLine("SSL is enabled, loading certificate at: " + certPath);                
+                //NIO2SO
+                if (File.Exists(certPath)) 
+                {                    
+                    //load certificate chain first
+                    var chain = new X509Chain(File.ReadAllText(certPath));                    
+                    var cert = voltronCertificate = chain[0];
+                    //next attempt to find the key
+                    var keyPath = @".\key.pem";
+                    Console.WriteLine("Server Certificate loaded, attempting accompanying key at: " + certPath);                    
+                    var key = CryptoKey.FromPrivateKey(File.ReadAllText(keyPath), settings.SSLCertificatePassword);
+                    if (!cert.CheckPrivateKey(key) || cert.Verify(key))
+                        Console.WriteLine($"Private key failed or not verified! {nameof(cert.CheckPrivateKey)} failure code: false");
+                    cert.PrivateKey = key;                    
+                }
+                //failed to load cert
+                if (voltronCertificate == null)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Could not load the certificate file. Please ensure voltron.pfx (or niotso cert.pem) is in the working directory. Disabling SSL...");                    
+                }
+                else
+                {
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Server Certificate and Key Loaded! SSL is enabled.");
+                }
+            }
+            Console.ResetColor();
+
+            bool usingSSL = settings.SSLEnabled && voltronCertificate != null;
+
             //START THE CITY SERVER
-            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings); // 49000 for City Server || HouseSimServer testing is 49101            
+            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings, voltronCertificate); // 49000 for City Server || HouseSimServer testing is 49101            
             cityServer.Start();
 
             //Go is a special color
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({settings.ServerConnectionAddress}) and" +
-                $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n\n");
+                $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n");
+            Console.ForegroundColor = usingSSL ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.WriteLine($"SSL: " + (usingSSL ? "Enabled" : "Disabled") + "\n");
             Console.ResetColor();
 
             while (Console.ReadLine() != "shutdown")

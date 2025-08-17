@@ -28,7 +28,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
         /// <exception cref="InvalidDataException"></exception>
         public LotProfile GetLotProfile(HouseIDToken HouseID)
         {
-            if (!TryDataServiceQuery(() => GetDataService().GetLotProfileByHouseID(HouseID), out LotProfile? item, out string error))
+            if (!TryDataServiceQuery(x => x.GetLotProfileByHouseID(HouseID), out LotProfile? item, out string error))
                 throw new InvalidDataException(error);
             if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
             return item;
@@ -60,7 +60,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             //attempt to purchase this lot
             uint HouseID = uint.Parse(lotPurchasePDU.HouseIDString);
 
-            if (!TryDataServiceQuery(() => GetDataService().AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
+            if (!TryDataServiceQuery(x => x.AttemptToPurchaseLotByAvatarID(lotPurchasePDU.AvatarID,
                 HouseID, lotPurchasePDU.LotPosition.X, lotPurchasePDU.LotPosition.Y), out LotProfile? newLotProfile, out string error))
             { //create failed packet
                 Failed(error);
@@ -69,7 +69,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 
             //create success packet
             //download my character data to get funds after the transaction
-            if (!TryDataServiceQuery(() => GetDataService().GetCharacterFileByAvatarID(lotPurchasePDU.AvatarID), out TSODBChar? myCharacterProfile, out error))
+            if (!TryDataServiceQuery(x => x.GetCharacterFileByAvatarID(lotPurchasePDU.AvatarID), out TSODBChar? myCharacterProfile, out error))
             { // failed to download character profile
                 throw new InvalidOperationException(error);
             }
@@ -97,7 +97,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             }
 
             //**download roommates from data service
-            if (!TryDataServiceQuery(() => GetDataService().GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))
+            if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))
                   throw new InvalidDataException(error);
             //**
             if (roommates == null) throw new NullReferenceException($"HouseID: {HouseID} was not found.");
@@ -113,7 +113,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
         public void GetLotList_Request(TSODBRequestWrapper PDU)
         {
             //download lot profiles from data service
-            if (!TryDataServiceQuery(() => GetDataService().GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
+            if (!TryDataServiceQuery(x => x.GetAllLotProfiles(), out N2GetLotListQueryResult? result, out string error))
                 throw new InvalidDataException(error);
 
             //send one packet for every lot in the world view
@@ -164,7 +164,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             if (req.HouseID == 0) return;
             //**request from nio2so
             //**download thumbnail
-            if (!TryDataServiceQuery(() => GetDataService().GetThumbnailByHouseID(req.HouseID), out byte[]? pngBytes, out string error))
+            if (!TryDataServiceQuery(x => x.GetThumbnailByHouseID(req.HouseID), out byte[]? pngBytes, out string error))
                 throw new InvalidDataException(error);
             
             if (pngBytes == null)
@@ -208,7 +208,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             uint loadHouseID = HouseID;
             //**
             //Read decompressed House Blob from data service
-            if (!TryDataServiceQuery(() => GetDataService().GetHouseBlobByHouseID(loadHouseID), out byte[]? houseBlobBytes, out string error))
+            if (!TryDataServiceQuery(x => x.GetHouseBlobByHouseID(loadHouseID), out byte[]? houseBlobBytes, out string error))
                 throw new InvalidDataException(error);
             if (houseBlobBytes == null)
                 throw new NullReferenceException($"HouseBlob {HouseID} is null and unhandled.");

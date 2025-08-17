@@ -41,7 +41,7 @@ namespace nio2so.DataService.API.Controllers
             //wait forever
             while (true)
             {
-                Task.Delay(100000);
+                Thread.Sleep(100000);
             }
         }
 
