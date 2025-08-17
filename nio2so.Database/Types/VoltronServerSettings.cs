@@ -37,8 +37,7 @@ namespace nio2so.DataService.Common.Types
         /// Required certificate signing for builds after The Sims Online Pre-Alpha, not required for Pre-Alpha only
         /// <para/>True only if <see cref="SSLCertificatePassword"/> is set. Please ensure a valid certificate file voltron.pfx is in the working directory
         /// </summary>
-        [JsonIgnore]
-        public bool EnableSSL => !string.IsNullOrWhiteSpace(SSLCertificatePassword) && SSLCertificatePassword.Length > 0;
+        public bool SSLEnabled { get; set; }
         /// <summary>
         /// This is the password used to encrypt the SSL certificate file voltron.pfx
         /// <para/><inheritdoc cref="EnableSSL"/>

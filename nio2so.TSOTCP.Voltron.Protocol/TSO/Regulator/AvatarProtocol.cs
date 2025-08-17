@@ -117,7 +117,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 
             //**download the requested avatarID appearance data from nio2so
             //get charblob stream
-            if(!TryDataServiceQuery(() => GetDataService().GetAvatarCharBlobByAvatarID(avatarID), out byte[]? result, out string error))
+            if(!TryDataServiceQuery(x => x.GetAvatarCharBlobByAvatarID(avatarID), out byte[]? result, out string error))
                 throw new InvalidDataException(error);
 
             TSODBCharBlob charBlob = TSOVoltronSerializer.Deserialize<TSODBCharBlob>(result);
@@ -147,7 +147,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
 
             //**download bookmarks from nio2so
             //get result from nio2so data service
-            if (!TryDataServiceQuery(() => GetDataService().GetAvatarBookmarksByAvatarID(avatarID), 
+            if (!TryDataServiceQuery(x => x.GetAvatarBookmarksByAvatarID(avatarID), 
                 out N2BookmarksByAvatarIDQueryResult? result, out string error))
                 throw new InvalidDataException(error);            
 
@@ -288,7 +288,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             uint avatarID = relPDU.AvatarID;
 
             //**get relationships from the dataservice
-            if (!TryDataServiceQuery(() => GetDataService().GetOutgoingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
+            if (!TryDataServiceQuery(x => x.GetOutgoingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
                 throw new InvalidDataException(error);
 
             RespondTo(PDU, new TSOGetRelationshipsByIDResponse(avatarID, result.Relationships.ToArray()));
@@ -300,7 +300,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
             uint avatarID = relPDU.AvatarID;
 
             //**get relationships from the dataservice
-            if (!TryDataServiceQuery(() => GetDataService().GetIncomingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
+            if (!TryDataServiceQuery(x => x.GetIncomingRelationshipsByAvatarID(avatarID), out N2RelationshipsByAvatarIDQueryResult? result, out string error))
                 throw new InvalidDataException(error);
 
             RespondTo(PDU, new TSOGetReversedRelationshipsByIDResponse(avatarID, result.Relationships.ToArray()));
@@ -315,7 +315,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
                 goto error;
 
             //**download online status from data service
-            if (!TryDataServiceQuery(() => GetDataService().GetOnlineStatusByAvatarID(AvatarID), out bool IsOnline, out string error))
+            if (!TryDataServiceQuery(x => x.GetOnlineStatusByAvatarID(AvatarID), out bool IsOnline, out string error))
                 throw new InvalidOperationException(error);
 
             var status = IsOnline ? Struct.TSOStatusReasonStruct.Online : TSOStatusReasonStruct.Offline;

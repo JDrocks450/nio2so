@@ -8,6 +8,7 @@
     <Configurations>Debug;Release</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>

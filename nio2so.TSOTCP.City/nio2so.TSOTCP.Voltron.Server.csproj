@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar\TCPQuaZar.csproj" />
+    <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar.csproj" />
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
     <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.TSOTCP.Voltron.Protocol.csproj" />
   </ItemGroup>

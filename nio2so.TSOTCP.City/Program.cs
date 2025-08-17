@@ -1,8 +1,8 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types;
+using OpenSSL.Crypto;
+using OpenSSL.X509;
 using System.Diagnostics;
-using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
@@ -58,23 +58,30 @@ namespace nio2so.TSOTCP.Voltron.Server
             Console.ResetColor();
 
             //OPEN SSL CERT IF ONE IS AVAILABLE
-            X509Certificate2? voltronCertificate = default;
+            X509Certificate? voltronCertificate = default;
             string certFile = @"C:\nio2so\voltron.pfx";
-            if (settings.EnableSSL)
+            if (settings.SSLEnabled)
             {
                 Console.WriteLine("SSL is enabled, loading certificate...");
+                string certPath = @"c:\nio2so\cert.pem";
                 //NIO2SO
                 if (File.Exists(certFile))
                 {
-                    var results = X509CertificateLoader.LoadPkcs12CollectionFromFile(certFile, settings.SSLCertificatePassword);
-                    voltronCertificate = results.First();
-                    Console.WriteLine($"Verified Certificate: {voltronCertificate.Verify()} Matches Hostname: {voltronCertificate.MatchesHostname(settings.ServerIPAddress)}");
+                    //var results = X509CertificateLoader.LoadPkcs12CollectionFromFile(certFile, settings.SSLCertificatePassword);
+                    //voltronCertificate = results.First();
+                    //Console.WriteLine($"Verified Certificate: {voltronCertificate.Verify()} Matches Hostname: {voltronCertificate.MatchesHostname(settings.ServerIPAddress)}");
                 }
                 //NIOTSO COMPATIBILITY
-                else if (File.Exists(@"c:\nio2so\cert.pem")) 
-                {
-                    var niotsoCert = X509Certificate2.CreateFromPemFile(@"c:\nio2so\cert.pem", @"c:\nio2so\key.pem");
-                    niotsoCert.GetRSAPrivateKey();                    
+                else if (File.Exists(certPath)) 
+                {                    
+                    var chain = new X509Chain(File.ReadAllText(certPath));
+                    var keyPath = @"c:\nio2so\key.pem";
+                    var cert = voltronCertificate = chain[0];
+                    var key = CryptoKey.FromPrivateKey(File.ReadAllText(keyPath), settings.SSLCertificatePassword);
+                    if (!cert.CheckPrivateKey(key))
+                        Console.WriteLine("Private key failed!");
+                    bool verified = cert.Verify(key);
+                    cert.PrivateKey = key;
                 }
                 //failed to load cert
                 if (voltronCertificate == null)

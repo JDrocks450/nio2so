@@ -296,9 +296,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
             return dataServiceClient;
         }
-        protected bool TryDataServiceQuery<T>(Func<Task<HTTPServiceClientBase.HTTPServiceResult<T>>> DataServiceQuery, out T? Result, out string FailureMessage)
+        protected bool TryDataServiceQuery<T>(Func<nio2soVoltronDataServiceClient, Task<HTTPServiceClientBase.HTTPServiceResult<T>>> DataServiceQuery, out T? Result, out string FailureMessage)
         {
-            var result = DataServiceQuery().Result;
+            var result = DataServiceQuery(GetDataService()).Result;
             FailureMessage = result.FailureReason;
             Result = result.Result;
             return result.IsSuccessful;

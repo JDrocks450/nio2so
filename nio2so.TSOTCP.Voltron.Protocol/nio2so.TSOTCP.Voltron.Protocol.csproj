@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyVersion>0.7.0.0</AssemblyVersion>
     <FileVersion>0.7.0.0</FileVersion>
+    <Platforms>AnyCPU;x86</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar\TCPQuaZar.csproj" />
+    <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar.csproj" />
     <ProjectReference Include="..\nio2so.Data.Common\nio2so.Data.Common.csproj" />
     <ProjectReference Include="..\nio2so.Database\nio2so.DataService.Common.csproj" />
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />

@@ -12,7 +12,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using System.Security.Cryptography.X509Certificates;
+using OpenSSL.X509;
 
 namespace nio2so.TSOTCP.Voltron.Protocol
 {
@@ -72,8 +72,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="Settings"></param>
-        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer, X509Certificate2? SSLCertificate) :
-            base(new(Name, Settings.ServerIPAddress == "localhost" ? IPAddress.Loopback : IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, SSLCertificate, Settings.MaxConcurrentConnections)
+        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer, X509Certificate? ServerCertificate) :
+            base(new(Name, Settings.ServerIPAddress == "localhost" ? IPAddress.Loopback : IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, ServerCertificate, Settings.MaxConcurrentConnections)
             {
                 CachePackets = false, // no memory leaks please
                 DisposePacketOnSent = true, // no memory leaks please
