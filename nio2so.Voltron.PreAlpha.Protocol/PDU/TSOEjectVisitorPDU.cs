@@ -1,0 +1,24 @@
+﻿using nio2so.Voltron.Core.TSO;
+
+namespace nio2so.Voltron.PreAlpha.Protocol.PDU
+{
+    /// <summary>
+    /// Ignored by the client, likely server only command to tell the server to eject someone
+    /// </summary>
+    [TSOVoltronPDU((uint)TSO_PreAlpha_VoltronPacketTypes.EJECT_VISITOR_PDU)]
+    public class TSOEjectVisitorPDU : TSOVoltronPacket
+    {
+        public uint AvatarID { get; set; }
+
+        public TSOEjectVisitorPDU()
+        {
+        }
+
+        public TSOEjectVisitorPDU(uint avatarID)
+        {
+            AvatarID = avatarID;
+        }
+
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.EJECT_VISITOR_PDU;
+    }
+}

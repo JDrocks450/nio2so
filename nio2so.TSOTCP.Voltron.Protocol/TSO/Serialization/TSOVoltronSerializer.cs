@@ -1,11 +1,10 @@
-﻿using nio2so.Data.Common.Serialization.Voltron;
-using QuazarAPI.Networking.Data;
+﻿using QuazarAPI.Networking.Data;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization
+namespace nio2so.Voltron.Core.TSO.Serialization
 {
     /// <summary>
     /// Provides functionality that Serializes and Deserializes object instances to/from Voltron-compatible streams at runtime

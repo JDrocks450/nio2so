@@ -1,6 +1,6 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.TSO;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
+﻿using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.PreAlpha.Protocol.Services;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +19,7 @@ namespace nio2so.TSOView2.Formats.Network
     public partial class TSOVoltronPacketPropertiesControl : UserControl, IDisposable
     {
         private TSOVoltronPacket? _currentPDU;
+        private readonly TSOPreAlphaPDUFactory factory = new();
 
         public string CurrentFile
         {
@@ -43,6 +44,9 @@ namespace nio2so.TSOView2.Formats.Network
         public TSOVoltronPacketPropertiesControl()
         {
             InitializeComponent();
+
+            factory = new();
+            factory.Init(null); // optimize this later
         }
 
         public bool DisplayPDU(string PDUFileURI, bool ShowValues = true)
@@ -57,8 +61,8 @@ namespace nio2so.TSOView2.Formats.Network
             //LOAD FROM FILE
             try
             {
-                using (FileStream stream = File.OpenRead(PDUFileURI))
-                    _currentPDU = TSOPDUFactory.CreatePacketObjectFromDataBuffer(stream);
+                using (FileStream stream = File.OpenRead(PDUFileURI))                
+                    _currentPDU = factory.CreatePacketObjectFromDataBuffer(stream);                
             }
             catch (Exception e)
             {

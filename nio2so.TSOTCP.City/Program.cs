@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types;
+using nio2so.Voltron.Core;
 using OpenSSL.Crypto;
 using OpenSSL.X509;
 using System.Diagnostics;
@@ -19,7 +20,7 @@ namespace nio2so.TSOTCP.Voltron.Server
 
             //VersionInfo is a special color
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{Protocol.TSOVoltronBasicServer.ServerVersionInfoString}");
+            Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{TSOVoltronBasicServer.ServerVersionInfoString}");
 
             //Init is a special color
             Console.ForegroundColor = ConsoleColor.Yellow;

@@ -1,17 +1,15 @@
-﻿using MiscUtil.Conversion;
-using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.Voltron.Core.TSO.Aries;
+using nio2so.Voltron.Core.TSO.Serialization;
 using QuazarAPI;
 using QuazarAPI.Networking.Data;
+using QuazarAPI.Util.Endian;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO
+namespace nio2so.Voltron.Core.TSO
 {
     /// <summary>
     /// Stores the header information of a <see cref="TSOVoltronPacket"/>
@@ -43,8 +41,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         public uint? SenderQuazarConnectionID { get; set; } = null;
         public virtual string FriendlyPDUName => GetType().Name;
         public abstract ushort VoltronPacketType { get; }
-
-        public TSO_PreAlpha_VoltronPacketTypes KnownPacketType => (TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType;
         public uint PayloadSize { get; protected set; }
 
         /// <summary>
@@ -61,8 +57,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         /// </summary>
         public virtual void EnsureNoErrors()         
         {
-            if (KnownPacketType == TSO_PreAlpha_VoltronPacketTypes.UNKNOWN_MESSAGE_ID_PDU)
-                throw new InvalidDataException($"{nameof(KnownPacketType)} is {KnownPacketType} (INVALID)");
+            if (VoltronPacketType == 0x0)
+                throw new InvalidDataException($"{nameof(VoltronPacketType)} is 0x0 (INVALID)");
         }
 
         public TSOVoltronSerializerGraphItem? MySerializedGraph { get; private set; }
@@ -199,7 +195,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
 
             if (VoltronPacketType != fooVoltronPacketType) // DOES IT MATCH THIS OBJECT?
                 throw new InvalidDataException($"Developer: The TSOVoltronPacket object you're calling the ReflectFromBody function on is: " +
-                    $"{KnownPacketType}, yet the data we got is for: {(TSO_PreAlpha_VoltronPacketTypes)fooVoltronPacketType}!");
+                    $"{VoltronPacketType:X4}, yet the data we got is for: {fooVoltronPacketType:X4}!");
             PayloadSize = fooPayloadSize; // PACKET SIZE
             if (PayloadSize > BodyStream.Length) // NOT ENOUGH DATA YET!
                 throw new InternalBufferOverflowException("This packet is larger than the supplied data buffer. Get all the data first before calling.");
@@ -252,9 +248,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
             }
             return new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, bodyBuffer);
         }
-
-        public static IEnumerable<TSOVoltronPacket> ParseAllPackets(TSOTCPPacket AriesPacket) =>
-            TSOPDUFactory.CreatePacketObjectsFromAriesPacket(AriesPacket);
 
         public static T? ParsePacket<T>(byte[] Data, out int ReadAmount) where T : ITSOVoltron, new()
         {

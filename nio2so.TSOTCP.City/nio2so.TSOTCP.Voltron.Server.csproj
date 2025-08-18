@@ -16,7 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar.csproj" />
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
-    <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.TSOTCP.Voltron.Protocol.csproj" />
+    <ProjectReference Include="..\nio2so.Voltron.PreAlpha.Protocol\nio2so.Voltron.PreAlpha.Protocol.csproj" />
   </ItemGroup>
 
   <ItemGroup>

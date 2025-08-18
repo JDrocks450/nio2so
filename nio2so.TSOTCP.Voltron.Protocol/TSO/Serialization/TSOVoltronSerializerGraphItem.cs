@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Reflection;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization
+namespace nio2so.Voltron.Core.TSO.Serialization
 {
     /// <summary>
     /// A serialization graph that graphs the objects serialized by the <see cref="TSOVoltronSerializerCore"/>

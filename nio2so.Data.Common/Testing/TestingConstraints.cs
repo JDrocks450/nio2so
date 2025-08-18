@@ -21,7 +21,7 @@
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
-        public const bool VerboseLogging = true;
+        public const bool VerboseLogging = false;
 
         /// <summary>
         /// What the ID for My House

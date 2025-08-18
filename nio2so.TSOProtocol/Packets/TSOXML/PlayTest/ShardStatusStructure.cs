@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using System.Runtime.Serialization;
 
 namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PlayTest
 {
@@ -9,6 +10,7 @@ namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PlayTest
                                               ShardStatusReason Status,
                                               int Map) : IVersionedPacketStructure                                                                                            
     {
+        [IgnoreDataMember]
 
         public static ShardStatusStructure Default = new(Name: TestingConstraints.MyShardName, Rank: 1, Location: "LOCATION", OnlineAvatars: 1, Status: ShardStatusReason.Up, Map: 10);
 

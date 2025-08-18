@@ -2,14 +2,14 @@ using nio2so.TSOHTTPS.Protocol.Controllers;
 using nio2so.TSOHTTPS.Protocol.Services;
 using System.Net;
 
-namespace TSOHTTPS
+namespace nio2so.TSOHTTPS
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            System.Net.ServicePointManager.SecurityProtocol =
-               System.Net.SecurityProtocolType.Tls12 | 
+            ServicePointManager.SecurityProtocol =
+               SecurityProtocolType.Tls12 | 
                SecurityProtocolType.Tls11 | 
                SecurityProtocolType.Tls;
 

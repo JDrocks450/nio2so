@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\nio2so.Data.Common\nio2so.Data.Common.csproj" />
+    <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
+    <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.Voltron.Core.csproj" />
+  </ItemGroup>
+
+</Project>

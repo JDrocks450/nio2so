@@ -1,7 +1,8 @@
-﻿using System.Runtime.Serialization;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Struct
+namespace nio2so.Voltron.Core.TSO.Struct
 {
     /// <summary>
     /// This is a structure consisting of an AriesID and MasterID </para>
@@ -9,10 +10,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Struct
     [Serializable]
     public record TSOAriesIDStruct : ITSONumeralStringStruct
     {
-        [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
+        [TSOVoltronString(TSOVoltronValueTypes.Pascal)]
         public string AriesID { get; set; } = "";        
 
-        [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Pascal)]
+        [TSOVoltronString(TSOVoltronValueTypes.Pascal)]
         public string MasterID
         {
             get => ((ITSONumeralStringStruct)this).FormatSpecifier + (string.IsNullOrEmpty(((ITSONumeralStringStruct)this).FormatSpecifier) ? _masterID : _masterID.Replace(((ITSONumeralStringStruct)this).FormatSpecifier, ""));
@@ -48,7 +49,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Struct
         /// </summary>
         [IgnoreDataMember]
         [TSOVoltronIgnorable]
-        internal static TSOAriesIDStruct Default => new TSOAriesIDStruct() { AriesID = "", MasterID = "" };
+        public static TSOAriesIDStruct Default => new TSOAriesIDStruct() { AriesID = "", MasterID = "" };
 
         string ITSONumeralStringStruct.FormatSpecifier => "??";
         string ITSONumeralStringStruct.IDString { get => AriesID; set => AriesID = value; }

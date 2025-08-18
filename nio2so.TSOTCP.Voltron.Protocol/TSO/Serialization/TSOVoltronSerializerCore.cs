@@ -1,11 +1,11 @@
-﻿using MiscUtil.Conversion;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
 using QuazarAPI.Networking.Data;
-using nio2so.Data.Common.Serialization.Voltron;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using nio2so.Data.Common.Serialization.Voltron;
+using QuazarAPI.Util.Endian;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization
+namespace nio2so.Voltron.Core.TSO.Serialization
 {
     /// <summary>
     /// Provides low-level serialization functionality for individual data types part of a larger data contract

@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Struct
+namespace nio2so.Voltron.Core.TSO.Struct
 {
     /// <summary>
     /// A structure containing one string intended for a string containing numbers and a second string containing text

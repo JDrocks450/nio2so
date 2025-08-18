@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Text;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization
+namespace nio2so.Voltron.Core.TSO.Serialization
 {
     public interface ITSOVoltronSpecializedPDUHeader
     {

@@ -10,7 +10,7 @@
         /// <para/>For strings specifically, you can get a bit more granular with <see cref="TSOVoltronString"/> but this attribute will also
         /// work for changing between Pascal and NullTerminated
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public class TSOVoltronValue : Attribute
         {
             public TSOVoltronValueTypes Type { get; protected set; }
@@ -23,7 +23,7 @@
         /// <summary>
         /// Dictates how this string should be handled by the parser/decoder logic in <see cref="TSOVoltronPacket"/>
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronString : TSOVoltronValue
         {
             public int PascalLengthValueLengthBytes { get; set; }
@@ -51,7 +51,7 @@
             /// <param name="NullTerminatedMaxLength"></param>
             public TSOVoltronString(TSOVoltronValueTypes Type, char NullTerminator, int NullTerminatedMaxLength = 255) : base(Type)
             {
-                this.PascalLengthValueLengthBytes = 4;
+                PascalLengthValueLengthBytes = 4;
                 NullTerminatorChar = NullTerminator;
                 this.NullTerminatedMaxLength = NullTerminatedMaxLength;
             }
@@ -60,9 +60,9 @@
         /// Dictates to the <see cref="TSOVoltronPacket"/> serializer that this property should be set to the distance from this property to 
         /// the end of the packet. 
         /// <para/>Perfect for MessageLength properties!
-        /// <para/>Should only be used on <see cref="UInt32"/>
+        /// <para/>Should only be used on <see cref="uint"/>
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronDistanceToEnd : Attribute
         {
             public TSOVoltronDistanceToEnd() { }
@@ -73,7 +73,7 @@
         /// <para/>Perfect for <c>ArrayName</c>Count properties!
         /// <para/>Can be used on any <b>Numeric</b> data type
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronArrayLength : Attribute
         {
             public string ArrayPropertyName { get; set; }
@@ -86,7 +86,7 @@
         /// <summary>
         /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
         public class TSOVoltronIgnorable : Attribute
         {
             public TSOVoltronIgnorable()
@@ -97,7 +97,7 @@
         /// <summary>
         /// This property will terminate parsing the <see cref="TSOVoltronPacket"/> and put all remaining bytes until the end of the packet into this property.
         /// </summary>
-        [System.AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
+        [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronBodyArray : Attribute
         {
             public TSOVoltronBodyArray(int MaxLength = -1)

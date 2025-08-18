@@ -8,6 +8,7 @@ using nio2so.Formats;
 using nio2so.TSOHTTPS.Protocol.Data;
 using nio2so.TSOHTTPS.Protocol.Data.Credential;
 using nio2so.TSOHTTPS.Protocol.Packets.TSOXML;
+using nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PlayTest;
 using nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha;
 using nio2so.TSOHTTPS.Protocol.Services;
 

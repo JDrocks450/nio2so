@@ -1,8 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
 using QuazarAPI.Networking.Data;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
+namespace nio2so.Voltron.Core.TSO.Aries
 {
     /// <summary>
     /// <see href="http://wiki.niotso.org/Maxis_Protocol#AriesPackets"/>    
@@ -27,8 +26,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
     /// </summary>
     public class TSOTCPPacket : PacketBase
     {
-        private static bool _warningShownOnce = false;
-
         public override uint GetHeaderSize() => ARIES_FRAME_HEADER_LEN;
 
         /// <summary>
@@ -88,8 +85,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
                 if (!headerSuccess) // THROW IF FIRST PACKET
                 {
                     if (currentIndex == 0)
-                        TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors,
-                            "cTSOTCPPacket", "First packet in the response body isn't an Aries packet.")); // FIRST PACKET ISN'T EVEN ARIES
+                        throw new InvalidDataException("First packet in the response body isn't an Aries packet."); // FIRST PACKET ISN'T EVEN ARIES
                     break;
                 }
                 uint packetBuffer = size + ARIES_FRAME_HEADER_LEN;
@@ -126,15 +122,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
         {
             byte[] packetData = new byte[PayloadSize + ARIES_FRAME_HEADER_LEN];
             Array.Copy(BitConverter.GetBytes(PacketType), 0, packetData, sizeof(uint) * 0, sizeof(uint));
-            if (Timestamp == 0)
-            {
-                Timestamp = 0xA1A2A3A4;
-                if (!_warningShownOnce)
-                    TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings,
-                        "cTSOTCPPacket", "Timestamp parameter was 0x0. Changed to 0xA1A2A3A4 just in time. " +
-                        "This warning will not be shown again."));
-                _warningShownOnce = true;
-            }
+            if (Timestamp == 0)            
+                Timestamp = 0xA1A2A3A4;            
             Array.Copy(BitConverter.GetBytes(Timestamp), 0, packetData, sizeof(uint) * 1, sizeof(uint));
             Array.Copy(BitConverter.GetBytes(PayloadSize), 0, packetData, sizeof(uint) * 2, sizeof(uint));
             if (PayloadSize > 0)
@@ -180,8 +169,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
             }
             catch (Exception e)
             { // TRY FUNCTION WILL IGNORE ERRORS
-                TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors,
-                    "cTSOTCPPacket", $"Error when parsing Aries header: {e.Message}"));
                 return false;
             }
             return PayloadSize != 0;

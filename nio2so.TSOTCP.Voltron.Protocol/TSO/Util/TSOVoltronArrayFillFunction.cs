@@ -1,10 +1,10 @@
-﻿namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Util
+﻿namespace nio2so.Voltron.Core.TSO.Util
 {
     /// <summary>
     /// A helper class to offer an extension method for byte[]s to be filled with:
     /// <code>BAADF00D</code>
     /// </summary>
-    internal static class TSOVoltronArrayFillFunction
+    public static class TSOVoltronArrayFillFunction
     {
         /// <summary>
         /// Takes this array, extends it to the desired length, and fills the garbage bytes with <c>0xBA AD F0 0D</c>

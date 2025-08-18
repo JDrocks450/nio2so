@@ -1,6 +1,6 @@
-﻿using MiscUtil.Conversion;
+﻿using QuazarAPI.Util.Endian;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Aries
+namespace nio2so.Voltron.Core.TSO.Aries
 {
     /// <summary>
     /// This Aries packet gets information about the client that's calling into the server. 

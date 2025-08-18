@@ -1,6 +1,6 @@
 ﻿using nio2so.DataService.Common;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.Services
+namespace nio2so.Voltron.Core.Services
 {
     /// <summary>
     /// The <see cref="nio2soDataServiceClient"/> but for use in <see cref="ITSOServer"/> 
@@ -8,6 +8,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
     /// </summary>
     public class nio2soVoltronDataServiceClient : nio2soDataServiceClient, ITSOService
     {
+        public ITSOServer Parent { get; set; } = null!;
         public nio2soVoltronDataServiceClient(Uri nio2soApiAddress) : this(new HttpClient(), nio2soApiAddress) { }
         /// <summary>
         /// <inheritdoc cref="nio2soDataServiceClient(HttpClient,Uri)"/>
@@ -19,6 +20,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
         public void Dispose()
         {
             Client.Dispose();
-        }        
+        }
+
+        public void Init(ITSOServer Server)
+        {
+            
+        }
     }
 }

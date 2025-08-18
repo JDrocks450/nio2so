@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using System.Runtime.Serialization;
 
 namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha
 {
@@ -10,6 +11,7 @@ namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha
         public TSOPE_ShardStatusStructure(ShardLocation Location, string Name,
             ShardStatusReason Status, uint OnlineAvatars) : this(Location.ToString().ToLower(), Name, Status, OnlineAvatars) { }
 
+        [IgnoreDataMember]
         public static TSOPE_ShardStatusStructure Default = new(ShardLocation.PUBLIC, TestingConstraints.MyShardName, ShardStatusReason.Up, 1);
 
         public IVersionedPacketStructure GetDefault() => Default;

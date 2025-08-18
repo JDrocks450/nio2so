@@ -1,4 +1,5 @@
 ﻿using nio2so.Data.Common.Testing;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 
 namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha
@@ -22,7 +23,9 @@ namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML.PreAlpha
         [property: JsonPropertyName("Popularity-Delta")] byte PopularityDelta,
         [property: JsonPropertyName("Shard-Name")] string ShardName) : IVersionedPacketStructure
     {
+        [IgnoreDataMember]
         public static TSOPE_AvatarDataStructure Empty => new(0, "", 0, 0, 0, 0, "");
+        [IgnoreDataMember]
         public static TSOPE_AvatarDataStructure Default => new(TestingConstraints.MyAvatarID, TestingConstraints.MyAvatarName, TestingConstraints.StartingFunds, 5000, 5, 1, TestingConstraints.MyShardName);
 
         public IVersionedPacketStructure GetDefault() => Default;

@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
 using System.Xml.Linq;
 
@@ -67,6 +68,8 @@ namespace nio2so.TSOHTTPS.Protocol.Packets.TSOXML
             if (BaseNode == null) BaseNode = RootElement;
             foreach (var property in structuredData.GetType().GetProperties())
             {
+                if (property.GetCustomAttribute<IgnoreDataMemberAttribute>() != null) continue; // skip properties with IgnoreDataMemberAttribute
+
                 //NAME
                 string name = property.Name; // set name to be property name
                 name = property.GetCustomAttribute<TSOXMLElementName>()?.ElementName ?? name; // attribute present, reset name to be attribute name

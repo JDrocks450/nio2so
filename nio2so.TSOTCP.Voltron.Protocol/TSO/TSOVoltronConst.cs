@@ -1,7 +1,7 @@
 ﻿using nio2so.Data.Common.Testing;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
+using nio2so.Voltron.Core.TSO.Aries;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO
+namespace nio2so.Voltron.Core.TSO
 {
     /// <summary>
     /// Constants to use for the <see cref="TSOCityServer"/>

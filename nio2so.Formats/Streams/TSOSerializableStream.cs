@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.FAR3;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.Formats.FAR3;
 using nio2so.Formats.Util.Endian;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -22,12 +23,12 @@ namespace nio2so.Formats.Streams
         /// <summary>
         /// Do not trust this number, it's Endian can be literally either one for seemingly no reason
         /// </summary>
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
         /// <summary>
         /// Do not trust this number, it's Endian can be literally either one for seemingly no reason
         /// </summary>
         public uint DecompressedSize { get; set; }
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)]
+        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
         public uint CompressedSize { get; set; }
         [TSOVoltronBodyArray]
         public byte[] StreamContents

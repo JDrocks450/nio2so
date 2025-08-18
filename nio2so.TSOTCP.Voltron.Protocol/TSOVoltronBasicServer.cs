@@ -1,20 +1,20 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Types;
-using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.Services;
-using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Aries;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Regulator;
+using nio2so.Voltron.Core.Factory;
+using nio2so.Voltron.Core.Services;
+using nio2so.Voltron.Core.Telemetry;
+using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Aries;
+using nio2so.Voltron.Core.TSO.PDU;
+using nio2so.Voltron.Core.TSO.Regulator;
+using OpenSSL.X509;
 using QuazarAPI.Networking.Standard;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
-using OpenSSL.X509;
 
-namespace nio2so.TSOTCP.Voltron.Protocol
+namespace nio2so.Voltron.Core
 {
     /// <summary>
     /// A basic Voltron Server that handles the <see cref="TSOTCPPacket"/>s and <see cref="TSOVoltronPacket"/>s for The Sims Online Pre-Alpha.
@@ -35,8 +35,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// <summary>
         /// <inheritdoc cref="ITSOService"/>
         /// </summary>
-        public TSOServerServiceManager Services { get; private set; } = new();
-        public TSOServerTelemetryServer Telemetry { get; protected set; }
+        public TSOServerServiceManager Services { get; }
+        public TSOLoggerServiceBase Logger { get; }
 
         /// <summary>
         /// True to pause the processing of any Voltron Packets until this is false
@@ -72,7 +72,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="Settings"></param>
-        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOServerTelemetryServer TelemetryServer, X509Certificate? ServerCertificate) :
+        protected TSOVoltronBasicServer(string Name, VoltronServerSettings Settings, TSOLoggerServiceBase TelemetryServer, X509Certificate? ServerCertificate) :
             base(new(Name, Settings.ServerIPAddress == "localhost" ? IPAddress.Loopback : IPAddress.Parse(Settings.ServerIPAddress), Settings.ServerPort, ServerCertificate, Settings.MaxConcurrentConnections)
             {
                 CachePackets = false, // no memory leaks please
@@ -82,7 +82,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             })
         {
             Regulators = new(this);
-            Telemetry = TelemetryServer;
+            Services = new(this);
+            Logger = TelemetryServer;
+            Services.Register(TelemetryServer);
         }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)
@@ -98,7 +100,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             base.OnClientDisconnect(ID);
 
             //Update VoltronDMS
-            Regulators.Get<VoltronDMSProtocol>().ON_DISCONNECT(ID);
+            Regulators.Get<IDMSProtocol>().ON_DISCONNECT(ID);
         }
 
         protected void OnIncomingAriesFrameCallback(uint ID, TSOTCPPacket Data)
@@ -107,7 +109,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             //ServerPauseEvent.Reset();
 
             //**Telemetry
-            Telemetry.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, Data);
+            Logger.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, Data);
 
             switch (Data.PacketType)
             {
@@ -119,19 +121,22 @@ namespace nio2so.TSOTCP.Voltron.Protocol
 
                         if (!uint.TryParse(sessionData.User, out uint AvatarID))
                         {
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"AvatarID {sessionData.User} is unknown and was disconnected."));
+                            Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Errors, Name, $"AvatarID {sessionData.User} is unknown and was disconnected."));
                             Disconnect(ID);
                             break;
                         }
-                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name, $"AvatarID {sessionData.User} is logging into Voltron on nio2so!"));
+                        Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, Name, $"AvatarID {sessionData.User} is logging into Voltron on nio2so!"));
+
+                        //GET THE VOLTRON DMS REGULATOR
+                        var dmsProtocol = Regulators.Get<IDMSProtocol>();
 
                         //HOST_ONLINE_PDU
-                        SubmitAriesFrame(ID, new TSOHostOnlinePDU(ClientBufferLength, "badword"));
+                        SubmitAriesFrame(ID, dmsProtocol.GET_HOST_ONLINE(ClientBufferLength, "badword"));
                         
                         //attempt to find the client session service   
                         if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
                         { // not added to this server, cannot continue.
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, $"Could not find the ClientSessionService! Disconnecting..."));
+                            Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Errors, Name, $"Could not find the ClientSessionService! Disconnecting..."));
                             Disconnect(ID);
                             break;
                         }
@@ -140,7 +145,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         if (AvatarID == 0)
                         { // loading into CAS
                             sessionService.AddClientInCAS(ID);
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): User entering CAS."));
+                            Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, Name, $"UserLogin(): User entering CAS."));
                             break;
                         }
 
@@ -149,16 +154,17 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         try
                         {
                             //download the player's name from data service.
-                            var UpdatePlayerPDU = Regulators.Get<VoltronDMSProtocol>().GetUpdatePlayerPDU(AvatarID, out string AvatarName);                                                     
+                            var UpdatePlayerPDU = dmsProtocol.GET_UPDATE_PLAYER(AvatarID, out string AvatarName);                                                     
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
                             //send the update player PDU to the client
                             SubmitAriesFrame(ID, UpdatePlayerPDU);
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
+                            Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
+
                         }
                         catch (Exception ex)
                         {
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, Name, ex.Message));
+                            Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Errors, Name, ex.Message));
                             Disconnect(ID);
                             break;
                         }
@@ -189,7 +195,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                     var voltronPacket = packetSendQueue.First();
                     packetSendQueue.Remove(voltronPacket);
 
-                    if (voltronPacket is TSOClientBye) disconnecting = true; // When sending the BYE_PDU we should disconnect from the Server cleanly.
                     SubmitAriesFrame(ID, voltronPacket);
                 }
                 packetSendQueue.Clear();
@@ -212,7 +217,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol
             }
 
             //GET VOLTRON PACKETS OUT OF DATA BUFFER
-            var packets = TSOVoltronPacket.ParseAllPackets(IncomingAriesPacket);
+            var packets = Services.Get<TSOPDUFactoryServiceBase>().CreatePacketObjectsFromAriesPacket(IncomingAriesPacket);
             _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
             while (_VoltronBacklog.Count > 0)
             { // Work through all incoming PDUs ... list can change foreach would be unsafe here                           
@@ -227,16 +232,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                     var returnPackets = OnIncomingVoltronPacket(ref _VoltronBacklog, ID, packet, ref _handled); // handle pdu
                     if (!_handled)
                     { // HANDLER FAILED
-                        Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Warnings, "Voltron Handler",
-                            $"Handling {packet.KnownPacketType} Voltron packet was not successful."));
+                        Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, "Voltron Handler",
+                            $"Handling {packet.GetVoltronPacketTypeName(this)} Voltron packet was not successful."));
                         continue;
                     }
                     packetSendQueue.AddRange(returnPackets); // ADD TO SEND QUEUE
                 }
                 catch (Exception ex)
                 {
-                    Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Errors, "Voltron Handler",
-                            $"Handling the {packet.KnownPacketType} Voltron packet resulted in an error. \n" +
+                    Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Errors, "Voltron Handler",
+                            $"Handling the {packet.GetVoltronPacketTypeName(this)} Voltron packet resulted in an error. \n" +
                         $"{ex}"));
                 }
             }
@@ -261,32 +266,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                 packets.Add(packetToSend);
             }
 
-            Handled = true;
-            switch (Packet.KnownPacketType)
-            {
-                case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
-                    { // DB Request packets all start with the same Packet Type.
-                        TSODBRequestWrapper? dbPacket = Packet as TSODBRequestWrapper;
-                        if (dbPacket == default) break;
-                        var clsID = (TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID;
-                        //Handle DB request packets here and enqueue the response packets into the return value of this function.
-                        if (!Regulators.HandleIncomingDBRequest(dbPacket, out TSOProtocolRegulatorResponse? returnValue) ||
-                            returnValue == null)
-                        { // handle failed!
-                            Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Discoveries, "TSODBRequestWrapper Handler",
-                                        $"Could not handle " +
-                                $"{(TSO_PreAlpha_DBStructCLSIDs)dbPacket.TSOPacketFormatCLSID}::" +
-                                $"{(TSO_PreAlpha_DBActionCLSIDs)dbPacket.TSOSubMsgCLSID}!"));
-                            break;
-                        }
-
-                        //handle success!
-                        foreach (var packet in returnValue.ResponsePackets)
-                            defaultSend(packet);
-                    }
-                    break;
-                default: Handled = false; break;
-            }
             // TRY USING THE REGULATOR MANAGER TO HANDLE THIS PACKET
             if (!Handled)
             { // INVOKE THE SERVER-SIDE REGULATOR MANAGER
@@ -337,10 +316,10 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         {
             IEnumerable<TSOVoltronPacket> largePDUs = SplitLargePDU(voltronPacket);
             if (largePDUs.Count() > 1) // log console on auto TSOSplitBuffers            
-                Telemetry.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message, Name,
+                Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, Name,
                     $"***\n" +
                     $"\n" +
-                    $"Split {voltronPacket.ToShortString()} into {largePDUs.Count()} {nameof(TSOSplitBufferPDU)}s... " +
+                    $"Split {voltronPacket.ToShortString()} into {largePDUs.Count()} TSOSplitBufferPDUs... " +
                     $"({largePDUs.Count()} x {ClientBufferLength}(max) = {largePDUs.Sum(x => x.BodyLength)} bytes)\n" +
                     $"\n" +
                     $"***"));            
@@ -353,9 +332,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol
                         throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
                 }
                 Send(ID, ariesPacket);
-                Telemetry.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING for ARIES packets
+                Logger.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING for ARIES packets
             }                        
-            Telemetry.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING FOR VOLTRON PDUs
+            Logger.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING FOR VOLTRON PDUs
         }
 
         /// <summary>
@@ -368,9 +347,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         {
             List<TSOVoltronPacket> packets = new();
             //ensure to remove the ARIES header size from the split size to ensure we don't spill over            
-            uint splitSize = ClientBufferLength != 0 ? (uint)ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN : TSOSplitBufferPDU.STANDARD_CHUNK_SIZE;
+            uint splitSize = ClientBufferLength != 0 ? (uint)ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN : TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
             if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
-                packets.AddRange(TSOPDUFactory.CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize));
+                packets.AddRange(Services.Get<TSOPDUFactoryServiceBase>().CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize));
             else
                 packets.Add(DBWrapper);
             return packets;
@@ -383,6 +362,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// <param name="PDU"></param>
         /// <param name="Verb"></param>
         private void Debug_LogSendPDU(uint ID, TSOVoltronPacket PDU, NetworkTrafficDirections Direction) =>
-            Telemetry.OnVoltronPacket(Direction, DateTime.Now, PDU, ID);
+            Logger.OnVoltronPacket(Direction, DateTime.Now, PDU, ID);
     }
 }

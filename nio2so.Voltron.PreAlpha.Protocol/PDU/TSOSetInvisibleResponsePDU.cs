@@ -1,0 +1,12 @@
+﻿using nio2so.Voltron.PreAlpha.Protocol.Struct;
+using nio2so.Voltron.Core.TSO;
+namespace nio2so.Voltron.PreAlpha.Protocol.PDU
+{
+    [TSOVoltronPDU((uint)TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_RESPONSE_PDU)]
+    public class TSOSetInvisibleResponsePDU : TSOVoltronBasicResponsePacket
+    {
+        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SET_ACCEPT_ALERTS_PDU;
+        public TSOSetInvisibleResponsePDU(bool IsInvisible, TSOStatusReasonStruct? StatusReason = default) : base(IsInvisible, StatusReason) { }
+        public TSOSetInvisibleResponsePDU() : this(true) { }
+    }
+}

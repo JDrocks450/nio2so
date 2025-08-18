@@ -1,8 +1,8 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.TSO;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Struct;
+﻿using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Struct;
 using System.Collections.Concurrent;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.Services
+namespace nio2so.Voltron.Core.Services
 {
     /// <summary>
     /// Maps a Quazar Connection ID to a <see cref="TSOAriesIDStruct"/>
@@ -11,6 +11,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
     {
         private readonly ConcurrentDictionary<uint, TSOAriesIDStruct> _sessions = new();
         private readonly HashSet<uint> _casClients = new();
+
+        public ITSOServer Parent { get; set; } = null!;
 
         public bool AddClientInCAS(uint QuazarID) => _casClients.Add(QuazarID);
         public void AddClient(uint QuazarID, TSOAriesIDStruct VoltronID)
@@ -63,6 +65,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Services
         public IEnumerable<uint> GetConnectedQuazarIDs() => [.. _sessions.Keys];
 
         public void Dispose()
+        {
+            
+        }
+
+        public void Init(ITSOServer Server)
         {
             
         }

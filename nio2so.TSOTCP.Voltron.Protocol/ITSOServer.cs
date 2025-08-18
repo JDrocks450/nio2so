@@ -1,7 +1,7 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO;
+﻿using nio2so.Voltron.Core.Telemetry;
+using nio2so.Voltron.Core.TSO;
 
-namespace nio2so.TSOTCP.Voltron.Protocol
+namespace nio2so.Voltron.Core
 {
     /// <summary>
     /// Base interface for Voltron Servers
@@ -12,9 +12,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol
         /// Additional services that <see cref="TSORegulator"/> objects can use for their functionality
         /// </summary>
         TSOServerServiceManager Services { get; }
-        TSOServerTelemetryServer Telemetry { get; }
+        TSOLoggerServiceBase Logger { get; }
         TSORegulatorManager Regulators { get; }
-        
+        string Name { get; }
         public bool IsRunning { get; set; }
     }
 }

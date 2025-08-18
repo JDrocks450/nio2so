@@ -1,10 +1,9 @@
 ﻿using nio2so.Data.Common.Testing;
 using nio2so.DataService.Common.Tokens;
-using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Lot;
 using System.Text.Json;
 
-namespace nio2so.DataService.API
+namespace nio2so.DataService.Common.Types
 {
     /// <summary>
     /// Settings for the nio2so Database Service Server

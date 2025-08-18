@@ -64,12 +64,12 @@
             string uri = GetObjectURI(ObjectID, OverrideExtension);
             if (!File.Exists(uri))
             {
-                //TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
+                //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
                 //GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} not found. Sending default value if available..."));
                 return await OnFileNotFound();
             }
             byte[] buffer = await File.ReadAllBytesAsync(uri);
-            //TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
+            //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
               //  GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} success! Size: {buffer.Length}"));
             return buffer;
         }
@@ -97,7 +97,7 @@
         {
             Directory.CreateDirectory(BaseDirectory);
             return File.WriteAllBytesAsync(GetObjectURI(ObjectID, OverrideExtension), Buffer);
-            //TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
+            //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
              //   GetType().Name, $"Set {MY_ITEMNAME} ID: {ObjectID} successfully. Size: {Buffer.Length} (Can Overwrite: {Overwrite})"));
         }
 

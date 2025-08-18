@@ -1,9 +1,7 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.Factory;
-using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
+﻿using nio2so.Voltron.Core.Telemetry;
 using System.Reflection;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO
+namespace nio2so.Voltron.Core.TSO
 {
     /// <summary>
     /// A response to a <see cref="ITSOProtocolRegulator"/> Handle() method
@@ -26,6 +24,12 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
     {
         ITSOServer Server { get; set; }
         string RegulatorName { get; }
+
+        /// <summary>
+        /// Initializes the <see cref="ITSOProtocolRegulator"/> with the given <paramref name="Server"/>.
+        /// </summary>
+        /// <param name="Server"></param>
+        void Init(ITSOServer Server);
         /// <summary>
         /// Handles an incoming PDU.
         /// <para>Returns <see langword="false"/> if this particulator <see cref="ITSOProtocolRegulator"/> cannot handle that request.</para>
@@ -34,14 +38,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         /// <param name="ResponsePackets">Packets sent in response to this PDU.</param>
         /// <returns></returns>
         bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response);
-        /// <summary>
-        /// Handles an incoming <see cref="TSODBRequestWrapper"/> PDU.
-        /// <para>Returns <see langword="false"/> if this particular <see cref="ITSOProtocolRegulator"/> cannot handle that request.</para>
-        /// </summary>
-        /// <param name="PDU">The PDU the client sent</param>
-        /// <param name="ResponsePackets">Packets sent in response to this PDU.</param>
-        /// <returns></returns>
-        bool HandleIncomingDBRequest(TSODBRequestWrapper PDU, out TSOProtocolRegulatorResponse Response);
     }
 
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
@@ -82,7 +78,7 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         /// <para/><paramref name="OmissionList"/> will omit any types specified from this mapping process.
         /// </summary>
         public void RegisterDefaultProtocols(params Type[] OmissionList) =>
-            RegisterProtocols(typeof(TSOPDUFactory).Assembly, OmissionList);
+            RegisterProtocols(typeof(TSORegulatorManager).Assembly, OmissionList);
 
         /// <summary>
         /// Registers all <see cref="TSORegulator"/> types in the given assembly.
@@ -98,16 +94,16 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
                 var attribute = type.GetCustomAttribute<TSORegulator>();
                 if (attribute != null)
                 { // is this type a TSORegulator?
-                    var instance = type.Assembly.CreateInstance(type.FullName);
-                    if (instance != null)
+                    ITSOProtocolRegulator? instance = (ITSOProtocolRegulator)type.Assembly.CreateInstance(type.FullName);
+                    if (instance == null) continue; // cannot create an instance of this type, skip it.
+
+                    instance.Init(server); // initialize the instance
+                    bool value = typeMap.Add(instance);
+                    if (value)
                     {
-                        bool value = typeMap.Add((ITSOProtocolRegulator)instance);
-                        if (value)
-                        {
-                            TSOServerTelemetryServer.Global.OnConsoleLog(new(TSOServerTelemetryServer.LogSeverity.Message,
-                                "cTSORegulatorManager", $"Mapped {type.Name}!"));
-                            ((ITSOProtocolRegulator)instance).Server = server;
-                        }
+                        server.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+                            "cTSORegulatorManager", $"Mapped {type.Name}!"));
+                        ((ITSOProtocolRegulator)instance).Server = server;
                     }
                 }
             }
@@ -126,19 +122,6 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
             return false;
         }
         /// <summary>
-        /// Passes the incoming <see cref="TSODBRequestWrapper"/> to all registered <see cref="ITSOProtocolRegulator"/> instances and returns a response if any of them could handle it.
-        /// </summary>
-        /// <param name="Incoming"></param>
-        /// <param name="Outgoing"></param>
-        /// <returns></returns>
-        public bool HandleIncomingDBRequest(TSODBRequestWrapper Incoming, out TSOProtocolRegulatorResponse Outgoing)
-        {
-            foreach (var regulator in typeMap)
-                if (regulator.HandleIncomingDBRequest(Incoming, out Outgoing)) return true;
-            Outgoing = null;
-            return false;
-        }
-        /// <summary>
         /// Gets the <see cref="ITSOProtocolRegulator"/> by <see cref="Type"/> <typeparamref name="T"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -146,9 +129,11 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO
         /// <exception cref="Exception"></exception>
         public T Get<T>()
         {
+            Type searchType = typeof(T);
             foreach (var regulator in typeMap)
-                if (regulator.GetType() == typeof(T)) return (T)regulator;
-            throw new Exception($"Regulator {typeof(T).Name} is not found.");
+                if (regulator.GetType().IsAssignableTo(searchType)) 
+                    return (T)regulator;
+            throw new Exception($"Regulator {searchType.Name} is not found.");
         }
     }
 }

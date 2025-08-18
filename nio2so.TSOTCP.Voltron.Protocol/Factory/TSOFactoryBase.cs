@@ -1,9 +1,8 @@
 ﻿using nio2so.DataService.Common.Types.Lot;
-using nio2so.TSOTCP.Voltron.Protocol.Telemetry;
-using nio2so.TSOTCP.Voltron.Protocol.TSO.Serialization;
+using nio2so.Voltron.Core.TSO.Serialization;
 using System.Reflection;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.Factory
+namespace nio2so.Voltron.Core.Factory
 {
     /// <summary>
     /// Marks this type as a <see cref="TSOFactoryBase"/> to be added to the Type map
@@ -56,9 +55,9 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
         protected bool Register()
         {
             bool result = _factories.TryAdd(GetType(), this);
-            if (result)
-                TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                    GetType().Name, "Registered to the cTSOFactory type map"));
+            //if (result)
+            //    TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+            //        GetType().Name, "Registered to the cTSOFactory type map"));
             return result;
         }
 
@@ -129,13 +128,13 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
             string uri = GetObjectURI(ObjectID, OverrideExtension);
             if (!File.Exists(uri))
             {
-                TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} not found. Sending default value if available..."));
+                //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+                //GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} not found. Sending default value if available..."));
                 return OnFileNotFound();
             }
             byte[] buffer = File.ReadAllBytes(uri);
-            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} success! Size: {buffer.Length}"));
+            //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+            //    GetType().Name, $"Get {MY_ITEMNAME} ID: {ObjectID} success! Size: {buffer.Length}"));
             return buffer;
         }
 
@@ -162,8 +161,8 @@ namespace nio2so.TSOTCP.Voltron.Protocol.Factory
         {
             Directory.CreateDirectory(MY_DIR);
             File.WriteAllBytes(GetObjectURI(ObjectID, OverrideExtension), Buffer);
-            TSOServerTelemetryServer.LogConsole(new(TSOServerTelemetryServer.LogSeverity.Message,
-                GetType().Name, $"Set {MY_ITEMNAME} ID: {ObjectID} successfully. Size: {Buffer.Length} (Can Overwrite: {Overwrite})"));
+            //TSOLoggerServiceBase.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+            //    GetType().Name, $"Set {MY_ITEMNAME} ID: {ObjectID} successfully. Size: {Buffer.Length} (Can Overwrite: {Overwrite})"));
         }
 #if DEBUG
         public void Debug_SetCustomDataToDisk(uint DebugObjectID, string DataTypeName, byte[] WriteBytes, bool Overwrite = true) =>

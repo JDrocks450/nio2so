@@ -1,5 +1,4 @@
 ﻿using nio2so.Data.Common.Testing;
-using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace nio2so.DataService.Common.Types

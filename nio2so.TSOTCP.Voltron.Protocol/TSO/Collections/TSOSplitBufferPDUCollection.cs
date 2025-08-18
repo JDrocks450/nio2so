@@ -1,11 +1,11 @@
-﻿using nio2so.TSOTCP.Voltron.Protocol.TSO.PDU;
+﻿using nio2so.Voltron.Core.TSO.PDU;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.Collections
+namespace nio2so.Voltron.Core.TSO.Collections
 {
     /// <summary>
     /// A collection of <see cref="TSOSplitBufferPDU"/> instances
     /// </summary>
-    public class TSOSplitBufferPDUCollection : List<TSOSplitBufferPDU>, IDisposable
+    public class TSOSplitBufferPDUCollection : List<TSOVoltronPacket>, IDisposable
     {
         public void Dispose()
         {

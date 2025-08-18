@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.Data", "nio2so.Data"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.Data.Common", "nio2so.Data.Common\nio2so.Data.Common.csproj", "{25D905FD-4585-4BC3-8E4D-9AB354E79A6C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.TSOTCP.Voltron.Protocol", "nio2so.TSOTCP.Voltron.Protocol\nio2so.TSOTCP.Voltron.Protocol.csproj", "{B9A73912-A59A-48E0-963C-B9DD9AEE475C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.Core", "nio2so.TSOTCP.Voltron.Protocol\nio2so.Voltron.Core.csproj", "{B9A73912-A59A-48E0-963C-B9DD9AEE475C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.DataService", "nio2so.DataService", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
@@ -32,6 +32,10 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TCPQuaZar", "..\TCPQuaZar\TCPQuaZar.csproj", "{F9231504-5183-42CA-004E-B5A151839467}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedOpenSsl", "C:\Users\xXJDr\source\repos\JDrocks450\tcpquazar.openssldotnet\ManagedOpenSsl\ManagedOpenSsl.csproj", "{73DCC218-655B-485F-8EAC-0CE5F2F7343D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.Protocol", "nio2so.Protocol", "{D8EEF804-6E81-4543-B0E7-99D7DDD64944}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.PreAlpha.Protocol", "nio2so.Voltron.PreAlpha.Protocol\nio2so.Voltron.PreAlpha.Protocol.csproj", "{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -129,6 +133,14 @@ Global
 		{73DCC218-655B-485F-8EAC-0CE5F2F7343D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{73DCC218-655B-485F-8EAC-0CE5F2F7343D}.Release|x86.ActiveCfg = Release|x86
 		{73DCC218-655B-485F-8EAC-0CE5F2F7343D}.Release|x86.Build.0 = Release|x86
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Debug|x86.Build.0 = Debug|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Release|x86.ActiveCfg = Release|Any CPU
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -145,6 +157,7 @@ Global
 		{E4829665-F5AD-4D79-AC04-B3D369EB828E} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{F9231504-5183-42CA-004E-B5A151839467} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
 		{73DCC218-655B-485F-8EAC-0CE5F2F7343D} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
+		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6} = {D8EEF804-6E81-4543-B0E7-99D7DDD64944}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}

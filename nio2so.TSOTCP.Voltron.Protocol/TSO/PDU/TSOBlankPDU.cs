@@ -1,6 +1,6 @@
 ﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU
+namespace nio2so.Voltron.Core.TSO.PDU
 {
     /// <summary>
     /// A PDU with no structure, used when receiving a PDU format not yet implemented
@@ -11,14 +11,14 @@ namespace nio2so.TSOTCP.Voltron.Protocol.TSO.PDU
     {
         public override ushort VoltronPacketType { get; }
 
-        [TSOVoltronBodyArray] public byte[] PayloadArray { get; set; }
+        [TSOVoltronBodyArray] public byte[] PayloadArray { get; set; } = Array.Empty<byte>();
 
-        public TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes PacketType)
+        public TSOBlankPDU(uint PacketType)
         {
             VoltronPacketType = (ushort)PacketType;
             MakeBodyFromProperties();
         }
-        public TSOBlankPDU(TSO_PreAlpha_VoltronPacketTypes PacketType, byte[] BodyBytes) : this(PacketType)
+        public TSOBlankPDU(uint PacketType, byte[] BodyBytes) : this(PacketType)
         {
             PayloadArray = BodyBytes;
             MakeBodyFromProperties();

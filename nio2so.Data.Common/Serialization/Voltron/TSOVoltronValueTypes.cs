@@ -14,7 +14,7 @@
         /// </summary>
         NullTerminated,
         /// <summary>
-        /// A length-prefixed string plus a <see cref="UInt16"/> indicating data type (0x8000)
+        /// A length-prefixed string plus a <see cref="ushort"/> indicating data type (0x8000)
         /// <para>Looks like: <c>{ 0x8000 [WORD LENGTH] [UTF-8 *LENGTH* byte array] }</c></para>
         /// </summary>
         Pascal,
