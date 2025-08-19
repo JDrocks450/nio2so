@@ -1,5 +1,6 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.PreAlpha.Protocol.Services;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -69,36 +70,46 @@ namespace nio2so.TSOView2.Formats.Network
 
         private void Load_VoltronPanel()
         {
-            Load_VoltronNavigationTree();
+            //Load the navigation tree with Voltron.PreAlpha.Protocol packets
+            Load_VoltronNavigationTree([typeof(TSOPreAlphaPDUFactory).Assembly]);
         }
 
-        private void Load_VoltronNavigationTree()
+        private void Load_VoltronNavigationTree(Assembly[] ProtocolAssemblies, Type? BasicPacketType = default)
         {
             _selectableTypes.Clear();
 
-            Type BasicPacketType = typeof(TSOVoltronPacket);
+            if (BasicPacketType == default) BasicPacketType = typeof(TSOVoltronPacket);
 
             Assembly protocolAssembly = BasicPacketType.Assembly;
+            HashSet<Assembly> protocols = [.. ProtocolAssemblies];
+            protocols.Add(protocolAssembly);
 
-            TreeViewItem root = new() { Header = "nio2so", IsExpanded = true };
-            NavigationToken baseNode = new("nio2so", root);
+            TreeViewItem root = new() { Header = "nio2so", IsExpanded = true };            
 
-            foreach(Type definedType in protocolAssembly.ExportedTypes)
+            foreach(var assembly in protocols)
             {
-                if (!definedType.IsAssignableTo(BasicPacketType)) continue;
-                if (!DoSearchResult(definedType)) continue;
-                string[] tokens = definedType.FullName.Split('.');
-                NavigationToken current = baseNode;
-                for(int i = 0; i < tokens.Length - 1; i++)
+                NavigationToken baseNode = new(assembly.FullName, root);
+                foreach (Type definedType in assembly.ExportedTypes)
                 {
-                    if (i == 0) continue;
-                    string token = tokens[i];
-                    current = current.EnsureToken(token, new());
+                    if (!definedType.IsAssignableTo(BasicPacketType)) continue;
+                    if (!DoSearchResult(definedType)) continue;
+                    string[] tokens = definedType.FullName.Split('.');
+                    NavigationToken current = baseNode;
+                    for (int i = 0; i < tokens.Length - 1; i++)
+                    {
+                        if (i == 0) continue;
+                        string token = tokens[i];
+                        current = current.EnsureToken(token, new());
+                    }
+                    var typeNode = current.EnsureToken(definedType, new());
+                    if (!_selectableTypes.TryAdd(typeNode.NavigationNode, typeNode))
+                    {
+                        typeNode.NavigationNode.Foreground = System.Windows.Media.Brushes.Red;
+                        continue; // skip this type, it is already added
+                    }
+                    typeNode.NavigationNode.Selected += Voltron_TypeSelected;
                 }
-                var typeNode = current.EnsureToken(definedType, new());
-                _selectableTypes.Add(typeNode.NavigationNode, typeNode);
-                typeNode.NavigationNode.Selected += Voltron_TypeSelected;
-            }
+            }            
 
             NamespaceTypesListing.Items.Clear();
             NamespaceTypesListing.Items.Add(root);            
@@ -116,17 +127,22 @@ namespace nio2so.TSOView2.Formats.Network
 
         private void Voltron_TypeSelected(object sender, RoutedEventArgs e)
         {
+            if (!_selectableTypes.TryGetValue((TreeViewItem)sender, out TypeNavigationToken? typeNav) || typeNav == default)
+            {
+                MessageBox.Show("This selection could not be found. Please make your selection again.");
+                return;
+            }
             try
             {
-                TypeNavigationToken typeNav = _selectableTypes[(TreeViewItem)sender];
                 var packet = ActivateInstancePacket(typeNav);
-                if (packet == null)
-                    MessageBox.Show("This PDU is not available at this time.");
+                if (packet == null)                
+                    throw new NullReferenceException("The reflected type could not be instantiated. It may not have a parameterless constructor.");
                 VoltronPacketProperties.DisplayPDU(packet, false);
             }
-            catch(Exception exception)
-            {               
-                MessageBox.Show(exception.Message,  exception.GetType().Name);
+            catch (Exception exception)
+            {
+                typeNav.NavigationNode.Foreground = System.Windows.Media.Brushes.Red;
+                VoltronPacketProperties.DisplayException(exception);
             }
         }
 
@@ -170,7 +186,7 @@ namespace nio2so.TSOView2.Formats.Network
         {
             SearchBox.IsEnabled = false;
             searchFilter = SearchBox.Text;
-            Load_VoltronNavigationTree();
+            Load_VoltronPanel();
             SearchBox.IsEnabled = true;
         }
     }

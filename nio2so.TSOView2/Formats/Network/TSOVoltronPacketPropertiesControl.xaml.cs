@@ -46,7 +46,7 @@ namespace nio2so.TSOView2.Formats.Network
             InitializeComponent();
 
             factory = new();
-            factory.Init(null); // optimize this later
+            factory.Init(null);
         }
 
         public bool DisplayPDU(string PDUFileURI, bool ShowValues = true)
@@ -66,36 +66,67 @@ namespace nio2so.TSOView2.Formats.Network
             }
             catch (Exception e)
             {
-                MessageBox.Show(e.Message, "Error Occurred!");
+                MessageBox.Show(e.Message, "Deserialization Error Occurred");
             }
 
             if (_currentPDU == null) return false;
 
             //DISPLAY PROPERTIES (SERIALIZATION GRAPH)
-            ShowHierarchyProperties();
-
-            return true;
+            return DisplayPDU(_currentPDU, ShowValues);    
         }
 
         public bool DisplayPDU(TSOVoltronPacket Packet, bool ShowValues = true)
         {
-            this.ShowValues = ShowValues;
             _currentPDU = Packet;
-            ShowHierarchyProperties();
-            return true;
+            return ShowPDUHierarchyProperties(ShowValues);
         }
+
+        public bool DisplayObject(object obj, bool ShowValues = true)
+        {
+            try
+            {
+                return ShowObjectProperties(TSOVoltronSerializer.GetSerializationGraph(obj), ShowValues);
+            }
+            catch (Exception e)
+            {
+                return DisplayException(e);
+            }
+        }
+
+        public bool DisplayException(Exception exception)
+        {
+            PDUPropertyTree.Items.Clear();
+            PreviewText.Foreground = Brushes.Red;
+            PreviewText.Text = exception.ToString();
+            return true;
+        }       
 
         /// <summary>
         /// Will display the serialization graph of the loaded PDU (<see cref="_currentPDU"/>)
         /// </summary>
-        private void ShowHierarchyProperties()
-        {
-            if (_currentPDU == null) return;
+        private bool ShowPDUHierarchyProperties(bool ShowValues)
+        {            
+            if (_currentPDU == null) return false;
 
             TSOVoltronSerializer.CreatingSerializationGraphs = true;
 
             _currentPDU.MakeBodyFromProperties();
             var graph = _currentPDU.MySerializedGraph;
+
+            if (!ShowObjectProperties(graph, ShowValues))
+                return false;
+
+            _currentPDU.MakeBodyFromProperties();
+            graph = _currentPDU.MySerializedGraph;
+
+            PreviewText.Text = TSOVoltronSerializer.GenerateSerializationSummary(graph, ShowValues, AutoInitializeValues);
+            return true;
+        }
+
+        private bool ShowObjectProperties(TSOVoltronSerializerGraphItem? RootNode, bool ShowValues)
+        {
+            PreviewText.Foreground = Brushes.Black;
+            this.ShowValues = ShowValues;
 
             TreeViewItem rootNode = new();
 
@@ -114,7 +145,7 @@ namespace nio2so.TSOView2.Formats.Network
                         catch (MissingMethodException) { }
                     }
                 }
-                
+
                 TreeViewItem currentItem = new()
                 {
                     Header = GetCodeBlock(CurrentItem),
@@ -127,18 +158,20 @@ namespace nio2so.TSOView2.Formats.Network
                         ProcessOne(currentItem, graphItem);
             }
 
-            ProcessOne(rootNode, graph);
+            if (RootNode == null)
+                RootNode = TSOVoltronSerializer.GetSerializationGraph(new NullReferenceException(nameof(RootNode)));
+            if (RootNode == null)
+                return false; // catestrophic failure
+
+            ProcessOne(rootNode, RootNode);
             TreeViewItem newRootNode = (TreeViewItem)rootNode.Items[0];
             rootNode.Items.Remove(newRootNode);
             rootNode = newRootNode;
 
             PDUPropertyTree.Items.Clear();
-            PDUPropertyTree.Items.Add(rootNode);
-
-            _currentPDU.MakeBodyFromProperties();
-            graph = _currentPDU.MySerializedGraph;
-
-            PreviewText.Text = TSOVoltronSerializer.GenerateSerializationSummary(graph, ShowValues, AutoInitializeValues);
+            PDUPropertyTree.Items.Add(rootNode);    
+            
+            return true;
         }
 
         TextBlock GetCodeBlock(TSOVoltronSerializerGraphItem CurrentItem)

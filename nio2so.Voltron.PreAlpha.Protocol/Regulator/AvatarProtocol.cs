@@ -332,7 +332,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                                     RegulatorName, $"FIND PLAYER: ERROR! ARIES ID WAS NULL!"));
         }
 
-        public override bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
+        protected override bool TryHandleUnhandledVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response)
         {
             //This is all other PDUs not yet implemented
 
@@ -364,13 +364,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVISIBLE_PDU:
                     statusUpdated(new TSOSetInvincibleResponsePDU(false)); break;
                 case TSO_PreAlpha_VoltronPacketTypes.SET_INVINCIBLE_PDU:
-                    statusUpdated(new TSOSetInvisibleResponsePDU(false)); 
+                    statusUpdated(new TSOSetInvisibleResponsePDU(false));
                     break;
-            }
-            Response = null;
-            if (success)
-                return success;
-            return base.HandleIncomingPDU(PDU, out Response);
-        }        
+            }            
+            return success;
+        }
     }
 }

@@ -1,14 +1,18 @@
-﻿#define MAKEMANY
-#undef MAKEMANY
+﻿#define TSOPREALPHA
+#define TSOPLAYTEST
+
+//#undef TSOPREALPHA
+
+#if TSOPREALPHA
+#undef TSOPLAYTEST
+#endif
 
 using nio2so.DataService.Common.Types;
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Factory;
 using nio2so.Voltron.Core.Services;
+using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
-using nio2so.Voltron.PreAlpha.Protocol;
-using nio2so.Voltron.PreAlpha.Protocol.Regulator;
-using nio2so.Voltron.PreAlpha.Protocol.Services;
 using OpenSSL.X509;
 using System.Net.Http.Json;
 
@@ -43,16 +47,32 @@ namespace nio2so.TSOTCP.Voltron.Server
             }
         }
 
+        static TSOLoggerServiceBase GetServerLogger(string SysLogPath = default)
+        {
+#if TSOPLAYTEST
+            return new nio2so.Voltron.PlayTest.Protocol.TSOPlayTestLoggerService(SysLogPath);
+#elif TSOPREALPHA
+            return new nio2so.Voltron.PreAlpha.Protocol.TSOPreAlphaLoggerService(SysLogPath);
+#endif
+        }
+
         /// <summary>
         /// Creates a new <see cref="TSONeoVol2ronServer"/> with the specified <see cref="VoltronServerSettings"/>
         /// </summary>
         /// <param name="Settings"></param>
-        public TSONeoVol2ronServer(VoltronServerSettings Settings, X509Certificate? ServerCertificate) : base(Settings.ShardName, Settings, 
-            new TSOPreAlphaLoggerService(TSOVoltronConst.SysLogPath), ServerCertificate)
+        public TSONeoVol2ronServer(VoltronServerSettings Settings, X509Certificate? ServerCertificate) : base(Settings.ShardName, Settings,
+            GetServerLogger(TSOVoltronConst.SysLogPath), ServerCertificate)
         {
             //**REGULATOR
             Regulators.RegisterDefaultProtocols(); // register all Voltron.Core.TSO protocols (very few)
-            Regulators.RegisterProtocols(typeof(TSOProtocol).Assembly); // register The Sims Online targeting pack protocols (protocol assembly)
+            
+            // register The Sims Online targeting pack protocols (protocol assembly)
+#if TSOPLAYTEST
+            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PlayTest.Protocol.Regulator.TSOProtocol).Assembly); 
+#endif
+#if TSOPREALPHA
+            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PreAlpha.Protocol.Regulator.TSOProtocol).Assembly); 
+#endif
             Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
         }
 
@@ -67,7 +87,12 @@ namespace nio2so.TSOTCP.Voltron.Server
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
-            Services.Register(new TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
+#if TSOPLAYTEST
+            Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
+#endif
+#if TSOPREALPHA
+            Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
+#endif
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;

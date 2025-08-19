@@ -5,7 +5,7 @@ namespace nio2so.Voltron.Core.TSO.Collections
     /// <summary>
     /// A collection of <see cref="TSOSplitBufferPDU"/> instances
     /// </summary>
-    public class TSOSplitBufferPDUCollection : List<TSOVoltronPacket>, IDisposable
+    public class TSOSplitBufferPDUCollection : List<TSOSplitBufferPDUBase>, IDisposable
     {
         public void Dispose()
         {

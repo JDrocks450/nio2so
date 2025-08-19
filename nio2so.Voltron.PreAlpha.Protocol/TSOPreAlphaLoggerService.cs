@@ -11,10 +11,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol
 {    
     public class TSOPreAlphaLoggerService : TSOLoggerServiceBase
     {
-        public TSOPreAlphaLoggerService(string SysLogPath = default) : base(SysLogPath)
-        {
-
-        }
+        public TSOPreAlphaLoggerService(string SysLogPath = default) : base(SysLogPath) { }
 
         public override void OnVoltronPacket(NetworkTrafficDirections Direction, DateTime Time, TSOVoltronPacket PDU, uint? ClientID = null)
         {
@@ -24,28 +21,17 @@ namespace nio2so.Voltron.PreAlpha.Protocol
                 OnVoltron_DBWrapperPDU(Direction, Time, dbWrapper, ClientID);
                 return;
             }
-
-            Console.ForegroundColor = Direction switch
-            {
-                NetworkTrafficDirections.INBOUND => ConsoleColor.Green,
-                NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
-                _ => ConsoleColor.Blue
-            };
+            //filter out dumb stuff
             if (!TestingConstraints.VerboseLogging)
             {
-                if (PDU is TSOSplitBufferPDU)
+                if (PDU is TSOPreAlphaSplitBufferPDU)
                     return; // skip these
                 if (PDU is ITSODataBlobPDU standardMsg &&
                     standardMsg.DataBlobContentObject.GetAs<TSOStandardMessageContent>().
                     Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
                     return; // this is a server confirmation message, they spam. Do not log these.
             }
-
-            Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
-
-            //**LOG PDU TO DISK
-            if (Direction == NetworkTrafficDirections.INBOUND || Direction == NetworkTrafficDirections.OUTBOUND)
-                PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
+            base.OnVoltronPacket(Direction, Time, PDU, ClientID);
         }
 
         public void OnVoltron_DBWrapperPDU(NetworkTrafficDirections Direction, DateTime Time, TSODBRequestWrapper PDU, uint? ClientID = null)

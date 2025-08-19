@@ -5,6 +5,7 @@ using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO.PDU;
 using nio2so.Voltron.Core.TSO.Struct;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 
 namespace nio2so.Voltron.Core.TSO.Regulator
 {
@@ -70,28 +71,36 @@ namespace nio2so.Voltron.Core.TSO.Regulator
                 typeof(TDelegate)
             );
         }
+        public static TSOProtocolMatchingOption CreateVoltron<TEnum>()
+            where TEnum : Enum => Create<TEnum, TSOVoltronPacket, TSOProtocolHandler, TSOProtocolBase.VoltronInvokationDelegate>();
     }
 
     /// <summary>
-    /// Maps Voltron Packet Types to their individual handler functions. Each protocol regulator should inherit from this class. 
-    /// <para/><see cref="ITSOProtocolRegulator"/> should be structured similar to an ApiController in ASP.NET Core, where each method is a handler for a specific resource.
+    /// <inheritdoc cref="ITSOProtocolRegulator"/>
     /// </summary>
     public abstract class TSOProtocolBase : ITSOProtocolRegulator
     {
+        /// <summary>
+        /// A <see cref="TSOVoltronPacket"/> function handler delegate that will be used to handle incoming <see cref="TSOVoltronPacket"/> types
+        /// </summary>
+        /// <param name="PDU"></param>
+        public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);
+
         /// <summary>
         /// Maps the <see cref="TSOProtocolMatchingOption.PDUType"/> property to a dictionary of <see cref="TSOProtocolMatchingOption.EnumType"/> value to the <see cref="Delegate"/> function that will handle it
         /// </summary>
         private Dictionary<Type,Dictionary<uint,Delegate>> _map = new();
 
-        protected TSOServerServiceManager ServiceManager => Server.Services;
-        protected TSOProtocolRegulatorResponse? CurrentResponse = null;
+        protected TSOServerServiceManager? ServiceManager => Server?.Services;
+        private TSOProtocolRegulatorResponse? CurrentResponse { get; set; } = null;
+
         private readonly TSOProtocolMatchingOption[] options;
 
         /// <summary>
         /// The underlying <see cref="ITSOServer"/> instance used for sending/receiving PDUs/other network traffic
         /// </summary>
         public ITSOServer? Server { get; set; }
-        protected TSOLoggerServiceBase Logger => Server.Logger;
+        protected TSOLoggerServiceBase? Logger => Server?.Logger;
 
         /// <summary>
         /// The name of this regulator
@@ -107,6 +116,13 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             }
         }
 
+        /// <summary>
+        /// Creates a new <see cref="TSOProtocolBase"/> instance with the provided <paramref name="Options"/>.
+        /// <para/>Please ensure that the <paramref name="Options"/> are unique and in order of most generic to most specific.
+        /// <para/>As in, you should position <see cref="TSOVoltronPacket"/> as the first option, and then more specific PDUs/interfaces after that.
+        /// </summary>
+        /// <param name="Options">Please ensure that the <paramref name="Options"/> are unique and in order of most generic to most specific.
+        /// <para/>As in, you should position <see cref="TSOVoltronPacket"/> as the first option, and then more specific PDUs/interfaces after that.</param>
         protected TSOProtocolBase(params TSOProtocolMatchingOption[] Options)
         {
             options = Options;
@@ -115,14 +131,14 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         public virtual void Init(ITSOServer Server)
         {
             this.Server = Server;
-            MapMe(options);
+            MapInternal(options);
             LogConsole($"Initialized {GetType().Name} Regulator", "Initialization");
         }
 
         /// <summary>
-        /// Maps all <see cref="TSOProtocolHandler"/>, <see cref="TSOProtocolDatabaseHandler"/> and <see cref="TSOProtocolDatablobHandler"/> adorned methods as handlers to this regulator
+        /// Maps all <see cref="TSOProtocolMatchingOption.AttributeType"/> adorned methods as VoltronPDU handlers to this <see cref="TSOProtocolBase"/> instance.
         /// </summary>
-        private void MapMe(params TSOProtocolMatchingOption[] matchingConfigs)
+        private void MapInternal(params TSOProtocolMatchingOption[] matchingConfigs)
         {
             void DoMappingFunction(Type TAttribute, Type TDelegate, MethodInfo Target, Func<uint, Delegate, bool> TryAdd)
             {
@@ -309,7 +325,47 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             return map;
         }
 
-        //Must be overridden in a derived class
-        public abstract bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response);
+        public bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
+        {
+            if (Server == null) throw new NullReferenceException("No server instance!!!");
+
+            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<(uint, TSOVoltronPacket)>());
+            
+            //TRY GENERIC VOLTRON PACKET HANDLER
+            if (GetMapFor<TSOVoltronPacket>().TryGetValue(PDU.VoltronPacketType, out Delegate? action) && action != null)
+            {
+                Invoke(action, PDU);
+                return true;
+            }
+            //PASS TO PROTOCOL FOR SPECIFIC HANDLER
+            else if (TryHandleSpecialVoltronPDU(PDU, ref Response))            
+                return true;          
+            //NO HANDLERS EXIST
+            else if (TryHandleUnhandledVoltronPDU(PDU, ref Response))
+                return true;
+            //COMPLETELY UNHANDLED
+            Response = null;
+            return false;
+        }
+        /// <summary>
+        /// Uses the <see cref="MethodInvoker"/> to invoke the <paramref name="Delegate"/> with the provided <paramref name="Parameters"/> list.
+        /// </summary>
+        /// <param name="Delegate"></param>
+        /// <param name="Parameters"></param>
+        protected void Invoke(Delegate Delegate, params object[] Parameters) => MethodInvoker.Create(Delegate.Method).Invoke(this, [..Parameters]);
+        /// <summary>
+        /// When overridden, this method will enable the specific protocols to handle special Voltron PDUs that are not handled by the generic <see cref="TSOVoltronPacket"/> handler.
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <param name="Response"></param>
+        /// <returns></returns>
+        protected abstract bool TryHandleSpecialVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response);
+        /// <summary>
+        /// If all attempts to handle the <paramref name="PDU"/> fail, this method will be called to handle unhandled Voltron PDUs.
+        /// </summary>
+        /// <param name="PDU"></param>
+        /// <param name="Response"></param>
+        /// <returns></returns>
+        protected virtual bool TryHandleUnhandledVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response) => false;
     }
 }

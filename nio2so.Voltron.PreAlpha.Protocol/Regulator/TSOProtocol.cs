@@ -3,7 +3,6 @@ using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
-using System.Reflection;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 {
@@ -37,19 +36,27 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     }
 
     /// <summary>
+    /// For use with The Sims Online Pre-Alpha Voltron Server.<para/>
     /// A base class for <see cref="ITSOProtocolRegulator"/> objects that provides functionality for mapping 
     /// an incoming PDU type to a method that will handle the incoming PDU.
     /// </summary>
     public abstract class TSOProtocol : TSOProtocolBase
     {
-        public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);
+        /// <summary>
+        /// A <see cref="TSODBRequestWrapper"/> handler delegate.
+        /// </summary>
+        /// <param name="PDU"></param>
         public delegate void VoltronDatabaseInvokationDelegate(TSODBRequestWrapper PDU);
+        /// <summary>
+        /// A <see cref="ITSODataBlobPDU"/> handler delegate.
+        /// </summary>
+        /// <param name="PDU"></param>
         public delegate void VoltronDataBlobInvokationDelegate(ITSODataBlobPDU PDU);
 
-        protected new TSOPreAlphaLoggerService Logger => (TSOPreAlphaLoggerService)Server.Logger;
+        protected new TSOPreAlphaLoggerService? Logger => base.Logger as TSOPreAlphaLoggerService;
 
         protected TSOProtocol() : base(
-            TSOProtocolMatchingOption.Create<TSO_PreAlpha_VoltronPacketTypes, TSOVoltronPacket, TSOProtocolHandler, VoltronInvokationDelegate>(),
+            TSOProtocolMatchingOption.CreateVoltron<TSO_PreAlpha_VoltronPacketTypes>(),
             TSOProtocolMatchingOption.Create<TSO_PreAlpha_VoltronPacketTypes, TSODBRequestWrapper, TSOProtocolDatabaseHandler, VoltronDatabaseInvokationDelegate>(),
             TSOProtocolMatchingOption.Create<TSO_PreAlpha_VoltronPacketTypes, ITSODataBlobPDU, TSOProtocolDatablobHandler, VoltronDataBlobInvokationDelegate>()
             )
@@ -62,16 +69,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             return false;
         }
 
-        public override bool HandleIncomingPDU(TSOVoltronPacket PDU, out TSOProtocolRegulatorResponse Response)
+        protected override bool TryHandleSpecialVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response)
         {
-            if (Server == null) throw new NullReferenceException("No server instance!!!");
-
-            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<(uint, TSOVoltronPacket)>());
-
-            void Invoke(Delegate d, object parameter) => MethodInvoker.Create(d.Method).Invoke(this, parameter);
-
+            // Special VoltronPDU handling for TSO_PreAlpha_Packets
             switch (PDU.KnownPacketType())
             {
+                //DB WRAPPERS
                 case TSO_PreAlpha_VoltronPacketTypes.DB_REQUEST_WRAPPER_PDU:
                     {
                         var dbPDU = (TSODBRequestWrapper)PDU;
@@ -82,6 +85,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                         }
                     }
                     break;
+                //ITSODataBlobPDUs
                 case TSO_PreAlpha_VoltronPacketTypes.TRANSMIT_DATABLOB_PDU:
                 case TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU:
                     {
@@ -94,17 +98,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                         if (OnUnknownDataBlobPDU(broadcastPDU)) return true;
                     }
                     break;
-                default:
-                    {
-                        if (GetMapFor<TSOVoltronPacket>().TryGetValue(PDU.VoltronPacketType, out var action))
-                        {
-                            Invoke(action, PDU);
-                            return true;
-                        }
-                    }
-                    break;
             }
-            Response = null;
             return false;
         }
     }

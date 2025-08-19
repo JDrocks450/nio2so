@@ -1,22 +1,26 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.PDU;
-using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.PDU
+namespace nio2so.Voltron.PlayTest.Protocol.PDU
 {
     /// <summary>
     /// Wrapper for a data buffer larger than that of the current <see cref="TSOVoltronConst.TSOAriesClientBufferLength"/> on either party
     /// </summary>
-    [TSOVoltronPDU((uint)TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
-    public class TSOPreAlphaSplitBufferPDU : TSOSplitBufferPDUBase
+    [TSOVoltronPDU((uint)TSO_PlayTest_VoltronPacketTypes.SplitBufferPDU)]
+    internal class TSOPlayTestSplitBufferPDU : TSOSplitBufferPDUBase
     {
         public const uint STANDARD_CHUNK_SIZE = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
-        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU;
+        public override ushort VoltronPacketType => (ushort)TSO_PlayTest_VoltronPacketTypes.SplitBufferPDU;
 
         /// <summary>
         /// Creates a new blank <see cref="TSOPreAlphaSplitBufferPDU"/>
         /// </summary>
-        public TSOPreAlphaSplitBufferPDU() : base() { MakeBodyFromProperties(); }
+        public TSOPlayTestSplitBufferPDU() : base() { MakeBodyFromProperties(); }
         /// <summary>
         /// Creates a new <see cref="TSOPreAlphaSplitBufferPDU"/> with the given data stream <paramref name="DataBuffer"/>        
         /// </summary>
@@ -24,6 +28,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         /// <param name="IsEOF">This <b>needs</b> to be accurate to whether there is forthcoming data bytes in future split buffer 
         /// transmissions in this frame -- as in, <b>has the whole data buffer been sent for this frame?</b></param>
         /// <exception cref="InternalBufferOverflowException"></exception>
-        public TSOPreAlphaSplitBufferPDU(byte[] DataBuffer, bool IsEOF) : base(DataBuffer, IsEOF) { }                
+        public TSOPlayTestSplitBufferPDU(byte[] DataBuffer, bool IsEOF) : base(DataBuffer, IsEOF) { }
     }
 }

@@ -1,23 +1,25 @@
 ﻿using nio2so.Voltron.Core.Factory;
-using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Collections;
-using nio2so.Voltron.Core.TSO.Regulator;
-using nio2so.Voltron.PreAlpha.Protocol.PDU;
+using nio2so.Voltron.Core.TSO.PDU;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
+namespace nio2so.Voltron.Core.TSO.Regulator
 {
     /// <summary>
-    /// Handles incoming <see cref="TSOPreAlphaSplitBufferPDU"/> PDUs from a remote connection
+    /// A base class for SplitBuffer PDU behavior
     /// </summary>
-    [TSORegulator("TSOPreAlphaSplitBufferPDUProtocol")]
-    internal class SplitBufferPDUProtocol : TSOProtocol
+    public abstract class TSOSplitBufferProtocolBase
     {
         internal class SplitBufferPDUThreadContext : IDisposable
         {
             private TSOSplitBufferPDUCollection _SplitBufferPDUs = new();
             /// <summary>
-            /// When merging a <see cref="TSOPreAlphaSplitBufferPDU"/> this stores what packet we're currently unpacking
+            /// When merging a <see cref="TSOSplitBufferPDU"/> this stores what packet we're currently unpacking
             /// </summary>
             private TSOVoltronPacketHeader? _VoltronPacketHeader;
             public uint _recvBytes = 0;
@@ -29,7 +31,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 UnsplitPacket = null;
 
                 _recvPDUs++;
-                var splitBuffer = (TSOPreAlphaSplitBufferPDU)PDU;
+                var splitBuffer = (TSOSplitBufferPDUBase)PDU;
                 if (!IsUnpacking)
                 { // START UNPACKING                    
                     _VoltronPacketHeader = TSOVoltronPacket.ReadVoltronHeader(splitBuffer.DataBuffer);
@@ -40,7 +42,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
                 if (_recvBytes >= _VoltronPacketHeader.PDUPayloadSize || splitBuffer.EOF)
                 { // all packets received. dispose and reset
-                    UnsplitPacket = FactoryService.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);             
+                    UnsplitPacket = FactoryService.CreatePacketObjectFromSplitBuffers(_SplitBufferPDUs);
                     //remember to dispose later :) !
                 }
             }
@@ -57,7 +59,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
         private readonly ConcurrentDictionary<int, SplitBufferPDUThreadContext> _threads = new();
 
-        [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
         public void DoProtocol(TSOVoltronPacket PDU)
         {
             int ID = Thread.CurrentThread.ManagedThreadId;
@@ -68,17 +69,21 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (!_threads.ContainsKey(ID))
                 CreateContext(ID);
             if (!_threads.TryGetValue(ID, out SplitBufferPDUThreadContext? context) || context == null)
-                throw new Exception($"{nameof(TSOPreAlphaSplitBufferPDU)} cannot create a new context for the thread: {ID}");
+                throw new Exception($"{nameof(TSOSplitBufferPDUBase)} cannot create a new context for the thread: {ID}");
             context.DoProtocolOnThread(GetService<TSOPDUFactoryServiceBase>(), PDU, out TSOVoltronPacket? DesplitPDU);
             if (DesplitPDU != null)
             { // decompressed a PDU ... insert it into this voltron aries frame
                 InsertOne(DesplitPDU);
 
-                LogConsole($"Inserted the {DesplitPDU}\n\nFrom {context._recvPDUs} {nameof(TSOPreAlphaSplitBufferPDU)}s ... ({context._recvBytes} bytes)");
+                LogConsole($"Inserted the {DesplitPDU}\n\nFrom {context._recvPDUs} {nameof(TSOSplitBufferPDUBase)}s ... ({context._recvBytes} bytes)");
 
                 context.Dispose();
                 _threads.TryRemove(ID, out _);
             }
         }
+
+        protected abstract void InsertOne(TSOVoltronPacket InsertionPacket);
+        protected abstract void LogConsole(string message);
+        protected abstract T GetService<T>() where T : ITSOService;
     }
 }

@@ -2,15 +2,15 @@
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Collections;
 using nio2so.Voltron.Core.TSO.Regulator;
-using nio2so.Voltron.PreAlpha.Protocol.PDU;
+using nio2so.Voltron.PlayTest.Protocol.PDU;
 using System.Collections.Concurrent;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
+namespace nio2so.Voltron.PlayTest.Protocol.Regulator
 {
     /// <summary>
     /// Handles incoming <see cref="TSOPreAlphaSplitBufferPDU"/> PDUs from a remote connection
     /// </summary>
-    [TSORegulator("TSOPreAlphaSplitBufferPDUProtocol")]
+    [TSORegulator("TSOPlayTestSplitBufferPDUProtocol")]
     internal class SplitBufferPDUProtocol : TSOProtocol
     {
         internal class SplitBufferPDUThreadContext : IDisposable
@@ -29,7 +29,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 UnsplitPacket = null;
 
                 _recvPDUs++;
-                var splitBuffer = (TSOPreAlphaSplitBufferPDU)PDU;
+                var splitBuffer = (TSOPlayTestSplitBufferPDU)PDU;
                 if (!IsUnpacking)
                 { // START UNPACKING                    
                     _VoltronPacketHeader = TSOVoltronPacket.ReadVoltronHeader(splitBuffer.DataBuffer);
@@ -57,7 +57,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
         private readonly ConcurrentDictionary<int, SplitBufferPDUThreadContext> _threads = new();
 
-        [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.SPLIT_BUFFER_PDU)]
+        [TSOProtocolHandler((uint)TSO_PlayTest_VoltronPacketTypes.SplitBufferPDU)]
         public void DoProtocol(TSOVoltronPacket PDU)
         {
             int ID = Thread.CurrentThread.ManagedThreadId;
@@ -68,13 +68,13 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (!_threads.ContainsKey(ID))
                 CreateContext(ID);
             if (!_threads.TryGetValue(ID, out SplitBufferPDUThreadContext? context) || context == null)
-                throw new Exception($"{nameof(TSOPreAlphaSplitBufferPDU)} cannot create a new context for the thread: {ID}");
+                throw new Exception($"{nameof(TSOPlayTestSplitBufferPDU)} cannot create a new context for the thread: {ID}");
             context.DoProtocolOnThread(GetService<TSOPDUFactoryServiceBase>(), PDU, out TSOVoltronPacket? DesplitPDU);
             if (DesplitPDU != null)
             { // decompressed a PDU ... insert it into this voltron aries frame
                 InsertOne(DesplitPDU);
 
-                LogConsole($"Inserted the {DesplitPDU}\n\nFrom {context._recvPDUs} {nameof(TSOPreAlphaSplitBufferPDU)}s ... ({context._recvBytes} bytes)");
+                LogConsole($"Inserted the {DesplitPDU}\n\nFrom {context._recvPDUs} {nameof(TSOPlayTestSplitBufferPDU)}s ... ({context._recvBytes} bytes)");
 
                 context.Dispose();
                 _threads.TryRemove(ID, out _);

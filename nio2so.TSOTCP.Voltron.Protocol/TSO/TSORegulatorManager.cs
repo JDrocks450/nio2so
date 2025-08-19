@@ -17,8 +17,8 @@ namespace nio2so.Voltron.Core.TSO
         IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets);
 
     /// <summary>
-    /// Inheritors of this class will handle incoming PDUs (and DB Requests).
-    /// <para>You should make use of the <see cref="TSORegulator"/> attribute to mark one as a Regulator.</para>
+    /// Maps Voltron Packet Types to their individual handler functions. Each protocol regulator should inherit from this class. 
+    /// <para/><see cref="ITSOProtocolRegulator"/> should be structured similar to an ApiController in ASP.NET Core, where each method is a handler for a specific resource.
     /// </summary>
     public interface ITSOProtocolRegulator
     {

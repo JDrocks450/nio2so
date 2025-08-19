@@ -1,6 +1,12 @@
-﻿namespace nio2so.Voltron.Core.TSO
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace nio2so.Voltron.PlayTest.Protocol
 {
-    internal enum TSO_Release_VoltronPacketTypes
+    internal enum TSO_PlayTest_VoltronPacketTypes
     {
         AlertHandledPDU = 0x0001,
         AlertMsgPDU = 0x0002,

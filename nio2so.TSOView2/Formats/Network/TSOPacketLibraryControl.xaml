@@ -12,7 +12,7 @@
             <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" Margin="0,5,5,0" VerticalAlignment="Top" HorizontalAlignment="Right" Grid.Column="1">Learn about The Sims Online: Pre-Alpha</TextBlock>
-        <DockPanel Panel.ZIndex="3" VerticalAlignment="Top" MaxWidth="220" Margin="135,5,10,0">
+        <DockPanel Panel.ZIndex="3" VerticalAlignment="Top" MinWidth="220" MaxWidth="800" Margin="135,5,10,0">
             <TextBlock Foreground="White" Margin="5,0" VerticalAlignment="Center">Search:</TextBlock>
             <TextBox x:Name="SearchBox" KeyUp="SearchBox_KeyUp"/>
         </DockPanel>

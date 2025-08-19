@@ -319,7 +319,7 @@ namespace nio2so.Voltron.Core
                 Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, Name,
                     $"***\n" +
                     $"\n" +
-                    $"Split {voltronPacket.ToShortString()} into {largePDUs.Count()} TSOSplitBufferPDUs... " +
+                    $"Split {voltronPacket.ToShortString()} into {largePDUs.Count()} {largePDUs.First().GetType().Name}... " +
                     $"({largePDUs.Count()} x {ClientBufferLength}(max) = {largePDUs.Sum(x => x.BodyLength)} bytes)\n" +
                     $"\n" +
                     $"***"));            
@@ -349,7 +349,8 @@ namespace nio2so.Voltron.Core
             //ensure to remove the ARIES header size from the split size to ensure we don't spill over            
             uint splitSize = ClientBufferLength != 0 ? (uint)ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN : TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
             if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
-                packets.AddRange(Services.Get<TSOPDUFactoryServiceBase>().CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize));
+                // ONLY USE ITSOSPLITBUFFERPDU ON A VOLTRON PACKET OBJECT
+                packets.AddRange(Services.Get<TSOPDUFactoryServiceBase>().CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize).Cast<TSOVoltronPacket>());
             else
                 packets.Add(DBWrapper);
             return packets;

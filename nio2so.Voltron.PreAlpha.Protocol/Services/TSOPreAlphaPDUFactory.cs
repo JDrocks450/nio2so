@@ -7,15 +7,14 @@ using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using System.Reflection;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.Services
-{    
+{
     /// <summary>
-    /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>s
+    /// For use with The Sims Online Pre-Alpha Voltron Server. <para/>
+    /// This is an interface to use when reading/writing <see cref="TSOVoltronPacket"/>, <see cref="TSODBRequestWrapper"/>, and TSOBroadcastPDU.
     /// </summary>
     public class TSOPreAlphaPDUFactory : TSOPDUFactoryServiceBase
-    {
-        private Dictionary<TSO_PreAlpha_VoltronPacketTypes, Type> typeMap = new();
+    {        
         private Dictionary<TSO_PreAlpha_DBActionCLSIDs, Type> _dbtypeMap = new();
-        private Dictionary<TSO_PreAlpha_MasterConstantsTable, Type> _broadcastDatablobTypeMap = new();
 
         /// <summary>
         /// Maps the given assemblies to the factory.
@@ -27,65 +26,22 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Services
         /// </summary>
         public TSOPreAlphaPDUFactory() : this(typeof(TSOPreAlphaPDUFactory).Assembly, typeof(TSOVoltronPacket).Assembly) { }
 
-        protected override void MapAssembly(Assembly Assembly)
+        protected override bool TryMapSpecialVoltronPacket(Type type)
         {
-            Parent.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings,
-                       GetType().Name, $"\nBeginning to map: {Assembly.FullName}\n"));
-            foreach (var type in Assembly.GetTypes())
+            var dbattribute = type.GetCustomAttribute<TSOVoltronDBRequestWrapperPDU>();
+            if (dbattribute != null)
             {
-                var attribute = type.GetCustomAttribute<TSOVoltronPDU>();
-                if (attribute != null)
-                {
-                    var enumType = (TSO_PreAlpha_VoltronPacketTypes)(uint)attribute.Type;
-                    string friendlyName = Enum.GetName(enumType) ?? "Unknown";                    
-                    bool value = typeMap.TryAdd(enumType, type);
-                    Parent.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
-                        GetType().Name, $"Mapped {enumType}(0x{attribute.Type:X4}) to void {type.Name}()"));
-                    continue;
-                }
-                var dbattribute = type.GetCustomAttribute<TSOVoltronDBRequestWrapperPDU>();
-                if (dbattribute != null)
-                {
-                    var enumType = (TSO_PreAlpha_DBActionCLSIDs)(uint)dbattribute.Type;
-                    string friendlyName = Enum.GetName(enumType) ?? "Unknown";
-                    bool value = _dbtypeMap.TryAdd(enumType, type);
-                    Parent.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
-                       GetType().Name, $"Mapped *DB* {enumType}(0x{dbattribute.Type:X4}) to void {type.Name}()"));
-                    continue;
-                }
+                var enumType = (TSO_PreAlpha_DBActionCLSIDs)(uint)dbattribute.Type;
+                string friendlyName = Enum.GetName(enumType) ?? "Unknown";
+                bool value = _dbtypeMap.TryAdd(enumType, type);
+                LogConsole($"Mapped *DB* {enumType}(0x{dbattribute.Type:X4}) to void {type.Name}()");
+                return true;
             }
-            Parent.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings,
-                       GetType().Name, $"Completed Successfully! {Assembly.FullName}"));
+            return false;
         }
-        public override TSOSplitBufferPDUCollection CreateSplitBufferPacketsFromPDU(TSOVoltronPacket PDU, uint SizeLimit = 500)
-        {
-            if (SizeLimit == 0)
-                SizeLimit = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
-            if (PDU.BodyLength < SizeLimit)
-                throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
 
-            using (MemoryStream ms = new(PDU.Body))
-            {
-                ms.Seek(0, SeekOrigin.Begin);
-
-                long dataRemaining = ms.Length - ms.Position;
-
-                TSOSplitBufferPDUCollection collection = new();
-                while (ms.Position < ms.Length)
-                {
-                    byte[] buffer2 = new byte[Math.Min(SizeLimit, dataRemaining)];
-                    ms.Read(buffer2, 0, buffer2.Length);
-                    dataRemaining = ms.Length - ms.Position;
-                    TSOSplitBufferPDU splitBuffer = new(buffer2, dataRemaining == 0);
-                    collection.Add(splitBuffer);
-                }
-                return collection;
-            }
-        }
-        public override TSOVoltronPacket? CreatePacketObjectByPacketType(uint PacketType, Stream PDUData, bool MakeBlankPacketOnFail = true)
-        {
-            TSOVoltronPacket? getReturnValue() => MakeBlankPacketOnFail ? new TSOBlankPDU(PacketType) : default;
-
+        protected override TSOVoltronPacket? TryGetSpecialVoltronPacket(uint PacketType, Stream PDUData)
+        {           
             TSO_PreAlpha_VoltronPacketTypes KnownPacketType = (TSO_PreAlpha_VoltronPacketTypes)PacketType;
             switch (KnownPacketType)
             {
@@ -97,7 +53,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Services
                         if (_dbtypeMap.TryGetValue(clsID, out var dbtype))
                         {
                             var retValue = dbtype?.Assembly?.CreateInstance(dbtype.FullName) as TSODBRequestWrapper;
-                            if (retValue != null) return retValue;
+                            if (retValue != null) 
+                                return retValue;
                             throw new InvalidDataException($"Your type: {dbtype.Name} is not a {nameof(TSODBRequestWrapper)}! " +
                                 $"You must fix this and recompile.");
                             //Let case fall through to default Type map implementation below
@@ -105,38 +62,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Services
                     }
                     break;
             }
-            //Use the cTSOFactory Type map to reflect the packet type
-            if (typeMap.TryGetValue(KnownPacketType, out var type))
-                return (TSOVoltronPacket)type?.Assembly?.CreateInstance(type.FullName) ?? getReturnValue();
-            return getReturnValue();
-        }
+            return null;
+        }        
 
+        public override string GetVoltronPacketTypeName(ushort VoltronPacketType) => Enum.GetName((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ?? "0x" + VoltronPacketType.ToString("X4");
+        public override TSOSplitBufferPDUBase CreateSplitBufferPDU(byte[] DataBuffer, bool IsEOF) => new TSOPreAlphaSplitBufferPDU(DataBuffer, IsEOF);
         public override void Dispose()
         {
             
-        }
-
-        public override string GetVoltronPacketTypeName(ushort VoltronPacketType) => Enum.GetName((TSO_PreAlpha_VoltronPacketTypes)VoltronPacketType) ?? "0x" + VoltronPacketType.ToString("X4");
-
-        public override TSOVoltronPacket? CreatePacketObjectFromSplitBuffers(TSOSplitBufferPDUCollection Packets)
-        {
-            if (!Packets.Any()) throw new ArgumentOutOfRangeException(nameof(Packets));
-            if (Packets.Count < 2) throw new ArgumentOutOfRangeException(nameof(Packets));
-
-            int read = 0;
-            using (MemoryStream stream = new MemoryStream())
-            {
-                foreach (TSOSplitBufferPDU splitBuffer in Packets)
-                {
-                    read++;
-                    stream.Write(splitBuffer.DataBuffer);
-                    if (splitBuffer.EOF) break;
-                }
-                if (read != Packets.Count) throw new Exception("This may be totally safe. Supplied SplitBuffer Collection had " +
-                    "more items than there were for this buffer.");
-                stream.Seek(0, SeekOrigin.Begin);
-                return CreatePacketObjectFromDataBuffer(stream);
-            }
         }
     }
 }

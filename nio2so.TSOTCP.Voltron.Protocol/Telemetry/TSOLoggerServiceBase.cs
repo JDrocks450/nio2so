@@ -8,6 +8,14 @@ using System.Diagnostics;
 namespace nio2so.Voltron.Core.Telemetry
 {
     /// <summary>
+    /// A predefined <see cref="TSOLoggerServiceBase"/> that logs to the console and optionally to a system log file.
+    /// </summary>
+    public sealed class TSOVoltronBasicLogger : TSOLoggerServiceBase
+    {
+        public TSOVoltronBasicLogger(string? SysLogPath = null) : base(SysLogPath) { }
+    }
+
+    /// <summary>
     /// A pipeline to receive information on the current running state of a <see cref="ITSOServer"/>
     /// </summary>
     public abstract class TSOLoggerServiceBase : ITSOService
@@ -109,7 +117,21 @@ namespace nio2so.Voltron.Core.Telemetry
         /// <param name="Time"></param>
         /// <param name="PDU"></param>
         /// <param name="ClientID"></param>
-        public abstract void OnVoltronPacket(NetworkTrafficDirections Direction, DateTime Time, TSOVoltronPacket PDU, uint? ClientID = null);
+        public virtual void OnVoltronPacket(NetworkTrafficDirections Direction, DateTime Time, TSOVoltronPacket PDU, uint? ClientID = null)
+        {
+            Console.ForegroundColor = Direction switch
+            {
+                NetworkTrafficDirections.INBOUND => ConsoleColor.Green,
+                NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
+                _ => ConsoleColor.Blue
+            };            
+
+            Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
+
+            //**LOG PDU TO DISK
+            if (Direction == NetworkTrafficDirections.INBOUND || Direction == NetworkTrafficDirections.OUTBOUND)
+                PDU.WritePDUToDisk(Direction == NetworkTrafficDirections.INBOUND);
+        }
         /// <summary>
         /// Fired when a <see cref="TSOVoltronPacket"/> is received that is not yet documented in this protocol
         /// </summary>
