@@ -14,7 +14,14 @@ namespace nio2so.Voltron.Core.TSO
         IEnumerable<TSOVoltronPacket> ResponsePackets, 
         IEnumerable<TSOVoltronPacket> InsertionPackets, 
         IEnumerable<TSOVoltronPacket> EnqueuePackets,
-        IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets);
+        IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets)
+    {
+        /// <summary>
+        /// Used to tell the <see cref="TSOVoltronBasicServer"/> to disconnect this client from QuaZar after this response is completed.
+        /// </summary>
+        public bool Disconnecting => DisconnectingID.HasValue;
+        internal uint? DisconnectingID { get; set; }
+    }
 
     /// <summary>
     /// Maps Voltron Packet Types to their individual handler functions. Each protocol regulator should inherit from this class. 

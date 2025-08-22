@@ -132,7 +132,7 @@ namespace nio2so.Voltron.Core
 
                         //HOST_ONLINE_PDU
                         SubmitAriesFrame(ID, dmsProtocol.GET_HOST_ONLINE(ClientBufferLength, "badword"));
-                        
+
                         //attempt to find the client session service   
                         if (!Services.TryGet<nio2soClientSessionService>(out var sessionService))
                         { // not added to this server, cannot continue.
@@ -154,13 +154,14 @@ namespace nio2so.Voltron.Core
                         try
                         {
                             //download the player's name from data service.
-                            var UpdatePlayerPDU = dmsProtocol.GET_UPDATE_PLAYER(AvatarID, out string AvatarName);                                                     
+                            var UpdatePlayerPDU = dmsProtocol.GET_UPDATE_PLAYER(AvatarID, out string AvatarName);
+                            if (UpdatePlayerPDU == null)
+                                throw new NullReferenceException(nameof(UpdatePlayerPDU));
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
                             //send the update player PDU to the client
                             SubmitAriesFrame(ID, UpdatePlayerPDU);
                             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
-
                         }
                         catch (Exception ex)
                         {
@@ -171,7 +172,7 @@ namespace nio2so.Voltron.Core
                     }
                     break;
                 case (uint)TSOAriesPacketTypes.Voltron:
-                    //**all code contained here should be consider thread independent (no references to shared resources that aren't thread-safe)
+                    //**all code contained here should be consider thread independent (no references to shared resources that aren't thread-safe)                                        
                     BeginVoltronFrame_Threaded(ID, Data);
                     break;
             }
@@ -186,10 +187,11 @@ namespace nio2so.Voltron.Core
             List<TSOVoltronPacket> _VoltronBacklog = new();
             List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
 
+            uint? disconnectingID = null;
+
             // Sends the current packetSendQueue in a TSOAriesPacket
             void CloseAriesFrame(uint ID)
             {
-                bool disconnecting = false;
                 while (packetSendQueue.Any())
                 {
                     var voltronPacket = packetSendQueue.First();
@@ -200,8 +202,8 @@ namespace nio2so.Voltron.Core
                 packetSendQueue.Clear();
                 _VoltronBacklog.Clear();
 
-                if (disconnecting)
-                    Disconnect(ID,null);
+                if (disconnectingID.HasValue)
+                    Disconnect(disconnectingID.Value,null);
             }
 
             //refer to client session service to get this client's connection
@@ -217,7 +219,8 @@ namespace nio2so.Voltron.Core
             }
 
             //GET VOLTRON PACKETS OUT OF DATA BUFFER
-            var packets = Services.Get<TSOPDUFactoryServiceBase>().CreatePacketObjectsFromAriesPacket(IncomingAriesPacket);
+            var factoryService = Services.Get<TSOPDUFactoryServiceBase>();
+            var packets = factoryService.CreatePacketObjectsFromAriesPacket(IncomingAriesPacket);
             _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
             while (_VoltronBacklog.Count > 0)
             { // Work through all incoming PDUs ... list can change foreach would be unsafe here                           
@@ -229,7 +232,7 @@ namespace nio2so.Voltron.Core
                 try
                 {
                     bool _handled = false; // DICTATES WHETHER HANDLER WAS SUCCESSFUL
-                    var returnPackets = OnIncomingVoltronPacket(ref _VoltronBacklog, ID, packet, ref _handled); // handle pdu
+                    var returnPackets = OnIncomingVoltronPacket(ref _VoltronBacklog, ID, packet, ref _handled, out disconnectingID); // handle pdu
                     if (!_handled)
                     { // HANDLER FAILED
                         Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, "Voltron Handler",
@@ -240,9 +243,13 @@ namespace nio2so.Voltron.Core
                 }
                 catch (Exception ex)
                 {
+                    string errorPath = Path.Combine(TestingConstraints.WorkspaceDirectory, "tsotcppackets",
+                        $"errorPacket [{factoryService.GetVoltronPacketTypeName(packet.VoltronPacketType)}].dat");
                     Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Errors, "Voltron Handler",
-                            $"Handling the {packet.GetVoltronPacketTypeName(this)} Voltron packet resulted in an error. \n" +
+                            $"Handling the {packet.GetVoltronPacketTypeName(this)} Voltron packet resulted in an error. Dumped to: {errorPath} \n" +
                         $"{ex}"));
+                    //log error packet
+                    File.WriteAllBytes(errorPath,packet.Body);
                 }
             }
             CloseAriesFrame(ID);
@@ -257,8 +264,10 @@ namespace nio2so.Voltron.Core
         /// <param name="Packet"></param>
         /// <param name="Handled"></param>
         /// <returns></returns>
-        private IEnumerable<TSOVoltronPacket> OnIncomingVoltronPacket(ref List<TSOVoltronPacket> VoltronBacklog, uint ID, TSOVoltronPacket Packet, ref bool Handled)
+        private IEnumerable<TSOVoltronPacket> OnIncomingVoltronPacket(ref List<TSOVoltronPacket> VoltronBacklog, uint ID, TSOVoltronPacket Packet, ref bool Handled, out uint? disconnectingID)
         {
+            disconnectingID = null;
+
             List<TSOVoltronPacket> packets = new();
             void defaultSend(TSOVoltronPacket packetToSend)
             {
@@ -273,6 +282,7 @@ namespace nio2so.Voltron.Core
                 { // REGULATOR HANDLED
                     if (Response != null)
                     {
+                        disconnectingID = Response.DisconnectingID;
                         if (Response.InsertionPackets != null) // ADD INSERTIONS TO BACKLOG
                         {
                             foreach (var packet in Response.InsertionPackets)

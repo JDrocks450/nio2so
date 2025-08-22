@@ -5,14 +5,14 @@ using nio2so.Voltron.PlayTest.Protocol.PDU;
 using System.Reflection;
 
 namespace nio2so.Voltron.PlayTest.Protocol.Services
-{
+{   
     /// <summary>
     /// For use with The Sims Online Play-Test Voltron Server. <para/>
     /// This is an interface to use when reading/writing .. i dont know yet!
     /// </summary>
     public class TSOPlayTestPDUFactory : TSOPDUFactoryServiceBase
     {
-        //private Dictionary<TSO_PreAlpha_DBActionCLSIDs, Type> _dbtypeMap = new();
+        private Dictionary<TSO_PlayTest_MsgCLSIDs, Type> _dataServicetypeMap = new();
 
         /// <summary>
         /// Maps the given assemblies to the factory.
@@ -31,7 +31,9 @@ namespace nio2so.Voltron.PlayTest.Protocol.Services
 
         protected override TSOVoltronPacket? TryGetSpecialVoltronPacket(uint PacketType, Stream PDUData)
         {
-
+            //create a new data service wrapper
+            if (PacketType == (ushort)TSO_PlayTest_VoltronPacketTypes.DataServiceWrapperPDU)            
+                return new TSODataServiceWrapperPDU();            
             return null;
         }
 

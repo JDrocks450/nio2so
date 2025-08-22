@@ -1,6 +1,6 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Serialization;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
+using nio2so.Voltron.Core.TSO.Struct;
 using System.Reflection;
 using System.Text;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;

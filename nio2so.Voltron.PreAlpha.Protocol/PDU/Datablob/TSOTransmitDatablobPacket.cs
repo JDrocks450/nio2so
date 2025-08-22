@@ -2,7 +2,6 @@
 using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob

@@ -77,10 +77,17 @@
         public sealed class TSOVoltronArrayLength : Attribute
         {
             public string ArrayPropertyName { get; set; }
-
-            public TSOVoltronArrayLength(string arrayPropertyName)
+            public int Arithmetic { get; set; } = 0;
+            /// <summary>
+            /// This will link to the following Array property by name. 
+            /// <para/>Optionally, you can specify how much to add/subtract from the runtime length value. 
+            /// </summary>
+            /// <param name="arrayPropertyName"></param>
+            /// <param name="arithmetic"></param>
+            public TSOVoltronArrayLength(string arrayPropertyName, int arithmetic = 0)
             {
                 ArrayPropertyName = arrayPropertyName;
+                Arithmetic = arithmetic;
             }
         }
         /// <summary>

@@ -348,6 +348,16 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             return false;
         }
         /// <summary>
+        /// <inheritdoc cref="SafeDisconnect(uint)"/>
+        /// </summary>
+        /// <param name="Packet">A packet that was sent from the remote connection you want to disconnect</param>
+        protected void SafeDisconnect(TSOVoltronPacket Packet) => SafeDisconnect(((ITSOVoltron)Packet).SenderQuazarConnectionID.Value);
+        /// <summary>
+        /// Disconnects this remote connection after this frame is completed.
+        /// </summary>
+        /// <param name="QuaZarID">The ID of the connection to disconnect</param>
+        protected void SafeDisconnect(uint QuaZarID) => CurrentResponse.DisconnectingID = QuaZarID;
+        /// <summary>
         /// Uses the <see cref="MethodInvoker"/> to invoke the <paramref name="Delegate"/> with the provided <paramref name="Parameters"/> list.
         /// </summary>
         /// <param name="Delegate"></param>

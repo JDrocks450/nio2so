@@ -28,7 +28,17 @@ namespace nio2so.DataService.API.Databases
         protected async Task Save()
         {
             foreach (var library in Libraries)
-                await library.Value.Save();
+            {
+                try
+                {
+                    await library.Value.Save();
+                }
+                catch (Exception ex)
+                {
+                    // add rollback tech here
+                    throw ex;
+                }
+            }
         }
     }
 }

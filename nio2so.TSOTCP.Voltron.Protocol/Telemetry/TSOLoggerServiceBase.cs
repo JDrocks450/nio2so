@@ -136,15 +136,15 @@ namespace nio2so.Voltron.Core.Telemetry
         /// Fired when a <see cref="TSOVoltronPacket"/> is received that is not yet documented in this protocol
         /// </summary>
         /// <param name="PacketType"></param>
-        /// <param name="PacketData"></param>
+        /// <param name="DataLength"></param>
         /// <param name="ClientID"></param>
-        public virtual void OnVoltron_OnDiscoveryPacket(ushort PacketType, byte[] PacketData, uint? ClientID = null)
+        public virtual void OnVoltron_OnDiscoveryPacket(ushort PacketType, int DataLength)
         {
             var displayName = Parent.Services.Get<TSOPDUFactoryServiceBase>().GetVoltronPacketTypeName(PacketType) ?? $"Unknown Packet Type: 0x{PacketType:X4}";
 
             Console.ForegroundColor = ConsoleColor.DarkMagenta;
             Log($"TSO PDU Discovery ***********\n");
-            Log($"Found the {displayName} PDU with: {PacketData.Length} bytes. You already have a copy of that one.");
+            Log($"Found the {displayName} PDU with: {DataLength} bytes. This will be saved to the discoveries folder.");
             Log($"\n****************************");
         }
         /// <summary>

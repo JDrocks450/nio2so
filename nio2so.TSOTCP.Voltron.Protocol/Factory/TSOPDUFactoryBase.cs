@@ -84,7 +84,7 @@ namespace nio2so.Voltron.Core.Factory
             TSOVoltronPacket? cTSOVoltronpacket = null;
             uint currentIndex = 0;
             long startPosition = Stream.Position;
-
+                   
             int readBytes = TSOVoltronPacket.ReadVoltronHeader(Stream, out ushort VPacketType, out uint Size);
             currentIndex += Size;
             cTSOVoltronpacket = CreatePacketObjectByPacketType(VPacketType, Stream);
@@ -95,7 +95,15 @@ namespace nio2so.Voltron.Core.Factory
                 throw new NullReferenceException($"Reflected packet was null. T: {VPacketType} S: {Size}. Continuing...");            
             if (cTSOVoltronpacket is TSOBlankPDU)
             {
-                Parent.Services.Get<TSOLoggerServiceBase>().OnVoltron_OnDiscoveryPacket(VPacketType, temporaryBuffer);
+                Parent.Services.Get<TSOLoggerServiceBase>().OnVoltron_OnDiscoveryPacket(VPacketType, temporaryBuffer.Length);
+                try
+                {
+                    LogDiscoveryPacketToDisk(VPacketType, temporaryBuffer);
+                }
+                catch (Exception ex)
+                {
+                    LogConsole($"ERROR: Could not save the discovery packet to file: {ex}",TSOLoggerServiceBase.LogSeverity.Errors);
+                }
                 return null;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);

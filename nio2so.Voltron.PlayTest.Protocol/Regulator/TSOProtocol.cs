@@ -1,6 +1,11 @@
 ﻿using nio2so.Data.Common;
 using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.PlayTest.Protocol.PDU;
+using nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat;
+using nio2so.Voltron.PlayTest.Protocol.Services;
+using QuazarAPI.Networking.Data;
 using System.Reflection;
 
 namespace nio2so.Voltron.PlayTest.Protocol.Regulator
@@ -22,7 +27,16 @@ namespace nio2so.Voltron.PlayTest.Protocol.Regulator
         protected override bool TryHandleSpecialVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response)
         {
             // Special VoltronPDU handling for TSO_PlayTest_Packets
-
+            if (PDU is TSODataServiceWrapperPDU dataService)
+            {
+                var stdMsg = dataService.Message.GetMessageAs<TSONetMessageStandard>();
+                TSOTCPPacket response = PacketBase.Parse<TSOTCPPacket>(File.ReadAllBytes(@"C:\nio2so\const\loadavatarbyid.dat"),out _);                
+                //RespondWith(voltronResponse);
+            }
+            if (PDU is TSODBRequestWrapperPDU dbPDU)
+            {
+                var stdMsg = dbPDU.Message.GetMessageAs<TSONetMessageStandard>();
+            }
             return false;
         }
     }

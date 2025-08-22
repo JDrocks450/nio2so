@@ -1,15 +1,15 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Struct;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.PDU
+namespace nio2so.Voltron.PlayTest.Protocol.PDU
 {
     /// <summary>
     /// Updates the <c>m_PlayerInfo</c> this client is acting as
     /// </summary>
-    [TSOVoltronPDU((uint)TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU)]
+    [TSOVoltronPDU((uint)TSO_PlayTest_VoltronPacketTypes.UpdatePlayerPDU)]
     public class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
-        public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.UPDATE_PLAYER_PDU;
+        public override ushort VoltronPacketType => (ushort)TSO_PlayTest_VoltronPacketTypes.UpdatePlayerPDU;
         /// <summary>
         /// The new <see cref="TSOPlayerInfoStruct"/> (<c>m_playerInfo</c>) to update the value to
         /// </summary>

@@ -119,11 +119,12 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             
             if (property.PropertyType.IsArray)
             {
-                PropertyInfo? arrayLength = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
+                PropertyInfo? arrayLengthProp = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
                     .FirstOrDefault(y => y.GetCustomAttribute<TSOVoltronArrayLength>().ArrayPropertyName.ToLowerInvariant() == property.Name.ToLowerInvariant());
-                if (arrayLength == null)
+                if (arrayLengthProp == null)
                     throw new InvalidDataException("ArrayLength property for this array was not found for the type: " + Instance.GetType().Name);
-                uint count = Convert.ToUInt32(arrayLength.GetValue(Instance));
+                var attribute = arrayLengthProp.GetCustomAttribute<TSOVoltronArrayLength>();
+                uint count = (uint)(Convert.ToUInt32(arrayLengthProp.GetValue(Instance)) + attribute.Arithmetic);
                 Type arrayType = property.PropertyType.GetElementType();
                 Array arrayVal = Array.CreateInstance(arrayType, count);
                 for(int i = 0; i < count; i++)                
@@ -335,7 +336,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     Array? myArrayValue = foundArrayProperty.GetValue(Instance) as Array;
                     if (myArrayValue == null)
                         error($"{arrLegAtt.ArrayPropertyName} is an array type, but its value is null. You really should not be doing this. It should be an empty array when using these attributes.");
-                    SerializeValue = Convert.ChangeType(myArrayValue.Length, property.PropertyType); // set myvalue to be the length of the array
+                    SerializeValue = Convert.ChangeType(myArrayValue.Length + arrLegAtt.Arithmetic, property.PropertyType); // set myvalue to be the length of the array
                 }
             }
 

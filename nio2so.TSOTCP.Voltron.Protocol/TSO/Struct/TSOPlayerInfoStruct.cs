@@ -1,6 +1,4 @@
-﻿using nio2so.Voltron.Core.TSO.Struct;
-
-namespace nio2so.Voltron.PreAlpha.Protocol.Struct
+﻿namespace nio2so.Voltron.Core.TSO.Struct
 {
     /// <summary>
     /// <c>Maps to m_pPlayerInfo</c> Which contains information on a player for the <see cref="TSOFindPlayerResponsePDU"/>

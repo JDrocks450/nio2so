@@ -10,4 +10,8 @@
     <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.Voltron.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="PDU\Database\" />
+  </ItemGroup>
+
 </Project>
