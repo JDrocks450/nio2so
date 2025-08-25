@@ -15,8 +15,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
     {
         internal uint headerLength;
 
-        public TSOAriesIDStruct CurrentSessionID { get; set; } = TSOAriesIDStruct.Default;
-        public ushort Arg1 { get; set; } = 0x00;
+        public TSOPlayerInfoStruct CurrentSessionID { get; set; } = new TSOPlayerInfoStruct(TSOAriesIDStruct.Default);
         public uint MessageLength { get; set; }
         public TSO_PreAlpha_DBStructCLSIDs StructType { get; set; } = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage;
         public byte HeaderByte { get; set; } = 0x21;
@@ -61,15 +60,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         protected override TSODBWrapperPDUHeader Header { get; } = new();
         public uint GetHeaderLength() => Header.headerLength;
 
-        public TSOAriesIDStruct SenderSessionID
+        public TSOPlayerInfoStruct SenderSessionID
         {
             get => Header.CurrentSessionID;
             set => Header.CurrentSessionID = value;
-        }
-        public ushort Bitfield_Arg1
-        {
-            get => Header.Arg1;
-            set => Header.Arg1 = value;
         }
         /// <summary>
         /// The distance (in bytes) from the end of this specific DWORD to the end of the packet. 
@@ -164,7 +158,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
             var startPosition = BodyStream.Position;
             var avatarID = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
             var avatarName = TSOVoltronSerializerCore.ReadString(TSOVoltronValueTypes.Pascal, BodyStream);
-            ushort arg1 = BodyStream.ReadBodyUshort(Endianness.BigEndian);
+            byte badge = (byte)BodyStream.ReadBodyByte();
+            byte isAlertable = (byte)BodyStream.ReadBodyByte();
             uint msgSize = BodyStream.ReadBodyDword(Endianness.BigEndian);
             uint struc = BodyStream.ReadBodyDword();
             byte headLen = (byte)BodyStream.ReadBodyByte();
@@ -175,8 +170,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
             return new()
             {
                 headerLength = headerlength,
-                CurrentSessionID = new(avatarID, avatarName),
-                Arg1 = arg1,
+                CurrentSessionID = new(new TSOAriesIDStruct(avatarID, avatarName),badge,isAlertable != 0),
                 MessageLength = msgSize,
                 StructType = (TSO_PreAlpha_DBStructCLSIDs)struc,
                 HeaderByte = headLen,

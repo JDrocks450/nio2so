@@ -4492,19 +4492,19 @@ namespace nio2so.Voltron.PreAlpha.Protocol
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
         /// </summary>
-        kDBServiceRequestMsg = TSO_PreAlpha_MasterConstantsTable.kDBServiceRequestMsg,
+        kDBServiceRequestMsg = 0x3BF82D4E,
         /// <summary>
         /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
         /// </summary>
-        kDBServiceResponseMsg = TSO_PreAlpha_MasterConstantsTable.kDBServiceResponseMsg,
+        kDBServiceResponseMsg = 0xDBF301A9,
         /// <summary>
         /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Responses
         /// </summary>
-        kSimResponseMsg = TSO_PreAlpha_MasterConstantsTable.kSimResponseMsg,
+        kSimResponseMsg = 0x7B6F2221,
         /// <summary>
         /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Requests
         /// </summary>
-        kSimRequestMsg = TSO_PreAlpha_MasterConstantsTable.kSimRequestMsg,
+        kSimRequestMsg = 0x1B6F221B,
     }
 
     /// <summary>

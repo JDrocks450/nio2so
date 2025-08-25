@@ -99,38 +99,42 @@ namespace nio2so.Voltron.Core.TSO.Serialization
         public static bool ReflectProperty(Stream Stream, PropertyInfo property, object Instance)
         {
             Stream _bodyBuffer = Stream;
-            //check if this property is the body array property
-            if (property.PropertyType == typeof(byte[]))
+
+            if (property.PropertyType.IsArray)
             {
-                if (property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
-                { // it is.
+                PropertyInfo? arrayLengthProp = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
+                    .FirstOrDefault(y => y.GetCustomAttribute<TSOVoltronArrayLength>().ArrayPropertyName.ToLowerInvariant() == property.Name.ToLowerInvariant());
+                if (arrayLengthProp != null)
+                {
+                    var attribute = arrayLengthProp.GetCustomAttribute<TSOVoltronArrayLength>();
+                    uint count = (uint)(Convert.ToUInt32(arrayLengthProp.GetValue(Instance)) + attribute.Arithmetic);
+                    Type arrayType = property.PropertyType.GetElementType();
+                    Array arrayVal = Array.CreateInstance(arrayType, count);
+                    if (arrayVal is byte[])
+                    { // byte[] optimization
+                        Stream.ReadExactly(arrayVal as byte[], 0, (int)count);
+                    }
+                    else
+                    { // all other array types
+                        for (int i = 0; i < count; i++)
+                            arrayVal.SetValue(TryNumericTypes(Stream, arrayType), i);
+                    }
+                    property.SetValue(Instance, arrayVal);
+                    return true;
+                }
+                //check if this property is the body array property
+                else if (property.PropertyType == typeof(byte[]) && property.GetCustomAttribute<TSOVoltronBodyArray>() != default)
+                {
                     if (property.PropertyType != typeof(byte[])) // not a byte[]
                         throw new CustomAttributeFormatException($"You applied the TSOVoltronBodyArray attribute to {property.PropertyType.Name}! Please ensure it matches byte[].");
                     int remainingData = (int)(Stream.Length - Stream.Position); // get remaining bytes count
                     byte[] destBuffer = new byte[remainingData];
                     _bodyBuffer.Read(destBuffer, 0, remainingData); // read into buffer
                     property.SetValue(Instance, destBuffer);
-                    return true; // halt execution
+                    return true; // halt execution                                        
                 }
-                else throw new NotImplementedException("byte[] is the destination type to deserialize, yet you didn't " +
-                    "adorn the property with the TSOVoltronBodyArrayAtrribute! This is required to ensure you understand " +
-                    "that it will take EVERY byte to the end of the packet body into that property and also for code-clarity.");
-            }
-            
-            if (property.PropertyType.IsArray)
-            {
-                PropertyInfo? arrayLengthProp = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
-                    .FirstOrDefault(y => y.GetCustomAttribute<TSOVoltronArrayLength>().ArrayPropertyName.ToLowerInvariant() == property.Name.ToLowerInvariant());
-                if (arrayLengthProp == null)
-                    throw new InvalidDataException("ArrayLength property for this array was not found for the type: " + Instance.GetType().Name);
-                var attribute = arrayLengthProp.GetCustomAttribute<TSOVoltronArrayLength>();
-                uint count = (uint)(Convert.ToUInt32(arrayLengthProp.GetValue(Instance)) + attribute.Arithmetic);
-                Type arrayType = property.PropertyType.GetElementType();
-                Array arrayVal = Array.CreateInstance(arrayType, count);
-                for(int i = 0; i < count; i++)                
-                    arrayVal.SetValue(TryNumericTypes(Stream, arrayType),i);
-                property.SetValue(Instance, arrayVal);
-                return true;
+                else throw new NotImplementedException($"{property.PropertyType} is the destination type to deserialize, yet it isn't " +
+                        $"adorned with {nameof(TSOVoltronBodyArray)} attribute or there isn't a corresponding {nameof(TSOVoltronArrayLength)} attribute property.");
             }
 
             //Numbers

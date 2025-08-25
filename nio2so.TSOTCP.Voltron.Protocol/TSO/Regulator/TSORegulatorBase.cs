@@ -220,10 +220,7 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="ResponsePacket"></param>
         protected void RespondTo<T>(ITSOVoltronAriesMasterIDStructure DBPacket, T ResponsePacket) where T : TSOVoltronPacket, ITSOVoltronAriesMasterIDStructure
         {
-            ResponsePacket.SenderSessionID = new(
-                DBPacket.SenderSessionID.AriesID,
-                DBPacket.SenderSessionID.MasterID
-            );
+            ResponsePacket.SenderSessionID = new TSOPlayerInfoStruct(DBPacket.SenderSessionID);
             ResponsePacket.MakeBodyFromProperties();
             RespondWith(ResponsePacket);
         }

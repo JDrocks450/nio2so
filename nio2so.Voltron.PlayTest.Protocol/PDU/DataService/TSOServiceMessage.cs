@@ -10,25 +10,29 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.Voltron.PlayTest.Protocol.PDU.DataService
 {
-    public class TSODataServiceMessage
+    public class TSOServiceMessage
     {
+        const int WIDTH = sizeof(TSO_PlayTest_MsgCLSIDs) + sizeof(uint);
+
+
         /// <summary>
         /// The length of the <see cref="ContentBytes"/> property
         /// </summary>       
-        [TSOVoltronArrayLength(nameof(MessageContentBytes),sizeof(TSO_PlayTest_MsgCLSIDs))]
+        [TSOVoltronArrayLength(nameof(MessageContentBytes),-WIDTH)]
         public uint ContentLength { get; set; }
         /// <summary>
-        /// The format of this <see cref="TSODataServiceMessage.MessageContentBytes"/>
+        /// The format of this <see cref="TSOServiceMessage.MessageContentBytes"/>
         /// </summary>
-        public TSO_PlayTest_MsgCLSIDs MessageFormat { get; set; }
+        public TSO_PlayTest_MsgCLSIDs MessageFormat { get; set; }        
+        public ushort Unknown_Flags { get; set; } = 0x2F4C;
         /// <summary>
-        /// Unknown what this stands for
+        /// The size, in bytes, of this <see cref="TSOServiceMessage"/> object
+        /// <para/>The byte preceeding the pascal string's length is not counted
         /// </summary>
-        public uint Unknown { get; set; } = 0x953C001D;
-        [TSOVoltronBodyArray]
+        public ushort ParameterLength { get; set; } = 0;
         public byte[] MessageContentBytes { get; set; } = [];
         /// <summary>
-        /// Attempts to read the message enclosed in this <see cref="TSODataServiceMessage"/> as the provided <see cref="ITSOMessage"/> <typeparamref name="T"/>
+        /// Attempts to read the message enclosed in this <see cref="TSOServiceMessage"/> as the provided <see cref="ITSOMessage"/> <typeparamref name="T"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
@@ -44,7 +48,7 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.DataService
 
         public override string ToString()
         {
-            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, " +
+            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} (reported: {ContentLength-WIDTH}" +
                 $"{nameof(MessageFormat)}: {MessageFormat}";
         }
     }

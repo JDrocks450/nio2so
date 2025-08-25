@@ -20,6 +20,12 @@
             Badge = badge;
             IsAlertable = isAlertable;
         }
+        public TSOPlayerInfoStruct(TSOPlayerInfoStruct other) : base()
+        {
+            PlayerID = other.PlayerID;
+            Badge = other.Badge;
+            IsAlertable = other.IsAlertable;
+        }
 
         /// <summary>
         /// <c>Maps to m_PlayerID</c>

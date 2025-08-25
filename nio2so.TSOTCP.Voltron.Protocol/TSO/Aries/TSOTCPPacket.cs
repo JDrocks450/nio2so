@@ -174,7 +174,7 @@ namespace nio2so.Voltron.Core.TSO.Aries
             return PayloadSize != 0;
         }
 
-        public static void WriteAllPacketsToDisk(IEnumerable<TSOTCPPacket> packets, string Directory = "/packets/tsotcppackets/")
+        public static void WriteAllPacketsToDisk(IEnumerable<TSOTCPPacket> packets, string Directory = "packets/tsotcppackets/")
         {
             int packetNumber = 0;
             System.IO.Directory.CreateDirectory(Directory);

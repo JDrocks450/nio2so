@@ -6,6 +6,30 @@ using System.Threading.Tasks;
 
 namespace nio2so.Voltron.PlayTest.Protocol
 {
+    /// <summary>
+    /// A kMSG is used to invoke a Regulator to change its state or respond to a stimulus.
+    /// <para>For example, the DBServiceClientD will use the <see cref="kDBServiceRequestMsg"/> to send data.
+    /// and uses the <see cref="kDBServiceResponseMsg"/> to be notified when to receive data.</para>
+    /// </summary>
+    public enum TSO_PlayTest_kMSGs : uint
+    {
+        /// <summary>
+        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
+        /// </summary>
+        kDBServiceRequestMsg = 0x3BF82D4E,
+        /// <summary>
+        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
+        /// </summary>
+        kDBServiceResponseMsg = 0xDBF301A9,
+        /// <summary>
+        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Responses
+        /// </summary>
+        kSimResponseMsg = 0x7B6F2221,
+        /// <summary>
+        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Requests
+        /// </summary>
+        kSimRequestMsg = 0x1B6F221B,
+    }
     public enum TSO_PlayTest_MsgCLSIDs : uint
     {
         /// <summary>
@@ -146,7 +170,7 @@ namespace nio2so.Voltron.PlayTest.Protocol
         ResetWatchdogPDU = 0x0071,
         ResetWatchdogResponsePDU = 0x0072,
 
-        // Special-case values (unchanged)
+        // The Sims Online PDUs
         BroadcastDataBlobPDU = 0x2710,
         TransmitDataBlobPDU = 0x2711,
         DBRequestWrapperPDU = 0x2712,

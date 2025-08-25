@@ -30,6 +30,6 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU
         /// <summary>
         /// <inheritdoc cref="TSODataServiceWrapperPDU.Message"/>
         /// </summary>
-        public TSODataServiceMessage Message { get; set; }
+        public TSOServiceMessage Message { get; set; }
     }
 }

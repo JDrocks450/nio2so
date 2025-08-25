@@ -8,6 +8,6 @@
         /// <summary>
         /// The current AriesID/MasterID combination that denotes the current Client
         /// </summary>
-        public TSOAriesIDStruct SenderSessionID { get; set; }
+        public TSOPlayerInfoStruct SenderSessionID { get; set; }
     }
 }

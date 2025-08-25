@@ -117,7 +117,7 @@ namespace nio2so.Voltron.Core
                     {
                         //**Client is logging into Voltron!
                         var sessionData = TSOAriesClientSessionInfo.FromPacket(Data);
-                        TSOTCPPacket.WriteAllPacketsToDisk([Data]);
+                        TSOTCPPacket.WriteAllPacketsToDisk([Data], Path.Combine(TestingConstraints.WorkspaceDirectory, "tsotcppackets"));
 
                         if (!uint.TryParse(sessionData.User, out uint AvatarID))
                         {

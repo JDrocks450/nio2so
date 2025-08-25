@@ -13,7 +13,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures
     /// </summary>
     public interface ITSODataBlobPDU
     {
-        TSOPlayerInfoStruct SenderInfo { get; }
+        TSOPlayerInfoStruct SenderSessionID { get; }
         TSO_PreAlpha_MasterConstantsTable SubMsgCLSID { get; set; }
         TSOGenericDataBlobContent DataBlobContentObject { get; set; }
     }

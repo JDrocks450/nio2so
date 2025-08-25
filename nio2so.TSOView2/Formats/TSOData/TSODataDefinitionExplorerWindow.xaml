@@ -16,6 +16,18 @@
                 <Separator/>
                 <MenuItem Header="Exit" Name="CloseItem" Click="CloseItem_Click"/>
             </MenuItem>
+            <MenuItem Header="Find">
+                <MenuItem Name="SearchItem" IsCheckable="False" Click="SearchItem_Click">
+                    <MenuItem.Header>
+                        <DockPanel>
+                            <TextBlock Text="Tree Search" DockPanel.Dock="Top"/>
+                            <Separator DockPanel.Dock="Top"/>
+                            <TextBox Name="SearchBoxItem" DockPanel.Dock="Bottom" MinWidth="150"/>
+                        </DockPanel>
+                    </MenuItem.Header>
+                </MenuItem>
+                <MenuItem Header="Reset Search Filter" Name="ResetSearchItem" Click="ResetSearchItem_Click"/>
+            </MenuItem>
         </Menu>
         <Grid Margin="10,5,10,10">
             <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" FontSize="18" VerticalAlignment="Top" HorizontalAlignment="Right">
@@ -41,9 +53,18 @@
                     <ColumnDefinition/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <TreeView Name="TypeViewer">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Padding="10,2" Margin="0,0,0,5" Background="LightGoldenrodYellow" BorderBrush="#FFFFD13E" BorderThickness="1" Name="FilterNotification" MouseLeftButtonUp="FilterNotification_MouseLeftButtonUp" Cursor="Hand">
+                        <TextBlock>
+                            <Run FontWeight="Bold" Text="Search Filter: "/>
+                            <Run Name="FilterLabel" Text="None"/>
+                            <Run FontStyle="Italic" Text=" (click to remove)"/>
+                        </TextBlock>
+                    </Border>
+                    <TreeView DockPanel.Dock="Bottom" Name="TypeViewer">
 
-                </TreeView>
+                    </TreeView>
+                </DockPanel>
                 <DataGrid Grid.Column="1" Margin="5,0,0,0" Name="DataViewer">
                     
                 </DataGrid>

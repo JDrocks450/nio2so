@@ -38,12 +38,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob
         public override ushort VoltronPacketType => (ushort)TSO_PreAlpha_VoltronPacketTypes.BROADCAST_DATABLOB_PDU;
         protected override TSOBroadcastDatablobPDUHeader Header { get; } = new();
 
-        public TSOPlayerInfoStruct SenderInfo
+        public TSOPlayerInfoStruct SenderSessionID
         {
             get => Header.SenderInfo;
             set => Header.SenderInfo = value;
         }
-        TSOAriesIDStruct ITSOVoltronAriesMasterIDStructure.SenderSessionID { get => SenderInfo.PlayerID; set => SenderInfo.PlayerID = value; }
         [TSOVoltronDistanceToEnd]
         public uint MessageLength
         {
@@ -93,7 +92,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob
             this.SubMsgCLSID = SubMsgCLSID;
             DataBlobContentObject = new TSOGenericDataBlobContent(ContentObject);
 
-            SenderInfo = Sender;
+            SenderSessionID = Sender;
             MakeBodyFromProperties();
         }
         public TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable SubMsgCLSID, byte[] ContentBytes)
@@ -109,7 +108,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob
         public TSOBroadcastDatablobPacket(TSOTransmitDataBlobPacket transmitPDU) :
             this(transmitPDU.SubMsgCLSID, transmitPDU.DataBlobContentObject.ContentBytes)
         {
-            SenderInfo = transmitPDU.SenderInfo;
+            SenderSessionID = transmitPDU.SenderSessionID;
             MakeBodyFromProperties();
         }
 

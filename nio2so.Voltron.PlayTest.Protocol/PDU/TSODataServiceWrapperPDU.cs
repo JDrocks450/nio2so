@@ -31,7 +31,7 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU
         /// <summary>
         /// The message contained in this <see cref="TSODataServiceWrapperPDU"/>
         /// </summary>
-        public TSODataServiceMessage Message { get; set; }
+        public TSOServiceMessage Message { get; set; }
 
         public TSODataServiceWrapperPDU() : base()
         {

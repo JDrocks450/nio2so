@@ -30,12 +30,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob
     public class TSOTransmitDataBlobPacket : TSOVoltronSpecializedPacket<TSOVoltronBroadcastDatablobPDUField, TSOTransmitDatablobPDUHeader>,
         ITSOVoltronAriesMasterIDStructure, ITSODataBlobPDU
     {
-        public TSOPlayerInfoStruct SenderInfo
+        public TSOPlayerInfoStruct SenderSessionID
         {
             get => Header.SenderInfo;
             set => Header.SenderInfo = value;
         }
-        TSOAriesIDStruct ITSOVoltronAriesMasterIDStructure.SenderSessionID { get => SenderInfo.PlayerID; set => SenderInfo.PlayerID = value; }
         public TSOAriesIDStruct DestinationSessionID
         {
             get => Header.DestinationSessionID;

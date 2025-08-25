@@ -60,8 +60,13 @@ namespace nio2so.TSOView2.Formats.TSOData
 
         //**UI EVENTS
 
-        private void InvokeUIRedraw(UI_TSODATADEF_PAGE Page)
+        private void InvokeUIRedraw(UI_TSODATADEF_PAGE Page, string? SearchFilter = default)
         {
+            if (string.IsNullOrWhiteSpace(SearchFilter))
+                SearchFilter = null;            
+            FilterNotification.Visibility = SearchFilter != null ? Visibility.Visible : Visibility.Collapsed;
+            FilterLabel.Text = SearchFilter;
+
             TreeViewItem ShowBasicStructs(IEnumerable<TSODataStruct> Types)
             {
                 TypeViewer.Items.Clear();
@@ -71,7 +76,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                     IsExpanded = true
                 };
                 TypeViewer.Items.Add(parentItem);
-                foreach (var type in Types)
+                foreach (var type in Types.Where(x => SearchFilter == null || x.NameString.Contains(SearchFilter, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     var typeItem = new TreeViewItem()
                     {
@@ -102,7 +107,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                     IsExpanded = true
                 };
                 TypeViewer.Items.Add(parentItem);
-                foreach (var type in Types)
+                foreach (var type in Types.Where(x => SearchFilter == null || x.NameString.Contains(SearchFilter, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     var typeItem = new TreeViewItem()
                     {
@@ -152,7 +157,8 @@ namespace nio2so.TSOView2.Formats.TSOData
                     break;
                 case UI_TSODATADEF_PAGE.Strings:
                     Dictionary<TSODataStringCategories, TreeViewItem> categoryGroup = new();
-                    foreach(var stringRef in CurrentFile.Strings)
+                    string getSafeName(KeyValuePair<uint,TSODataString> stringRef) => $"{stringRef.Key:X4}: \"{stringRef.Value.Value ?? "null"}\"";
+                    foreach (var stringRef in CurrentFile.Strings.Where(x => SearchFilter == null || getSafeName(x).Contains(SearchFilter,StringComparison.InvariantCultureIgnoreCase)))
                     {
                         if (!categoryGroup.TryGetValue(stringRef.Value.Category, out var TreeItem)) {
                             TreeItem = new TreeViewItem()
@@ -170,7 +176,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                         }
                         TreeItem.Items.Add(new TreeViewItem()
                         {
-                            Header = $"{stringRef.Key:X4}: \"{stringRef.Value.Value ?? "null"}\""
+                            Header = getSafeName(stringRef)
                         });
                     }
                     break;
@@ -274,5 +280,19 @@ namespace nio2so.TSOView2.Formats.TSOData
                 MessageBox.Show(ex.Message);
             }
         }
+
+        private void SearchItem_Click(object sender, RoutedEventArgs e)
+        {
+            InvokeUIRedraw((UI_TSODATADEF_PAGE)StructTabViewer.SelectedIndex, SearchBoxItem.Text);
+            SearchBoxItem.Text = "";
+        }
+
+        private void ResetSearchItem_Click(object sender, RoutedEventArgs e)
+        {
+            SearchBoxItem.Text = "";
+            SearchItem_Click(sender, e);
+        }
+
+        private void FilterNotification_MouseLeftButtonUp(object sender, System.Windows.Input.MouseButtonEventArgs e) => ResetSearchItem_Click(sender, e);
     }
 }

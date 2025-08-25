@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.Util.Endian;
+using nio2so.Voltron.PlayTest.Protocol.PDU.DataService;
 using QuazarAPI.Networking.Data;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat
     {
 
     }
+
     /// <summary>
     /// Represents a <see cref="TSO_PlayTest_MsgCLSIDs.cTSONetMessageStandard"/> which is the most common type
     /// </summary>
@@ -26,13 +28,13 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat
         /// </summary>
         public uint SendingAvatarID { get; set; }
         /// <summary>
-        /// The ID attached to this transaction. Should match the response to this query
-        /// </summary>
-        public uint TransactionID { get; set; }        
-        /// <summary>
         /// The flags dictating which Data properties are available in this <see cref="TSONetMessageStandard"/>
         /// </summary>
         public byte Flags { get; set; }
+        /// <summary>
+        /// The ID attached to this transaction. Should match the response to this query
+        /// </summary>
+        public TSO_PlayTest_kMSGs kMSG { get; set; }                
         /// <summary>
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
@@ -47,9 +49,10 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat
             set
             {
                 _bytes = value;
-                if (value != null)
+                if (value != null && value.Length > 0)
                     ReadMessageData();
-                else ClearPreviousMessage();
+                else 
+                    ClearPreviousMessage();
             }
         }
 
@@ -116,7 +119,9 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat
             uint readUInt(Endianness Endian = Endianness.BigEndian)
             {
                 byte[] data = new byte[sizeof(uint)];
-                int readData = stream.ReadAtLeast(data, data.Length);
+                int readData = stream.Read(data, 0, data.Length);
+                if (readData != data.Length)
+                    return default;
                 return Endian == Endianness.BigEndian ? 
                     EndianBitConverter.Big.ToUInt32(data, 0) :
                     EndianBitConverter.Little.ToUInt32(data, 0);

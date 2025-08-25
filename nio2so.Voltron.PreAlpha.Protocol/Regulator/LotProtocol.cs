@@ -96,7 +96,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (HouseID == 0)
             {
                 //respond with empty response
-                RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID, roommatePDU.SenderSessionID.AvatarID));
+                RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID, roommatePDU.SenderSessionID.PlayerID.AvatarID));
                 return; // Seems to be mistaken to send in this scenario
             }
 

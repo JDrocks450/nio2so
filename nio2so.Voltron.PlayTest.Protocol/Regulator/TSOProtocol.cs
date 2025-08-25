@@ -30,12 +30,17 @@ namespace nio2so.Voltron.PlayTest.Protocol.Regulator
             if (PDU is TSODataServiceWrapperPDU dataService)
             {
                 var stdMsg = dataService.Message.GetMessageAs<TSONetMessageStandard>();
-                TSOTCPPacket response = PacketBase.Parse<TSOTCPPacket>(File.ReadAllBytes(@"C:\nio2so\const\loadavatarbyid.dat"),out _);                
-                //RespondWith(voltronResponse);
+                return true;
             }
             if (PDU is TSODBRequestWrapperPDU dbPDU)
             {
                 var stdMsg = dbPDU.Message.GetMessageAs<TSONetMessageStandard>();
+                TSOTCPPacket response = PacketBase.Parse<TSOTCPPacket>(File.ReadAllBytes(@"C:\nio2so\const\loadavatarbyid.dat"), out _);
+                TSOVoltronPacket? voltronResponse = GetService<TSOPlayTestPDUFactory>().CreatePacketObjectsFromAriesPacket(response).FirstOrDefault();
+                var stdMsg1 = (voltronResponse as TSODBRequestWrapperPDU).Message.GetMessageAs<TSONetMessageStandard>();
+                if (voltronResponse != null)
+                    RespondWith(voltronResponse);
+                return true;
             }
             return false;
         }

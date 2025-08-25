@@ -398,7 +398,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void OnStandardMessage(ITSODataBlobPDU PDU)
         {
             TSOBroadcastDatablobPacket? broadcastPDU = PDU as TSOBroadcastDatablobPacket;
-            TSOAriesIDStruct sender = PDU.SenderInfo.PlayerID;
+            TSOAriesIDStruct sender = PDU.SenderSessionID.PlayerID;
             uint avatarID = (sender as ITSONumeralStringStruct)?.NumericID ?? 0;
             if (avatarID == 0)
                 throw new InvalidDataException($"AvatarID sending a broadcast PDU is {avatarID}, ARIESID: {sender}");
@@ -415,7 +415,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             {                                
                 if (avatarID != roomInfo.LeaderAvatarID)
                 {
-                    broadcastPDU.SenderInfo = GetPlayerInfoStruct(roomInfo.LeaderID);
+                    broadcastPDU.SenderSessionID = GetPlayerInfoStruct(roomInfo.LeaderID);
                 }
                 BroadcastPDUToRoom(HouseID, broadcastPDU); // host to room
             }
@@ -450,7 +450,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             return;
 
             //test message pdu ... doesn't work
-            RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new(161, "FriendlyBuddy")), "Testing"));
+            RespondWith(new TSOAnnouncementMsgPDU(new TSOPlayerInfoStruct(new TSOAriesIDStruct(161, "FriendlyBuddy")), "Testing"));
         }
 
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LOT_ENTRY_REQUEST_PDU)]

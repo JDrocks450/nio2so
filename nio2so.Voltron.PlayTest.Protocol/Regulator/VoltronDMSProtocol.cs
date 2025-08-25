@@ -65,7 +65,7 @@ namespace nio2so.Voltron.PlayTest.Protocol.Regulator
         public TSOVoltronPacket GET_UPDATE_PLAYER(uint AvatarID, out string AvatarName)
         {
             AvatarName = "default";
-            return new TSOUpdatePlayerPDU(new TSOPlayerInfoStruct(new(AvatarID,AvatarName)));
+            return new TSOUpdatePlayerPDU(new TSOPlayerInfoStruct(new TSOAriesIDStruct(AvatarID,AvatarName)));
         }
 
         public TSOVoltronPacket GET_HOST_ONLINE(ushort ClientBufferLength, params string[] Badwords) => new TSOHostOnlinePDU(ClientBufferLength, Badwords);
