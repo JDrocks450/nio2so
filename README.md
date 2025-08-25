@@ -1,5 +1,5 @@
-<center> 
-  <img src="projectlogods.png" height="150"> 
+<p align="center"> 
+  <img src="projectlogods.png" height="200"> 
 </center>
 
 ### New Implementation Of The Sims Online (Version 2)
