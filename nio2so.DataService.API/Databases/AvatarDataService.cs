@@ -70,7 +70,7 @@ namespace nio2so.DataService.API.Databases
         }       
 
         Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(CurrentSettings.DereferencePath(CurrentSettings.DefaultCharblobPath));
-
+        public bool Exists(AvatarIDToken AvatarID) => AvatarsLibrary.ContainsKey(AvatarID);
         /// <summary>
         /// Returns the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/>. The profile has no personal details and requires no validation **public info**
         /// </summary>

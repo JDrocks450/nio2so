@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:nio2so.TSOView2"
-        mc:Ignorable="d"
-        Title="The Sims Online Pre-Alpha (and New &amp; Improved) Asset Viewer" Height="768" Width="1024">
+        mc:Ignorable="d" Name="HOST"
+        Title="TSOView2 for The Sims Online - nio2so" Height="768" Width="1024">
     <DockPanel>
         <ToolBarPanel DockPanel.Dock="Top">
             <ToolBar ToolBarTray.IsLocked="True">
@@ -54,6 +54,19 @@
             </ToolBar>
         </ToolBarPanel>
         <Grid>
+            <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border CornerRadius="15" Background="Transparent" Padding="20,2" DockPanel.Dock="Bottom" HorizontalAlignment="Center">
+                    <TextBlock >
+                        <Run FontSize="24" FontWeight="Bold" Text="Version: "/>
+                        <Run FontSize="24" FontWeight="SemiBold" Text="{Binding VersionString, ElementName=HOST, Mode=OneTime}"/>
+                    </TextBlock>
+                </Border>
+                <Image Source="/tsoview2logo.png" MaxWidth="512">
+                    <Image.Effect>
+                        <DropShadowEffect Color="Black" Direction="320" ShadowDepth="5" Opacity="0.5" BlurRadius="10"/>
+                    </Image.Effect>
+                </Image>
+            </DockPanel>
             <Frame Name="MainPageContent"/>
         </Grid>
     </DockPanel>

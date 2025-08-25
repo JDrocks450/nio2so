@@ -121,6 +121,24 @@ namespace nio2so.DataService.API.Controllers
             return Ok();
         }
 
+        [HttpGet("{AvatarID}/inbox")]
+        public ActionResult<IEnumerable<Letter>> GetInboxMessages(uint AvatarID) => Ok(APIDataServices.GetDataService<InboxDataService>().GetLetters(AvatarID));
+
+        [HttpGet("{AvatarID}/inbox/clear")]
+        public ActionResult ClearInboxMessages(uint AvatarID)
+        {
+            APIDataServices.GetDataService<InboxDataService>().ClearLetters(AvatarID);
+            return Ok();
+        }
+        // POST api/avatars/1337/inbox/send?SenderID=42
+        [HttpPost("{RecipientID}/inbox/send")]
+        public ActionResult SendInboxMessageToAvatarAsync(uint RecipientID, [FromQuery] uint SenderID, [FromBody] Letter Message)
+        {
+            if (APIDataServices.GetDataService<InboxDataService>().SendLetter(SenderID, RecipientID, Message, out string ReasonText))
+                return Ok();
+            return BadRequest(ReasonText);
+        }
+
         // POST api/<AvatarDataController>
         [HttpPost]
         public void Post([FromBody] string value)

@@ -6,7 +6,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
     /// This message is sent when the Client is requesting to get all messages in their Inbox
     /// <para/>It is unclear what 'MPS' may mean, but their exists too 'BBS' messages in the constants table.
     /// <para/>Best guess: MPS stands for 'Message Protocol System/Service'
-    /// <para/>See also: <see cref="TSOGetMPSMessagesPDUResponse"/>
+    /// <para/>See also: <see cref="TSOGetMPSMessagesResponsePDU"/>
     /// </summary>
     [TSOVoltronPDU((uint)TSO_PreAlpha_VoltronPacketTypes.GET_MPS_MESSAGES_PDU)]
     public class TSOGetMPSMessagesPDU : TSOVoltronPacket

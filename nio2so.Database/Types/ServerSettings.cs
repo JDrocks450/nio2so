@@ -41,6 +41,7 @@ namespace nio2so.DataService.Common.Types
         public string AvatarCreationIndexFile => DatabaseDirectoryToken + @"\ACID.json";
         public string HouseBlobLibraryDirectory => Path.Combine(DatabaseDirectoryToken, "houseblob");
         public string AvatarBlobLibraryPath => Path.Combine(DatabaseDirectoryToken, "charblob");
+        public string InboxServiceFile => DatabaseDirectoryToken + @"\inboxmessages.json";
 
         /// <summary>
         /// Accounts that are always present in the <see cref="AccountsFile"/>

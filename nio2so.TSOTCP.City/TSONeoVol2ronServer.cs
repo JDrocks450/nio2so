@@ -1,7 +1,7 @@
 ﻿#define TSOPREALPHA
 #define TSOPLAYTEST
 
-#undef TSOPREALPHA
+//#undef TSOPREALPHA
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST

@@ -28,6 +28,7 @@ namespace nio2so.TSOView2
         /// </summary>
         private Dictionary<MenuItem, Action> uiInvokableActionMap { get; set; } = default;
 
+        public string VersionString => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
         public MainWindow()
         {
             InitializeComponent();            

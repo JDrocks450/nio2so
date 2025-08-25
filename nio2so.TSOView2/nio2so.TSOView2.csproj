@@ -9,10 +9,16 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>AnyCPU;x86</Platforms>
+    <ApplicationIcon>tsoview2logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="Resources\caution.png" />
+    <None Remove="tsoview2logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="tsoview2logo.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +33,7 @@
 
   <ItemGroup>
     <Resource Include="Resources\caution.png" />
+    <Resource Include="tsoview2logo.png" />
   </ItemGroup>
 
 </Project>

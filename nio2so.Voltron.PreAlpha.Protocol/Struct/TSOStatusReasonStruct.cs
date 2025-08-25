@@ -47,7 +47,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Struct
         [IgnoreDataMember]
         public static TSOStatusReasonStruct Offline => new((uint)PlayerStatuses.Offline,PlayerStatuses.Offline.ToString());
         [IgnoreDataMember]
-        public static TSOStatusReasonStruct? Default => new(TSOVoltronConst.ResponsePDU_DefaultStatusCode,
+        public static TSOStatusReasonStruct Default => new(TSOVoltronConst.ResponsePDU_DefaultStatusCode,
             TSOVoltronConst.ResponsePDU_DefaultReasonText);
     }
 }

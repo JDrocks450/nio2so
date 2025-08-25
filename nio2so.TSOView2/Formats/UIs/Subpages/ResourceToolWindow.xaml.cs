@@ -1,6 +1,7 @@
 ﻿using Microsoft.Win32;
 using nio2so.Formats.Img.Targa;
 using nio2so.TSOView2.Util;
+using System;
 using System.Text;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -25,11 +26,21 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                 Multiselect = true,
                 DereferenceLinks = true,
                 CheckFileExists = true,
-                CheckPathExists = true,               
+                CheckPathExists = true,
             };
-            if (dlg.ShowDialog() ?? false)
-                foreach (var s in dlg.FileNames)
+            if (!(dlg.ShowDialog() ?? false))
+                return;
+            foreach (var s in dlg.FileNames)
+            {
+                try
+                {
                     SpawnWithResourceURI(s);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Failed to open resource: {s}\n\n{ex}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
         public static void SpawnWithResourceURI(string URI)

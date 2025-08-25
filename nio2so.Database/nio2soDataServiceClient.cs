@@ -6,6 +6,7 @@ using nio2so.DataService.Common.Types.Lot;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
+using static nio2so.DataService.Common.HTTPServiceClientBase;
 
 namespace nio2so.DataService.Common
 {
@@ -344,6 +345,29 @@ namespace nio2so.DataService.Common
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HTTPServiceResult<VoltronServerSettings>> GetVoltronServiceSettings() => GetQueryAs<VoltronServerSettings>($"configure/settings/voltron");
-            
+
+        /// <summary>
+        /// Sends a <see cref="Letter"/> to the <paramref name="ReceiverID"/>'s inbox from the <paramref name="SenderID"/> Avatar ID
+        /// </summary>
+        /// <param name="SenderID"></param>
+        /// <param name="ReceiverID"></param>
+        /// <param name="LetterContent"></param>
+        /// <returns></returns>
+        public Task<HttpResponseMessage> SendInboxMessageToAvatar(AvatarIDToken SenderID, AvatarIDToken ReceiverID, Letter LetterContent) =>
+            QueryPostAs($"avatars/{ReceiverID}/inbox/send", LetterContent, (nameof(SenderID),SenderID));
+
+        /// <summary>
+        /// Downloads all inbox <see cref="Letter"/>s for the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<IEnumerable<Letter>>> GetInboxMessages(AvatarIDToken AvatarID) => GetQueryAs<IEnumerable<Letter>>($"avatars/{AvatarID}/inbox");
+        /// <summary>
+        /// Clears all inbox <see cref="Letter"/>s for the given <paramref name="AvatarID"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public Task<HttpResponseMessage> ClearInboxMessages(AvatarIDToken AvatarID, DateTime? Before = default) => HttpGet($"avatars/{AvatarID}/inbox/clear");
+
     }
 }
