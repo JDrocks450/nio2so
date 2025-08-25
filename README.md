@@ -1,10 +1,21 @@
-# nio2so
-A continuation of niotso (The Sims Online)
+<center> 
+  <img src="projectlogods.png" height="150"> 
+</center>
 
-![image](https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe)
+### New Implementation Of The Sims Online (Version 2)
 
-An image of TSOView2 rendering City terrain as it would appear in TSO Pre-Alpha.
-More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).
+<b>A continuation of niotso (The Sims Online).</b> This project successfully emulates the server program <i>The Sims Online: Pre-Alpha</i> interfaces with to create the gameplay experience as it were in May 2002.
+
+<figure>
+  <img
+  src="https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe"
+  alt="An image of TSOView2.exe rendering City terrain as it would appear in TSO Pre-Alpha.">
+  <figcaption></figcaption>
+</figure>
+
+An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as it would appear in The Sims Online: Pre-Alpha.
+
+<i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
 
 ## Project Roadmap & Reference Materials
 **Roadmap** You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
