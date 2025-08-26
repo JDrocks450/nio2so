@@ -208,7 +208,7 @@ namespace nio2so.Formats.UI.UIScript
                     cstFile.Populate();
                 File.ReferencedCSTFiles.Add((uint)tableID);
                 string stringID = define.GetProperty("stringIndex").GetValue<UIScriptString>();
-                return cstFile[stringID];
+                return cstFile[stringID].StringValue;
             }
             catch (Exception e)
             {

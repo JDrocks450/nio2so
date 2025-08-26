@@ -45,6 +45,12 @@ namespace nio2so.TSOView2.Formats.UIs
 
         retry:
             var theme = UIsHandler.Current.CurrentTheme;
+            if (theme == null)
+            {
+                MessageBox.Show("The UIScript viewer is not ready right now. Try restarting the application. If this error" +
+                    "persists, try resetting your The Sims Online directory in the configuration settings.", "UIScript Tool not Ready!");
+                return;
+            }
             //CHECK IF GAME PATH IS SET
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun())
             {

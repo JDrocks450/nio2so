@@ -1,0 +1,23 @@
+﻿<Window x:Class="nio2so.TSOView2.Formats.Cst.CSTDirectoryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:nio2so.TSOView2.Formats.Cst" 
+        Foreground="White" Name="HOST"
+        mc:Ignorable="d" WindowStartupLocation="CenterOwner" Background="{StaticResource TSOWindowBackgroundBrush}"
+        Title="TSOView2 String File Explorer" Height="600" Width="800" MinHeight="200" MinWidth="300">
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Open Directory..." Name="OpenCSTDirectoryItem" Click="OpenCSTDirectoryItem_Click"/>
+                <Separator/>
+                <MenuItem Header="Exit" Name="CloseItem" Click="CloseItem_Click"/>
+            </MenuItem>
+        </Menu>
+        <Grid>
+            <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,6" Text="{Binding Title,ElementName=HOST}"></TextBlock>
+            <local:CSTDirectoryControl x:Name="CSTControl"/>
+        </Grid>
+    </DockPanel>
+</Window>

@@ -1,5 +1,6 @@
 ﻿using nio2so.TSOView2.Formats;
 using nio2so.TSOView2.Formats.Compressor;
+using nio2so.TSOView2.Formats.Cst;
 using nio2so.TSOView2.Formats.Network;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.TSOData;
@@ -73,7 +74,8 @@ namespace nio2so.TSOView2
                 { VoltronDirectoryOpenItem, () => TSOVoltronPacketDirectoryWindow.TryPromptUserAndShowDialog(out _) },
                 { MaxisProtocolItem, () => new TSOPacketLibraryWindow(this).Show() },
                 { ConstantsBrowser, () => new TSOConstantsTableWindow(this).Show() },
-                { HexDumperEdithPluginItem, () => new HexDumpWindow(this).Show() }
+                { HexDumperEdithPluginItem, () => new HexDumpWindow(this).Show() },
+                { OpenCSTDirectoryItem, () => new CSTDirectoryWindow(this).Show() }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

@@ -22,6 +22,7 @@
                                 <MenuItem Name="VoltronPacketOpenItem" Header="Open Voltron Packet PDU"/>
                                 <MenuItem Name="VoltronDirectoryOpenItem" Header="Open Voltron PDU Directory..."/>
                             </MenuItem>
+                            <MenuItem Name="OpenCSTDirectoryItem" Header="String (*.CST) Directory..."/>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>
