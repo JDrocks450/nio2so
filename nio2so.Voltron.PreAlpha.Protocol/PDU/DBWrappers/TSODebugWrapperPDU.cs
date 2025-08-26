@@ -31,18 +31,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             MakeBodyFromProperties();
         }
         /// <summary>
-        /// Creates a new <see cref="TSODebugWrapperPDU"/> with a <paramref name="BodyArray"/> acting as the data following the <see cref="TSODBRequestWrapper"/> header structure
-        /// </summary>
-        /// <param name="BodyArray">See: <see cref="PDUBytes"/></param>
-        /// <param name="Action">See: <see cref="TSODBRequestWrapper.TSOPacketFormatCLSID"/></param>
-        /// <param name="kMSG">See: <see cref="TSODBRequestWrapper.kMSGID"/></param>
-        /// <param name="Struct">See: <see cref="TSODBRequestWrapper.TSOSubMsgCLSID"/></param>
-        public TSODebugWrapperPDU(byte[] BodyArray, TSO_PreAlpha_DBActionCLSIDs Action,
-            uint kMSG = (uint)TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,
-            TSO_PreAlpha_DBStructCLSIDs Struct = TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage
-            )
-            : this(BodyArray, Action, (TSO_PreAlpha_kMSGs)kMSG, Struct) { }
-        /// <summary>
         /// Creates a new <see cref="TSODebugWrapperPDU"/> with a Body Array acting as the data following the <see cref="TSODBRequestWrapper"/> header structure
         /// </summary>
         /// <param name="BodyArray">Reads a file into the <see cref="PDUBytes"/> property</param>
