@@ -1,21 +1,11 @@
 ﻿using Microsoft.Win32;
 using nio2so.Formats.CST;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace nio2so.TSOView2.Formats.Cst
 {
@@ -32,7 +22,10 @@ namespace nio2so.TSOView2.Formats.Cst
         public CSTDirectoryControl()
         {
             InitializeComponent();
+            Loaded += CSTDirectoryWindow_Loaded;
         }
+        // only load if no directory is open -- this will check by using the CSTControl's IsDirectoryOpen property
+        private void CSTDirectoryWindow_Loaded(object sender, RoutedEventArgs e) => _ = !IsDirectoryOpen ? PromptAndOpenDirectory() : true; // lol nice hack around void return type :) // thanks, me :)
 
         void ReevaluateUIComponents()
         {
@@ -51,7 +44,7 @@ namespace nio2so.TSOView2.Formats.Cst
                     //get file info
                     uint fileKey = Directory.Keys.ElementAt(i);
                     CSTFile file = Directory[fileKey];
-                    string fName = System.IO.Path.GetFileName(file.FilePath) ?? "unknown file";
+                    string fName = file.FriendlyName ?? "unknown file";
                     string displayName = $"{fileKey:D4}: {fName}";
                     //make a new tree view item for this file
                     TreeViewItem newItem = new ()

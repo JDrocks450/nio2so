@@ -2,8 +2,11 @@
 using nio2so.Formats.ARCHIVE;
 using nio2so.Formats.FAR1;
 using nio2so.Formats.FAR3;
+using nio2so.Formats.Img.Targa;
+using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -23,7 +26,7 @@ namespace nio2so.TSOView2.Formats.FAR3
     /// <summary>
     /// Interaction logic for FAR3Control.xaml
     /// </summary>
-    public partial class FAR3Control : Page
+    public partial class FAR3Control : Page, IDisposable
     {
         public enum FARMode
         {
@@ -32,7 +35,7 @@ namespace nio2so.TSOView2.Formats.FAR3
             FAR3 = 2,
         }
 
-        string archivePath;
+        string? archivePath;
         IFileArchive<string>? archive;
         private readonly FARMode mode;
 
@@ -42,8 +45,14 @@ namespace nio2so.TSOView2.Formats.FAR3
         {
             InitializeComponent();
 
+            Unloaded += delegate { Dispose(); };
             Loaded += FAR3Control_Loaded;
+            UIReset();
             mode = Mode;
+        }
+        ~FAR3Control()
+        {
+            Dispose();
         }
 
         private void FAR3Control_Loaded(object sender, RoutedEventArgs e)
@@ -52,36 +61,87 @@ namespace nio2so.TSOView2.Formats.FAR3
                 PromptAndOpenArchive();
         }
 
+        void UIReset()
+        {
+            ExtractDirectoryLabel.Visibility = Visibility.Collapsed;
+            ImagePreviewBox.Source = null;
+            FileTree.Items.Clear();
+        }
+
         void UIRedraw()
         {
             FileTree.Items.Clear();
 
-            if (!ArchiveOpened) return;
-            //make file root tree node
-            TreeViewItem root = new TreeViewItem()
+            if (!ArchiveOpened || archive == null) return;
+            lock (archive)
             {
-                Header = System.IO.Path.GetFileName(archivePath),
-                IsExpanded = true
-            };
-            root.ItemsSource = archive.GetAllFileEntries();
-            FileTree.Items.Add(root);
+                //make file root tree node
+                TreeViewItem root = new TreeViewItem()
+                {
+                    Header = System.IO.Path.GetFileName(archivePath),
+                    IsExpanded = true
+                };
+                root.ItemsSource = archive.GetAllFileEntries();
+                FileTree.Items.Add(root);
+            }
+        }
+
+        void CopyImage()
+        {
+            BitmapSource? src = ImagePreviewBox?.Source as BitmapSource;
+            if (src == null) return;
+            Clipboard.SetImage(src);
+        }
+
+        void UIUpdatePreview(IFileEntry Entry)
+        {
+            if (!ArchiveOpened || archive == null) return;
+            if (Entry == null) return;
+            if (string.IsNullOrWhiteSpace(Entry.Filename)) return;
+            byte[] entryData = default;
+            lock (archive)
+            {
+                entryData = archive.GetEntry(Entry.Filename);                
+            }
+            if (entryData == null) return;
+            using MemoryStream stream = new MemoryStream(entryData);
+
+            try
+            {
+                using System.Drawing.Image img = System.Drawing.Image.FromStream(stream);
+                ImagePreviewBox.Source = img.Convert(true);
+                return;
+            }
+            catch { } // not supported?
+            stream.Seek(0,SeekOrigin.Begin);
+            try
+            {
+                using var tga = TargaImage.LoadTargaImage(stream);
+                ImagePreviewBox.Source = tga.Convert(true);
+            }
+            catch { }
         }
 
         async Task<(bool Result, string ErrorReason)> ExtractOne(string BaseDirectory, IFileEntry Entry)
-        {                        
-            IFileEntry? entry = Entry;
+        {
+            IFileEntry entry = Entry;
             string ErrorReason = "An entry was null. Skipping this entry.";
-            if (entry == null)            
+            if (entry == null)
                 return (false, ErrorReason);
             ErrorReason = "An archive is not open right now.";
             if (!ArchiveOpened)
-                return (false, ErrorReason);    
+                return (false, ErrorReason);
             string name = entry.ToString();
             bool success = false;
             try
-            {                
+            {
+                _ = Dispatcher.InvokeAsync(() =>
+                {
+                    ExtractDirectoryLabel.Visibility = Visibility.Visible;
+                    (ExtractionDirectoryLabel.Inlines.ElementAt(0) as Run).Text = BaseDirectory;                    
+                });
                 await File.WriteAllBytesAsync(System.IO.Path.Combine(BaseDirectory, name), archive[name]);
-                ErrorReason = "OK.";  
+                ErrorReason = "OK.";
                 success = true;
             }
             catch (UnauthorizedAccessException)
@@ -150,7 +210,7 @@ namespace nio2so.TSOView2.Formats.FAR3
             return false;
         }
 
-        async Task ExtractAll(bool ForceDirBrowser = false)
+        async Task ExtractAll(bool ForceDirBrowser = false, params IFileEntry[] Entries)
         {
             if (!ArchiveOpened) return;
             StringBuilder errorBuilder = new();
@@ -173,7 +233,7 @@ namespace nio2so.TSOView2.Formats.FAR3
             }
             bool Nested = false;
         retry:
-            foreach (var entry in archive.GetAllFileEntries())
+            foreach (var entry in Entries)
             {
                 var valueResult = await ExtractOne(baseDir, entry);
                 if (!valueResult.Result)
@@ -197,9 +257,10 @@ namespace nio2so.TSOView2.Formats.FAR3
 
         private async void AllButton_Click(object sender, RoutedEventArgs e)
         {
+            if (!ArchiveOpened || archive == null) return;
             bool promptDir = false;
             if (Keyboard.GetKeyStates(Key.LeftShift) == KeyStates.Down) promptDir = true;
-            await ExtractAll(promptDir);
+            await ExtractAll(promptDir, archive.GetAllFileEntries().ToArray());
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
@@ -208,5 +269,42 @@ namespace nio2so.TSOView2.Formats.FAR3
         }
 
         internal static void SpawnWindow(FARMode Mode) => new Window() { Content = new FAR3Control(Mode) }.Show();
+
+        private void FileTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (!ArchiveOpened) return;
+            if (FileTree.SelectedItem == null) return;
+            if (FileTree.SelectedItem is IFileEntry entry)
+                UIUpdatePreview(entry);
+        }
+
+        public void Dispose()
+        {
+            UIReset();
+            archivePath = null;
+            archive?.Dispose();
+            archive = null;
+        }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e) => CopyImage();
+
+        private void Page_KeyDown(object sender, KeyEventArgs e)
+        {
+            if ((Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl)) && Keyboard.IsKeyDown(Key.C)) 
+                CopyImage();
+        }
+
+        private async void FileButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!ArchiveOpened) return;
+            if (FileTree.SelectedItem == null) return;
+            await ExtractAll(false, (IFileEntry)FileTree.SelectedItem);
+        }
+
+        private void ExtractionDirectoryLabel_Click(object sender, RoutedEventArgs e)
+        {
+            string fLink = (ExtractionDirectoryLabel.Inlines.ElementAt(0) as Run).Text;
+            using Process p = Process.Start("explorer", fLink);
+        }
     }
 }

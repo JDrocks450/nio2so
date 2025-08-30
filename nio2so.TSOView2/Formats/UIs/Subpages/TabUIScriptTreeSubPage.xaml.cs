@@ -60,7 +60,8 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                     {
                         Header = name,
                         Foreground = GetColorByComponentType(comp),
-                        Tag = comp
+                        Tag = comp,
+                        IsExpanded = true
                     };
                     compNode.Selected += ObjectTreeNode_Selected;
                     Node.Items.Add(compNode);
@@ -70,11 +71,11 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
             }
             var node = new TreeViewItem()
             {
-                Header = "Root"
+                Header = "Root",
+                IsExpanded = true
             };
             AddGroup(node, CurrentUIScriptFile);
             UiScriptsTreeObject.Items.Add(node);
-            node.IsExpanded = true;
         }
 
         private void ObjectTreeNode_Selected(object sender, RoutedEventArgs e)

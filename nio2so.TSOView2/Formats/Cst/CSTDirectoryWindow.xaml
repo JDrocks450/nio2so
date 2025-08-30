@@ -16,7 +16,6 @@
             </MenuItem>
         </Menu>
         <Grid>
-            <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,6" Text="{Binding Title,ElementName=HOST}"></TextBlock>
             <Frame NavigationUIVisibility="Hidden">
                 <Frame.Content>
                     <local:CSTDirectoryControl x:Name="CSTControl"/>

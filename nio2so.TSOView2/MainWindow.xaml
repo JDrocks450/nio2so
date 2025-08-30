@@ -4,63 +4,62 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:nio2so.TSOView2"
-        mc:Ignorable="d" Name="HOST"
+        mc:Ignorable="d" Name="HOST" Closing="HOST_Closing"
         Title="TSOView2 for The Sims Online - nio2so" Height="768" Width="1024">
     <DockPanel>
-        <ToolBarPanel DockPanel.Dock="Top">
-            <ToolBar ToolBarTray.IsLocked="True">
-                <Menu Name="DefaultMenu" ToolBar.OverflowMode="Never">
-                    <MenuItem Header="File...">
-                        <MenuItem Header="Open...">
-                            <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
-                            <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
-                            <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
-                            <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
-                            <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
-                            <MenuItem Header="nio2so Network Activity">
-                                <MenuItem Name="TSOTCPPacketOpenItem" Header="Open Aries Frame..."/>
-                                <MenuItem Name="VoltronPacketOpenItem" Header="Open Voltron Packet PDU"/>
-                                <MenuItem Name="VoltronDirectoryOpenItem" Header="Open Voltron PDU Directory..."/>
-                            </MenuItem>
-                            <MenuItem Name="OpenCSTDirectoryItem" Header="String (*.CST) Directory..."/>
-                            <MenuItem Header="Open Archive...">
-                                <MenuItem Name="OpenFAR3ArchiveItem" Header="Open FAR3 Archive"/>
-                                <MenuItem Name="OpenFAR1ArchiveItem" Header="Open FAR1 Archive"/>
-                                <MenuItem Name="OpenFARV1BArchiveItem" Header="Open FARV1B Archive"/>
-                            </MenuItem>
-                        </MenuItem>
-                        <Separator/>
-                        <MenuItem Name="ExitItem" Header="Exit"/>
+        <Menu Name="DefaultMenu" DockPanel.Dock="Top">
+            <MenuItem Header="File...">
+                <MenuItem Header="Open..." MinWidth="150">
+                    <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
+                    <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
+                    <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
+                    <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
+                    <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
+                    <MenuItem Header="nio2so Network Activity">
+                        <MenuItem Name="TSOTCPPacketOpenItem" Header="Open Aries Frame..."/>
+                        <MenuItem Name="VoltronPacketOpenItem" Header="Open Voltron Packet PDU"/>
+                        <MenuItem Name="VoltronDirectoryOpenItem" Header="Open Voltron PDU Directory..."/>
                     </MenuItem>
-                    <MenuItem Header="Edit...">
+                    <MenuItem Name="OpenCSTDirectoryItem" Header="String (*.CST) Directory..."/>
+                    <MenuItem Header="Open Archive...">
+                        <MenuItem Name="OpenFAR3ArchiveItem" Header="Open FAR3 Archive"/>
+                        <MenuItem Name="OpenFAR1ArchiveItem" Header="Open FAR1 Archive"/>
+                        <MenuItem Name="OpenFARV1BArchiveItem" Header="Open FARV1B Archive"/>
+                    </MenuItem>
+                    <MenuItem Header="Targa Images..." Name="ViewTGAItem"/>
+                </MenuItem>
+                <Separator/>
+                <MenuItem Name="ClosePluginItem" Header="Close Page"/>
+                <MenuItem Name="NewWindowItem" Header="Create New Window"/>
+                <Separator/>
+                <MenuItem Name="ExitItem" Header="Exit"/>
+            </MenuItem>
+            <MenuItem Header="Edit...">
 
-                    </MenuItem>
-                    <MenuItem Header="View...">
-                        <MenuItem Header="Interactive Documentation...">
-                            <MenuItem Name="MaxisProtocolItem" Header="Maxis Protocol"/>
-                            <MenuItem x:Name="ConstantsBrowser" Header="Constants Browser"/>
-                        </MenuItem>
-                        <MenuItem Header="View TGA..." Name="ViewTGAItem"/>
-                        <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
-                    </MenuItem>
-                    <MenuItem Header="Plugin...">
-                        <MenuItem Header="Format Constants Table to Enum" Name="EnumPluginItem"/>
-                        <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
-                        <MenuItem Header="Edith ResEdit Hex Dumper" Name="HexDumperEdithPluginItem"/>
-                    </MenuItem>
-                    <MenuItem Header="Help...">
-                        <MenuItem Header="About" Name="AboutItem"/>
-                        <Separator/>
-                        <MenuItem Header="Check for Updates" Name="UpdatesItem"/>
-                        <MenuItem Header="Check me out!" Name="MyselfItem"/>
-                        <MenuItem Header="nio2so Github" Name="GithubItem"/>
-                        <MenuItem Header="nio2so Wiki" Name="WikiItem"/>
-                    </MenuItem>
-                </Menu>
-            </ToolBar>
-        </ToolBarPanel>
+            </MenuItem>
+            <MenuItem Header="View...">
+                <MenuItem Header="Interactive Documentation...">
+                    <MenuItem Name="MaxisProtocolItem" Header="Maxis Protocol"/>
+                    <MenuItem x:Name="ConstantsBrowser" Header="Constants Browser"/>
+                </MenuItem>
+                <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
+            </MenuItem>
+            <MenuItem Header="Plugin...">
+                <MenuItem Header="Format Constants Table to Enum" Name="EnumPluginItem"/>
+                <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
+                <MenuItem Header="Edith ResEdit Hex Dumper" Name="HexDumperEdithPluginItem"/>
+            </MenuItem>
+            <MenuItem Header="Help...">
+                <MenuItem Header="About" Name="AboutItem"/>
+                <Separator/>
+                <MenuItem Header="Check for Updates" Name="UpdatesItem"/>
+                <MenuItem Header="Check me out!" Name="MyselfItem"/>
+                <MenuItem Header="nio2so Github" Name="GithubItem"/>
+                <MenuItem Header="nio2so Wiki" Name="WikiItem"/>
+            </MenuItem>
+        </Menu>
         <Grid>
-            <DockPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+            <DockPanel x:Name="ProjectLogo" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Border CornerRadius="15" Background="Transparent" Padding="20,2" DockPanel.Dock="Bottom" HorizontalAlignment="Center">
                     <TextBlock >
                         <Run FontSize="24" FontWeight="Bold" Text="Version: "/>
@@ -73,7 +72,8 @@
                     </Image.Effect>
                 </Image>
             </DockPanel>
-            <Frame Name="MainPageContent"/>
+            <TextBlock Grid.ColumnSpan="2" Style="{StaticResource TSOPreAlpha_BasicTextStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,6" Text="{Binding Content.Title,ElementName=MainPageContent}"></TextBlock>
+            <Frame Name="MainPageContent" NavigationUIVisibility="Hidden"/>
         </Grid>
     </DockPanel>
 </Window>

@@ -42,8 +42,11 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                 {
                     var control = new HeaderedContentControl() { Header = define.Name, Tag = define };
                     //ASSET ID
-                    if(define.TryGetReference(UIsHandler.Current.CurrentTheme, out TSOThemeDefinition? ThemeDefinition, out ulong assetID))
-                        control.Content = ThemeDefinition.TextureRef.Convert(true);
+                    if (define.TryGetReference(UIsHandler.Current.CurrentTheme, out TSOThemeDefinition? ThemeDefinition, out ulong assetID))
+                    {
+                        var img = ThemeDefinition?.TextureRef;
+                        control.Content = img?.Convert(true);
+                    }
 
                     ImagePropertiesBin.Items.Add(control);
                     control.PreviewMouseLeftButtonUp += ImageBin_SwitchReference;
@@ -101,7 +104,8 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
 
             if (!assetFound)
                 URIBox.BorderBrush = System.Windows.Media.Brushes.Red;
-            else ResourceToolWindow.SpawnWithImageStream(currentDefinitionForDefine.TextureRef.Convert(true));
+            else ResourceToolWindow.SpawnWithImageStream(currentDefinitionForDefine.TextureRef.Convert(true),
+                currentDefinitionForDefine.FilePath == default ? null : System.IO.Path.GetFileName(currentDefinitionForDefine.FilePath));
                  
             OnSaveCallback = Callback;
             SaveDefinePropertiesButton.IsEnabled = true;            
@@ -117,7 +121,7 @@ namespace nio2so.TSOView2.Formats.UIs.Subpages
                 catch (Exception e)
                 {
                     message = e.Message;
-                    MessageBox.Show($"An error has occured on save! {message}", "Big oopsies!");
+                    MessageBox.Show($"An error has occured on save!\n\n{e}", e.Message);
                 }
                 UIsHandler.Current.CurrentTheme.Remove(assetID); // just in case B)
                 UIsHandler.Current.CurrentTheme.Add(assetID, currentDefinitionForDefine);

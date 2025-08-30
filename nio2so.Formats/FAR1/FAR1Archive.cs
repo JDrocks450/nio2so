@@ -41,6 +41,8 @@ namespace nio2so.Formats.FAR1
             get { return m_NumFiles; }
         }
 
+        byte[] IFileArchive<string>.this[string Filename] => throw new NotImplementedException();
+
         public byte[] this[string Filename] => GetEntry(Filename);
 
         /// <summary>
@@ -156,11 +158,6 @@ namespace nio2so.Formats.FAR1
         public IEnumerable<IFileEntry> GetAllFileEntries() => GetAllFarEntries();
 
         public byte[] GetEntry(string FileName) => GetEntry(new KeyValuePair<string, byte[]>(FileName, null));
-
-        IEnumerable<IFileEntry> IFileArchive<string>.GetAllFileEntries()
-        {
-            throw new NotImplementedException();
-        }
 
         public void Dispose() => m_Reader.Dispose();
     }

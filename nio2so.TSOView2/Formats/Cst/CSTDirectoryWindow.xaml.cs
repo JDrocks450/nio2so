@@ -35,11 +35,8 @@ namespace nio2so.TSOView2.Formats.Cst
                 {
                     MessageBox.Show($"Failed to open CST Directory '{CSTDirectory.FullName}': {ex.Message}", "Error Opening CST Directory", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
-            }
-            Loaded += CSTDirectoryWindow_Loaded;
+            }            
         }
-        // only load if no directory is open -- this will check by using the CSTControl's IsDirectoryOpen property
-        private void CSTDirectoryWindow_Loaded(object sender, RoutedEventArgs e) => _ = !CSTControl.IsDirectoryOpen ? CSTControl.PromptAndOpenDirectory() : true; // lol nice hack around void return type :) // thanks, me :)
 
         private void OpenCSTDirectoryItem_Click(object sender, RoutedEventArgs e) => CSTControl.PromptAndOpenDirectory();
 

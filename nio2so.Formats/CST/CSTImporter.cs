@@ -28,7 +28,12 @@
             }
             return retVal;
         }
-        public static CSTFile Import(string FilePath) => new CSTImporter().ImportFromFile(FilePath);
+        public static CSTFile Import(string FilePath)
+        {
+            var file = new CSTImporter().ImportFromFile(FilePath);
+            file.FilePath = FilePath;
+            return file;
+        }
         public override CSTFile Import(Stream stream)
         {
             CSTFile file = new();

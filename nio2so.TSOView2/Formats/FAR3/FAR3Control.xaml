@@ -4,19 +4,44 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:nio2so.TSOView2.Formats.FAR3"
-             mc:Ignorable="d" 
-             MinHeight="400" MinWidth="350">
-    <DockPanel>
-        <UniformGrid Columns="3" DockPanel.Dock="Bottom">
-            <Button Name="FileButton">
-                <TextBlock>
-                    <Run>Extract</Run>
-                    <Run Text="{Binding SelectedItem, ElementName=FileTree, Mode=OneWay}"/>
+             mc:Ignorable="d" Title="TSOView2 Archive Explorer"
+             d:DesignHeight="768" d:DesignWidth="1024" Foreground="White" KeyDown="Page_KeyDown">
+    <DockPanel Margin="10">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+            <DockPanel Margin="0,0,5,0">
+                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,10">Archive Explorer</TextBlock>
+                <UniformGrid Columns="2" DockPanel.Dock="Bottom">
+                    <Button Name="FileButton" Click="FileButton_Click">
+                        <TextBlock>
+                            <Run>Extract</Run>
+                            <Run Text="{Binding SelectedItem, ElementName=FileTree, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Button>
+                    <Button Name="AllButton" Click="AllButton_Click">Extract All</Button>
+                    <Button Name="CloseButton" Click="CloseButton_Click" Visibility="Collapsed">Refresh</Button>
+                </UniformGrid>
+                <TextBlock x:Name="ExtractDirectoryLabel" DockPanel.Dock="Bottom" Margin="0,5">
+                    <Run FontWeight="Bold">Extracted Files are going to:</Run> <LineBreak/>
+                    <Hyperlink Name="ExtractionDirectoryLabel" Foreground="LightGreen" Click="ExtractionDirectoryLabel_Click">LABEL</Hyperlink>
                 </TextBlock>
-            </Button>
-            <Button Name="AllButton" Click="AllButton_Click">Extract All</Button>
-            <Button Name="CloseButton" Click="CloseButton_Click">Refresh</Button>
-        </UniformGrid>
-        <TreeView Name="FileTree"/>
+                <TreeView Name="FileTree" SelectedItemChanged="FileTree_SelectedItemChanged"/>
+            </DockPanel>
+            <DockPanel Margin="5,0,0,0" Grid.Column="2">
+                <DockPanel DockPanel.Dock="Top">
+                    <Button Name="CopyButton" DockPanel.Dock="Left" Width="75" Click="CopyButton_Click">Copy</Button>
+                    <TextBlock  Margin="10,0,0,10">
+                        <Run>Preview</Run>
+                        <Run Text="{Binding SelectedValue,ElementName=FileTree,Mode=OneWay}"/>
+                    </TextBlock>
+                </DockPanel>
+                <Border  Background="White" BorderThickness="1" BorderBrush="#FF00ACFF" >
+                    <Image Name="ImagePreviewBox" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                </Border>
+            </DockPanel>
+        </Grid>
     </DockPanel>
 </Page>

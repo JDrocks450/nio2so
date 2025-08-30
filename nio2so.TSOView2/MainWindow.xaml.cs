@@ -10,14 +10,16 @@ using nio2so.TSOView2.Formats.UIs.Subpages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace nio2so.TSOView2
 {
     public interface ITSOView2Window
     {
-        void MainWindow_ShowPlugin(Page NewPage);
+        void ShowPlugin(Page NewPage);
     }
 
     /// <summary>
@@ -25,6 +27,7 @@ namespace nio2so.TSOView2
     /// </summary>
     public partial class MainWindow : Window, ITSOView2Window
     {
+        private Dictionary<int, Process> _processes = new();
         /// <summary>
         /// Maps <see cref="MenuItem"/> controls defined in XAML to an action in code behind.
         /// </summary>
@@ -44,11 +47,24 @@ namespace nio2so.TSOView2
                 new UIsHandler().Initialize();
             //HOOK Click Event for all MenuItems with a Name property
             UIWireUp_HookEvents();
+            //reset ui
+            ClosePlugin();
         }
 
-        public void MainWindow_ShowPlugin(Page NewPage)
+        public void ShowPlugin(Page NewPage)
         {
+            ProjectLogo.Visibility = Visibility.Collapsed;
+            Background = (Brush)FindResource("TSOWindowBackgroundBrush");
             MainPageContent.Content = NewPage;
+            ClosePluginItem.Visibility = Visibility.Visible;
+        }
+
+        public void ClosePlugin()
+        {
+            ProjectLogo.Visibility = Visibility.Visible;
+            ClosePluginItem.Visibility = Visibility.Collapsed;
+            Background = Brushes.White;
+            MainPageContent.Content = null;
         }
 
         private void UIWireUp_HookEvents()
@@ -73,13 +89,15 @@ namespace nio2so.TSOView2
                 { RefPackItem, DecompressorWindow.ShowDecompressor },
                 { VoltronPacketOpenItem, () => TSOVoltronPacketPropertiesWindow.TryPromptUserAndShowDialog(out _) },
                 { VoltronDirectoryOpenItem, () => TSOVoltronPacketDirectoryWindow.TryPromptUserAndShowDialog(out _) },
-                { MaxisProtocolItem, () => new TSOPacketLibraryWindow(this).Show() },
+                { MaxisProtocolItem, () => ShowPlugin(new TSOPacketLibraryControl()) },
                 { ConstantsBrowser, () => new TSOConstantsTableWindow(this).Show() },
                 { HexDumperEdithPluginItem, () => new HexDumpWindow(this).Show() },
-                { OpenCSTDirectoryItem, () => new CSTDirectoryWindow(this).Show() },
-                { OpenFAR3ArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR3) },
-                { OpenFAR1ArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR1) },
-                { OpenFARV1BArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR1_v1B) }
+                { OpenCSTDirectoryItem, () => ShowPlugin(new CSTDirectoryControl()) },
+                { OpenFAR3ArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.FAR3) },
+                { OpenFAR1ArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.FAR1) },
+                { OpenFARV1BArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.FAR1_v1B) },
+                { ClosePluginItem, ClosePlugin },
+                { NewWindowItem, CreateNewInstance },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)
@@ -98,10 +116,16 @@ namespace nio2so.TSOView2
                     SearchChildren(mItem);
             }
         }
-
+        private void FARShowExplorer(FAR3Control.FARMode Mode) => ShowPlugin(new FAR3Control(Mode));
         private void OpenWebsite(string Website) => Process.Start("explorer", Website);
         private void CheckForUpdates() => OpenWebsite(@"https://github.com/JDrocks450/nio2so/releases");
-
+        private void CreateNewInstance()
+        {
+            string path = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(path)) return;
+            Process p = Process.Start(path);
+            _processes.Add(p.Id, p);
+        }
         private void UIDefaultMenuStrip_InvokeAction(object sender, RoutedEventArgs e)
         {
             //If this named MenuItem has an attached handler, it will be invoked here
@@ -118,6 +142,19 @@ namespace nio2so.TSOView2
 #else
                 member(); // run without exception catching
 #endif
+        }
+
+        private void HOST_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            //todo: make ui for this that is cancellable and forceable
+
+            //CLOSE ALL PROCESSES
+            for (int i = 0; i < _processes.Count; i++)
+            {
+                var proc = _processes.Values.ElementAt(i);
+                proc.CloseMainWindow(); // close cleanly to prevent data loss in case any pages override closing() behavior
+                proc.WaitForExit(); // wait for exit ... this certainly won't cause hangs. nope.
+            }
         }
     }
 }

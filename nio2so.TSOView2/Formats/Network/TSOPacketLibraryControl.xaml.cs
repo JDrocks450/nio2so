@@ -14,7 +14,7 @@ namespace nio2so.TSOView2.Formats.Network
     /// <summary>
     /// Interaction logic for TSOPacketLibraryControl.xaml
     /// </summary>
-    public partial class TSOPacketLibraryControl : UserControl
+    public partial class TSOPacketLibraryControl : Page
     {
         record TypeNavigationToken : NavigationToken
         {

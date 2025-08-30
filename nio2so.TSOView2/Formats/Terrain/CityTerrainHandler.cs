@@ -82,7 +82,7 @@ namespace nio2so.TSOView2.Formats.Terrain
             TSOCityViewPage page = new();
             page.Mini_HUD_Image.Source = Current.Mesh.VertexColorAtlas.Convert();
 
-            (Application.Current.MainWindow as ITSOView2Window).MainWindow_ShowPlugin(page);
+            (Application.Current.MainWindow as ITSOView2Window).ShowPlugin(page);
         }
     }
 }

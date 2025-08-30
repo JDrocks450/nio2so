@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿//#define OLD_DIALOG
+
+using Microsoft.Win32;
 using System;
 using System.IO;
 using System.Text.Json;
@@ -60,7 +62,7 @@ namespace nio2so.TSOView2
     {
         
 
-        private const string PATH = "tsoview2.config";
+        internal const string PATH = "tsoview2.config";
 
         static TSOViewConfigHandler()
         {
@@ -77,23 +79,42 @@ namespace nio2so.TSOView2
         /// </summary>
         public static void InvokeConfigViewerDialog()
         {
+            string json = "";
+            if (File.Exists(PATH))
+                json = File.ReadAllText(PATH);
+            if (string.IsNullOrWhiteSpace(json))
+                json = GetSettingsJson(new TSOViewConfig());
+            var jsonBox = new TextBox()
+            {
+                Text = json
+            };
             Window wnd = new()
             {
                 Title = "TSOView2 Configuration Settings",
                 Owner = Application.Current.MainWindow,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
+#if OLD_DIALOG
                 Content = new DataGrid()
                 {
                     ItemsSource = new[] { CurrentConfiguration },
                     Margin = new Thickness(10)
                 },
+#else
+                Content = jsonBox,
+#endif
                 Width = 600,
                 Height = 350
             };
             wnd.Closed += delegate
             {
-                SaveConfiguration();
-                MessageBox.Show("Your config settings are saved. Please restart the application.");
+                json = jsonBox.Text;
+                File.WriteAllText(PATH, json);
+                //SaveConfiguration();
+                MessageBox.Show(
+
+                    "Your config settings are saved. " +
+
+                    "Please restart the application.");
                 Application.Current.Shutdown();
             };
             wnd.Show();
@@ -155,6 +176,12 @@ namespace nio2so.TSOView2
             return true;
         }
 
-        internal static void SaveConfiguration() => File.WriteAllText(PATH, JsonSerializer.Serialize<TSOViewConfig>(CurrentConfiguration));
+        static string GetSettingsJson(TSOViewConfig Settings) =>
+            JsonSerializer.Serialize<TSOViewConfig>(Settings, new JsonSerializerOptions(JsonSerializerDefaults.General)
+            {
+                WriteIndented = true,
+            });
+
+        internal static void SaveConfiguration() => File.WriteAllText(PATH, GetSettingsJson(CurrentConfiguration));
     }
 }

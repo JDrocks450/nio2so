@@ -38,7 +38,21 @@ namespace nio2so.TSOView2.Formats.UIs
 
         public void Initialize()
         {
-            TSOViewConfigHandler.LoadFromFile();
+            try
+            {
+                TSOViewConfigHandler.LoadFromFile();
+            }
+            catch (Exception e)
+            {
+                File.Delete(TSOViewConfigHandler.PATH);
+                MessageBox.Show($"Your configuration settings are corrupted. {e.Message}\n\n" +
+                    $"Resetting to default settings.", $"{nameof(TSOViewConfig)} File");
+            }
+            finally
+            {
+                if (TSOViewConfigHandler.CurrentConfiguration == default)
+                    TSOViewConfigHandler.CurrentConfiguration = new();
+            }
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
             //game directory not set!!
 
@@ -141,7 +155,7 @@ namespace nio2so.TSOView2.Formats.UIs
             void OnOK()
             {
                 TSOUIDialogViewerPage page = new();
-                (Application.Current.MainWindow as ITSOView2Window).MainWindow_ShowPlugin(page);
+                (Application.Current.MainWindow as ITSOView2Window).ShowPlugin(page);
             }
         }
     }

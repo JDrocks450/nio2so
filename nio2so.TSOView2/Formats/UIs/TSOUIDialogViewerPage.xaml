@@ -6,13 +6,10 @@
       xmlns:local="clr-namespace:nio2so.TSOView2.Formats.UIs" xmlns:subpages="clr-namespace:nio2so.TSOView2.Formats.UIs.Subpages" xmlns:controls="clr-namespace:nio2so.TSOView2.Formats.UIs.Controls"
       mc:Ignorable="d" 
       d:DesignHeight="768" d:DesignWidth="1024" KeyUp="Page_KeyUp" MouseLeftButtonUp="Page_MouseLeftButtonUp"
-      Title="TSOUIDialogViewerPage" Background="CornflowerBlue">
+      Title="TSOView2 UI Script Viewer - nio2so">
 
     <DockPanel>
         <Grid>
-            <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" Margin="5" FontWeight="Bold" FontSize="18" VerticalAlignment="Top" HorizontalAlignment="Right">
-                TSOView2 for nio2so
-            </TextBlock>
             <TabControl Margin="5,10,5,5">
                 <TabItem Header="UI Viewer">
                     <Grid>
