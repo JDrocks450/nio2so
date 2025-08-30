@@ -18,6 +18,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.GetTopList_Request)]
         public void GET_TOP_LIST_REQUEST(TSODBRequestWrapper DBPDU)
         {
+            //trigger exp to find spot to breakpoint in the disassembly
+            //RespondTo(DBPDU, new TSODebugWrapperPDU(new byte[0], TSO_PreAlpha_DBActionCLSIDs.GetTopList_Response));
+            //return;
+            //respond with test pdu
             RespondTo(DBPDU, TSODebugWrapperPDU.FromFile(@"C:\nio2so\const\gettop100list.dat", TSO_PreAlpha_DBActionCLSIDs.GetTopList_Response));
         }
     }

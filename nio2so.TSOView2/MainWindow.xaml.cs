@@ -1,6 +1,7 @@
 ﻿using nio2so.TSOView2.Formats;
 using nio2so.TSOView2.Formats.Compressor;
 using nio2so.TSOView2.Formats.Cst;
+using nio2so.TSOView2.Formats.FAR3;
 using nio2so.TSOView2.Formats.Network;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.TSOData;
@@ -75,7 +76,10 @@ namespace nio2so.TSOView2
                 { MaxisProtocolItem, () => new TSOPacketLibraryWindow(this).Show() },
                 { ConstantsBrowser, () => new TSOConstantsTableWindow(this).Show() },
                 { HexDumperEdithPluginItem, () => new HexDumpWindow(this).Show() },
-                { OpenCSTDirectoryItem, () => new CSTDirectoryWindow(this).Show() }
+                { OpenCSTDirectoryItem, () => new CSTDirectoryWindow(this).Show() },
+                { OpenFAR3ArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR3) },
+                { OpenFAR1ArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR1) },
+                { OpenFARV1BArchiveItem, () => FAR3Control.SpawnWindow(FAR3Control.FARMode.FAR1_v1B) }
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

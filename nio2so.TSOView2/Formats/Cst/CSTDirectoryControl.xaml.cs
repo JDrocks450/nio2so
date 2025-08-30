@@ -22,7 +22,7 @@ namespace nio2so.TSOView2.Formats.Cst
     /// <summary>
     /// Interaction logic for CSTDirectoryControl.xaml
     /// </summary>
-    public partial class CSTDirectoryControl : UserControl
+    public partial class CSTDirectoryControl : Page
     {
         public CSTDirectory? Directory { get; private set; }
         public bool IsDirectoryOpen => Directory != null;

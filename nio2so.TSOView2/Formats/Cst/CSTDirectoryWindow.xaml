@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:nio2so.TSOView2.Formats.Cst" 
         Foreground="White" Name="HOST"
         mc:Ignorable="d" WindowStartupLocation="CenterOwner" Background="{StaticResource TSOWindowBackgroundBrush}"
-        Title="TSOView2 String File Explorer" Height="600" Width="800" MinHeight="200" MinWidth="300">
+        Title="TSOView2 String File Explorer">
     <DockPanel>
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="File">
@@ -17,7 +17,11 @@
         </Menu>
         <Grid>
             <TextBlock Style="{StaticResource TSOPreAlpha_BasicTextStyle}" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10,6" Text="{Binding Title,ElementName=HOST}"></TextBlock>
-            <local:CSTDirectoryControl x:Name="CSTControl"/>
+            <Frame NavigationUIVisibility="Hidden">
+                <Frame.Content>
+                    <local:CSTDirectoryControl x:Name="CSTControl"/>
+                </Frame.Content>
+            </Frame>
         </Grid>
     </DockPanel>
 </Window>

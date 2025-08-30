@@ -23,6 +23,11 @@
                                 <MenuItem Name="VoltronDirectoryOpenItem" Header="Open Voltron PDU Directory..."/>
                             </MenuItem>
                             <MenuItem Name="OpenCSTDirectoryItem" Header="String (*.CST) Directory..."/>
+                            <MenuItem Header="Open Archive...">
+                                <MenuItem Name="OpenFAR3ArchiveItem" Header="Open FAR3 Archive"/>
+                                <MenuItem Name="OpenFAR1ArchiveItem" Header="Open FAR1 Archive"/>
+                                <MenuItem Name="OpenFARV1BArchiveItem" Header="Open FARV1B Archive"/>
+                            </MenuItem>
                         </MenuItem>
                         <Separator/>
                         <MenuItem Name="ExitItem" Header="Exit"/>

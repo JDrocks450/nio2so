@@ -78,7 +78,7 @@ namespace nio2so.Formats.Streams
             Seek(startOffset, SeekOrigin.Begin);
             byte[] datastream = new byte[Length - startOffset];
             Read(datastream, 0, datastream.Length);
-            byte[] fileData = new Decompresser().Decompress(datastream);            
+            byte[] fileData = new Decompresser().DecompressRefPackStream(datastream);            
             return fileData;
         }
 

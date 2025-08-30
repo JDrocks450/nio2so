@@ -4,6 +4,7 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using nio2so.Formats.ARCHIVE;
 using System.Text;
 /*
  * THIS FILE CAN BE FOUND AT THE FREESO REPOSITORY AUTHORED BY RHYS
@@ -14,7 +15,7 @@ namespace nio2so.Formats.FAR1
     /// <summary>
     /// A FAR1 (File Archive v1) archive.
     /// </summary>
-    public class FAR1Archive
+    public class FAR1Archive : IFileArchive<string>
     {
         private string m_Path;
         private BinaryReader m_Reader;
@@ -39,6 +40,8 @@ namespace nio2so.Formats.FAR1
         {
             get { return m_NumFiles; }
         }
+
+        public byte[] this[string Filename] => GetEntry(Filename);
 
         /// <summary>
         /// Creates a new FAR1Archive instance from a path.
@@ -86,7 +89,7 @@ namespace nio2so.Formats.FAR1
         /// </summary>
         /// <param name="Entry">A KeyValuePair (string, byte[]) representing the entry. The byte array can be null.</param>
         /// <returns>A FarEntry or null if the entry wasn't found.</returns>
-        public byte[] GetEntry(KeyValuePair<string, byte[]> Entry)
+        public byte[]? GetEntry(KeyValuePair<string, byte[]> Entry)
         {
             foreach (FarEntry Ent in m_Entries)
             {
@@ -148,9 +151,17 @@ namespace nio2so.Formats.FAR1
             return Entries;
         }
 
-        public void Close()
+        public void Close() => m_Reader.Close();
+
+        public IEnumerable<IFileEntry> GetAllFileEntries() => GetAllFarEntries();
+
+        public byte[] GetEntry(string FileName) => GetEntry(new KeyValuePair<string, byte[]>(FileName, null));
+
+        IEnumerable<IFileEntry> IFileArchive<string>.GetAllFileEntries()
         {
-            m_Reader.Close();
+            throw new NotImplementedException();
         }
+
+        public void Dispose() => m_Reader.Dispose();
     }
 }

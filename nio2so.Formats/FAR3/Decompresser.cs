@@ -343,36 +343,38 @@ namespace nio2so.Formats.FAR3
                 m_DecompressedSize = decompressed_size;            
         }
 
+        public byte[] Decompress(byte[] Data) => DecompressRefPackStream(Data, false);
+
         /// <summary>
         /// Decompresses data and returns it as an
         /// uncompressed array of bytes.
         /// </summary>
         /// <param name="Data">The data to decompress.</param>
         /// <returns>An uncompressed array of bytes.</returns>
-        public byte[] Decompress(byte[] Data)
+        public byte[] DecompressRefPackStream(byte[] Data, bool directlyReadRefPack = true)
         {
             //** MODIFIED BY BISQUICK
             // Add signature processing: Read 0x10 0xFB **u24 m_DecompressedSize** before reading RefPack bitstream            
-            
-            byte byte_0, byte_1, byte_2, byte_3;
-            uint proc_len, ref_dis, ref_len;
 
             MemoryStream MemData = new MemoryStream(Data);
             BinaryReader Reader = new BinaryReader(MemData);
 
-            PreprocessDecompress(Reader);
-            if(m_DecompressedSize == 0)
-                throw new InvalidDataException("Decompressed Size is zero. This file may be corrupt.");
+            if (directlyReadRefPack)
+            {
+                PreprocessDecompress(Reader);
+                if (m_DecompressedSize == 0)
+                    throw new InvalidDataException("Decompressed Size is zero. This file may be corrupt.");
 
-            byte[] ndata = new byte[Data.Length - MemData.Position];
-            //**The preprocess decompress function will ensure MemData is at the correct position.
-            MemData.Read(ndata,0,ndata.Length);
-            MemData.Dispose();
-            Reader.Dispose();
-            Data = ndata;
+                byte[] ndata = new byte[Data.Length - MemData.Position];
+                //**The preprocess decompress function will ensure MemData is at the correct position.
+                MemData.Read(ndata, 0, ndata.Length);
+                MemData.Dispose();
+                Reader.Dispose();
+                Data = ndata;
 
-            MemData = new MemoryStream(Data);
-            Reader = new BinaryReader(MemData);
+                MemData = new MemoryStream(Data);
+                Reader = new BinaryReader(MemData);
+            }            
 
             if (Data.Length > 6)
             {
@@ -493,5 +495,7 @@ namespace nio2so.Formats.FAR3
             //No data to decompress
             return Data;
         }
+
+
     }
 }

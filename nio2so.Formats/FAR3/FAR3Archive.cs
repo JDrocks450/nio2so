@@ -4,6 +4,7 @@
  * http://mozilla.org/MPL/2.0/. 
  */
 
+using nio2so.Formats.ARCHIVE;
 using System.Text;
 
 /*
@@ -15,7 +16,7 @@ namespace nio2so.Formats.FAR3
     /// <summary>
     /// Represents a single FAR3 archive.
     /// </summary>
-    public class FAR3Archive : IDisposable
+    public class FAR3Archive : IDisposable, IFileArchive<string>
     {
         private BinaryReader m_Reader;
         public static bool isReadingSomething = false;
@@ -229,6 +230,8 @@ namespace nio2so.Formats.FAR3
                 return GetEntry(m_Entries[Filename]);
             }
         }
+        public byte[] GetEntry(string FileName) => GetEntry(m_Entries[FileName]);
+        public IEnumerable<IFileEntry> GetAllFileEntries() => GetAllFAR3Entries();
 
         #region IDisposable Members
 
@@ -241,7 +244,7 @@ namespace nio2so.Formats.FAR3
             {
                 m_Reader.Close();
             }
-        }
+        }        
 
         #endregion
     }

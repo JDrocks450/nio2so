@@ -126,7 +126,7 @@ namespace nio2so.TSOView2.Formats.Compressor
                         suggestedFileName = System.IO.Path.Combine(
                             System.IO.Path.GetDirectoryName(FileName),
                             System.IO.Path.GetFileNameWithoutExtension(FileName).Replace("_compressed","") + "_decompressed.dat");
-                        outputBytes = new Decompresser().Decompress(inputBytes);
+                        outputBytes = new Decompresser().DecompressRefPackStream(inputBytes);
                         DecompressedDataRect.Visibility = Visibility.Visible;
                         DecompressedLabel.Text = System.IO.Path.GetFileName(suggestedFileName);
                         DecompressedDataRect.IsEnabled = true;
