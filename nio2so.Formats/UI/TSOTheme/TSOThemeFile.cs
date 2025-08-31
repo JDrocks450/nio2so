@@ -202,10 +202,21 @@ namespace nio2so.Formats.UI.TSOTheme
                     missings.Add(define.Name);
                     continue;
                 }
-                if (definition == null) continue;
-                if (definition.FilePath.StartsWith('/') || definition.FilePath.StartsWith('\\'))
-                    definition.FilePath = definition.FilePath.Substring(1);
-                string path = Path.Combine(BaseDirectory, definition.FilePath);
+                if (definition?.FilePath == null) continue;
+                string commentFilePath = definition.FilePath;
+                bool trimmed = false;
+                while (commentFilePath.Any())
+                {
+                    if (!char.IsLetterOrDigit(commentFilePath[0]))
+                    {
+                        commentFilePath = commentFilePath.Substring(1);
+                        continue;
+                    }
+                    trimmed = true;
+                    break;
+                }
+                if (!trimmed) continue;
+                string path = Path.Combine(BaseDirectory, commentFilePath);
                 if (!TrySafeLoadTexture(path, out Image? Reference) || Reference == null)
                 {
                     completelySuccessful = false;
@@ -270,7 +281,7 @@ namespace nio2so.Formats.UI.TSOTheme
 
                 string ArchiveURI = DesiredResourceURIPath.Substring(tempPath.Length).TrimStart('\\');
                 var FARArchive = files.First();
-                FAR3.FAR3Archive archive = new FAR3.FAR3Archive(FARArchive);
+                using FAR3.FAR3Archive archive = new FAR3.FAR3Archive(FARArchive);
                 Data = archive[Path.GetFileName(DesiredResourceURIPath)];
             }
             catch (Exception) { return false; }

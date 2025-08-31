@@ -35,61 +35,67 @@ namespace nio2so.Formats.FAR3
         {
             m_ArchivePath = Path;
 
-            if (isReadingSomething == false)
+            try
             {
-                isReadingSomething = true;
-
-                try
+                if (isReadingSomething == false)
                 {
-                    m_Reader = new BinaryReader(File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read));
+                    isReadingSomething = true;
+
+                    try
+                    {
+                        m_Reader = new BinaryReader(File.Open(Path, FileMode.Open, FileAccess.Read, FileShare.Read));
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new FAR3Exception("Could not open the specified archive - " + Path + "! (FAR3Archive())");
+                    }
+
+                    string Header = Encoding.ASCII.GetString(m_Reader.ReadBytes(8));
+                    uint Version = m_Reader.ReadUInt32();
+
+                    if (Header != "FAR!byAZ" || Version != 3)
+                    {
+                        throw new FAR3Exception("Archive wasn't a valid FAR V.3 archive! (FAR3Archive())");
+                    }
+
+                    uint ManifestOffset = m_Reader.ReadUInt32();
+                    m_ManifestOffset = ManifestOffset;
+
+                    m_Reader.BaseStream.Seek(ManifestOffset, SeekOrigin.Begin);
+
+                    uint NumFiles = m_Reader.ReadUInt32();
+
+                    for (int i = 0; i < NumFiles; i++)
+                    {
+                        Far3Entry Entry = new Far3Entry();
+                        Entry.DecompressedFileSize = m_Reader.ReadUInt32();
+                        byte[] Dummy = m_Reader.ReadBytes(3);
+                        Entry.CompressedFileSize = (uint)(Dummy[0] << 0 | Dummy[1] << 8 | Dummy[2] << 16);
+                        Entry.DataType = m_Reader.ReadByte();
+                        Entry.DataOffset = m_Reader.ReadUInt32();
+                        //Entry.HasFilename = m_Reader.ReadUInt16();
+                        Entry.IsCompressed = m_Reader.ReadByte();
+                        Entry.AccessNumber = m_Reader.ReadByte();
+                        Entry.FilenameLength = m_Reader.ReadUInt16();
+                        Entry.TypeID = m_Reader.ReadUInt32();
+                        Entry.FileID = m_Reader.ReadUInt32();
+                        Entry.Filename = Encoding.ASCII.GetString(m_Reader.ReadBytes(Entry.FilenameLength));
+
+                        if (!m_Entries.ContainsKey(Entry.Filename))
+                            m_Entries.Add(Entry.Filename, Entry);
+                        m_EntriesList.Add(Entry);
+
+                        m_EntryByID.Add(Entry.FileID, Entry); //isn't this a bad idea? i have a feeling this is a bad idea...
+
+
+                    }
+
+                    //Keep the stream open, it helps peformance.
+                    //m_Reader.Close();
                 }
-                catch (Exception ex)
-                {
-                    throw new FAR3Exception("Could not open the specified archive - " + Path + "! (FAR3Archive())");
-                }
-
-                string Header = Encoding.ASCII.GetString(m_Reader.ReadBytes(8));
-                uint Version = m_Reader.ReadUInt32();
-
-                if (Header != "FAR!byAZ" || Version != 3)
-                {
-                    throw new FAR3Exception("Archive wasn't a valid FAR V.3 archive! (FAR3Archive())");
-                }
-
-                uint ManifestOffset = m_Reader.ReadUInt32();
-                m_ManifestOffset = ManifestOffset;
-
-                m_Reader.BaseStream.Seek(ManifestOffset, SeekOrigin.Begin);
-
-                uint NumFiles = m_Reader.ReadUInt32();
-
-                for (int i = 0; i < NumFiles; i++)
-                {
-                    Far3Entry Entry = new Far3Entry();
-                    Entry.DecompressedFileSize = m_Reader.ReadUInt32();
-                    byte[] Dummy = m_Reader.ReadBytes(3);
-                    Entry.CompressedFileSize = (uint)(Dummy[0] << 0 | Dummy[1] << 8 | Dummy[2] << 16);
-                    Entry.DataType = m_Reader.ReadByte();
-                    Entry.DataOffset = m_Reader.ReadUInt32();
-                    //Entry.HasFilename = m_Reader.ReadUInt16();
-                    Entry.IsCompressed = m_Reader.ReadByte();
-                    Entry.AccessNumber = m_Reader.ReadByte();
-                    Entry.FilenameLength = m_Reader.ReadUInt16();
-                    Entry.TypeID = m_Reader.ReadUInt32();
-                    Entry.FileID = m_Reader.ReadUInt32();
-                    Entry.Filename = Encoding.ASCII.GetString(m_Reader.ReadBytes(Entry.FilenameLength));
-
-                    if (!m_Entries.ContainsKey(Entry.Filename))
-                        m_Entries.Add(Entry.Filename, Entry);
-                    m_EntriesList.Add(Entry);
-
-                    m_EntryByID.Add(Entry.FileID, Entry); //isn't this a bad idea? i have a feeling this is a bad idea...
-
-
-                }
-
-                //Keep the stream open, it helps peformance.
-                //m_Reader.Close();
+            }
+            finally
+            {
                 isReadingSomething = false;
             }
         }
