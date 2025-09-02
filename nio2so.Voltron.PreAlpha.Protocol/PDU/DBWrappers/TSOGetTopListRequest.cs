@@ -10,5 +10,5 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
     public class TSOGetTopListRequest : TSODBRequestWrapper
     {
 
-    }
+    }    
 }
