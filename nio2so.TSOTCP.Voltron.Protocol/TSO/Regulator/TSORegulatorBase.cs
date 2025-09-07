@@ -308,6 +308,17 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="Severity"></param>
         protected void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
             GetService<TSOLoggerServiceBase>().LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, RegulatorName, $"[{Caption ?? ""}] {Message}"));
+        /// <summary>
+        /// <inheritdoc cref="LogConsole(string, string, TSOLoggerServiceBase.LogSeverity)"/> as an <see cref="TSOLoggerServiceBase.LogSeverity.Errors"/>
+        /// </summary>
+        /// <param name="Error"></param>
+        /// <param name="Caption"></param>
+        protected void LogError(string Error, string Caption = "") => LogConsole(Error, Caption, TSOLoggerServiceBase.LogSeverity.Errors);
+        /// <summary>
+        /// <inheritdoc cref="LogError(string, string)"/>
+        /// </summary>
+        /// <param name="ErrorException"></param>
+        protected void LogError(Exception ErrorException) => LogError(ErrorException.ToString(), ErrorException.GetType().Name);
 
         /// <summary>
         /// Returns the type map for the provided <paramref name="PDUType"/>

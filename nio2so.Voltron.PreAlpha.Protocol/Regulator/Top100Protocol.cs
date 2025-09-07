@@ -30,11 +30,19 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             if (File.Exists(path))
             { // convert user image to BMP RLE8 INDEXED
-                using (Bitmap bmp = (Bitmap)Image.FromFile(path))
+                try
                 {
-                    Console.WriteLine("CONVERT FROM: " + bmp.PixelFormat);
-                    using (Bitmap top100listIcon = bmp.Clone(new Rectangle(0, 0, Math.Min(96, bmp.Width), Math.Min(23, bmp.Height)), PixelFormat.Format8bppIndexed))
-                        iconBytes = RLE8Bitmap.RunLengthEncodeBitmap(top100listIcon);
+                    using (Bitmap bmp = (Bitmap)Image.FromFile(path))
+                    {
+                        var destinationFormat = PixelFormat.Format8bppIndexed;
+                        LogConsole($"Starting conversion program ({bmp.PixelFormat} -> {destinationFormat} as {nameof(RLE8Bitmap)} compression)");
+                        using (Bitmap top100listIcon = bmp.Clone(new Rectangle(0, 0, Math.Min(96, bmp.Width), Math.Min(23, bmp.Height)), destinationFormat))
+                            iconBytes = RLE8Bitmap.RunLengthEncodeBitmap(top100listIcon);
+                    }
+                }
+                catch (Exception error)
+                {
+                    LogError(error);
                 }
             }
 

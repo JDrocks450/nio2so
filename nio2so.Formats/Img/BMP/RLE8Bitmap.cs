@@ -133,7 +133,7 @@ namespace nio2so.Formats.Img.BMP
 
             var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format8bppIndexed);
             List<byte> result = new List<byte>();
-
+            
             // Actual RLE algorithm. Bottom of image is first stored row, so start from bottom.
             for (var rowIndex = bmp.Height - 1; rowIndex >= 0; rowIndex--)
             {
