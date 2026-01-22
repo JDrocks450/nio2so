@@ -34,22 +34,38 @@ Here is a document I update periodically about various systems in the game and i
 **TCRF Article**
 Much of the accomplishments through nio2so have been documented in this article, to preserve and understand this facinating version of the game. [See more on The Cutting Room Floor](https://tcrf.net/Proto:The_Sims_Online/TSO_Pre-Alpha)
 
+## Nio2so Compatible-Versions of The Sims Online
+**TSO Pre-Alpha 1.3.2.56**
+
+*Beta/Tuning 1.3.1.56, a version compiled on/around May 9th, 2002.*
+
+> *nio2so protocol compatibility: mostly complete.*
+
+**TSO Play-Test 1.3.2.81**
+
+*A version compiled on/around September 21st, 2002.*
+
+>nio2so protocol compatibility: barely started.
+
+You will hear these versions referred to as only Pre-Alpha or Play-Test in this project.
+
 ## Summary
 nio2so (and niotso) are/were projects aimed to restore The Sims Online in its unaltered state by emulating the server the game interacted with back when the game was online.
 
-Disclaimer: nio2so currently is used for research purposes for discovery about The Sims Online: Pre-Alpha. It has not been tested/designed for any other version, currently.
+Disclaimer: nio2so currently is used for research purposes for discovery about the above mentioned versions. It has not been tested/designed for any other versions, currently.
 
 ### Sitemap
-nio2so has the following components:
- * **nio2so.TSOHTTP(S)** - This handles the all HTTP(S) communication with the game client. These use the exact same schema, just one is configured for HTTP, and the other is HTTPS.
+nio2so many components. Some major ones are:
+ * **nio2so.TSOHTTPS** - This handles the all HTTP(S) communication with the game client. They're configured for HTTP & HTTPS.
  * **nio2so.TSOProtocol** - This is the schema used for HTTP and HTTPS communcation.
- * **nio2so.TSOTCP.City** - This emulates the TSO: Pre-Alpha City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis.
- * **TCOQuaZar** - A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar
+ * **nio2so.TSOTCP.Voltron** - This emulates the TSO: Pre-Alpha/Play-Test City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis.
+ * **nio2so.DataService** - The DataService supplies data to the nio2so Voltron-compatible server. Communication is handled through an HTTP client originating from the TSONeoVol2ronServer.
+ * **TCPQuaZar** - A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar. A basic TCP Client/Server.
 
 ## Setting up
-You do need a copy of The Sims Online: Pre-Alpha installed on your system.
+You do need a copy of The Sims Online: Pre-Alpha installed on your system. I would recommend one installation per running TSOClient.exe instance.
 
-I recommend using DxWnd as this software is quite buggy nowadays.
+I recommend using DxWnd as this game is quite buggy nowadays. Also look into replacing the graphics library The Sims uses with a more modern one.
 
 ### Clone the Repository
 Clone the repository, ensure you have .NET Framework installed on your system and the latest version of Visual Studio.
@@ -58,9 +74,21 @@ Clone the repository, ensure you have .NET Framework installed on your system an
 
 I would highly recommend editing your StartUp Project Settings to match mine:
 
-![image](https://github.com/JDrocks450/nio2so/assets/16988651/fe7ef991-f7a4-4669-b2ef-a34c870a03e3)
+<img width="681" height="319" alt="StartUp Settings" src="https://github.com/user-attachments/assets/b787c631-f754-4a2d-94a9-5b724b7a695c" />
 
-Build & Run, ensure there are no build errors.
+**Ensure you have the following projects running simultaneously when attempting to use nio2so:**
+* TSOHTTPS - This allows you to login into The Sims Online, and nio2so.
+* TSOTCP.Voltron.Server - Voltron is the TCP Server that is compliant with the Pre-Alpha (mostly complete) & Play-Test (early beta) protocols
+* DataService.API - The data service must be running in order to track and save progress and simulate the online gameplay.
+
+*Please ensure you have necessary self-signed certificates for the TSOHTTPS and DataService servers. Visual Studio can help you with this if you're unfamiliar.*
+
+**Build & Run**, ensure there are no build errors. *Do not set your server settings yet, if prompted by nio2so - leave this window open.*
+
+### Set your nio2so Server Settings
+On first run, you will be prompted to edit some settings. Please make sure they're applicable to what your goals are. Change them between runs of your server if you like. 
+
+**Make sure that you set whether or not you're using a Pre-Alpha client or not. You can't join with a Play-Test copy to a Pre-Alpha server, and vice versa.**
 
 ### Edit your hosts file
 Since the Pre-Alpha build is hard-coded to connect to specific addresses, the easiest way to get up and running is to ensure your Hosts File in Windows has these additions:
@@ -71,20 +99,20 @@ Since the Pre-Alpha build is hard-coded to connect to specific addresses, the ea
 
   `127.0.0.1 xo.max.ad.ea.com`
 
-These will intercept network traffic from the Game Client to the nio2so server program running on your PC.
+These will intercept network traffic from the TSOClient.exe to the nio2so **TSONeoVol2ronServer** running on your PC.
 
-### Boot-up Sims Online Pre-Alpha
-This was designed to run with an unmodified client. However, you can also use FatBag's patch, detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
+### Boot-up The Sims Online Pre-Alpha (or Play-Test)
+*If using Play-Test, you can skip this section. Just load up your game client.*
 
-This is where you have to make a choice. If you're trying to experiment with the City server, skip to the next step. Otherwise if you're looking to try to host a room, continue.
+This was designed to run with an unmodified client. However, it's basically required for you to use FatBag's patches, due to the nature of using The Sims Online: Pre-Alpha. It is detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
 
-OK. Now, you have to actually have to have the aforementioned patch. This is called the HouseSimServer patch. The Mashuga client is used to facilitate the ability to host a room.
+Luckily, in the Releases section, I have packaged a ZIP with two patched Pre-Alpha TSOClient.exe executables in it. I have used a Hex Editor to make one executable a **server** and one a **client**. (it's a single bit swap)
 
-You must run FatBag's patched client with the following runtime arguments (DxWnd helps here): `-w -debug_objects -nosound -hsb_mode -playerid:1200 -vport:49`
+One instance should be a server, this will be the HOST. Now, all subsequent instances should be a client instance, that will connect to the host server instance's lot.
 
-This instance you just opened will be the HOST. Now, make a client that will connect to the host.
+*Please do not use the same installation for the server and the client(s). They will fight over resources in the installation directory and cause crashes and hangs.
 
-Run another instance with these runtime arguments: `-w -debug_objects`
+Run both instances with these runtime arguments: `-w -debug_objects` (not required, but recommended)
 
 Next step.
 
@@ -93,42 +121,37 @@ Before continuing with the instructions, you can refer to this YouTube video I r
 https://www.youtube.com/watch?v=8wcedhRtuLs&t=11s
 
 ### Logging in
-OK, made it this far. Now you gotta log in. Let's begin.
+Run the nio2so StartUp Project configuration I showed you above. It will launch three servers. The `TSOHTTPS`, `DataService` and `TSOTCP.Voltron.Server` servers. _They all are required._
 
-Run the nio2so StartUp Project configuration I showed you above. It will launch three servers. The `TSOHTTP`, `TSOHTTPS`, and `TSOTCP.City` servers. They all are required.
+Type in your username and password. Password can't be blank! I thought of that, too. (Check out the AuthLogin controller in TSOHTTPS)
+*If you don't have a username and password yet, just type one in. The **DataService** server will store your information.*
 
-Type in your username and password. Just in case you forgot I made this, your username must be `bloaty`. You can definitely change this if you want. Password can't be blank! I thought of that, too. (AuthLogin.cs)
+First, The Sims Online client will connect on TSOHTTPS. Nio2so is automatically configured to respond on both HTTP & HTTPS connections. If both of these aren't running, you won't get far.
 
-First, The Sims Online will connect on TSOHTTPS. Then, it will ping TSOHTTP. If both of these aren't running, you won't get far.
+*Please note: Play-Test and later clients will use an encrypted stream over SSL. Nio2so can be SSL-compatible, just make sure to adjust your nio2so server settings accordingly.*
 
-### SAS and beyond
-Welcome to the research area. Anything from here we have to discover.
+### Select-A-Sim and beyond
+Go ahead and make an avatar, if you haven't already. Your avatar will be stored using the **DataService**. 
 
-The City Server is a daunting animal. Let me give you some insight below.
+Next time you login, your avatar will be waiting for you :)
+
+The Map View and beyond are still in research stages, though Pre-Alpha's protocol is mostly cracked and implemented into nio2so as of writing this.
+
+Remember to check out this article for some examples of things you can try out. [See more on The Cutting Room Floor](https://tcrf.net/Proto:The_Sims_Online/TSO_Pre-Alpha)
 
 ## Getting into a Lot
-What you can do is the following steps to get into a simulated lot: (as of now you will need a Debugger program -- I recommend x32dbg for this)
- * Place a breakpoint here: (In CityRoomClientProtocol.cs)
-![image](https://github.com/user-attachments/assets/81640aec-bd96-42e8-8e09-1a8313018d1d)
- * In your debugger, place a breakpoint here in `tsoprotocolsd.dll`: `0x0340A3E6`
-![image](https://github.com/user-attachments/assets/250c2351-69fa-4918-b0dc-693ca3dff8b5)
- * Log into Select-A-Sim
- * Create a new Sim (if you haven't already)
- * Load into the City View
- * The Breakpoint in nio2so (may be) triggered. SKIP this line as of now.
- * Purchase a new lot (anywhere)
- * Restart the Sims Online Game Client
- * In Select-A-Sim again, now you should see an option to Join City and Lot under your Avatar. Click it.
- * The Breakpoint in nio2so should now be triggered. Allow the line to run this time. TestingConstraints.LOTTestingMode will do this automatically for you FYI ;)
- * The Breakpoint in `tsoprotocolsd.dll` should now be triggered. SKIP to line `0x0340A466` to skip the 30 Second Lot Timeout.
- * Explore!
+Take your server instance detailed in a prior step, and join a house you own, you can also buy one at this time. The first connection to a house will be assumed to be the _host (server) instance_.
+
+Then, open a client instance and join the aforementioned lot. If it's not online yet, give it time. This game is over 25 years old, afterall.
 
 ## Voltron? Cadence? Aries? What are you talking about?
-I will tell you a little bit about these technologies.
+Below is a summary of some aspects of The Sims Online networking:
  * **Cadence** - Cadence & CadenceClient are the lowest level transport for TCP communication. They're libraries facilitating the transport of data using TCP. This isn't too important.
  * **Aries** - Aries is the next level up on top of Cadence. Aries has AriesPackets, which have a Type, timestamp, and size. [Read up about it more here](http://wiki.niotso.org/Maxis_Protocol#Aries_packets)http://wiki.niotso.org/Maxis_Protocol#Aries_packets.
 Aries, in truth, isn't really crucial either since the Sims Online development team made Voltron packets which do a similar thing as Aries.
  * **Voltron** - It's the protocol The Sims Online used to create the gameplay experience. Every action the Client can perform is largely dictated using Voltron Packets (Pre-Alpha calls these PDUs). PDUs are sent and received from Regulators (controllers, basically). A Regulator handles a certain aspect of the Engine powering the game. For example, there is a LoginRegulator which handles... logging in!
+
+*Voltron is what is referred to as the protocol for The Sims Online. nio2so implements this as the TSONeoVol2ronServer -- which is capable of running as a Pre-Alpha compliant or Play-Test compliant server.**
 
 ## Voltron Packets & PDUs
 Voltron as a framework uses Voltron Packets wrapped inside of Aries Packets to get the job done. [The structure of a Voltron Packet can be found here.](http://wiki.niotso.org/Maxis_Protocol#Voltron_packets)
@@ -137,12 +160,14 @@ In summary, Voltron Packets have:
  * Voltron Packet Type (PDU ID)
  * Payload Size
 
-Hey developers! Check out TSOVoltronPacket.cs in TSOTCP.City! Wanna see how it's serialized? TSOVoltronPacket.MakeBodyFromProperties();
+**Please note that nio2so uses runtime serialization of all PDU types, using attributes. A custom serializer has been written, which is called the TSOVoltronSerializer**
 
 [Here's a list of all TSO Pre-Alpha PDU IDs.](http://niotso.org/files/prealpha_pdu_tables.txt)
 
 Don't want to use that link? There is an enum for you to use in code at TSOVoltronEnum.cs
 In fact, for developers there are many enums in the same directory as TSOVoltronEnum.cs containing specific CLSIDs for other Packet Formats -- and an enum for all constants found in the game binary.
+
+Each Voltron PDU is coded into the respective Pre-Alpha or Play-Test protocol assembly. Please look over these as a basis for the formatting if you which to develop this on your own. They are runtime-serialized, plan accordingly.
 
 ## Regulators & Protocols
 Yes, regulators are controllers, basically. Each Regulator has a protocol that it uses. The protocol is the set of PDUs it can send/receive and how to interpret them. There are the following Protocols in The Sims Online: Pre-Alpha:
