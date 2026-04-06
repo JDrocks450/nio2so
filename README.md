@@ -6,6 +6,8 @@
 
 <b>A continuation of niotso (The Sims Online).</b> This project successfully emulates the server program <i>The Sims Online: Pre-Alpha</i> interfaces with to create the gameplay experience as it were in May 2002.
 
+<b>Videos</b> Check out the [nio2so Files on YouTube](https://www.youtube.com/watch?v=6mHNAjcoVvg&list=PL2HW9WQ-hEm0RiMerQS1Q0jotFYlAimVJ&pp=sAgC) for footage/research/documentation of this project!
+
 <figure>
   <img
   src="https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe"
