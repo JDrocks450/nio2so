@@ -100,7 +100,8 @@ namespace nio2so.DataService.Common
     }
 
     /// <summary>
-    /// Interface for interacting with the nio2so Data Service to make requests/responses
+    /// Interface for making well-formed requests/responses with the nio2so Data Service.
+    /// <para/>It is recommended to use this as opposed to manually forming queries, as this is intended to be updated as the nio2soAPI specification is updated.
     /// </summary>
     public class nio2soDataServiceClient : HTTPServiceClientBase
     {
@@ -294,23 +295,27 @@ namespace nio2so.DataService.Common
         /// <summary>
         /// Searches for the given resource <paramref name="Type"/> exactly matching the given search <paramref name="Query"/>
         /// </summary>
+        /// <param name="Query">Search Query text string</param>
+        /// <param name="Type">Depends on game version. For example, TSO Pre-Alpha nio2so codebase has TSO_PreAlpha_Categories enum you can use.</param>
         /// <returns></returns>
         public async Task<N2SearchQueryResult> SubmitSearchExact(string Query, string Type) =>
             (await GetQueryAs<N2SearchQueryResult>($"search/{Type}/exact",(nameof(Query),Query))).Result ?? new(Query, Type, []);
         /// <summary>
         /// Searches for the given resource <paramref name="Type"/> broadly matching the given search <paramref name="Query"/>
         /// </summary>
+        /// <param name="Query">Search Query text string</param>
+        /// <param name="Type">Depends on game version. For example, TSO Pre-Alpha nio2so codebase has TSO_PreAlpha_Categories enum you can use.</param>
         /// <returns></returns>
         public async Task<N2SearchQueryResult> SubmitSearch(string Query, string Type) =>
             (await GetQueryAs<N2SearchQueryResult>($"search/{Type}", (nameof(Query), Query))).Result ?? new (Query, Type, []);
         /// <summary>
-        /// Gets how the <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> feels about other avatars
+        /// Gets how the given avatar <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> feels about other avatars
         /// </summary>
         /// <returns></returns>
         public async Task<HTTPServiceResult<N2RelationshipsByAvatarIDQueryResult>> GetOutgoingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
             await GetQueryAs<N2RelationshipsByAvatarIDQueryResult>($"avatars/{AvatarID}/relationships", ("direction", "outgoing"));
         /// <summary>
-        /// Gets how the other avatars feel about <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> 
+        /// Gets how the other avatars feel about the given <see cref="AvatarIDToken"/> <paramref name="AvatarID"/> 
         /// </summary>
         /// <returns></returns>
         public async Task<HTTPServiceResult<N2RelationshipsByAvatarIDQueryResult>> GetIncomingRelationshipsByAvatarID(AvatarIDToken AvatarID) =>
@@ -326,28 +331,29 @@ namespace nio2so.DataService.Common
         /// <summary>
         /// Sets the online status of the given <paramref name="AvatarID"/>
         /// </summary>
-        /// <param name="HouseID"></param>
+        /// <param name="AvatarID">The ID of the avatar to update</param>
+        /// <param name="IsOnline">Online Status</param>
         /// <returns></returns>
         public Task<HttpResponseMessage> SetOnlineStatusByAvatarID(AvatarIDToken AvatarID, bool IsOnline) =>
             QueryPostAsString($"avatars/{AvatarID}/online","", (nameof(IsOnline),IsOnline));
 
         /// <summary>
         /// Returns the status of the nio2so data service
+        /// <para/>True for Online, false for not accepting connections.
         /// </summary>
-        /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HTTPServiceResult<bool>> GetServerStatus() =>
             GetQueryAs<bool>($"configure/status");
 
         /// <summary>
-        /// Returns the status of the nio2so data service
+        /// Returns the settings used by this Voltron Server.
         /// </summary>
-        /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HTTPServiceResult<VoltronServerSettings>> GetVoltronServiceSettings() => GetQueryAs<VoltronServerSettings>($"configure/settings/voltron");
 
         /// <summary>
         /// Sends a <see cref="Letter"/> to the <paramref name="ReceiverID"/>'s inbox from the <paramref name="SenderID"/> Avatar ID
+        /// <para/>If the user is offline, this <see cref="Letter"/> will remain as a pending message on the server until the user logs in.
         /// </summary>
         /// <param name="SenderID"></param>
         /// <param name="ReceiverID"></param>
@@ -358,12 +364,16 @@ namespace nio2so.DataService.Common
 
         /// <summary>
         /// Downloads all inbox <see cref="Letter"/>s for the given <paramref name="AvatarID"/>
+        /// <para/>Once the messages are delivered, use <see cref="ClearInboxMessages(AvatarIDToken, DateTime?)"/> to ensure they're cleared properly 
+        /// on the server.
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HTTPServiceResult<IEnumerable<Letter>>> GetInboxMessages(AvatarIDToken AvatarID) => GetQueryAs<IEnumerable<Letter>>($"avatars/{AvatarID}/inbox");
         /// <summary>
         /// Clears all inbox <see cref="Letter"/>s for the given <paramref name="AvatarID"/>
+        /// <para/>This does NOT clear the inbox stored on the PC by The Sims Online game client, this clears pending messages that the server is waiting to deliver
+        /// to the game client. Once the game client has received the pending messages, this should be used to ensure they're not double-sent.
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <returns></returns>

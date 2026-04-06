@@ -18,11 +18,14 @@ namespace nio2so.DataService.Common.Tokens
     }
 
     /// <summary>
-    /// The <see cref="UserName"/> of the account and a unique <see cref="TokenValue"/> separated by a <see cref="SEPARATOR_CHAR"/>
-    /// <code>bloaty#1234</code>
+    /// A <see cref="UserToken"/> acts as a means to get data unique to a user account in nio2so. It is the standard for making requests of 
+    /// a user's account data, or any data attached to this user.
+    /// <para/>The format is as follows:
+    /// <para/>The <see cref="UserName"/> of the account and a unique <see cref="TokenValue"/> separated by a <see cref="SEPARATOR_CHAR"/>
+    /// <code>Example: "bloaty@1234"</code>
     /// </summary>
-    /// <param name="UserName"></param>
-    /// <param name="AvatarID"></param>
+    /// <param name="UserName">The name of the user's account</param>
+    /// <param name="TokenValue">Unique token value for this account.</param>
     [JsonConverter(typeof(UserTokenJsonConverter))]
     public record struct UserToken(string UserName, uint TokenValue)
     {

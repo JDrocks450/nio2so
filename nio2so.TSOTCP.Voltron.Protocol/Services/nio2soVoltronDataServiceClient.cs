@@ -3,7 +3,8 @@
 namespace nio2so.Voltron.Core.Services
 {
     /// <summary>
-    /// The <see cref="nio2soDataServiceClient"/> but for use in <see cref="ITSOServer"/> 
+    /// The <see cref="nio2soDataServiceClient"/> but for use with an <see cref="ITSOServer"/> instance in the form of an <see cref="ITSOService"/>
+    /// <para/><b>See the following: <see cref="nio2soDataServiceClient"/>:</b>
     /// <para/><inheritdoc cref="nio2soDataServiceClient"/>
     /// </summary>
     public class nio2soVoltronDataServiceClient : nio2soDataServiceClient, ITSOService

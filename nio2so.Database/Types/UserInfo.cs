@@ -2,6 +2,9 @@
 
 namespace nio2so.DataService.Common.Types
 {
+    /// <summary>
+    /// Simple Copyable interface that will member-wise clone an object instance's public properties automatically using Reflection.
+    /// </summary>
     public interface ICopyable
     {
         /// <summary>
@@ -19,6 +22,9 @@ namespace nio2so.DataService.Common.Types
         }
     }
 
+    /// <summary>
+    /// Schema for the data provided that represents a User's account data in nio2so.    
+    /// </summary>
     [Serializable]
     public class UserInfo : ICopyable
     {
