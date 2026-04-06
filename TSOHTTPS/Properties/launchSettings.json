@@ -22,7 +22,7 @@
     "https": {
       "commandName": "Project",
       "dotnetRunMessages": true,
-      "launchBrowser": true, // SWAGGER HERE
+      "launchBrowser": false, // SWAGGER HERE
       "launchUrl": "swagger",
       "applicationUrl": "https://localhost:443;http://localhost:80",
       "environmentVariables": {

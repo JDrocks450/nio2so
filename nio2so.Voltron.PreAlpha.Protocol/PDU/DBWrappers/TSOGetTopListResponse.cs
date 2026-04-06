@@ -17,20 +17,32 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
 
     [TSOVoltronDBRequestWrapperPDU((uint)TSO_PreAlpha_DBActionCLSIDs.GetTopList_Response)]
     public class TSOGetTopListResponse : TSODBRequestWrapper
-    {        
+    {
+        /// <summary>
+        /// <see cref="UInt32"/> values corresponding to <see cref="TSOTop100List.ListType"/> property
+        /// </summary>
+        public enum TSOTop100ListTypes : uint
+        {
+            Avatars = 0x0001,
+            Houses = 0x0002,
+            Clubs = 0x0003,
+            Neighborhoods = 0x0004
+        }
+
         public record TSOTop100List
         {
             /// <summary>
             /// Creates a new <see cref="TSOTop100List"/>
+            /// <para/><paramref name="ListID"/> <inheritdoc cref="ListID"/>
             /// </summary>
-            /// <param name="LID"></param>
-            /// <param name="p2"></param>
+            /// <param name="ListID"></param>
+            /// <param name="ListType"></param>
             /// <param name="ListName"></param>
             /// <param name="BMPBytes"></param>
-            public TSOTop100List(uint LID, uint p2, string ListName, byte[] BMPBytes)
+            public TSOTop100List(uint ListID, TSOTop100ListTypes ListType, string ListName, byte[] BMPBytes)
             {
-                ListID = LID;
-                Unknown = p2;
+                this.ListID = ListID;
+                this.ListType = (uint)ListType;
                 ThumbnailBytes = BMPBytes;
                 this.ListName = ListName;
             }
@@ -39,9 +51,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             /// </summary>
             public uint ListID { get; set; }
             /// <summary>
-            /// ListType?
+            /// ListType maps to <see cref="TSOTop100ListTypes"/> enum values
             /// </summary>
-            public uint Unknown { get; set; }
+            public uint ListType { get; set; }
             /// <summary>
             /// The display name for this <see cref="TSOTop100List"/>
             /// </summary>
@@ -52,6 +64,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             [TSOVoltronArrayLength(nameof(ThumbnailBytes))] public uint ThumbnailLength { get; set; }
             /// <summary>
             /// An array of bytes containing the BMP Thumbnail image for this <see cref="TSOTop100List"/>
+            /// <para/>The BMP format must be an RLE8 encoded BMP image, which an encoder implementation is provided in the nio2so codebase.
             /// </summary>
             public byte[] ThumbnailBytes { get; set; } = [];
         }

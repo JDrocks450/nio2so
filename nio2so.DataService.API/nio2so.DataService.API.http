@@ -4,3 +4,13 @@
 GET {{nio2so.DataService.API_HostAddress}}/api/configure/settings/voltron
 Accept: application/json
 ###
+
+# GET ACCOUNTS TEST
+GET {{nio2so.DataService.API_HostAddress}}/api/lots/profiles
+Accept: application/json
+###
+
+# GET ACCOUNTS TEST
+GET {{nio2so.DataService.API_HostAddress}}/api/top100
+Accept: application/json
+###

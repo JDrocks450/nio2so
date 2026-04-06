@@ -4,6 +4,7 @@ using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
+using nio2so.DataService.Common.Types.Top100;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

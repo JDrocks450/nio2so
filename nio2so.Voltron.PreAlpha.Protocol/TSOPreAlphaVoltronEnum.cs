@@ -4448,6 +4448,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol
         /// GZCLSID_cDBGetTopResultSetByID_Request
         /// </summary>
         GetTopResultSetByID_Request = 0xBCD038AC,
+        GetTopResultSetByID_Response = 0xFCD03A1B,
         /// <summary>
         /// This is sent after closing Edit A Sim and after the SetCharByID_Request PDU.
         /// <para/>This seems to set the money fields of the Avatar (Total Money, Passive Money, etc.)

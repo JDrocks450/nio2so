@@ -42,6 +42,7 @@ namespace nio2so.DataService.Common.Types
         public string HouseBlobLibraryDirectory => Path.Combine(DatabaseDirectoryToken, "houseblob");
         public string AvatarBlobLibraryPath => Path.Combine(DatabaseDirectoryToken, "charblob");
         public string InboxServiceFile => DatabaseDirectoryToken + @"\inboxmessages.json";
+        public string Top100ListsLibraryPath => DatabaseDirectoryToken + @"\top100.json";
 
         /// <summary>
         /// Accounts that are always present in the <see cref="AccountsFile"/>
@@ -67,7 +68,7 @@ namespace nio2so.DataService.Common.Types
         /// Should walk the user through setting up settings for their server when flag is set
         /// </summary>
         public bool FirstRunExperience { get; set; } = true;
-        
+
         public string DereferencePath(string SpecialPath)
         {
             string[] tokens = SpecialPath.Split('\\');

@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.Img.BMP;
+﻿using nio2so.DataService.Common.Types.Top100;
+using nio2so.Formats.Img.BMP;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers;
@@ -6,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,13 +34,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             { // convert user image to BMP RLE8 INDEXED
                 try
                 {
-                    using (Bitmap bmp = (Bitmap)Image.FromFile(path))
-                    {
-                        var destinationFormat = PixelFormat.Format8bppIndexed;
-                        LogConsole($"Starting conversion program ({bmp.PixelFormat} -> {destinationFormat} as {nameof(RLE8Bitmap)} compression)");
-                        using (Bitmap top100listIcon = bmp.Clone(new Rectangle(0, 0, Math.Min(96, bmp.Width), Math.Min(23, bmp.Height)), destinationFormat))
-                            iconBytes = RLE8Bitmap.RunLengthEncodeBitmap(top100listIcon);
-                    }
+                    iconBytes = RUN_CONVERSION_BMP_RLE8(path);
                 }
                 catch (Exception error)
                 {
@@ -46,13 +42,58 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 }
             }
 
-            var list = new TSOGetTopListResponse.TSOTop100List(0x03EA, 0x0001, "Bisquick's Top Picks", iconBytes);
-            var list2 = new TSOGetTopListResponse.TSOTop100List(0x001C, 0x0003, "Splash Zone", iconBytes);
-            var list3 = new TSOGetTopListResponse.TSOTop100List(0x001B, 0x0003, "questionable sandwich", iconBytes);
-            //respond with test pdu
-            RespondTo(DBPDU, new TSOGetTopListResponse(list,list2,list3));
-            return;
-            RespondTo(DBPDU, TSODebugWrapperPDU.FromFile(@"C:\nio2so\const\gettop100list.dat", TSO_PreAlpha_DBActionCLSIDs.GetTopList_Response));
+            //get remote lists
+            if (!TryDataServiceQuery<IEnumerable<Top100ListInfo>>(x => x.GetTop100Lists(),out var dbLists,out string ErrorMsg))
+            {
+                LogError(ErrorMsg);
+                return;
+            }
+
+            if (dbLists == null || dbLists.Count() == 0)
+            {
+                LogError("Data Service returned null or no entries for Top 100 lists query.");
+                return;
+            }
+
+            //convert remote format top 100 list schema into TSO PA format
+            TSOGetTopListResponse.TSOTop100List[] tsoPAListFormat = new TSOGetTopListResponse.TSOTop100List[dbLists.Count()];
+
+            for(int i = 0; i < tsoPAListFormat.Length; i++)
+            {
+                var dataSource = dbLists.ElementAt(i);
+                tsoPAListFormat[i] = new TSOGetTopListResponse.TSOTop100List(dataSource.ListID,
+                    Enum.Parse<TSOGetTopListResponse.TSOTop100ListTypes>(dataSource.ListType),
+                    dataSource.ListName, iconBytes);
+            }
+
+            //Respond with top 100 listswhat
+            RespondTo(DBPDU, new TSOGetTopListResponse(tsoPAListFormat));
+        }
+
+        [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.GetTopResultSetByID_Request)]
+        public void GET_TOP_RESULT_SET_BY_ID_REQUEST(TSODBRequestWrapper DBPDU)
+        {
+            if (DBPDU is not TSOGetTop100ListSetByIDRequest ListSetRequest)
+            {
+                LogError($"Received {nameof(TSODBRequestWrapper)} {DBPDU} but it was not the expected {nameof(TSOGetTop100ListSetByIDRequest)} type.");
+                return;
+            }
+
+            RespondTo(DBPDU, new TSOGetTopResultSetByIDResponse(ListSetRequest.ListID, (uint)TSOGetTopListResponse.TSOTop100ListTypes.Houses,
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(6094983,"First House"),
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(161, "Friend"),
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(1337, "Bisquick")));
+        }
+
+        private byte[] RUN_CONVERSION_BMP_RLE8(string ResourceURI)
+        {
+            using (Bitmap bmp = (Bitmap)Image.FromFile(ResourceURI))
+            {
+                var destinationFormat = PixelFormat.Format8bppIndexed;
+                LogConsole($"Starting conversion program ({bmp.PixelFormat} -> {destinationFormat} as {nameof(RLE8Bitmap)} compression)");
+                using (Bitmap top100listIcon = bmp.Clone(new Rectangle(0, 0, Math.Min(96, bmp.Width), Math.Min(23, bmp.Height)), destinationFormat))
+                    return RLE8Bitmap.RunLengthEncodeBitmap(top100listIcon);
+            }
         }
     }
 }

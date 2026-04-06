@@ -3,6 +3,7 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
+using nio2so.DataService.Common.Types.Top100;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -378,6 +379,13 @@ namespace nio2so.DataService.Common
         /// <param name="AvatarID"></param>
         /// <returns></returns>
         public Task<HttpResponseMessage> ClearInboxMessages(AvatarIDToken AvatarID, DateTime? Before = default) => HttpGet($"avatars/{AvatarID}/inbox/clear");
+        /// <summary>
+        /// Retrieves a collection of available Top 100 lists.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation. The task result contains an <see
+        /// cref="IEnumerable{Top100ListInfo}"/> with information about each Top 100 list. The collection will be empty
+        /// if no lists are available.</returns>
+        public Task<HTTPServiceResult<IEnumerable<Top100ListInfo>>> GetTop100Lists() => GetQueryAs<IEnumerable<Top100ListInfo>>($"top100");
 
     }
 }

@@ -39,9 +39,12 @@ namespace nio2so.Voltron.Core.Services
         {
             if (QuazarID == 0)
                 throw new InvalidDataException(nameof(QuazarID) + $" is {QuazarID} which is invalid. (thrown at: {nameof(nio2soClientSessionService)})");
-            if (!_sessions.TryAdd(QuazarID, VoltronID) && Overwrite)
-                _sessions[QuazarID] = VoltronID;
-            else throw new InvalidOperationException($"The given key ({QuazarID}) already exists in the " + nameof(nio2soClientSessionService));
+            if (!_sessions.TryAdd(QuazarID, VoltronID))
+            {
+                if (Overwrite)
+                    _sessions[QuazarID] = VoltronID;
+                else throw new InvalidOperationException($"The given key ({QuazarID}) already exists in the " + nameof(nio2soClientSessionService));
+            }
         }
         /// <summary>
         /// Removes a connection from this <see cref="nio2soClientSessionService"/>
