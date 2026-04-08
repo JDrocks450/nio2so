@@ -4,6 +4,9 @@ using nio2so.DataService.Common.Types.Top100;
 
 namespace nio2so.DataService.API.Databases
 {
+    /// <summary>
+    /// This Data Service component serves data on the Top 100 List functionality in nio2so
+    /// </summary>
     public class Top100DataService : DataServiceBase
     {
         const string SERVICE_NAME = "Top100DataService";
@@ -43,10 +46,11 @@ namespace nio2so.DataService.API.Databases
             //General-use template showing each category of top 100 list
             
             string iconResource = @"C:\nio2so\const\top100_1.bmp";
-            top100list.Dictionary.TryAdd(1, new Top100ListInfo(1, "Avatars", "My Top Avatars", iconResource));
-            top100list.Dictionary.TryAdd(2, new Top100ListInfo(2, "Houses", "Splash House Zone", iconResource));
-            top100list.Dictionary.TryAdd(3, new Top100ListInfo(3, "Clubs", "questionable club blt", iconResource));
-            top100list.Dictionary.TryAdd(4, new Top100ListInfo(4, "Neighborhoods", "top neighborhoods", iconResource));
+            top100list.Dictionary.TryAdd(1, new Top100ListInfo(1001, "Avatars", "My Top Avatars", iconResource));
+            //1002 is hardcoded to be Most Popular Places list -- this one reflects that
+            top100list.Dictionary.TryAdd(2, new Top100ListInfo(1002, "Houses", "Splash House Zone", iconResource));
+            top100list.Dictionary.TryAdd(3, new Top100ListInfo(1003, "Clubs", "questionable club blt", iconResource));
+            top100list.Dictionary.TryAdd(4, new Top100ListInfo(1004, "Neighborhoods", "top neighborhoods", iconResource));
 
             return Save();
         }

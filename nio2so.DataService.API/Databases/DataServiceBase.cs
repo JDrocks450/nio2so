@@ -3,7 +3,6 @@ using nio2so.DataService.Common.Types;
 
 namespace nio2so.DataService.API.Databases
 {
-
     public abstract class DataServiceBase
     {
         protected Dictionary<string, IDataServiceLibrary> Libraries { get; } = new();

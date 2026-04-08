@@ -21,20 +21,22 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// <param name="ItemName"></param>
         public class TSOTopListResultStruct
         {
-            public TSOTopListResultStruct(uint itemID, string itemName)
+            public TSOTopListResultStruct(uint Rank, uint TargetID, string TargetName)
             {
-                ItemName = itemName;
-                ItemID = itemID;
+                this.Rank = Rank;
+                this.TargetID = TargetID;
+                this.TargetName = TargetName;
             }
+         
+            public uint Rank { get; set; } = 1;
+            public uint TargetID { get; set; }
 
             [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-            public string ItemName { get; set; } = "";
-
-            public uint ItemID { get; set; }
+            public string TargetName { get; set; } = "";
             
-
             [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-            public string ItemSubtitle { get; set; } = "1000";
+            public string DisplayName { get; set; } = "$1,000";
+            
         }
 
         public TSOGetTopResultSetByIDResponse() : base(
@@ -46,8 +48,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         }
         public TSOGetTopResultSetByIDResponse(uint ListID, uint ListType, params TSOTopListResultStruct[] Results) : this()
         {
-            this.ListID = ListID;
-            //this.ListType = ListType;
+            this.ListID = ListID;            
             this.Results = Results;
             MakeBodyFromProperties();
         }
@@ -62,7 +63,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// <inheritdoc cref="TSOVoltronArrayLength"/>
         /// </summary>
         [TSOVoltronDBWrapperField] [TSOVoltronArrayLength(nameof(Results))] public uint ResultsCount { get; set; }
-        
+
         /// <summary>
         /// List of returned <see cref="TSOSearchResultStruct"/> items
         /// </summary>

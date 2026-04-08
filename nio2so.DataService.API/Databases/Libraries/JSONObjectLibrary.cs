@@ -50,6 +50,9 @@ namespace nio2so.DataService.API.Databases.Libraries
         public Task Save()
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_baseDir));
+            //simple backup solution
+            if (File.Exists(_baseDir)) // if original db file exists, move it to a ".bak" filename, overwriting the previous version
+                File.Move(_baseDir, _baseDir + ".bak", true);
             using FileStream fs = File.Create(_baseDir);
             lock (DataFile)
             {

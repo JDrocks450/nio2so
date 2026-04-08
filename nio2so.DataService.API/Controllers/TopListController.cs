@@ -18,9 +18,8 @@ namespace nio2so.DataService.API.Controllers
             logger = Logger;
         }
 
-        // GET api/top100/lists
+        // GET api/top100
         [HttpGet]
-        public ActionResult<IEnumerable<Top100ListInfo>> GetTop100ListsAsync() =>
-            Ok(dataService.GetTop100Lists().Result);
+        public ActionResult<IEnumerable<Top100ListInfo>> GetTop100ListsAsync() => Ok(dataService.GetTop100Lists().Result);            
     }
 }
