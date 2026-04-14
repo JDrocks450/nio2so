@@ -1,8 +1,10 @@
 ﻿using Microsoft.Win32;
 using nio2so.Formats.FAR3;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -72,7 +74,9 @@ namespace nio2so.TSOView2.Formats.Compressor
                 }
                 catch(Exception ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show($"The RefPack Compressor/Decompressor failed with the following message:\n" +
+                        $"\n{ex.Message}", "De/Compressor System Error");
+                    ResetUI();
                 }
             }
         }
@@ -99,8 +103,9 @@ namespace nio2so.TSOView2.Formats.Compressor
                             if (inputBytes[i] == 0xFB)
                             {
                                 var result = MessageBox.Show("Please double-check that the file you submitted isn't already compressed.\n\n" +
-                                    $"Note: This can be a false-positive of course, I found 0xFB within the first {i} bytes. Continue?",
-                                    "Question", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                                    $"Note: This can be a false-positive of course! The system found \"0xFB\" (Magic Number)" +
+                                    $" at file index {i}. Would you like to continue?",
+                                    "Notice", MessageBoxButton.YesNo, MessageBoxImage.Question);
                                 if (result == MessageBoxResult.Yes)
                                     break;
                                 else goto exit;
@@ -151,6 +156,19 @@ namespace nio2so.TSOView2.Formats.Compressor
 
         }
 
-        private void HelpMeButton_Click(object sender, RoutedEventArgs e) => MessageBox.Show(HELPMETEXT);        
+        private void HelpMeButton_Click(object sender, RoutedEventArgs e) => MessageBox.Show(HELPMETEXT);
+
+        private void RefPackHelpLink_Click(object sender, RoutedEventArgs e)
+        {
+            var linkTarget = (sender as Hyperlink).Inlines.FirstInline as Run;
+            if (linkTarget == null) return;
+            var text = linkTarget.Text;
+            if (string.IsNullOrWhiteSpace(text)) return;
+            if (!text.Contains('(') || !text.Contains(')')) return;
+            string linkHref = text.Substring(text.IndexOf('(') + 1, text.IndexOf(')') - (text.IndexOf('(') + 1));
+            Process.Start("explorer", linkHref);
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e) => Close();
     }
 }
