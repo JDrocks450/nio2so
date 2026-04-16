@@ -16,12 +16,12 @@ _The start page in TSOView2_
 
 ### File Menu
 
-TSOView2 supports the following utilities and functions in the File menu:
+TSOView2 supports the following utilities and functions in the File menu: 
 
 * **Emulating UI Scripts** to visualize how certain UI Elements would've looked like without a running game client. [Read more here](https://github.com/JDrocks450/nio2so/wiki/TSOView2#ui-script-uis-viewer)
-* **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._ [Check it out here](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-3D-Geometry)
-* **Open the TSODataDefinition.dat file** and allow you to explore its contents.
-* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump to Reference Materials](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#compressing--decompressing-refpack)
+* **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._ [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-3D-Geometry)
+* **Open the TSODataDefinition.dat file** and allow you to explore its contents. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-TSODataDefinition.dat)
+* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#compressing--decompressing-refpack)
 * **Visualize nio2so server packet activty** to help you in your research
 * **Read String (*.CST) Files** and entire directories.
 * **Open FAR Archives** - FAR3, FAR1 & FARV1B Archives are supported for viewing and extraction.
@@ -66,8 +66,36 @@ You can (re)compress data by feeding a file containing bytes to compress into th
 
 <img width="2020" height="1463" alt="image" src="https://github.com/user-attachments/assets/5ffdf367-3b46-42e2-8a87-dd0940b8cc94" />
 
+_3D Geometry being viewed using TSOView2_
+
+You can view 3D visualization of a given city by doing the following:
+
 * Visit **File** > **Pre-Alpha City Map** or **New & Improved City Map**
 * Select a City Folder
 * Wait...
 * Right-Click and Drag to move, Scroll to Zoom
 * **File > Close Page** to exit
+
+## Viewing TSODataDefinition.dat
+
+<img width="1569" height="1127" alt="image" src="https://github.com/user-attachments/assets/8ea809f3-0869-4eba-bac1-5ea832566c74" />
+
+_You can use open any TSODataDefinition file using the File Menu in the TSOView2 Data Definition Viewer._
+
+Clicking on a struct will list its properties. Using the Find Menu in the toolbar will allow you to apply a text filter.
+
+### Level One Structs
+
+These are the simplest data types, which can be used in a Level Two data type. They represent a basic, reusable struct data type.
+
+### Level Two Structs
+
+These encompass basic and Level One data types to make more complex data structures.
+
+### Derived Types
+
+These take a Level Two data type and apply a Keep/Remove Mask to the type to optimize data types to lower bandwidth, etc. 
+
+### Strings
+
+This menu lists all strings found in the document.
