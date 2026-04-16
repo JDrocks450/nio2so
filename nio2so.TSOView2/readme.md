@@ -33,7 +33,7 @@ TSOView2 supports the following utilities and functions in the File menu:
 
 TSOView2 supports the following functions in the View menu:
 
-* **Viewing an interactive library** of the currently reverse-engineered Maxis Protocol for The Sims Online: Pre-Alpha using nio2so's implementation. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-the-Maxis-Protocol)
+* **Viewing an interactive library** of the currently reverse-engineered Maxis Protocol for The Sims Online: Pre-Alpha using nio2so's implementation. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-the-Maxis-Protocol) - [Full Spec](https://github.com/JDrocks450/nio2so/wiki/The-Sims-Online:-Pre%E2%80%90Alpha-%E2%80%90-Voltron-Specification)
 * **View Constants** found in the Executable file, search, copy values, etc.
 
 ### Plugin Menu
@@ -114,6 +114,8 @@ This is guaranteed to match the structure, and order, of the data the Client wil
 The **VoltronSerializer** has a secondary functionality which will generate a **SerializationGraph**, optionally with runtime values. This **SerializationGraph** is then visualized by this utility.
 
 _NOTE: Using the nio2so Network Activity utility will show runtime values for a network frame._
+
+[View the Full Specification here](https://github.com/JDrocks450/nio2so/wiki/The-Sims-Online:-Pre%E2%80%90Alpha-%E2%80%90-Voltron-Specification)
 
 ### Left - Navigation Menu
 
