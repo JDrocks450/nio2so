@@ -31,6 +31,7 @@ The mashuga client can be found here: [Machuga - GitHub](https://github.com/dadd
 
 **Maxis Protocol Documentation** -
 Here is some helpful reading: [Maxis Protocol (Niotso Wiki)](http://wiki.niotso.org/Maxis_Protocol)
+
 The nio2so reverse-engineered Maxis Protocol reference is here: [nio2so Maxis Protocol](https://github.com/JDrocks450/nio2so/wiki/The-Sims-Online:-Pre%E2%80%90Alpha-%E2%80%90-Voltron-Specification)
 
 **Technical Write-Up** -
