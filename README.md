@@ -67,7 +67,7 @@ Disclaimer: nio2so currently is used for research purposes for discovery about t
 nio2so many components. Some major ones are:
  * **nio2so.TSOHTTPS** - This handles the all HTTP(S) communication with the game client. They're configured for HTTP & HTTPS.
  * **nio2so.TSOProtocol** - This is the schema used for HTTP and HTTPS communcation.
- * **nio2so.TSOTCP.Voltron** - This emulates the TSO: Pre-Alpha/Play-Test City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis.
+ * **nio2so.TSOTCP.Voltron** - This emulates the TSO: Pre-Alpha/Play-Test City server. This server uses TCP as the transport layer and it was based on Cadence, Aries and Voltron at Maxis. _This is referred to sometimes as nio2so NeoVol2tron Server (N2NeoVol2ronServer.cs)_
  * **nio2so.DataService** - The DataService supplies data to the nio2so Voltron-compatible server. Communication is handled through an HTTP client originating from the TSONeoVol2ronServer.
  * **TCPQuaZar** - A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar. A basic TCP Client/Server.
 
