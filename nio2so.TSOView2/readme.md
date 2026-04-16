@@ -42,6 +42,6 @@ TSOView2 supports the following functions in the View menu:
 
 TSOView2 has the following plug-ins in the Plugin menu:
 
-* **Format a table of constants **formatted in one format to one compatible with C#
+* **Format a table of constants** formatted in one format to one compatible with C#
 * **Take a Play-Test version or later City Folder and make it compatible with The Sims Online: Pre-Alpha** (City Transmogrifier)
 * **Utility to paste Hex Data from Edith** to have it formatted, dumped or visualized
