@@ -20,7 +20,9 @@ An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as
 <i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
 
 ## Project Roadmap & Reference Materials
-**Roadmap** You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
+**Roadmap** - You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
+
+**TSOView2 Reference Material** - You can read about TSOView2, nio2so's custom utility application, here: [TSOView2 Reference](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#tsoview2-for-nio2so)
 
 **Original Project** - The original project can be found archived here: [Niotso - GitHub](https://github.com/daddesio/niotso)
 
@@ -29,11 +31,12 @@ The mashuga client can be found here: [Machuga - GitHub](https://github.com/dadd
 
 **Maxis Protocol Documentation** -
 Here is some helpful reading: [Maxis Protocol (Niotso Wiki)](http://wiki.niotso.org/Maxis_Protocol)
+The nio2so reverse-engineered Maxis Protocol reference is here: [nio2so Maxis Protocol](https://github.com/JDrocks450/nio2so/wiki/The-Sims-Online:-Pre%E2%80%90Alpha-%E2%80%90-Voltron-Specification)
 
 **Technical Write-Up** -
 Here is a document I update periodically about various systems in the game and interesting findings. It also contains documentation taken from the original creator. [Technical Analysis of The Sims Online: Pre-Alpha](/nio2so.TSOTCP.City/Documentation/Technical%20Analysis%20of%20The%20Sims%20Online.pdf)
 
-**TCRF Article**
+**-> TCRF Article <-** - 
 Much of the accomplishments through nio2so have been documented in this article, to preserve and understand this facinating version of the game. [See more on The Cutting Room Floor](https://tcrf.net/Proto:The_Sims_Online/TSO_Pre-Alpha)
 
 ## Nio2so Compatible-Versions of The Sims Online
