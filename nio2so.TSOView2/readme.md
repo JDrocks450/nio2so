@@ -19,9 +19,9 @@ _The start page in TSOView2_
 TSOView2 supports the following utilities and functions in the File menu:
 
 * **Emulating UI Scripts** to visualize how certain UI Elements would've looked like without a running game client. [Read more here](https://github.com/JDrocks450/nio2so/wiki/TSOView2#ui-script-uis-viewer)
-* **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._
+* **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._ [Check it out here](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-3D-Geometry)
 * **Open the TSODataDefinition.dat file** and allow you to explore its contents.
-* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump to Reference Materials](https://github.com/JDrocks450/nio2so/nio2so.TSOView2/readme.md#compressing--decompressing-refpack)
+* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump to Reference Materials](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#compressing--decompressing-refpack)
 * **Visualize nio2so server packet activty** to help you in your research
 * **Read String (*.CST) Files** and entire directories.
 * **Open FAR Archives** - FAR3, FAR1 & FARV1B Archives are supported for viewing and extraction.
@@ -59,3 +59,15 @@ You can dump this stream of bytes to a separate isolated file, and drag it into 
 
 ### Compression
 You can (re)compress data by feeding a file containing bytes to compress into the **right (Orange) box**.
+
+## Viewing 3D Geometry
+
+<img width="2027" height="1465" alt="image" src="https://github.com/user-attachments/assets/84fecfaa-504b-4056-9b22-b15f4a77a4d9" />
+
+<img width="2020" height="1463" alt="image" src="https://github.com/user-attachments/assets/5ffdf367-3b46-42e2-8a87-dd0940b8cc94" />
+
+* Visit **File** > **Pre-Alpha City Map** or **New & Improved City Map**
+* Select a City Folder
+* Wait...
+* Right-Click and Drag to move, Scroll to Zoom
+* **File > Close Page** to exit
