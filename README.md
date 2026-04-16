@@ -36,7 +36,7 @@ The nio2so reverse-engineered Maxis Protocol reference is here: [nio2so Maxis Pr
 **Technical Write-Up** -
 Here is a document I update periodically about various systems in the game and interesting findings. It also contains documentation taken from the original creator. [Technical Analysis of The Sims Online: Pre-Alpha](/nio2so.TSOTCP.City/Documentation/Technical%20Analysis%20of%20The%20Sims%20Online.pdf)
 
-**-> TCRF Article <-** - 
+### -> TCRF Article <- 
 Much of the accomplishments through nio2so have been documented in this article, to preserve and understand this facinating version of the game. [See more on The Cutting Room Floor](https://tcrf.net/Proto:The_Sims_Online/TSO_Pre-Alpha)
 
 ## Nio2so Compatible-Versions of The Sims Online
