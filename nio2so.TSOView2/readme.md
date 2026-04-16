@@ -33,7 +33,7 @@ TSOView2 supports the following utilities and functions in the File menu:
 
 TSOView2 supports the following functions in the View menu:
 
-* **Viewing an interactive library** of the currently reverse-engineered Maxis Protocol for The Sims Online: Pre-Alpha using nio2so's implementation.
+* **Viewing an interactive library** of the currently reverse-engineered Maxis Protocol for The Sims Online: Pre-Alpha using nio2so's implementation. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-the-Maxis-Protocol)
 * **View Constants** found in the Executable file, search, copy values, etc.
 
 ### Plugin Menu
@@ -99,3 +99,33 @@ These take a Level Two data type and apply a Keep/Remove Mask to the type to opt
 ### Strings
 
 This menu lists all strings found in the document.
+
+## Viewing the Maxis Protocol
+
+<img width="2019" height="1575" alt="image" src="https://github.com/user-attachments/assets/df5e1081-7c36-45ca-9428-9489495d487e" />
+
+_Using the Interactive Maxis Protocol viewer in TSOView2._
+
+TSOView2 uses C# Reflection to visualize the codebase. nio2so Voltron uses a reverse-engineered Maxis Protocol programmed in C#. This utility will visualize the structure of the 
+Network Data Sent to/from The Sims Online Client. This happens to mimic the structure of the C# code document due to how the project's code is written.
+
+This is guaranteed to match the structure, and order, of the data the Client will send/receive because this deeply connects to the **VoltronSerializer** system.
+
+The **VoltronSerializer** has a secondary functionality which will generate a **SerializationGraph**, optionally with runtime values. This **SerializationGraph** is then visualized by this utility.
+
+_NOTE: Using the nio2so Network Activity utility will show runtime values for a network frame._
+
+### Left - Navigation Menu
+
+This is a tree-graph representation of the how certain structures build off simpler ones.
+
+### Center-Top - Data Structure
+
+* Items in Square Brackets are a serializer-hint, telling the serializer to handle that type differently.
+* Green Types are classes
+* Blue Types are basic types (int, bool)
+* Arrays are denoted by two square brackets after the Type Name
+
+### Bottom - MD Generator
+
+Copy & Paste MD into GitHub
