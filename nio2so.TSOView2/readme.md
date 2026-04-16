@@ -14,20 +14,20 @@ It has many functions which some are documented [in the wiki](https://github.com
 
 _The start page in TSOView2_
 
-## File Menu
+### File Menu
 
 TSOView2 supports the following utilities and functions in the File menu:
 
 * **Emulating UI Scripts** to visualize how certain UI Elements would've looked like without a running game client. [Read more here](https://github.com/JDrocks450/nio2so/wiki/TSOView2#ui-script-uis-viewer)
 * **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._
 * **Open the TSODataDefinition.dat file** and allow you to explore its contents.
-* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack)
+* **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump to Reference Materials](https://github.com/JDrocks450/nio2so/nio2so.TSOView2/readme.md#compressing--decompressing-refpack)
 * **Visualize nio2so server packet activty** to help you in your research
 * **Read String (*.CST) Files** and entire directories.
 * **Open FAR Archives** - FAR3, FAR1 & FARV1B Archives are supported for viewing and extraction.
 * **Open Targa Images** - The Sims Online uses these sometimes.
 
-## View Menu
+### View Menu
 
 <img width="893" height="252" alt="image" src="https://github.com/user-attachments/assets/ba680522-de6e-4036-81ef-088b21e32ff4" />
 
@@ -36,7 +36,7 @@ TSOView2 supports the following functions in the View menu:
 * **Viewing an interactive library** of the currently reverse-engineered Maxis Protocol for The Sims Online: Pre-Alpha using nio2so's implementation.
 * **View Constants** found in the Executable file, search, copy values, etc.
 
-## Plugin Menu
+### Plugin Menu
 
 <img width="752" height="205" alt="image" src="https://github.com/user-attachments/assets/153bdbb2-5433-4a5a-9df8-ba81cf8cf266" />
 
@@ -45,3 +45,17 @@ TSOView2 has the following plug-ins in the Plugin menu:
 * **Format a table of constants** formatted in one format to one compatible with C#
 * **Take a Play-Test version or later City Folder and make it compatible with The Sims Online: Pre-Alpha** (City Transmogrifier)
 * **Utility to paste Hex Data from Edith** to have it formatted, dumped or visualized
+
+
+## Compressing / Decompressing RefPack
+
+<img width="981" height="486" alt="image" src="https://github.com/user-attachments/assets/320a0385-7280-4cc4-9f6d-ada9e103e628" />
+
+Using nio2so, you can sniff through some dumped network activty to/from the nio2so NeoVol2ron Server (Voltron Emulator Server) (Voltron is the Server for The Sims Online)
+and come across a payload that is a compressed RefPack stream. 
+
+### Decompression
+You can dump this stream of bytes to a separate isolated file, and drag it into the **left (Blue) box**. TSOView2 will dump a decompressed stream!
+
+### Compression
+You can (re)compress data by feeding a file containing bytes to compress into the **right (Orange) box**.
