@@ -20,7 +20,7 @@ TSOView2 supports the following utilities and functions in the File menu:
 
 * **Emulating UI Scripts** to visualize how certain UI Elements would've looked like without a running game client. [Read more here](https://github.com/JDrocks450/nio2so/wiki/TSOView2#ui-script-uis-viewer)
 * **Rendering 3D City geometry** using Pre-Alpha _(like)_ terrain tile rendering algorithm _(emulated)._ [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-3D-Geometry)
-* **Open the TSODataDefinition.dat file** and allow you to explore its contents. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#Viewing-TSODataDefinition.dat)
+* **Open the TSODataDefinition.dat file** and allow you to explore its contents. [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#viewing-tsodatadefinitiondat)
 * **Compress/Decompress a RefPack stream** - [What is RefPack?](http://wiki.niotso.org/RefPack) - [Jump](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#compressing--decompressing-refpack)
 * **Visualize nio2so server packet activty** to help you in your research
 * **Read String (*.CST) Files** and entire directories.
