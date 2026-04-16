@@ -20,6 +20,9 @@ An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as
 <i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
 
 ## Project Roadmap & Reference Materials
+
+**The Sims Online Instruction Booklet** - The instruction booklet to become familiar with the game can be found here: [See more on The Internet Archive](https://archive.org/details/the-sims-online-manual)
+
 **Roadmap** - You can visit the project roadmap here: [Roadmap](https://github.com/JDrocks450/nio2so/wiki/Roadmap-for-nio2so)
 
 **TSOView2 Reference Material** - You can read about TSOView2, nio2so's custom utility application, here: [TSOView2 Reference](https://github.com/JDrocks450/nio2so/tree/master/nio2so.TSOView2#tsoview2-for-nio2so)
