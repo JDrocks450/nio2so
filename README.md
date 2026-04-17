@@ -2,22 +2,18 @@
   <img src="projectlogods.png" height="200"> 
 </center>
 
-### New Implementation Of The Sims Online (Version 2)
+# New Implementation Of The Sims Online (Version 2)
 
-<b>A continuation of niotso (The Sims Online).</b> This project successfully emulates the server program <i>The Sims Online: Pre-Alpha</i> interfaces with to create the gameplay experience as it were in May 2002.
+<b>A continuation of niotso (for The Sims Online)</b> in which this project successfully emulates the server and protocols that the in-development <i>The Sims Online: Pre-Alpha</i> client interfaces with to create the gameplay experience as it were in May 2002. **_Experience it as if you were a developer at Maxis!_**
 
 <b>Videos</b> Check out the [nio2so Files on YouTube](https://www.youtube.com/watch?v=6mHNAjcoVvg&list=PL2HW9WQ-hEm0RiMerQS1Q0jotFYlAimVJ&pp=sAgC) for footage/research/documentation of this project!
 
-<figure>
-  <img
-  src="https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe"
-  alt="An image of TSOView2.exe rendering City terrain as it would appear in TSO Pre-Alpha.">
-  <figcaption></figcaption>
-</figure>
+### Project Component Map
 
-An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as it would appear in The Sims Online: Pre-Alpha.
+<img width="4096" height="3027" alt="nio2so Keynote 001" src="https://github.com/user-attachments/assets/8c21b5c0-32a7-4150-944f-3e091f0bcf3f" />
 
-<i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
+_The various components making up the complete nio2so project._
+
 
 ## Project Roadmap & Reference Materials
 
@@ -205,3 +201,14 @@ This project is a lot of Reverse-Engineering. Here's some helpful tips on what s
  * **cTSOVoltronDMServiceD.dll** - Voltron/City Server
  * **Aries.dll** - Packet Send/Receive
  * **Cadence.dll** - Packet Send/Receive
+
+<figure>
+  <img
+  src="https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe"
+  alt="An image of TSOView2.exe rendering City terrain as it would appear in TSO Pre-Alpha.">
+  <figcaption></figcaption>
+</figure>
+
+An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as it would appear in The Sims Online: Pre-Alpha.
+
+<i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
