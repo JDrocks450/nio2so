@@ -10,7 +10,7 @@
 
 ### Project Component Map
 
-<img width="4096" height="3027" alt="nio2so Keynote 001" src="https://github.com/user-attachments/assets/8c21b5c0-32a7-4150-944f-3e091f0bcf3f" />
+<img width="4096" height="3027" alt="nio2so transparent 001" src="https://github.com/user-attachments/assets/28db0ada-6cf0-4274-9443-f2b3290628f5" />
 
 _The various components making up the complete nio2so project._
 
