@@ -67,12 +67,12 @@ nio2so many components. Some major ones are:
  * **nio2so.DataService** - The DataService supplies data to the nio2so Voltron-compatible server. Communication is handled through an HTTP client originating from the TSONeoVol2ronServer.
  * **TCPQuaZar** - A TCP server framework I designed for use in various applications: https://github.com/JDrocks450/TCPQuaZar. A basic TCP Client/Server.
 
-## Setting up
+# Getting Setting up
 You do need a copy of The Sims Online: Pre-Alpha installed on your system. I would recommend one installation per running TSOClient.exe instance.
 
 I recommend using DxWnd as this game is quite buggy nowadays. Also look into replacing the graphics library The Sims uses with a more modern one.
 
-### Clone the Repository
+## Clone the Repository
 Clone the repository, ensure you have .NET Framework installed on your system and the latest version of Visual Studio.
 
 ![image](https://github.com/JDrocks450/nio2so/assets/16988651/d0b3ec30-25e1-491b-9afd-ef4df962da18)
@@ -90,7 +90,7 @@ I would highly recommend editing your StartUp Project Settings to match mine:
 
 **Build & Run**, ensure there are no build errors. *Do not set your server settings yet, if prompted by nio2so - leave this window open.*
 
-### Set your nio2so Server Settings
+## Set your nio2so Server Settings
 On first run, you will be prompted to edit some settings. Please make sure they're applicable to what your goals are. Change them between runs of your server if you like. 
 
 **Make sure that you set whether or not you're using a Pre-Alpha client or not. You can't join with a Play-Test copy to a Pre-Alpha server, and vice versa.**
@@ -106,7 +106,7 @@ Since the Pre-Alpha build is hard-coded to connect to specific addresses, the ea
 
 These will intercept network traffic from the TSOClient.exe to the nio2so **TSONeoVol2ronServer** running on your PC.
 
-### Boot-up The Sims Online Pre-Alpha (or Play-Test)
+## Boot-up The Sims Online Pre-Alpha (or Play-Test)
 *If using Play-Test, you can skip this section. Just load up your game client.*
 
 This was designed to run with an unmodified client. However, it's basically required for you to use FatBag's patches, due to the nature of using The Sims Online: Pre-Alpha. It is detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
@@ -121,11 +121,11 @@ Run both instances with these runtime arguments: `-w -debug_objects` (not requir
 
 Next step.
 
-### Demonstration YouTube Video
+## Demonstration YouTube Video
 Before continuing with the instructions, you can refer to this YouTube video I recorded to see how it works in action:
 https://www.youtube.com/watch?v=8wcedhRtuLs&t=11s
 
-### Logging in
+## Logging in
 Run the nio2so StartUp Project configuration I showed you above. It will launch three servers. The `TSOHTTPS`, `DataService` and `TSOTCP.Voltron.Server` servers. _They all are required._
 
 Type in your username and password. Password can't be blank! I thought of that, too. (Check out the AuthLogin controller in TSOHTTPS)
@@ -135,7 +135,7 @@ First, The Sims Online client will connect on TSOHTTPS. Nio2so is automatically 
 
 *Please note: Play-Test and later clients will use an encrypted stream over SSL. Nio2so can be SSL-compatible, just make sure to adjust your nio2so server settings accordingly.*
 
-### Select-A-Sim and beyond
+## Select-A-Sim and beyond
 Go ahead and make an avatar, if you haven't already. Your avatar will be stored using the **DataService**. 
 
 Next time you login, your avatar will be waiting for you :)
@@ -149,16 +149,20 @@ Take your server instance detailed in a prior step, and join a house you own, yo
 
 Then, open a client instance and join the aforementioned lot. If it's not online yet, give it time. This game is over 25 years old, afterall.
 
-## Voltron? Cadence? Aries? What are you talking about?
+# Voltron, Cadence and Aries
+
 Below is a summary of some aspects of The Sims Online networking:
  * **Cadence** - Cadence & CadenceClient are the lowest level transport for TCP communication. They're libraries facilitating the transport of data using TCP. This isn't too important.
  * **Aries** - Aries is the next level up on top of Cadence. Aries has AriesPackets, which have a Type, timestamp, and size. [Read up about it more here](http://wiki.niotso.org/Maxis_Protocol#Aries_packets)http://wiki.niotso.org/Maxis_Protocol#Aries_packets.
 Aries, in truth, isn't really crucial either since the Sims Online development team made Voltron packets which do a similar thing as Aries.
- * **Voltron** - It's the protocol The Sims Online used to create the gameplay experience. Every action the Client can perform is largely dictated using Voltron Packets (Pre-Alpha calls these PDUs). PDUs are sent and received from Regulators (controllers, basically). A Regulator handles a certain aspect of the Engine powering the game. For example, there is a LoginRegulator which handles... logging in!
+ * **Voltron** - It's the protocol The Sims Online used to create the gameplay experience. Every action the Client can perform is largely dictated using Voltron Packets (Pre-Alpha calls these PDUs). PDUs are sent and received from Regulators (controllers, basically). A Regulator handles a certain aspect of the Engine powering the game. For example, there is a **LoginRegulator** which handles **logging in**.
 
-*Voltron is what is referred to as the protocol for The Sims Online. nio2so implements this as the TSONeoVol2ronServer -- which is capable of running as a Pre-Alpha compliant or Play-Test compliant server.**
+**Voltron is what is referred to as the protocol for The Sims Online. nio2so implements this as the TSONeoVol2ronServer -- which is capable of running as a Pre-Alpha compliant or Play-Test compliant server.**
 
-## Voltron Packets & PDUs
+# Voltron Packets & PDUs
+
+<img width="4096" height="3027" alt="image" src="https://github.com/user-attachments/assets/8a5be2e1-c1f8-4952-a9fe-2378f46b76af" />
+
 Voltron as a framework uses Voltron Packets wrapped inside of Aries Packets to get the job done. [The structure of a Voltron Packet can be found here.](http://wiki.niotso.org/Maxis_Protocol#Voltron_packets)
 
 In summary, Voltron Packets have:
@@ -169,12 +173,12 @@ In summary, Voltron Packets have:
 
 [Here's a list of all TSO Pre-Alpha PDU IDs.](http://niotso.org/files/prealpha_pdu_tables.txt)
 
-Don't want to use that link? There is an enum for you to use in code at TSOVoltronEnum.cs
-In fact, for developers there are many enums in the same directory as TSOVoltronEnum.cs containing specific CLSIDs for other Packet Formats -- and an enum for all constants found in the game binary.
+**Don't want to use that link?** There is an enum for you to use in code (specific to the Targeting Pack) at _(Targeting Pack Assembly) > TSOVoltronEnum.cs_
+In fact, developers can use the many enums in the codebase like TSOVoltronEnum.cs, which contains specific CLSIDs for other Packet Formats -- and an enum for all constants found in the game binary, and in the codebase.
 
-Each Voltron PDU is coded into the respective Pre-Alpha or Play-Test protocol assembly. Please look over these as a basis for the formatting if you which to develop this on your own. They are runtime-serialized, plan accordingly.
+_Each Voltron PDU is coded into the respective Pre-Alpha or Play-Test protocol assembly. Please look over these as a basis for the formatting if you which to develop this on your own. They are runtime-serialized, plan accordingly._
 
-## Regulators & Protocols
+# Regulators & Protocols
 Yes, regulators are controllers, basically. Each Regulator has a protocol that it uses. The protocol is the set of PDUs it can send/receive and how to interpret them. There are the following Protocols in The Sims Online: Pre-Alpha:
  * LoginProtocol
  * cGameMasterProtocol
@@ -194,7 +198,9 @@ Regulators will see the incoming PDUs each frame. If it's a message that Regulat
 
 The developers referred to Regulators in the source code as cTSORegulator.cpp
 
-## Areas of Operation
+_Note: The nio2so Voltron Servers and the Sims Online clients both implement Regulators in their own ways. This word is used interchangably._
+
+# Areas of Operation
 This project is a lot of Reverse-Engineering. Here's some helpful tips on what some assemblies generally do.
 
  * **cTSOServiceClientD.dll** - Database Operations
