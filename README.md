@@ -55,6 +55,8 @@ Here is a document I update periodically about various systems in the game and i
 ### -> TCRF Article <- 
 Much of the accomplishments through nio2so have been documented in this article, to preserve and understand this facinating version of the game. [See more on The Cutting Room Floor](https://tcrf.net/Proto:The_Sims_Online/TSO_Pre-Alpha)
 
+**Special Thanks** This project would not possible without the support from the FreeSO community and riperiperi! [Check out FreeSO on GitHub](https://github.com/riperiperi/FreeSO)
+
 ## Nio2so Compatible-Versions of The Sims Online
 **TSO Pre-Alpha 1.3.2.56**
 
@@ -232,6 +234,6 @@ This project is a lot of Reverse-Engineering. Here's some helpful tips on what s
   <figcaption></figcaption>
 </figure>
 
-An image of <b>TSOView2</b> rendering the terrain of the city "Blazing Falls" as it would appear in The Sims Online: Pre-Alpha.
+An image of <b>TSOView2</b> rendering the terrain of the city "Dan's Grove" as it would appear in The Sims Online: Pre-Alpha.
 
 <i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
