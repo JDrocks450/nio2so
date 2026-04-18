@@ -1,6 +1,10 @@
+<p align="left"> 
+  <img src="Bisquick Logo.png" height="100">   
+</p>
+
 <p align="center"> 
   <img src="projectlogods.png" height="200"> 
-</center>
+</p>
 
 # New Implementation Of The Sims Online (Version 2)
 
