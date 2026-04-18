@@ -6,11 +6,23 @@
 
 <b>A continuation of niotso (for The Sims Online)</b> in which this project successfully emulates the server and protocols that the in-development <i>The Sims Online: Pre-Alpha</i> client interfaces with to create the gameplay experience as it were in May 2002. **_Experience it as if you were a developer at Maxis!_**
 
-<b>Videos</b> Check out the [nio2so Files on YouTube](https://www.youtube.com/watch?v=6mHNAjcoVvg&list=PL2HW9WQ-hEm0RiMerQS1Q0jotFYlAimVJ&pp=sAgC) for footage/research/documentation of this project!
+## Videos
 
-### Project Component Map
+Check out the various videos stemming from this project, documenting The Sims Online: Pre-Alpha!
 
-<img width="4096" height="3027" alt="nio2so transparent 001" src="https://github.com/user-attachments/assets/28db0ada-6cf0-4274-9443-f2b3290628f5" />
+### Demonstration Video
+
+[![nio2so on YouTube](https://img.youtube.com/vi/8wcedhRtuLs/0.jpg)](https://www.youtube.com/watch?v=8wcedhRtuLs)
+
+In case that doesn't load, [check it out on YouTube](https://www.youtube.com/watch?v=8wcedhRtuLs)
+
+### The nio2so Files
+
+Check out the [nio2so Files on YouTube](https://www.youtube.com/watch?v=6mHNAjcoVvg&list=PL2HW9WQ-hEm0RiMerQS1Q0jotFYlAimVJ&pp=sAgC) for footage/research/documentation of this project!
+
+## Project Component Map
+
+<img width="4096" alt="nio2so transparent 001" src="https://github.com/user-attachments/assets/28db0ada-6cf0-4274-9443-f2b3290628f5" />
 
 _The various components making up the complete nio2so project._
 
@@ -122,8 +134,9 @@ Run both instances with these runtime arguments: `-w -debug_objects` (not requir
 Next step.
 
 ## Demonstration YouTube Video
-Before continuing with the instructions, you can refer to this YouTube video I recorded to see how it works in action:
-https://www.youtube.com/watch?v=8wcedhRtuLs&t=11s
+Before continuing with the instructions, you can refer to this YouTube video I recorded to see how it works in action.
+
+[![nio2so on YouTube](https://img.youtube.com/vi/8wcedhRtuLs/0.jpg)](https://www.youtube.com/watch?v=8wcedhRtuLs)
 
 ## Logging in
 Run the nio2so StartUp Project configuration I showed you above. It will launch three servers. The `TSOHTTPS`, `DataService` and `TSOTCP.Voltron.Server` servers. _They all are required._
