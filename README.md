@@ -57,7 +57,7 @@ Much of the accomplishments through nio2so have been documented in this article,
 
 **Special Thanks** This project would not possible without the support from the FreeSO community and riperiperi! [Check out FreeSO on GitHub](https://github.com/riperiperi/FreeSO)
 
-## Nio2so Compatible-Versions of The Sims Online
+## nio2so-Compatible Versions of The Sims Online
 **TSO Pre-Alpha 1.3.2.56**
 
 *Beta/Tuning 1.3.1.56, a version compiled on/around May 9th, 2002.*
