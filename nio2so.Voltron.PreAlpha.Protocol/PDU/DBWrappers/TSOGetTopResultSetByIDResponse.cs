@@ -17,8 +17,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// <summary>
         /// Represents a search result in the <see cref="TSOSearchResponseStruct"/>
         /// </summary>
-        /// <param name="ItemID"></param>
-        /// <param name="ItemName"></param>
         public class TSOTopListResultStruct
         {
             public TSOTopListResultStruct(uint Rank, uint TargetID, string Name, string Caption, int Argument = 0, int Argument2 = 0, int Index = -1)
@@ -28,26 +26,50 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
                 this.Index = (uint)Index;
                 this.Rank = Rank;
                 this.TargetID = TargetID;
-                this.Caption = Caption; 
+                this.Caption = Caption;
                 this.Title = Name;
                 this.Argument2 = Argument2;
                 this.Argument = Argument;
             }
-            /// STRUCTURE IS WIP BUT WORKING
+
+            /// <summary>
+            /// The index of the item in the list
+            /// </summary>
             public uint Index { get; set; } = 1; // 4
+            /// <summary>
+            /// The ID in the database of the item being displayed
+            /// </summary>
             public uint TargetID { get; set; } // 4
-            public uint Rank { get; set; } = 1; // 4            
+            /// <summary>
+            /// The number shown as the "Rank" of this item
+            /// </summary>
+            public uint Rank { get; set; } = 1; // 4
+            /// <summary>
+            /// Unknown
+            /// </summary>
             public Int32 Argument { get; set; } = 0x01020304; // 4
+            /// <summary>
+            /// Unknown
+            /// </summary>
             public Int32 Argument2 { get; set; } = 0x01; // 1
 
+            /// <summary>
+            /// The "score" shown, e.g. Simoleans, score, friends, etc.
+            /// </summary>
             [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
             public string Caption { get; set; } = "1,100";
 
+            /// <summary>
+            /// The name of the item being displayed
+            /// </summary>
             [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
             public string Title { get; set; } = "Bisquick";
 
         }
 
+        /// <summary>
+        /// Responds with a list of items contained in a Top 100 List
+        /// </summary>
         public TSOGetTopResultSetByIDResponse() : base(
             TSO_PreAlpha_DBStructCLSIDs.cCrDMStandardMessage,
             TSO_PreAlpha_kMSGs.kDBServiceResponseMsg,

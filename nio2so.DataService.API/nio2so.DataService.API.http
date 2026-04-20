@@ -14,3 +14,8 @@ Accept: application/json
 GET {{nio2so.DataService.API_HostAddress}}/api/top100
 Accept: application/json
 ###
+
+# GET ACCOUNTS TEST
+GET {{nio2so.DataService.API_HostAddress}}/api/top100/1002
+Accept: application/json
+###

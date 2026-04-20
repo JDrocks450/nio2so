@@ -18,8 +18,24 @@ namespace nio2so.DataService.API.Controllers
             logger = Logger;
         }
 
-        // GET api/top100
+        /// <summary>
+        /// Returns all Top 100 Lists currently configured
+        /// <code> GET api/top100</code>
+        /// </summary>
+        /// <returns></returns>        
         [HttpGet]
-        public ActionResult<IEnumerable<Top100ListInfo>> GetTop100ListsAsync() => Ok(dataService.GetTop100Lists().Result);            
+        public async Task<ActionResult<IEnumerable<Top100ListInfo>>> GetTop100ListsAsync() => Ok(await dataService.GetTop100Lists());
+        /// <summary>
+        /// Returns all items in a Top 100 List by its ListID property
+        /// <code> GET api/top100/[ListID]</code>
+        /// </summary>
+        /// <returns></returns>        
+        [HttpGet("{ListID}")]
+        public ActionResult<Top100ListItemsInfo> GetTop100ListsAsync(int ListID)
+        {
+            Top100ListItemsInfo? data = dataService.GetItemsByListID((uint)ListID);
+            if (data == null) return NotFound();
+            return Ok(data);
+        }
     }
 }

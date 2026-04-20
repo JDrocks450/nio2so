@@ -386,6 +386,11 @@ namespace nio2so.DataService.Common
         /// cref="IEnumerable{Top100ListInfo}"/> with information about each Top 100 list. The collection will be empty
         /// if no lists are available.</returns>
         public Task<HTTPServiceResult<IEnumerable<Top100ListInfo>>> GetTop100Lists() => GetQueryAs<IEnumerable<Top100ListInfo>>($"top100");
+        /// <summary>
+        /// Retrieves a collection of items in a given Top 100 list by its ListID property.
+        /// </summary>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<Top100ListItemsInfo>> GetTop100ListItemsByID(uint ListID) => GetQueryAs<Top100ListItemsInfo>($"top100/{ListID}");
 
     }
 }

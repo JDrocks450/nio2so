@@ -67,7 +67,13 @@ namespace nio2so.DataService.API.Databases
                     Outgoing = new() { { 1337, new(161, 1337, 1, 1) } }
                 }
             });
-        }       
+        }
+
+        /// <summary>
+        /// Returns all profiles added to the system.
+        /// </summary>
+        /// <returns></returns>
+        internal IEnumerable<AvatarInfo> GetAllProfiles() => AvatarsLibrary.Values;
 
         Task<byte[]> CharBlobNotFound() => File.ReadAllBytesAsync(CurrentSettings.DereferencePath(CurrentSettings.DefaultCharblobPath));
         public bool Exists(AvatarIDToken AvatarID) => AvatarsLibrary.ContainsKey(AvatarID);

@@ -1,5 +1,7 @@
-﻿using nio2so.DataService.API.Databases.Libraries;
+﻿using Microsoft.AspNetCore.Mvc;
+using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Types;
+using nio2so.DataService.Common.Types.Lot;
 using nio2so.DataService.Common.Types.Top100;
 
 namespace nio2so.DataService.API.Databases
@@ -28,7 +30,7 @@ namespace nio2so.DataService.API.Databases
         /// Gets all <see cref="Top100DataService"/> definitions added to this DataService library.
         /// </summary>
         /// <returns></returns>
-        public Task<IEnumerable<Top100ListInfo>> GetTop100Lists() => 
+        internal Task<IEnumerable<Top100ListInfo>> GetTop100Lists() => 
             Task.FromResult(GetLibrary<JSONDictionaryLibrary<uint, Top100ListInfo>>(LIB_NAME).Dictionary.Values.AsEnumerable());
 
         /// <summary>
@@ -53,6 +55,50 @@ namespace nio2so.DataService.API.Databases
             top100list.Dictionary.TryAdd(4, new Top100ListInfo(1004, "Neighborhoods", "top neighborhoods", iconResource));
 
             return Save();
+        }
+
+        /// <summary>
+        /// Returns the items contained in a <see cref="Top100ListInfo"/>
+        /// </summary>
+        /// <param name="ListID"></param>
+        /// <returns></returns>
+        internal Top100ListItemsInfo? GetItemsByListID(uint ListID)
+        {
+            if (!GetLibrary<JSONDictionaryLibrary<uint, Top100ListInfo>>(LIB_NAME).TryGetValue(ListID, out var top100list))
+                return null; // NOT_FOUND
+
+            HashSet<nio2soTop100Item> DataSet = new HashSet<nio2soTop100Item>();
+
+            switch (top100list.ListType.ToLowerInvariant())
+            {
+                case "avatars":
+                    {
+                        //get sample data set
+
+                        IEnumerable<AvatarInfo> dataSource = APIDataServices.AvatarDataService.GetAllProfiles();
+
+                        //sort all avatars by simoleans
+                        uint rank = 0;
+                        foreach (var item in dataSource.OrderByDescending(x => x.Profile.Simoleans))
+                            DataSet.Add(new nio2soTop100Item(++rank, item.AvatarID, item.AvatarName, $"${item.Profile.Simoleans}"));
+                        //return dataset
+                    }
+                    break;
+                case "houses":
+                    {
+                        //get sample data set
+
+                        IEnumerable<LotProfile> dataSource = APIDataServices.LotDataService.GetLots();
+
+                        //sort all lots
+                        uint rank = 0;
+                        foreach (var item in dataSource)
+                            DataSet.Add(new nio2soTop100Item(++rank, item.HouseID, item.Name, ""));
+                        //return dataset
+                    }
+                    break;
+            }
+            return new Top100ListItemsInfo(top100list.ListID, top100list.ListType, top100list.ListName, DataSet);
         }
     }
 }

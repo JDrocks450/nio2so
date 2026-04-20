@@ -82,12 +82,28 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.GetTopResultSetByID_Request)]
         public void GET_TOP_RESULT_SET_BY_ID_REQUEST(TSODBRequestWrapper DBPDU)
         {
+            // NOTE: Client requests list 1002 when hitting the "Most Popular Places" button.
             if (DBPDU is not TSOGetTop100ListSetByIDRequest ListSetRequest)
             {
                 LogError($"Received {nameof(TSODBRequestWrapper)} {DBPDU} but it was not the expected {nameof(TSOGetTop100ListSetByIDRequest)} type.");
                 return;
             }
 
+            //get all remote top 100 list items from the nio2so data service
+            if (!TryDataServiceQuery(x => x.GetTop100ListItemsByID(ListSetRequest.ListID), out Top100ListItemsInfo? dbListItems, out string ErrorMsg))
+            {
+                LogError(ErrorMsg);
+                return;
+            }
+
+            // format the response data by selecting the data from the API format into the Nio2so Voltron format PDU
+            RespondTo(DBPDU, new TSOGetTopResultSetByIDResponse(dbListItems.ListID,
+                (uint)Enum.Parse<TSOGetTopListResponse.TSOTop100ListTypes>(dbListItems.ListType),
+                dbListItems.ListItems.Select(x => new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(x.Rank, x.ItemID, x.ItemName, x.Caption)).ToArray()));
+
+            return;
+
+            //default response data:
             RespondTo(DBPDU, new TSOGetTopResultSetByIDResponse(ListSetRequest.ListID, (uint)TSOGetTopListResponse.TSOTop100ListTypes.Houses,
                 new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(1, 6094983, "First House", "3"),
                 new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(2, 161, "Friendly Buddy", "$1,333"),
