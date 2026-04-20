@@ -72,10 +72,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     dataSource.ListName, iconBytes);
             }
 
-            //flush the cache
+            //flush the image cache
             FLUSH_CACHE();
 
-            //Respond with top 100 listswhat
+            //Respond with top 100 lists
             RespondTo(DBPDU, new TSOGetTopListResponse(tsoPAListFormat));
         }
 
@@ -89,9 +89,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             }
 
             RespondTo(DBPDU, new TSOGetTopResultSetByIDResponse(ListSetRequest.ListID, (uint)TSOGetTopListResponse.TSOTop100ListTypes.Houses,
-                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(1,6094983,"First House"),
-                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(2,161, "Friend"),
-                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(3,1337, "Bisquick")));
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(1, 6094983, "First House",1000),
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(2, 161, "Friendly Buddy",2000),
+                new TSOGetTopResultSetByIDResponse.TSOTopListResultStruct(3, 1337, "Bisquick", 3000)));
         }
 
         private byte[] TO_RLE8(string ResourceURI)

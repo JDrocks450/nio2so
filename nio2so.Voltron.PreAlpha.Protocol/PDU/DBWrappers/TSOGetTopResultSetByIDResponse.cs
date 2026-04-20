@@ -21,22 +21,27 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// <param name="ItemName"></param>
         public class TSOTopListResultStruct
         {
-            public TSOTopListResultStruct(uint Rank, uint TargetID, string TargetName)
+            public TSOTopListResultStruct(uint Rank, uint TargetID, string TargetName, int Argument)
             {
-                this.Rank = Rank;
-                this.TargetID = TargetID;
-                this.TargetName = TargetName;
+                this.Rank = this.Rank1 = Rank;
+                this.TargetID = TargetID;                
+                //this.TargetName = "TEST"; 
+                this.DisplayName = TargetName;
+                //this.Argument = Argument;
             }
-         
-            public uint Rank { get; set; } = 1;
-            public uint TargetID { get; set; }
+            /// STRUCTURE IS WIP BUT WORKING
+            public uint Rank { get; set; } = 1; // 4
+            public uint TargetID { get; set; } // 4
+            public uint Rank1 { get; set; } = 1; // 4            
+            public Int32 Argument { get; set; } = 0x01020304; // 4
+            public byte Arg1 { get; set; } = 0x00; // 1
+            public uint Arg2 { get; set; } = 0x0; // 4
 
             [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-            public string TargetName { get; set; } = "";
-            
-            [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-            public string DisplayName { get; set; } = "$1,000";
-            
+            public string DisplayName { get; set; } = "Bisquick";
+            //[TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
+            //public string TargetName { get; set; } = "$1,234";
+
         }
 
         public TSOGetTopResultSetByIDResponse() : base(
