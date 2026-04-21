@@ -38,6 +38,11 @@
                         </TreeView>
                     </DockPanel>
                     <local:TSOVoltronPacketPropertiesControl x:Name="VoltronPacketProperties" AutoInitializeValues="True" Grid.Column="1" Margin="10,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10">
+                        <TextBlock>Markdown Style</TextBlock>
+                        <RadioButton Margin="10,0" Content="Bulleted List"/>
+                        <RadioButton Name="JSONRadioButton" IsChecked="True" Content="JSON-Like" Checked="JSONRadioButton_Checked" Unchecked="JSONRadioButton_Unchecked"/>
+                    </StackPanel>
                 </Grid>
             </TabItem>
         </TabControl>

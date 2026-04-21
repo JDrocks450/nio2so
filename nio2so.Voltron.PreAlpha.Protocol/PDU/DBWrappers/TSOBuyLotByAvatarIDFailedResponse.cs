@@ -6,7 +6,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
     /// Sent when the Player requests to purchase a lot in the World View, and it cannot be completed. 
     /// <para/> This is a <see cref="TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response"/> which is ordinarily mapped to <see cref="TSOBuyLotByAvatarIDResponse"/>.
     /// This is a <see cref="TSOVoltronPacket"/> that is not mapped using the <see cref="TSOVoltronPDU"/> attribute because it exists for code clarity.
-    /// </summary>    
+    /// </summary>      
+    [TSOVoltronDBRequestWrapperPDU((uint)TSO_PreAlpha_DBActionCLSIDs.BuyLotByAvatarID_Response)]
     public sealed class TSOBuyLotByAvatarIDFailedResponse : TSODBRequestWrapper
     {
         /// <summary>

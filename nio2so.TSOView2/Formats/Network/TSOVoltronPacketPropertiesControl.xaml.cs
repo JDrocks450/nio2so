@@ -18,8 +18,19 @@ namespace nio2so.TSOView2.Formats.Network
     /// </summary>
     public partial class TSOVoltronPacketPropertiesControl : UserControl, IDisposable
     {
+        public enum PreviewSummaryModes
+        {
+            JsonLikeMarkdown = 0,
+            BulletMarkdown = 1,
+            
+        }
+
+        public const PreviewSummaryModes DEFAULT_MODE = PreviewSummaryModes.JsonLikeMarkdown;
+
         private TSOVoltronPacket? _currentPDU;
         private readonly TSOPreAlphaPDUFactory factory = new();
+
+        public PreviewSummaryModes PreviewMode { get; private set; }
 
         public string CurrentFile
         {
@@ -49,7 +60,18 @@ namespace nio2so.TSOView2.Formats.Network
             factory.Init(null);
         }
 
-        public bool DisplayPDU(string PDUFileURI, bool ShowValues = true)
+        /// <summary>
+        /// Redraws the control, optionally with a new <see cref="PreviewSummaryModes"/>
+        /// </summary>
+        /// <param name="NewMode"></param>
+        /// <returns></returns>
+        public bool RefreshDisplay(PreviewSummaryModes? NewMode = default)
+        {
+            if (NewMode == default) NewMode = PreviewMode;
+            return DisplayPDU(_currentPDU, NewMode.Value, ShowValues);
+        }
+
+        public bool DisplayPDU(string PDUFileURI, PreviewSummaryModes PreviewingMode, bool ShowValues = true)
         {
             this.ShowValues = ShowValues;
 
@@ -72,12 +94,14 @@ namespace nio2so.TSOView2.Formats.Network
             if (_currentPDU == null) return false;
 
             //DISPLAY PROPERTIES (SERIALIZATION GRAPH)
-            return DisplayPDU(_currentPDU, ShowValues);    
+            return DisplayPDU(_currentPDU, PreviewingMode, ShowValues);    
         }
 
-        public bool DisplayPDU(TSOVoltronPacket Packet, bool ShowValues = true)
+        public bool DisplayPDU(TSOVoltronPacket? Packet, PreviewSummaryModes PreviewingMode, bool ShowValues = true)
         {
             _currentPDU = Packet;
+            PreviewMode = PreviewingMode;
+            if (_currentPDU == null) return false;
             return ShowPDUHierarchyProperties(ShowValues);
         }
 
@@ -107,7 +131,8 @@ namespace nio2so.TSOView2.Formats.Network
         private bool ShowPDUHierarchyProperties(bool ShowValues)
         {            
             if (_currentPDU == null) return false;
-
+            
+            this.ShowValues = ShowValues;
             TSOVoltronSerializer.CreatingSerializationGraphs = true;
 
             _currentPDU.MakeBodyFromProperties();
@@ -119,7 +144,13 @@ namespace nio2so.TSOView2.Formats.Network
             _currentPDU.MakeBodyFromProperties();
             graph = _currentPDU.MySerializedGraph;
 
-            PreviewText.Text = TSOVoltronSerializer.GenerateSerializationSummary(graph, ShowValues, AutoInitializeValues);
+            var viewOptions = PreviewMode switch
+            {
+                PreviewSummaryModes.BulletMarkdown => TSOVoltronSerializerTextWriter.TSOVoltronTextWriterOptions.Markdown_Bulletpoints,
+                PreviewSummaryModes.JsonLikeMarkdown => TSOVoltronSerializerTextWriter.TSOVoltronTextWriterOptions.Markdown_JsonLike,
+            };
+
+            PreviewText.Text = new TSOVoltronSerializerTextWriter(viewOptions).GenerateSerializationSummary(graph, ShowValues, AutoInitializeValues);
             return true;
         }
 

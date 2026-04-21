@@ -61,6 +61,11 @@ namespace nio2so.TSOView2.Formats.Network
 
         private readonly Dictionary<TreeViewItem, TypeNavigationToken> _selectableTypes = new();
         private string searchFilter = "";
+
+        private bool GenerateJSONSummaries => JSONRadioButton.IsChecked ?? false;
+        private TSOVoltronPacketPropertiesControl.PreviewSummaryModes GetPreviewingMode =>
+            GenerateJSONSummaries ? TSOVoltronPacketPropertiesControl.PreviewSummaryModes.JsonLikeMarkdown : TSOVoltronPacketPropertiesControl.PreviewSummaryModes.BulletMarkdown;
+
         public TSOPacketLibraryControl()
         {
             InitializeComponent();
@@ -137,7 +142,7 @@ namespace nio2so.TSOView2.Formats.Network
                 var packet = ActivateInstancePacket(typeNav);
                 if (packet == null)                
                     throw new NullReferenceException("The reflected type could not be instantiated. It may not have a parameterless constructor.");
-                VoltronPacketProperties.DisplayPDU(packet, false);
+                VoltronPacketProperties.DisplayPDU(packet, GetPreviewingMode, false);
             }
             catch (Exception exception)
             {
@@ -168,13 +173,25 @@ namespace nio2so.TSOView2.Formats.Network
                 if (instance == null) continue;
 
                 instance.MakeBodyFromProperties();
+                string text = "";
+
                 var graph = instance.MySerializedGraph;
-                string text = TSOVoltronSerializer.GenerateSerializationSummary(graph, false, true);
+                var options = GenerateJSONSummaries ? TSOVoltronSerializerTextWriter.TSOVoltronTextWriterOptions.Markdown_JsonLike :
+                    TSOVoltronSerializerTextWriter.TSOVoltronTextWriterOptions.Markdown_Bulletpoints;
+                text = new TSOVoltronSerializerTextWriter(options).
+                    GenerateSerializationSummary(graph, false, true);
+
                 builder.AppendLine(text);
             }
             GenerateAll.Content = "Copied!";
             Clipboard.SetText(builder.ToString());
         }
+
+        private void JSONRadioButton_Checked(object sender, RoutedEventArgs e) => RefreshDisplay();
+
+        private void JSONRadioButton_Unchecked(object sender, RoutedEventArgs e) => RefreshDisplay();
+
+        private void RefreshDisplay() => VoltronPacketProperties.RefreshDisplay(GetPreviewingMode);
 
         private void MainNavigationTabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

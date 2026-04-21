@@ -77,7 +77,8 @@ namespace nio2so.TSOView2.Formats.Network
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
             if (CurrentFile != default)
-                DisplayPDU(CurrentFile);
+                if (!DisplayPDU(CurrentFile))
+                    Close();
         }
 
         private void CloseItem_Click(object sender, RoutedEventArgs e) => Close();
@@ -88,6 +89,6 @@ namespace nio2so.TSOView2.Formats.Network
             TryPromptUserAndShowDialog(out _);
         }
 
-        public bool DisplayPDU(string PDUFileURI) => PropertiesControl.DisplayPDU(PDUFileURI);
+        public bool DisplayPDU(string PDUFileURI) => PropertiesControl.DisplayPDU(PDUFileURI,TSOVoltronPacketPropertiesControl.DEFAULT_MODE);
     }
 }

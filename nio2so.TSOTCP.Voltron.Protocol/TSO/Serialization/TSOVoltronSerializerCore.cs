@@ -117,7 +117,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     else
                     { // all other array types
                         for (int i = 0; i < count; i++)
-                            arrayVal.SetValue(TryNumericTypes(Stream, arrayType), i);
+                            arrayVal.SetValue(TryReflectObjectType(Stream,property,arrayType), i);
                     }
                     property.SetValue(Instance, arrayVal);
                     return true;
@@ -140,8 +140,35 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             //Numbers
             if (TryNumericTypes(Stream, property, Instance)) return true;
 
+            // All other types
+            object? reflectedValue = TryReflectObjectType(Stream, property);
+            if (reflectedValue == null)
+                return false;
+
+            property.SetValue(Instance, reflectedValue);
+            return true;
+        }
+
+        private static object? TryReflectObjectType(Stream Stream, PropertyInfo property, Type? ForceType = default)
+        {
+            if (ForceType == null)
+                ForceType = property.PropertyType;
+
+            //Numbers
+            {
+                //check member attribute for special considerations
+                TSOVoltronValue? attribute = getPropertyAttribute<TSOVoltronValue>(property, out TSOVoltronValueTypes type);
+                bool hasAttributes = attribute != default;
+                //BigEndian by default!
+                Endianness dataEndianMode = type == TSOVoltronValueTypes.LittleEndian ? Endianness.LittleEndian : Endianness.BigEndian;
+
+                Object? returnValue = null;
+                returnValue = TryNumericTypes(Stream, ForceType, dataEndianMode);
+                if (returnValue != null) return returnValue;
+            }
+
             //Strings
-            if (property.PropertyType == typeof(string))
+            if (ForceType == typeof(string))
             {
                 TSOVoltronString? attribute = getPropertyAttribute<TSOVoltronString>(property, out TSOVoltronValueTypes type);
                 bool hasAttrib = attribute != null;
@@ -149,22 +176,16 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     type = TSOVoltronValueTypes.Pascal;
 
                 //---STRING
-                string destValue = ReadString(type, _bodyBuffer, attribute?.NullTerminatedMaxLength ?? 255, attribute?.NullTerminatorChar ?? '\0');
-                property.SetValue(Instance, destValue);
-                return true;
+                string destValue = ReadString(type, Stream, attribute?.NullTerminatedMaxLength ?? 255, attribute?.NullTerminatorChar ?? '\0');
+                return destValue;
             }
             //try deserialize object
-            if (property.PropertyType.IsClass)
+            if (ForceType.IsClass)
             {
-                object? value = TSOVoltronSerializer.Deserialize(Stream, property.PropertyType);
-                if (value != default)
-                {
-                    property.SetValue(Instance, value);
-                    return true;
-                }
+                return TSOVoltronSerializer.Deserialize(Stream, ForceType);
             }
-            return false;
-        }
+            return null;
+        } 
 
         /// <summary>
         /// <inheritdoc cref="TryNumericTypes(Stream, PropertyInfo, object)"/>
@@ -173,10 +194,8 @@ namespace nio2so.Voltron.Core.TSO.Serialization
         /// <param name="PropertyType"></param>
         /// <param name="dataEndianMode"></param>
         /// <returns></returns>
-        public static object TryNumericTypes(Stream Stream, Type PropertyType, Endianness dataEndianMode = Endianness.BigEndian)
+        public static object? TryNumericTypes(Stream Stream, Type PropertyType, Endianness dataEndianMode = Endianness.BigEndian)
         {
-            bool readValue = true;
-
             //fully evaluate enum types to base value type
             while (PropertyType.IsEnum)
                 PropertyType = Enum.GetUnderlyingType(PropertyType);
@@ -202,7 +221,6 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     return ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt16(intBytes, 0);
                         
                 }
-                return true;
             }
             else if (PropertyType == typeof(uint) || PropertyType == typeof(int))
             {// INT32/U32 rewrite 07/08/25
@@ -212,14 +230,10 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                 { // no it wasn't. previous solution sucked. read 4 bytes from body and convert to int32 like a normal human being.
                     byte[] intBytes = new byte[4];
                     Stream.ReadAtLeast(intBytes, 4);
-                    return
-                        ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt32(intBytes, 0);
+                    return ((EndianBitConverter)(dataEndianMode == Endianness.LittleEndian ? EndianBitConverter.Little : EndianBitConverter.Big)).ToInt32(intBytes, 0);
+                        
                 }
-                return true;
             }
-            else readValue = false;
-
-            if (readValue) return true;
 
             if (PropertyType == typeof(DateTime))
             { // DATE TIME does this even work for tso pre alpha.. lol?
@@ -227,7 +241,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                 var value = DateTime.UnixEpoch.AddSeconds(fromPacket);
                 return value;                
             }
-            return false;
+            return null;
         }
 
         /// <summary>
