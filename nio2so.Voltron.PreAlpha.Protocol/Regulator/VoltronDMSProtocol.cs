@@ -62,8 +62,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if(clientSession.RemoveClient(QuazarID, out TSOAriesIDStruct? VoltronID))
             {
                 //SET ONLINE STATUS TO FALSE
-                if (GetDataService().SetOnlineStatusByAvatarID(VoltronID.AvatarID, true).Result.IsSuccessStatusCode)
-                    LogConsole($"SetAvatarOnlineStatus(): AvatarID: {VoltronID.AvatarID} Value: {false}");
+                bool OnlineStatus = false;
+                if (GetDataService().SetOnlineStatusByAvatarID(VoltronID.AvatarID, OnlineStatus).Result.IsSuccessStatusCode)
+                    LogConsole($"SetAvatarOnlineStatus(): AvatarID: {VoltronID.AvatarID} Value: {OnlineStatus}");
                 LogConsole($"{nameof(ON_DISCONNECT)}(): AvatarID: {VoltronID.AvatarID} is leaving Voltron... bye-bye!", nameof(ON_DISCONNECT), TSOLoggerServiceBase.LogSeverity.Warnings);
                 // CLEAN THIS CLIENT OUT OF ANY ROOMS THEY'RE IN
                 if (GetRegulator<RoomProtocol>().AvatarPurgePlaySession(VoltronID, out string error))
