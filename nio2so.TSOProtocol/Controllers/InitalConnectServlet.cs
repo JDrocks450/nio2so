@@ -25,7 +25,7 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
         }
 
         /// <summary>
-        /// For use with The Sims Online: Play-Test <para/>
+        /// For use with The Sims Online: Play-Test and later <para/>
         /// <inheritdoc cref="InitialConnect(string, string)"/>
         /// </summary>
         /// <param name="Ticket">The <see cref="UserToken"/> of the user</param>

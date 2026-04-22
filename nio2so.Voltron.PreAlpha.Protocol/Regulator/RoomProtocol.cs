@@ -98,11 +98,13 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             ClientUpdateRoom_LeaveRoom(voltronID, out FailureReason);
         /// <summary>
         /// Creates a new <see cref="RoomProtocolRoomInfo"/> that is empty, uses the info from the given <paramref name="HouseID"/> and is lead by <paramref name="Leader"/>
-        /// <para/><paramref name="Created"/> True if the room as just now created, false if it already was open. Will migrate host to this passed one if already existed.
+        /// <para/><paramref name="Created"/> True if the room as just now created, false if it already was open. <b>Will migrate host to this passed one if already existed.</b>
+        /// <para/>Rooms are tracked and maintained in the protocol, you can use <see cref="EnsureRoomExists(uint, TSOAriesIDStruct?, out bool)"/> and <see cref="RoomExists(uint)"/>
+        /// to poll whether or not a room exists or not, without risk of accidental host migrations.
         /// </summary>
-        /// <param name="HouseID"></param>
-        /// <param name="Leader">If null, will throw an exception.</param>
-        /// <param name="Created"></param>
+        /// <param name="HouseID">The ID of the house in the Database</param>
+        /// <param name="Leader">If null, will throw an exception -- This will be ensured to be the new HouseLeader whereby <see cref="MigrateHost(uint, TSOAriesIDStruct)"/> is used</param>
+        /// <param name="Created">True if prior to calling this function, this runtime room was not yet created in the protocol.</param>
         /// <returns></returns>
         private RoomProtocolRoomInfo CreateOrGetRoomWithLeader(uint HouseID, TSOAriesIDStruct Leader, out bool Created)
         {
@@ -117,10 +119,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         }
 
         /// <summary>
-        /// 
+        /// If the room exists, returns it without changing the host of the room. If it doesn't exist, it will create the room with the given <paramref name="Leader"/>        
+        /// <para/>
         /// </summary>
-        /// <param name="HouseID"></param>
-        /// <param name="Leader">If null, will use the Lot's Owner ID ... CHANGE LATER.</param>
+        /// <param name="HouseID">The ID of the house in the database</param>
+        /// <param name="Leader">If null, will use the Lot's Owner ID -- use with caution!</param>
         /// <param name="Created"></param>
         /// <returns></returns>
         private RoomProtocolRoomInfo EnsureRoomExists(uint HouseID, TSOAriesIDStruct? Leader, out bool Created)
@@ -171,6 +174,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             return true;
         }
 
+        /// <summary>
+        /// Returns whether a room exists or not. You can use <see cref="EnsureRoomExists(uint, TSOAriesIDStruct?, out bool)"/> and <see cref="CreateOrGetRoomWithLeader(uint, TSOAriesIDStruct, out bool)"/>
+        /// to create rooms in the protocol.
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
         private bool RoomExists(uint HouseID) => _roomsByHouseID.ContainsKey(HouseID);
 
         /// <summary>
@@ -190,7 +199,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             int i = 0;
             foreach (var houseID in result.Lots.Select(x => x.HouseID)) // UPDATE LATER TO BE ONLINE LOTS
             { // add the room if its not already in the list
-                EnsureRoomExists(houseID, null, out _);
+                EnsureRoomExists(houseID, null, out _); // passing NULL here will set the LotLeader to the Owner for now, until a roommate or the Owner opens the lot.
+                // in that case, the host is migrated
             }
         }
 
@@ -364,7 +374,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInstance))
             { // online room
                 IsOnline =  true;
-                return new TSOListOccupantsResponsePDU(roomInstance.RoomID, roomInstance.Occupants.ToArray()); // respond with occupants
+                return new TSOListOccupantsResponsePDU(roomInstance.RoomID, [..roomInstance.Occupants]); // respond with occupants
             }
             //**basic response
             var profile = GetLotProfile(HouseID); // download profile
@@ -409,16 +419,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// will never automatically ask again if this is true.
         /// </summary>
         private void NotifyLotsOnline() => BroadcastToServer(new TSOListRoomsResponsePDU([.. _roomsByHouseID.Select(x => x.Value.RoomInfo)]));
-        /// <summary>
-        /// Helper function to send to all connected clients an updated list of people in online rooms
-        /// </summary>
-        private void NotifyLotOccupants()
-        {
-            foreach (var room in _roomsByHouseID)
-            {
-                BroadcastToServer(new TSOListOccupantsResponsePDU(room.Value.RoomID, [.. room.Value.Occupants]));
-            }
-        }
 
         protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
         {
@@ -478,7 +478,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             SyncRoomsWithLotDataService();
             NotifyLotsOnline();
-            NotifyLotOccupants();
             return;
 
             //test message pdu ... doesn't work
