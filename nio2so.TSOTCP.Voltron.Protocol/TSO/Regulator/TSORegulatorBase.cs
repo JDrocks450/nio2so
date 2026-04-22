@@ -2,6 +2,7 @@
 using nio2so.DataService.Common;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
+using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.PDU;
 using nio2so.Voltron.Core.TSO.Struct;
 using System.Reflection;
@@ -212,6 +213,10 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="ResponsePacket"></param>
         protected void RespondWith(TSOVoltronPacket ResponsePacket) =>
             ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).Add(ResponsePacket);
+        protected void RespondWithAll(params TSOVoltronPacket[] Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
+
+        protected void RespondWithAriesFrame(params TSOTCPPacket[] AriesFrames) => ((List<TSOTCPPacket>)CurrentResponse.AriesFrames).AddRange(AriesFrames);
+
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
         /// <para/>This function copies the <see cref="ITSOVoltronAriesMasterIDStructure"/> data to the <paramref name="ResponsePacket"/> before then calling <see cref="RespondWith(TSOVoltronPacket)"/>
@@ -337,7 +342,11 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         {
             if (Server == null) throw new NullReferenceException("No server instance!!!");
 
-            Response = CurrentResponse = new(new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<TSOVoltronPacket>(), new List<(uint, TSOVoltronPacket)>());
+            Response = CurrentResponse = new(new List<TSOVoltronPacket>(),
+                                             new List<TSOVoltronPacket>(),
+                                             new List<TSOVoltronPacket>(),
+                                             new List<(uint, TSOVoltronPacket)>(),
+                                             new List<TSOTCPPacket>());
             
             //TRY GENERIC VOLTRON PACKET HANDLER
             if (GetMapFor<TSOVoltronPacket>().TryGetValue(PDU.VoltronPacketType, out Delegate? action) && action != null)

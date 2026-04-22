@@ -307,6 +307,10 @@ namespace nio2so.Voltron.Core
                                 SubmitAriesFrame(sendID, packet.Packet);
                             }
                         }
+                        if (Response.AriesFrames != null)
+                        {
+                            Send(ID, [.. Response.AriesFrames]);
+                        }
                         Handled = true;
                     }
                 }

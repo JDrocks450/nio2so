@@ -1,4 +1,5 @@
 ﻿using nio2so.Voltron.Core.Telemetry;
+using nio2so.Voltron.Core.TSO.Aries;
 using System.Reflection;
 
 namespace nio2so.Voltron.Core.TSO
@@ -14,7 +15,8 @@ namespace nio2so.Voltron.Core.TSO
         IEnumerable<TSOVoltronPacket> ResponsePackets, 
         IEnumerable<TSOVoltronPacket> InsertionPackets, 
         IEnumerable<TSOVoltronPacket> EnqueuePackets,
-        IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets)
+        IEnumerable<(uint Session, TSOVoltronPacket Packet)> SessionPackets,
+        IEnumerable<TSOTCPPacket> AriesFrames)
     {
         /// <summary>
         /// Used to tell the <see cref="TSOVoltronBasicServer"/> to disconnect this client from QuaZar after this response is completed.
@@ -93,6 +95,8 @@ namespace nio2so.Voltron.Core.TSO
         /// <param name="DLL"></param>
         public void RegisterProtocols(Assembly DLL, params Type[] OmissionList)
         {
+            server.Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
+                            "cTSORegulatorManager", $"Begin mapping Protocol Assembly: {DLL.FullName}!"));
             foreach (var type in DLL.GetTypes())
             {
                 if (OmissionList.Select(x => x.AssemblyQualifiedName).Contains(type.AssemblyQualifiedName))
