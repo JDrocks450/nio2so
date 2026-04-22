@@ -1,10 +1,15 @@
-﻿#define TSOPREALPHA
+﻿/*
+#define TSOPREALPHA
 #define TSOPLAYTEST
-
-//#undef TSOPREALPHA
+#define TSONANDI
+*/
+#define TSOPREALPHA
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST
+#undef TSONANDI
+#elif TSOPLAYTEST
+#undef TSONANDI
 #endif
 
 using nio2so.DataService.Common.Types;
@@ -15,6 +20,7 @@ using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using OpenSSL.X509;
 using System.Net.Http.Json;
+using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
@@ -28,6 +34,9 @@ namespace nio2so.TSOTCP.Voltron.Server
     /// </summary>
     public class TSONeoVol2ronServer : TSOVoltronBasicServer
     {
+        public Assembly TargetingPack { get; private set; }
+        public string TargetingPackName => TargetingPack?.FullName ?? string.Empty;
+
         /// <summary>
         /// Uses the <see cref="LocalServerSettings.APIUrl"/> to download <see cref="VoltronServerSettings"/>
         /// </summary>
@@ -53,6 +62,8 @@ namespace nio2so.TSOTCP.Voltron.Server
             return new nio2so.Voltron.PlayTest.Protocol.TSOPlayTestLoggerService(SysLogPath);
 #elif TSOPREALPHA
             return new nio2so.Voltron.PreAlpha.Protocol.TSOPreAlphaLoggerService(SysLogPath);
+#elif TSONANDI
+            return new nio2so.Voltron.NewImproved.Protocol.TSONewImprovedLoggerService(SysLogPath);
 #endif
         }
 
@@ -65,14 +76,21 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             //**REGULATOR
             Regulators.RegisterDefaultProtocols(); // register all Voltron.Core.TSO protocols (very few)
-            
+
+            TargetingPack = null;
+
             // register The Sims Online targeting pack protocols (protocol assembly)
 #if TSOPLAYTEST
-            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PlayTest.Protocol.Regulator.TSOProtocol).Assembly); 
+            TargetingPack = (typeof(nio2so.Voltron.PlayTest.Protocol.Regulator.TSOProtocol).Assembly); 
 #endif
 #if TSOPREALPHA
-            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PreAlpha.Protocol.Regulator.TSOProtocol).Assembly); 
+            TargetingPack = (typeof(nio2so.Voltron.PreAlpha.Protocol.Regulator.TSOProtocol).Assembly); 
 #endif
+#if TSONANDI
+            TargetingPack = typeof(nio2so.Voltron.NewImproved.Protocol.Regulator.TSOProtocol).Assembly;
+#endif
+            if (TargetingPack == null) throw new NullReferenceException("Targeting Pack not supplied!");
+            Regulators.RegisterProtocols(TargetingPack);
             Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
         }
 
@@ -92,6 +110,9 @@ namespace nio2so.TSOTCP.Voltron.Server
 #endif
 #if TSOPREALPHA
             Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
+#endif
+#if TSONANDI
+            Services.Register(new nio2so.Voltron.NewImproved.Protocol.Services.TSONewImprovedPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
 #endif
 
             //HOOK EVENTS

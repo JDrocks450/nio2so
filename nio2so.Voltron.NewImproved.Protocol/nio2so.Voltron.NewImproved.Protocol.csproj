@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PDU\Database\**" />
+    <EmbeddedResource Remove="PDU\Database\**" />
+    <None Remove="PDU\Database\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.Voltron.Core.csproj" />
+  </ItemGroup>
+
+</Project>
