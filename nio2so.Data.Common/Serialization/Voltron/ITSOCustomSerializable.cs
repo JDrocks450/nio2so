@@ -1,4 +1,4 @@
-﻿namespace nio2so.Voltron.Core.TSO.Serialization
+﻿namespace nio2so.Data.Common.Serialization.Voltron
 {
     public interface ITSOCustomSerialize
     {
@@ -8,4 +8,5 @@
     {
         public void OnDeserialize(Stream Stream);
     }
+    public interface ITSOCustomSerializableType : ITSOCustomSerialize, ITSOCustomDeserialize { }
 }

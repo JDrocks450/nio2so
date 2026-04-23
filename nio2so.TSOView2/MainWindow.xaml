@@ -15,6 +15,7 @@
                     <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
                     <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
                     <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
+                    <MenuItem Name="OpenRASStreamItem" Header="Open a RAS Stream"/>
                     <MenuItem Header="nio2so Network Activity">
                         <MenuItem Name="TSOTCPPacketOpenItem" Header="Open Aries Frame..."/>
                         <MenuItem Name="VoltronPacketOpenItem" Header="Open Voltron Packet PDU"/>

@@ -1,4 +1,4 @@
-﻿using nio2so.Voltron.Core.TSO.Serialization;
+﻿using nio2so.Data.Common.Serialization.Voltron;
 using QuazarAPI.Networking.Data;
 using QuazarAPI.Util.Endian;
 
@@ -15,7 +15,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Struct
     /// <summary>
     /// A stream that has a 4-byte header, 4-bytes, then 4-byte size chunks
     /// </summary>
-    public class TSOHouseChunkPack : ITSOCustomDeserialize
+    [Obsolete("Please use RASStream.cs for this structure")] public class TSOHouseChunkPack : ITSOCustomDeserialize
     {
         /// <summary>
         /// Maps read chunk to the index it is found at in the source data stream

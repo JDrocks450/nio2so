@@ -8,6 +8,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Struct
     /// upon deserialization.
     /// </summary>
     [Serializable]
+    [Obsolete("Please use RASStream.cs for this structure")]
     public class SetHouseBlobByIDRequestStreamStructure
     {
         //*TOC_*

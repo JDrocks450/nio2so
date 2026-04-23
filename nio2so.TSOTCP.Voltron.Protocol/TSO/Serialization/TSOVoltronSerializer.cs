@@ -1,4 +1,5 @@
-﻿using QuazarAPI.Networking.Data;
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using QuazarAPI.Networking.Data;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;

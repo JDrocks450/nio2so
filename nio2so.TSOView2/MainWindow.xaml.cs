@@ -3,6 +3,7 @@ using nio2so.TSOView2.Formats.Compressor;
 using nio2so.TSOView2.Formats.Cst;
 using nio2so.TSOView2.Formats.FAR3;
 using nio2so.TSOView2.Formats.Network;
+using nio2so.TSOView2.Formats.RAS;
 using nio2so.TSOView2.Formats.Terrain;
 using nio2so.TSOView2.Formats.TSOData;
 using nio2so.TSOView2.Formats.UIs;
@@ -99,6 +100,7 @@ namespace nio2so.TSOView2
                 { ClosePluginItem, ClosePlugin },
                 { NewWindowItem, CreateNewInstance },
                 { OpenAnyFARArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.Auto) },
+                { OpenRASStreamItem, () => ShowPlugin(new TSORASUIPage()) },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)
