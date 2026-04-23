@@ -33,11 +33,12 @@ namespace nio2so.TSOView2.Formats.FAR3
             FAR1= 0,
             FAR1_v1B = 1,
             FAR3 = 2,
+            Auto = 3
         }
 
         string? archivePath;
         IFileArchive<string>? archive;
-        private readonly FARMode mode;
+        private FARMode mode { get; set; }
 
         public bool ArchiveOpened => archive != null;
 
@@ -83,6 +84,7 @@ namespace nio2so.TSOView2.Formats.FAR3
                 };
                 root.ItemsSource = archive.GetAllFileEntries();
                 FileTree.Items.Add(root);
+                FARVersionLabel.Text = mode.ToString();
             }
         }
 
@@ -157,29 +159,54 @@ namespace nio2so.TSOView2.Formats.FAR3
 
         public void OpenArchive(FileInfo FileName, FARMode? Mode = default)
         {
+            IFileArchive<string> Open(FARMode Mode)
+            {
+                switch (Mode)
+                {
+                    case FARMode.FAR3:
+                        return new FAR3Archive(FileName.FullName);
+                    case FARMode.FAR1:
+                        return new FAR1Archive(FileName.FullName, false);
+                    case FARMode.FAR1_v1B:
+                        return new FAR1Archive(FileName.FullName, true);
+                }
+                return null;
+            }
+
             if (!Mode.HasValue)
                 Mode = mode;
             if (!FileName.Exists)
                 throw new FileNotFoundException(FileName.FullName);
-            archivePath = FileName.FullName;         
-            switch (Mode)
+            archivePath = FileName.FullName;
+            if (Mode == FARMode.Auto)
+            { // Auto mode selected
+                IFileArchive<string> autoDetected = null;
+                for (int i = 0; i < (int)FARMode.Auto; i++)
+                {
+                    try
+                    {
+                        autoDetected = Open((FARMode)i);
+                        mode = (FARMode)i;
+                        break;
+                    }
+                    catch { }
+                }
+                if (autoDetected == null)
+                    throw new InvalidDataException("Could not open this file as any FAR Archive version supported.");
+
+                archive = autoDetected;
+            }
+            else // specific mode selected
             {
-                case FARMode.FAR3:
-                    archive = new FAR3Archive(FileName.FullName);
-                    break;
-                case FARMode.FAR1:
-                    archive = new FAR1Archive(FileName.FullName, false);
-                    break;
-                case FARMode.FAR1_v1B:
-                    archive = new FAR1Archive(FileName.FullName, true);
-                    break;
-            }            
+                archive = Open(Mode.Value);
+                mode = Mode.Value;
+            }
             UIRedraw();
         }
 
         public bool PromptAndOpenArchive(string InitialDirectory = default)
         {
-            string Prompt = $"Open a {mode} Archive";
+            string Prompt = $"Open a ({mode}) Archive";
 
             if (InitialDirectory == null)
             {

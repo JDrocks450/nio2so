@@ -98,6 +98,7 @@ namespace nio2so.TSOView2
                 { OpenFARV1BArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.FAR1_v1B) },
                 { ClosePluginItem, ClosePlugin },
                 { NewWindowItem, CreateNewInstance },
+                { OpenAnyFARArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.Auto) },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)
