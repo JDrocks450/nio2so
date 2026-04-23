@@ -83,9 +83,6 @@ namespace nio2so.TSOView2.Formats.RAS
 
         public bool PromptAndOpenArchive(string InitialDirectory = default)
         {
-            OpenArchive(new FileInfo(@"C:\Program Files (x86)\Maxis\TSO Pre-Alpha\TSO\UserData\Houses\house0006094983.dat"));
-            return true;
-            
             string Prompt = $"Open a \"RAS_\" Stream";
 
             if (InitialDirectory == null)
