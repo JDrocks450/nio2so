@@ -44,15 +44,18 @@ namespace nio2so.TSOView2.Formats.RAS
             ChunksListBox.ItemsSource = TableOfContentsListBox.ItemsSource = null;
             HexEditor.Stream?.Dispose();
             HexEditor.Stream = null;
+            HeaderDataGrid.ItemsSource = null;
 
             //** load state
             if (Stream == null) return;
 
-            ChunksListBox.ItemsSource = Stream.Content.Chunks.Keys;
-            TableOfContentsListBox.ItemsSource = Stream.Content.TableOfContents.TableContents.Values;
+            ChunksListBox.ItemsSource = Stream.Content.Chunks.Values;
+            TableOfContentsListBox.ItemsSource = Stream.Content.TableOfContents.Values;
 
             ChunksListBox.SelectionChanged += ChunksListBox_SelectionChanged;
             TableOfContentsListBox.SelectionChanged += ChunksListBox_SelectionChanged;
+
+            HeaderDataGrid.ItemsSource = Stream.Header.GetDescriptionStrings();
         }
 
         private void ChunksListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -65,7 +68,7 @@ namespace nio2so.TSOView2.Formats.RAS
                 ChunksListBox.SelectedItem = Stream.Content.GetChunk(ChunkType);
                 return;
             }
-            if (value is RASStream.RASContent.RASChunk chunkData)
+            if (value is RASStream.RASArchive.RASChunk chunkData)
             {
                 MemoryStream stream = new(chunkData.Content);
                 HexEditor.Stream = stream;
@@ -77,6 +80,12 @@ namespace nio2so.TSOView2.Formats.RAS
         {
             byte[] fileData = File.ReadAllBytes(FileDesc.FullName);
             Stream = TSOVoltronSerializer.Deserialize<RASStream>(fileData);
+
+            byte[] reserializedData = TSOVoltronSerializer.Serialize(Stream);
+            File.WriteAllBytes(@"C:\Users\Jeremy\OneDrive\Desktop\" + FileDesc.Name + ".bin", reserializedData); // for debugging
+
+            if (!RASStream.VerifyIntegrity(fileData, reserializedData))
+                MessageBox.Show($"Warning: The RAS Stream at {FileDesc.FullName} failed integrity verification! This may indicate that the file is malformed or that there is an issue with the deserialization/serialization code.", $"Integrity Verification Failed", MessageBoxButton.OK, MessageBoxImage.Warning);
 
             UpdateUI();
         }

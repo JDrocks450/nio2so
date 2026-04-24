@@ -12,21 +12,27 @@
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
             <ColumnDefinition Width="4*"/>
+            
         </Grid.ColumnDefinitions>
-        <DockPanel >
-            <TextBlock DockPanel.Dock="Top" Margin="0,0,0,10" VerticalAlignment="Center">Table of Contents Entries</TextBlock>
-            <ListBox Name="TableOfContentsListBox" />
+        <DockPanel Grid.Row="0">
+            <TextBlock DockPanel.Dock="Top" Margin="0,0,0,10" VerticalAlignment="Center">Header Info</TextBlock>
+            <ListBox Name="HeaderDataGrid" />
         </DockPanel>
         <DockPanel Grid.Row="1">
+            <TextBlock DockPanel.Dock="Top" Margin="0,5,0,10" VerticalAlignment="Center">Table of Contents Entries</TextBlock>
+            <ListBox Name="TableOfContentsListBox" />
+        </DockPanel>
+        <DockPanel Grid.Row="2">
             <TextBlock DockPanel.Dock="Top" Margin="0,5,0,10" VerticalAlignment="Center">Chunks</TextBlock>
             <ListBox Name="ChunksListBox" />
         </DockPanel>
         <GridSplitter Grid.Column="0" Width="2" Background="Gray" Grid.RowSpan="2"/>
-        <TabControl Grid.Column="1" Grid.RowSpan="2" Margin="10,0,0,0">
+        <TabControl Grid.Column="1" Grid.RowSpan="3" Margin="10,0,0,0">
             <TabItem Header="Hex View">
                 <wpfhexaeditor:HexEditor Name="HexEditor" />
             </TabItem>

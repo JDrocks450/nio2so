@@ -4528,6 +4528,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol
     public enum TSO_PreAlpha_HouseStreamChunkHeaders
     {
         flag = 0x67616C66,
-        hous = 0x73756F68
+        hous = 0x73756F68,
+        flag1 = 0x666C6167,
+        hous1 = 0x686F7573
     }
 }

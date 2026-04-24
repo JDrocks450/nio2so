@@ -22,16 +22,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// Length to end of payload
         /// </summary>
         [TSOVoltronDBWrapperField] public uint SARLength { get; set; }
-        [TSOVoltronDBWrapperField] public uint SARHeader { get; set; } = 0x5F534152; // "_SAR"
-        /// <summary>
-        /// This is the <see cref="DecompressedSize"/> + the length of all bytes from HouseID (inclusive) to this field (inclusive) (20 bytes)
-        /// </summary>
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint TotalSize { get; set; }
-        /// <summary>
-        /// Seems to be 0x02 as a uint -- unsure
-        /// </summary>
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)] public uint CompressionType2 { get; set; }
 
+#if false
         //TSO Serializable Stream
         /// <summary>
         /// A <see cref="TSOSerializableStream"/> containing a <see cref="SetHouseBlobByIDRequestStreamStructure"/> object
@@ -39,8 +31,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public TSOSerializableStream? HouseFileStream { get; set; }
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream;
+#else
+        [TSOVoltronDBWrapperField] public CompressedRASStream HouseFileStream { get; set; } = new();
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream.CompressedStream;
+#endif
 
         public TSOSetHouseBlobByIDRequest() : base() { }
+
+        public bool TryUnpack(out RASStream.RASArchive? RASFile) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out RASFile);
 
         /// <summary>
         /// Decompresses the <see cref="HouseFileStream"/> to a <see cref="SetHouseBlobByIDRequestStreamStructure"/> instance
