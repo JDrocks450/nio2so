@@ -1,8 +1,5 @@
-﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Formats.Streams;
+﻿using nio2so.Formats.Streams;
 using nio2so.Voltron.Core.TSO.Serialization.Types;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
-using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
 {
@@ -23,14 +20,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         /// </summary>
         [TSOVoltronDBWrapperField] public uint SARLength { get; set; }
 
-#if false
         //TSO Serializable Stream
-        /// <summary>
-        /// A <see cref="TSOSerializableStream"/> containing a <see cref="SetHouseBlobByIDRequestStreamStructure"/> object
-        /// <para/>See: <see cref="TryUnpack(out SetHouseBlobByIDRequestStreamStructure?)"/>
-        /// </summary>
-        [TSOVoltronDBWrapperField] public TSOSerializableStream? HouseFileStream { get; set; }
-        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream;
+#if false
+        
 #else
         [TSOVoltronDBWrapperField] public CompressedRASStream HouseFileStream { get; set; } = new();
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseFileStream.CompressedStream;
@@ -38,13 +30,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
 
         public TSOSetHouseBlobByIDRequest() : base() { }
 
-        public bool TryUnpack(out RASStream.RASArchive? RASFile) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out RASFile);
-
         /// <summary>
-        /// Decompresses the <see cref="HouseFileStream"/> to a <see cref="SetHouseBlobByIDRequestStreamStructure"/> instance
+        /// Decompresses the <see cref="HouseFileStream"/> to a <see cref="RASStream.RASArchive"/>
         /// </summary>
         /// <param name="Structure"></param>
-        /// <returns></returns>
-        public bool TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out Structure);
+        public bool TryUnpack(out RASStream.RASArchive? RASFile) => ((ITSOSerializableStreamPDU)this).TryUnpackStream(out RASFile);
     }
 }

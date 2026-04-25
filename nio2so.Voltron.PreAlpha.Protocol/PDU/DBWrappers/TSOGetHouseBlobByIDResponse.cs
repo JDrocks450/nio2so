@@ -13,6 +13,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
     /// <summary>
     /// The response packet to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request"/> which will provide
     /// the remote party with the stored <see cref="TSODBHouseBlob"/> data in the Database
+    /// <para/>UserData/Houses has defaulthouse.dat -- a <see cref="TSOSerializableStream"/> dumped to disk containing default house data.
+    /// You can use that to supply <see cref="TSOGetHouseBlobByIDResponse.HouseBlobStream"/> data, as well.
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU((uint)TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
     public class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
@@ -20,7 +22,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public bool HouseBlobFollows { get; set; } = true;
 
-        //**
+        //**RAS
 
         [TSOVoltronDBWrapperField]
         public uint RASLength
@@ -28,15 +30,22 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             get => (uint)(5 + (HouseBlobStream?.Length ?? 0) + FOOTERLEN); set => _ = value;
         }
 
-        //**TSOSERIALIZABLE
-        /// <summary>
-        /// This is documented in HOUS_SMASH but it is the Hous chunk from a saved property file that can be found in UserData/Houses
-        /// </summary>
+        //**TSOSERIALIZABLE        
 #if RASTEST
         [TSOVoltronDBWrapperField] public CompressedRASStream HouseBlobStream { get; set; } = new();
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseBlobStream.CompressedStream;
 #else
+        /// <summary>
+        /// The header RAS data preceeding the stream itself <see cref="HouseBlobStream"/>
+        /// <para/>Just supplying a <see cref="TSOSerializableStream"/> containing the HOUS data works well, full <see cref="RASStream.RASArchive"/> does not appear to work.
+        /// </summary>
         [TSOVoltronDBWrapperField] public RASStream.RASHeader RASHeader { get; set; } = new() { Version = 0x0, Unknown = 0x2CE9 }; // "RAS\0"
+        /// <summary>
+        /// The body of the <see cref="TSOSetHouseBlobByIDRequest"/> contains a <see cref="RASStream.RASArchive"/> that contains a HOUS chunk, this is 
+        /// a compressed stream containing the body of the HOUS chunk.
+        /// <para/>UserData/Houses has defaulthouse.dat -- a <see cref="TSOSerializableStream"/> dumped to disk containing default house data.
+        /// You can use that to supply this data, as well.
+        /// </summary>
         [TSOVoltronDBWrapperField] public TSOSerializableStream HouseBlobStream { get; set; } = new();
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseBlobStream;
 #endif
@@ -70,10 +79,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         public TSOGetHouseBlobByIDResponse() : base() { }
 
         /// <summary>
-        /// Makes a default response packet using the supplied parameters.
+        /// Makes a response packet using the supplied parameters.
         /// </summary>
         /// <param name="houseID">The ID of the house</param> 
-        /// <param name="HouseBlob">The house data blob</param> 
+        /// <param name="HouseBlob">HOUS Chunk data -- use <see cref="TSOSetHouseBlobByIDRequest.HouseFileStream"/> HOUS chunk data here.</param> 
         /// <param name="CompressBlob">Flag indicating if the blob should be compressed</param>
         public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob, bool CompressBlob = true) :
             base(
