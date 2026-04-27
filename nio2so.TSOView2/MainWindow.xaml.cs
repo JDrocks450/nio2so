@@ -1,4 +1,5 @@
 ﻿using nio2so.TSOView2.Formats;
+using nio2so.TSOView2.Formats.CityBIN;
 using nio2so.TSOView2.Formats.Compressor;
 using nio2so.TSOView2.Formats.Cst;
 using nio2so.TSOView2.Formats.FAR3;
@@ -101,6 +102,7 @@ namespace nio2so.TSOView2
                 { NewWindowItem, CreateNewInstance },
                 { OpenAnyFARArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.Auto) },
                 { OpenRASStreamItem, () => ShowPlugin(new TSORASUIPage()) },
+                { OpenCityBinFileItem, () => ShowPlugin(new TSOCityBinPage()) },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

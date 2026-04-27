@@ -1,0 +1,50 @@
+﻿<Page x:Class="nio2so.TSOView2.Formats.CityBIN.TSOCityBinPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+      xmlns:local="clr-namespace:nio2so.TSOView2.Formats.CityBIN"
+      mc:Ignorable="d" Loaded="Page_Loaded"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="TSOCityBinPage">
+
+    <Grid>
+        <Grid Margin="10">
+            <TabControl SelectionChanged="TabControl_SelectionChanged">
+                <TabItem Header="Chunk One"/>
+                <TabItem Header="Chunk Two"/>
+                <TabItem Header="Chunk Three"/>
+            </TabControl>
+            <Viewbox Margin="0,30,0,0" RenderOptions.BitmapScalingMode="NearestNeighbor">
+                <Image Name="RenderWindow" Width="256" Height="256"/>
+            </Viewbox>
+        </Grid>
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,10,10,0" Orientation="Horizontal">
+            <TextBlock Text="Width" FontWeight="Bold"/>
+            <TextBox x:Name="WidthTextBox" Width="100" Margin="0,5,0,0" Text="256"/>
+            <Button x:Name="RenderButton" Click="RenderButton_Click" Width="176">Render!</Button>
+        </StackPanel>
+
+        <Viewport3D Name="CityView">
+            <Viewport3D.Camera>
+                <OrthographicCamera x:Name="Camera" 
+                FarPlaneDistance="10000" 
+                UpDirection="0,1,0" 
+                LookDirection="0,0,0" 
+                NearPlaneDistance="0" 
+                Position="100,200,100"
+                Width="1024"                                     />
+            </Viewport3D.Camera>
+            <Viewport3D.Children>
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <Model3DGroup>
+                            <DirectionalLight Color="#FFFFFFFF" Direction="-1,-1,1"/>
+                            <Model3DGroup x:Name="MainSceneGroup"/>
+                        </Model3DGroup>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </Viewport3D.Children>
+        </Viewport3D>
+    </Grid>
+</Page>
