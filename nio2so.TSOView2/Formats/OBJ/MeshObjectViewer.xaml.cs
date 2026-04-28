@@ -27,6 +27,9 @@ namespace nio2so.TSOView2.Formats.OBJ
     {
         Camera currentCamera => Camera;
 
+        const double MAX_ZOOM = 5;
+        const double USER_MAX_ZOOM = 20;
+
         /// <summary>
         /// Creates a new <see cref="MeshObjectViewer"/> instance"/>
         /// </summary>
@@ -208,9 +211,16 @@ namespace nio2so.TSOView2.Formats.OBJ
         {
             if (currentCamera is PerspectiveCamera) throw new NotImplementedException("Perspective Camera support has been removed.");
 
-            ortho_targetWidth += (-e.Delta / 5);
-            if (ortho_targetWidth <= 0)
-                ortho_targetWidth = 20; // bounce effect
+            double newZoom = ortho_targetWidth + (-e.Delta / 5);
+            OnCameraZooming(newZoom);
+        }
+
+        private void OnCameraZooming(double NewZoomWidth)
+        {
+            ortho_targetWidth = NewZoomWidth;
+
+            if (ortho_targetWidth <= MAX_ZOOM)
+                ortho_targetWidth = MAX_ZOOM;
 
             var animation = new DoubleAnimation(ortho_targetWidth, TimeSpan.FromSeconds(.5))
             {
@@ -221,6 +231,8 @@ namespace nio2so.TSOView2.Formats.OBJ
             animation.Completed += delegate
             {
                 Camera.Width = ortho_targetWidth;
+                if (ortho_targetWidth < USER_MAX_ZOOM) // bounce effect
+                    OnCameraZooming(USER_MAX_ZOOM);
             };
             currentCamera.BeginAnimation(OrthographicCamera.WidthProperty, animation, HandoffBehavior.SnapshotAndReplace);
         }

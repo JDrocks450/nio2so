@@ -52,7 +52,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
         private System.Drawing.Color[] getForestColors()
         {
             System.Drawing.Color[] palette = new System.Drawing.Color[256];
-            for (int i = 1; i < 10; i++)
+            for (int i = 1; i < 12; i++)
             { // greens                
                 palette[i] = System.Drawing.Color.FromArgb(255, 0, 255/i, 0);
             }
@@ -261,7 +261,36 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 int x = (int)uv.X;
                 bmp.SetPixel(x, y, renderColor);
                 
-            }            
+            }
+
+            string text = "Klapaucius,880,696,4;\r\nStratford,952,958,2;\r\nEastern Heights,1392,568,2;\r\nTar Pits,792,868,1;\r\nLiverwurst,1252,868,3;\r\nObject Land,1102,878,5;\r\nStay Out!,1102,900,2;\r\nThe Strip,1232,688,2;\r\nNorthern Vista,1034,282,2;\r\nWestchester,284,714,5;\r\nLover's Gate,508,890,3;\r\nCape Fear,1064,428,3;\r\nSmog Town,448,520,2;\r\nNorthern Plains,788,396,4;";
+
+            int scrW = 2098;
+            int scrH = 1256;
+
+            using StringReader reader = new StringReader(text);
+            using System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp);            
+            using System.Drawing.Font font = new System.Drawing.Font("Comic Sans MS", 12);
+
+            int color = 75;
+
+            while (reader.Peek() > 0)
+            {
+                color+=4;
+
+                string line = reader.ReadLine();
+                string[] parts = line.Split(',');
+                string name = parts[0];
+                int x = int.Parse(parts[1]);
+                int y = int.Parse(parts[2]);
+                int size = int.Parse(parts[3].Replace(";",""));
+                // Render the neighborhood on the map using the name, coordinates, and size
+
+                using System.Drawing.Brush pen = new System.Drawing.SolidBrush(palette[color]);
+
+                g.FillEllipse(pen, new System.Drawing.RectangleF(x, y, (size*3)+3, (size*3)+3)); // Example: Mark the neighborhood location with a red dot
+                g.DrawString(name, font, pen, new System.Drawing.PointF(x + 15, y + 15)); // Example: Mark the neighborhood location with a red dot
+            }
 
             return WPFInteropExtensions.Convert(bmp);
         }
