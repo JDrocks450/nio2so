@@ -1,27 +1,15 @@
-﻿using nio2so.Formats.Img.BMP;
-using nio2so.TSOView2.Formats.OBJ;
-using nio2so.TSOView2.Util;
+﻿using nio2so.TSOView2.Util;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace nio2so.TSOView2.Formats.CityBIN
 {
@@ -61,6 +49,15 @@ namespace nio2so.TSOView2.Formats.CityBIN
             }
             return palette;
         }
+        private System.Drawing.Color[] getForestColors()
+        {
+            System.Drawing.Color[] palette = new System.Drawing.Color[256];
+            for (int i = 1; i < 10; i++)
+            { // greens                
+                palette[i] = System.Drawing.Color.FromArgb(255, 0, 255/i, 0);
+            }
+            return palette;
+        }
         private System.Drawing.Color[] getPalette()
         {
             System.Drawing.Bitmap paletteBMP = new System.Drawing.Bitmap(@"C:\Program Files (x86)\Maxis\TSO Pre-Alpha\TSO\MatchMaker\CityTerrainPalette.bmp");
@@ -72,7 +69,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 int y = i;
                 palette[i] = paletteBMP.GetPixel(x, y);
             }
-
+            //palette = palette.Reverse().ToArray();
             paletteBMP.Dispose();
             return palette;
         }
@@ -104,14 +101,13 @@ namespace nio2so.TSOView2.Formats.CityBIN
             return bmp;
         }
 
-        private BitmapImage RenderElevationChunk(FileStream FS)
+        private BitmapImage RenderElevationChunk(FileStream FS, System.Drawing.Color[] Palette, bool ElevationMode = false)
         {
             FileStream fs = FS;
 
             //makeshift bmp quick and dirty
 
-            System.Drawing.Color[] palette = getGreyscale();
-            palette = getPalette();
+            System.Drawing.Color[] palette = Palette;
 
             var bmp = GetElevationChunk(fs, out int w, out int h);
             var raster = new System.Drawing.Bitmap(w, h);
@@ -119,6 +115,9 @@ namespace nio2so.TSOView2.Formats.CityBIN
             //build the bmp
             int lowBound = bmp.Min();
             int highBound = bmp.Max();
+
+            int waterLevel = lowBound;
+
             int range = highBound - lowBound;
 
             for (int i = 0; i < bmp.Length; i++)
@@ -127,7 +126,19 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 int y = i / w;
                 int x = i % w;
 
-                //colorByte = (byte)((colorByte - lowBound) / (double)(highBound - lowBound) * 255);
+                if (ElevationMode)
+                    colorByte = (byte)(((colorByte - lowBound) / (double)(highBound - lowBound) * 255));
+                else
+                {
+                    colorByte -= (byte)waterLevel;
+                    if (colorByte == 0) // water tile
+                        colorByte = 138; // make it a nice blue instead of the palette's dark grey
+                    else
+                    {
+                        colorByte = (byte)((colorByte / (double)range) * 128);
+                        colorByte = (byte)Math.Abs(128 - colorByte); // count up from grass to white snowcap by elevation (?)
+                    }
+                }
 
                 System.Drawing.Color renderColor = palette[colorByte];
 
@@ -137,40 +148,45 @@ namespace nio2so.TSOView2.Formats.CityBIN
             return WPFInteropExtensions.Convert(raster);
         }
 
-        private BitmapImage RenderForestChunk(FileStream FS)
+        private BitmapImage[] RenderForestChunks(FileStream FS)
         {
             FileStream fs = FS;
 
-            int bppWidth = 2;
-
-            int readInt()
-            {
-                byte[] data = new byte[sizeof(uint)];
-                fs.ReadExactly(data, 0, data.Length);
-                return BitConverter.ToInt32(data);
-            }
-
+            int bppWidth = 1;
             int w = 256, h = 256;
 
             //level two
+            int images = 2;
+
             int calcSize = w * h * bppWidth;
             int actualSize = (int)(ImportantOffsets.chunk3 - ImportantOffsets.chunk2);
 
-            if (calcSize != actualSize)
-                ;
+            if (calcSize * images != actualSize)
+                throw new InvalidDataException($"Calculated image data size ({calcSize * 2}) does not match actual size ({actualSize})! The file may be malformed or the calculation logic may be incorrect."); 
 
-            byte[] bmp = new byte[actualSize];
             fs.Seek((long)ImportantOffsets.chunk2, SeekOrigin.Begin);
 
-            int readAmt = fs.Read(bmp, 0, bmp.Length);
-            if (readAmt != bmp.Length)
-                ;
+            BitmapImage[] bmps = new BitmapImage[2];
 
-            nint ptr = Marshal.UnsafeAddrOfPinnedArrayElement(bmp, 0);
-            using MemoryStream ms = new(bmp);
-            using var leveltwo = new System.Drawing.Bitmap(w, h, bppWidth * w, System.Drawing.Imaging.PixelFormat.Format16bppRgb565, ptr);
+            for (int i = 0; i < images; i++)
+            {
+                byte[] bmp = new byte[calcSize];
+                
+                int readAmt = fs.Read(bmp, 0, bmp.Length);
+                if (readAmt != bmp.Length)
+                    throw new InvalidDataException($"readamt ({readAmt}) and image expected Size ({bmp.Length}) data length mismatch!");
 
-            return WPFInteropExtensions.Convert(leveltwo);
+                nint ptr = Marshal.UnsafeAddrOfPinnedArrayElement(bmp, 0);
+                using MemoryStream ms = new(bmp);
+                using var renderedBmp = new System.Drawing.Bitmap(w, h, bppWidth * w, System.Drawing.Imaging.PixelFormat.Format8bppIndexed, ptr);
+
+                renderedBmp.Palette = new System.Drawing.Imaging.ColorPalette(getForestColors());
+
+                renderedBmp.MakeTransparent(renderedBmp.Palette.Entries[0]);
+
+                bmps[i] = WPFInteropExtensions.Convert(renderedBmp, true);
+            }
+            return bmps;
 
         }
 
@@ -251,14 +267,14 @@ namespace nio2so.TSOView2.Formats.CityBIN
         }
 
         private Model3DCollection RenderTerrainMesh(FileStream FS, float ElevationScale = 1.0f)
-        {           
+        {
             int GridSize = 256; // Assuming a 256x256 grid based on the file structure
 
             // Read the deformation data (UVs) from the file
-            Vector2[] uvData = GetDeformation(FS,GridSize,GridSize);
+            Vector2[] uvData = GetDeformation(FS, GridSize, GridSize);
 
             var elevationData = GetElevationChunk(FS, out int w, out int h);
-            var texture = RenderElevationChunk(FS); // This will read the elevation data and can be used to color the mesh
+            var texture = RenderElevationChunk(FS, getPalette(), false); // This will read the elevation data and can be used to color the mesh
 
             // uvData.Length is 65,536 (256 * 256)
             Vector3[] vertices = new Vector3[uvData.Length];
@@ -268,19 +284,18 @@ namespace nio2so.TSOView2.Formats.CityBIN
 
             for (int i = 0; i < uvData.Length; i++)
             {
-                // 1. Get the grid position from the index
+                // get the grid position from the index
                 int gridU = i % GridSize;
                 int gridV = i / GridSize;
 
-                // 2. Unshear the physical geometry (The Vertex)
-                // We rotate the grid indices to create a square 3D footprint
-                float xPos = gridU; //(gridU - gridV);
-                float zPos = gridV;//(gridU + gridV) * 0.5f;
+                // make uv mesh geometry
+                float xPos = gridU; //(gridU - gridV); // make isometric
+                float zPos = gridV; //(gridU + gridV) * 0.5f;
                 float yPos = ElevationScale * elevationData[i]; // Assuming it's flat unless there's a 3rd data stream
 
                 vertices[i] = new Vector3(xPos, yPos, zPos);
 
-                // 2. Triangle Logic (Only run if we aren't on the far right or bottom edge)
+                // triangulate the grid (except for the last row and column)
                 if (gridU < GridSize - 1 && gridV < GridSize - 1)
                 {
                     int root = i;
@@ -300,23 +315,38 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 }
             }
 
+            //to wpf mesh
             MeshGeometry3D mesh = new MeshGeometry3D
             {
                 Positions = new Point3DCollection(vertices.Select(v => new Point3D(v.X, v.Y, v.Z))),
                 TriangleIndices = new Int32Collection(tris),
-                TextureCoordinates = new PointCollection(uvData.Select(uv => new Point(uv.X / GridSize, uv.Y / GridSize))),                   
+                TextureCoordinates = new PointCollection(vertices.Select(uv => new Point(uv.X, uv.Z))),
             };
-
+            //make mesh material
             var material = new DiffuseMaterial(new ImageBrush(texture));
             var model = new GeometryModel3D
             {
                 Geometry = mesh,
                 Material = material,
-                BackMaterial = material,
+                //BackMaterial = material,
                 Transform = new ScaleTransform3D(1, 1, 1)
             };
 
-            return [model];
+            // ** forest layer ** 
+            var forestTexture = RenderForestChunks(FS)[0]; // Assuming the first image is the forest layer
+            var forestMaterial = new DiffuseMaterial(new ImageBrush(forestTexture));
+            var transforms = new Transform3DGroup();
+            transforms.Children.Add(new ScaleTransform3D(1, 1, 1));
+            transforms.Children.Add(new TranslateTransform3D(0, 0.1, 0)); // Slightly above the terrain to prevent z-fighting
+            var forestModel = new GeometryModel3D
+            {
+                Geometry = mesh,
+                Material = forestMaterial,
+                //BackMaterial = forestMaterial,
+                Transform = transforms
+            };
+
+            return [model,forestModel];
         }
 
         private void doRender(ImportantOffsets? Chunk = default)
@@ -333,13 +363,25 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 {
                     RenderWindow.Visibility = Visibility.Visible;
                     MeshModelViewer.Visibility = Visibility.Hidden;
+                    RenderWindow2.Visibility = Visibility.Collapsed;
 
-                    RenderWindow.Source = CurrentChunk switch
+                    void SetImages()
                     {
-                        ImportantOffsets.chunk0 => RenderElevationChunk(fs),
-                        ImportantOffsets.chunk3 => RenderUVTexture(fs),
-                        ImportantOffsets.chunk2 => RenderForestChunk(fs),
-                    };
+                        object VAL = CurrentChunk switch
+                        {
+                            ImportantOffsets.chunk0 => RenderElevationChunk(fs, getGreyscale(), true),
+                            ImportantOffsets.chunk3 => RenderUVTexture(fs),
+                            ImportantOffsets.chunk2 => RenderForestChunks(fs),
+                        };
+                        if (VAL is BitmapImage[] arr)
+                        { // lol hackish solution
+                            RenderWindow2.Visibility = Visibility.Visible;
+                            RenderWindow2.Source = arr[1];
+                            VAL = arr[0];
+                        }
+                        RenderWindow.Source = VAL as ImageSource;
+                    }
+                    SetImages();
 
                     if (Chunk == ImportantOffsets.chunk3 && (ThreeDBox.IsChecked ?? false)) // 3D
                     {
@@ -371,5 +413,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
         {
             doRender();
         }
+
+        private void CopyButton_Click(object sender, RoutedEventArgs e) => Clipboard.SetImage(RenderWindow.Source as BitmapSource);
     }
 }

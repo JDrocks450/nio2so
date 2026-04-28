@@ -6,24 +6,28 @@
       xmlns:local="clr-namespace:nio2so.TSOView2.Formats.CityBIN" xmlns:obj="clr-namespace:nio2so.TSOView2.Formats.OBJ"
       mc:Ignorable="d" Loaded="Page_Loaded"
       d:DesignHeight="450" d:DesignWidth="800"
-      Title="TSOCityBinPage">
+      Title="TSOView2 CityMap.bin Viewer">
 
     <Grid>
         <Grid Margin="10">
             <TabControl SelectionChanged="TabControl_SelectionChanged">
-                <TabItem Header="Chunk One"/>
-                <TabItem Header="Chunk Two"/>
-                <TabItem Header="Chunk Three"/>
+                <TabItem Header="Elevation Chunk"/>
+                <TabItem Header="Forest/Misc Chunk"/>
+                <TabItem Header="3D Mesh Chunk"/>
             </TabControl>
             <Grid Margin="0,30,0,0">
-                <Viewbox  RenderOptions.BitmapScalingMode="NearestNeighbor">
-                    <Image Name="RenderWindow" Width="{Binding Source.Width, ElementName=RenderWindow}" Height="{Binding Source.Height, ElementName=RenderWindow}"/>
+                <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor">
+                    <StackPanel>
+                        <Image Name="RenderWindow" Width="{Binding Source.Width, ElementName=RenderWindow}" Height="{Binding Source.Height, ElementName=RenderWindow}"/>
+                        <Image Name="RenderWindow2" Width="{Binding Source.Width, ElementName=RenderWindow2}" Height="{Binding Source.Height, ElementName=RenderWindow2}"/>
+                    </StackPanel>
                 </Viewbox>
                 <obj:MeshObjectViewer x:Name="MeshModelViewer" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
             </Grid>
         </Grid>
-        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,10,10,0" Orientation="Horizontal">
-            <Button x:Name="RenderButton" Click="RenderButton_Click" Padding="10,0">Redraw</Button>
+        <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Margin="370,10,10,0" Orientation="Horizontal">
+            <Button x:Name="RenderButton" Click="RenderButton_Click" Padding="10,0" Content="Refresh"/>
+            <Button x:Name="CopyButton" Click="CopyButton_Click" Padding="10,0" Content="Copy Image(s)"/>
             <CheckBox Name="ThreeDBox" VerticalAlignment="Center" Margin="10,0" IsChecked="True">3D</CheckBox>
         </StackPanel>
     </Grid>
