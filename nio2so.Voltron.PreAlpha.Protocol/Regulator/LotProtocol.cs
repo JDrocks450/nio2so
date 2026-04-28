@@ -2,6 +2,7 @@
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
+using nio2so.Formats.Streams;
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
@@ -235,9 +236,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
 
             uint HouseID = housePDU.HouseID;
-            if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
-                throw new InvalidDataException("Unable to read incoming HouseBlob data!");            
-            var housChunk = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
+            if (!housePDU.TryUnpack(out RASStream.RASArchive? Structure)) // decompress the Serializable stream
+                throw new InvalidDataException("Unable to read incoming HouseBlob data!");
+
+            RASStream.RASArchive.RASChunk? housChunk = Structure.GetChunk((uint)TSO_PreAlpha_HouseStreamChunkHeaders.hous1);
             if (housChunk == null) // get hous chunk in the package
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
             // send decompressed houseblob to the data service

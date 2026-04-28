@@ -71,6 +71,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     Enum.Parse<TSOGetTopListResponse.TSOTop100ListTypes>(dataSource.ListType),
                     dataSource.ListName, iconBytes);
             }
+            File.WriteAllBytes("C:\\Users\\Jeremy\\OneDrive\\Desktop\\dump.bmp", _resourceCache.First().Value);
 
             //flush the image cache
             FLUSH_CACHE();

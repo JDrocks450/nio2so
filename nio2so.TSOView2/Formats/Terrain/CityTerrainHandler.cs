@@ -1,5 +1,6 @@
 ﻿using nio2so.Formats.Terrain;
 using nio2so.TSOView2.FileDialog;
+using nio2so.TSOView2.Formats.OBJ;
 using nio2so.TSOView2.Util;
 using System;
 using System.Threading.Tasks;
@@ -51,7 +52,7 @@ namespace nio2so.TSOView2.Formats.Terrain
                 {
                     CitySettings = new()
                     {
-                        ElevationScale = 1 / 8.0
+                        ElevationScale = 1 / 12.0
                     }
                 };
                 //LOAD ASSETS

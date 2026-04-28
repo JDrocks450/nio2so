@@ -1,4 +1,5 @@
-﻿#define ATTEMPT_2
+﻿#define RASTEST
+#undef RASTEST
 
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.DataService.Common.Types.Lot;
@@ -12,52 +13,53 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
     /// <summary>
     /// The response packet to <see cref="TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Request"/> which will provide
     /// the remote party with the stored <see cref="TSODBHouseBlob"/> data in the Database
+    /// <para/>UserData/Houses has defaulthouse.dat -- a <see cref="TSOSerializableStream"/> dumped to disk containing default house data.
+    /// You can use that to supply <see cref="TSOGetHouseBlobByIDResponse.HouseBlobStream"/> data, as well.
     /// </summary>
     [TSOVoltronDBRequestWrapperPDU((uint)TSO_PreAlpha_DBActionCLSIDs.GetHouseBlobByID_Response)]
     public class TSOGetHouseBlobByIDResponse : TSODBRequestWrapper, ITSOSerializableStreamPDU
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
-        [TSOVoltronDBWrapperField] public byte Filler1 { get; set; } = 0x01;
+        [TSOVoltronDBWrapperField] public bool HouseBlobFollows { get; set; } = true;
 
-        //**
-
-        [TSOVoltronDBWrapperField]
-        public uint Filler4
-        {
-            get => (uint)(0x1D + (HouseBlobStream?.Length ?? 0) + FOOTERLEN); set => _ = value;
-        }
-        [TSOVoltronDBWrapperField][TSOVoltronValue(TSOVoltronValueTypes.BigEndian)] public uint Filler5 { get; set; } = 0x5F534152;
-        
-        [TSOVoltronDBWrapperField]
-        [TSOVoltronValue(TSOVoltronValueTypes.LittleEndian)]
-        public uint Filler6
-        {
-            get => HouseBlobStream?.DecompressedSize ?? 0 + 0x11;
-            set => _ = value;
-        }
+        //**RAS
 
         [TSOVoltronDBWrapperField]
-        public uint HB_Payload_Size
+        public uint RASLength
         {
-            get => HouseBlobStream?.GetTotalLength() ?? 0;
-            set => _ = value;
+            get => (uint)(5 + (HouseBlobStream?.Length ?? 0) + FOOTERLEN); set => _ = value;
         }
 
-        //**TSOSERIALIZABLE
+        //**TSOSERIALIZABLE        
+#if RASTEST
+        [TSOVoltronDBWrapperField] public CompressedRASStream HouseBlobStream { get; set; } = new();
+        TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseBlobStream.CompressedStream;
+#else
         /// <summary>
-        /// This is documented in HOUS_SMASH but it is the Hous chunk from a saved property file that can be found in UserData/Houses
+        /// The header RAS data preceeding the stream itself <see cref="HouseBlobStream"/>
+        /// <para/>Just supplying a <see cref="TSOSerializableStream"/> containing the HOUS data works well, full <see cref="RASStream.RASArchive"/> does not appear to work.
         /// </summary>
-        [TSOVoltronDBWrapperField] public TSOSerializableStream HouseBlobStream { get; set; }
+        [TSOVoltronDBWrapperField] public RASStream.RASHeader RASHeader { get; set; } = new() { Version = 0x0, Unknown = 0x2CE9 }; // "RAS\0"
+        /// <summary>
+        /// The body of the <see cref="TSOSetHouseBlobByIDRequest"/> contains a <see cref="RASStream.RASArchive"/> that contains a HOUS chunk, this is 
+        /// a compressed stream containing the body of the HOUS chunk.
+        /// <para/>UserData/Houses has defaulthouse.dat -- a <see cref="TSOSerializableStream"/> dumped to disk containing default house data.
+        /// You can use that to supply this data, as well.
+        /// </summary>
+        [TSOVoltronDBWrapperField] public TSOSerializableStream HouseBlobStream { get; set; } = new();
         TSOSerializableStream ITSOSerializableStreamPDU.GetStream() => HouseBlobStream;
+#endif
 
         //**FOOTER
 
         const uint FOOTERLEN = sizeof(uint) * 1;
 
+
         [TSOVoltronDBWrapperField] public uint Footer1 { get; set; } = 0x01; //0x0036FCFC; // 0x01
         [TSOVoltronDBWrapperField] public uint Footer2 { get; set; } = 0xDADDE510;
         [TSOVoltronDBWrapperField] public uint Footer3 { get; set; } = 0xDADDE511;
 
+#if false
         [TSOVoltronDBWrapperField]
         public byte[] FooterGarbage
         {
@@ -69,6 +71,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             };
             set => _ = value;
         }
+#endif
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
@@ -76,10 +79,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         public TSOGetHouseBlobByIDResponse() : base() { }
 
         /// <summary>
-        /// Makes a default response packet using the supplied parameters.
+        /// Makes a response packet using the supplied parameters.
         /// </summary>
         /// <param name="houseID">The ID of the house</param> 
-        /// <param name="HouseBlob">The house data blob</param> 
+        /// <param name="HouseBlob">HOUS Chunk data -- use <see cref="TSOSetHouseBlobByIDRequest.HouseFileStream"/> HOUS chunk data here.</param> 
         /// <param name="CompressBlob">Flag indicating if the blob should be compressed</param>
         public TSOGetHouseBlobByIDResponse(uint houseID, TSODBHouseBlob HouseBlob, bool CompressBlob = true) :
             base(
@@ -94,11 +97,25 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
             if (HouseBlob == null) 
                 throw new ArgumentNullException(nameof(HouseBlob));
 
-            var decompressedBytes = TSOVoltronSerializer.Serialize(HouseBlob);
+            //Create the RAS Archive with the Hous chunk containing the HouseBlob data
+            var HousChunkData = TSOVoltronSerializer.Serialize(HouseBlob);
+            RASStream.RASArchive archive = new RASStream.RASArchive(
+                new RASStream.RASArchive.RASChunk((uint)TSO_PreAlpha_HouseStreamChunkHeaders.flag, [0,0,0,0]),
+                new RASStream.RASArchive.RASChunk((uint)TSO_PreAlpha_HouseStreamChunkHeaders.hous, HousChunkData));
+
+#if RASTEST
+            HouseBlobStream = new CompressedRASStream(archive, CompressBlob, 0x9);
+            HouseBlobStream.Header.Version = 0x0;
+            HouseBlobStream.Header.Unknown = 0x2CE9;
+#else
+            byte[] Data = archive.GetChunk((uint)TSO_PreAlpha_HouseStreamChunkHeaders.hous).Content;
             if (CompressBlob)
-                HouseBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
+                HouseBlobStream = TSOSerializableStream.ToCompressedStream(Data);
             else
-                HouseBlobStream = new TSOSerializableStream(0x01, decompressedBytes, 0x200C);
+                HouseBlobStream = new TSOSerializableStream(0x01, Data, (uint)Data.Length);
+            RASHeader.TotalSize = (uint)(HouseBlobStream.Length + 5); // the length of the stream + the 5 bytes in the header
+            RASHeader.Unknown = (ushort)HouseBlobStream?.GetTotalLength();
+#endif
 
             MakeBodyFromProperties();
         }

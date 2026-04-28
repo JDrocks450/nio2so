@@ -62,6 +62,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers
         {
             this.AvatarID = AvatarID;
 
+            Filler = 0x01;
+
             var decompressedBytes = TSOVoltronSerializer.Serialize(BlobData);
             CharBlobStream = TSOSerializableStream.ToCompressedStream(decompressedBytes);
 
