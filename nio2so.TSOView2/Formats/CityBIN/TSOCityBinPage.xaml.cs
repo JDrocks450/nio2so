@@ -1,4 +1,5 @@
 ﻿using nio2so.Formats.Img.BMP;
+using nio2so.TSOView2.Formats.OBJ;
 using nio2so.TSOView2.Util;
 using System;
 using System.Collections;
@@ -6,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,6 +17,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.Media3D;
 using System.Windows.Navigation;
@@ -44,6 +47,9 @@ namespace nio2so.TSOView2.Formats.CityBIN
         private void Page_Loaded(object sender, RoutedEventArgs e)
         {
             doRender();
+
+            ThreeDBox.Checked += ThreeDBox_Checked;
+            ThreeDBox.Unchecked += ThreeDBox_Checked;
         }
 
         private System.Drawing.Color[] getGreyscale()
@@ -203,7 +209,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
             return uvList;
         }
 
-        public BitmapImage algorithmChunkThree2(FileStream FS)
+        public BitmapImage RenderUVTexture(FileStream FS)
         {
             var fs = FS;
 
@@ -241,13 +247,11 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 
             }            
 
-            var managedBMP =  WPFInteropExtensions.Convert(bmp);
-            Clipboard.SetImage(managedBMP);
-            return managedBMP;
+            return WPFInteropExtensions.Convert(bmp);
         }
 
-        private BitmapImage render3D(FileStream FS)
-        {
+        private Model3DCollection RenderTerrainMesh(FileStream FS, float ElevationScale = 1.0f)
+        {           
             int GridSize = 256; // Assuming a 256x256 grid based on the file structure
 
             // Read the deformation data (UVs) from the file
@@ -270,9 +274,9 @@ namespace nio2so.TSOView2.Formats.CityBIN
 
                 // 2. Unshear the physical geometry (The Vertex)
                 // We rotate the grid indices to create a square 3D footprint
-                float xPos = (gridU - gridV);
-                float zPos = (gridU + gridV) * 0.5f;
-                float yPos = 2.0f * elevationData[i]; // Assuming it's flat unless there's a 3rd data stream
+                float xPos = gridU; //(gridU - gridV);
+                float zPos = gridV;//(gridU + gridV) * 0.5f;
+                float yPos = ElevationScale * elevationData[i]; // Assuming it's flat unless there's a 3rd data stream
 
                 vertices[i] = new Vector3(xPos, yPos, zPos);
 
@@ -294,7 +298,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
                     tris[triIndex++] = belowRight;
                     tris[triIndex++] = right;
                 }
-            }            
+            }
 
             MeshGeometry3D mesh = new MeshGeometry3D
             {
@@ -303,35 +307,16 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 TextureCoordinates = new PointCollection(uvData.Select(uv => new Point(uv.X / GridSize, uv.Y / GridSize))),                   
             };
 
-            MainSceneGroup.Children.Clear();
-
             var material = new DiffuseMaterial(new ImageBrush(texture));
-            MainSceneGroup.Children.Add(new GeometryModel3D
+            var model = new GeometryModel3D
             {
                 Geometry = mesh,
                 Material = material,
                 BackMaterial = material,
                 Transform = new ScaleTransform3D(1, 1, 1)
-            });
+            };
 
-            // 1. Get the current camera position
-            Point3D cameraPos = Camera.Position;
-
-            Point3D objectCenter = new(128, 0, 128);
-
-            // 2. Calculate the direction vector from camera to object
-            Vector3D lookDir = new Vector3D(
-                0,//objectCenter.X - cameraPos.X,
-                objectCenter.Y - cameraPos.Y,
-                objectCenter.Z - cameraPos.Z
-            );
-
-            lookDir.Normalize();
-
-            // 3. Update the camera
-            Camera.LookDirection = lookDir;      
-
-            return null;
+            return [model];
         }
 
         private void doRender(ImportantOffsets? Chunk = default)
@@ -346,12 +331,22 @@ namespace nio2so.TSOView2.Formats.CityBIN
 
                 FileStream fs = new FileStream(SRC, FileMode.Open, FileAccess.Read);
                 {
+                    RenderWindow.Visibility = Visibility.Visible;
+                    MeshModelViewer.Visibility = Visibility.Hidden;
+
                     RenderWindow.Source = CurrentChunk switch
                     {
                         ImportantOffsets.chunk0 => RenderElevationChunk(fs),
-                        ImportantOffsets.chunk3 => render3D(fs),
+                        ImportantOffsets.chunk3 => RenderUVTexture(fs),
                         ImportantOffsets.chunk2 => RenderForestChunk(fs),
                     };
+
+                    if (Chunk == ImportantOffsets.chunk3 && (ThreeDBox.IsChecked ?? false)) // 3D
+                    {
+                        RenderWindow.Visibility = Visibility.Hidden;
+                        MeshModelViewer.Visibility = Visibility.Visible;
+                        MeshModelViewer.SetObjects(RenderTerrainMesh(fs,.5f));
+                    }
                 }
                 fs.Dispose();
             }
@@ -370,6 +365,11 @@ namespace nio2so.TSOView2.Formats.CityBIN
         {
             ImportantOffsets index = Enum.GetValues<ImportantOffsets>()[(sender as TabControl).SelectedIndex];
             doRender(index);
+        }
+
+        private void ThreeDBox_Checked(object sender, RoutedEventArgs e)
+        {
+            doRender();
         }
     }
 }

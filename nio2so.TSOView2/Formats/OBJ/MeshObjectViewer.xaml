@@ -4,9 +4,38 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:nio2so.TSOView2.Formats.OBJ"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d" Background="{StaticResource TSOWindowBackgroundBrush}"
+             d:DesignHeight="450" d:DesignWidth="800" MouseMove="Page_MouseMove" Name="HOST">
     <Grid>
-            
+        <Viewport3D Name="CityView">
+            <Viewport3D.Camera>
+                <OrthographicCamera x:Name="Camera" 
+                    FarPlaneDistance="10000" 
+                    UpDirection="0,1,0" 
+                    LookDirection=".0,.6,.6" 
+                    NearPlaneDistance="100" 
+                    Position="0,-247,0"
+                    Width="140" />
+            </Viewport3D.Camera>
+            <Viewport3D.Children>
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <Model3DGroup>
+                            <DirectionalLight Color="#FFFFFFFF" Direction=".5,-1,.5"/>
+                            <Model3DGroup x:Name="MainSceneGroup"/>
+                        </Model3DGroup>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </Viewport3D.Children>
+        </Viewport3D>
+        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,0">
+            <TextBlock Name="DebugText" Foreground="{Binding Foreground, ElementName=HOST}" FontWeight="Bold">
+            Camera Information
+            </TextBlock>
+            <Separator Margin="0,5"/>
+            <Button x:Name="ResetCameraButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="ResetCameraButton_Click">Reset Camera</Button>
+            <Button x:Name="PauseAnimationButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="PauseAnimationButton_Click">Stop Rotating</Button>
+            <Button x:Name="RecenterButton" Foreground="{Binding Foreground, ElementName=HOST}" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Click="RecenterButton_Click">Center Camera</Button>
+        </StackPanel>
     </Grid>
 </UserControl>
