@@ -46,6 +46,11 @@ namespace nio2so.TSOView2.Formats.OBJ
             Window.GetWindow(this).MouseWheel += CityView_MouseWheel;
         }
 
+        /// <summary>
+        /// Clears the 3D Object Canvas and places the new collection at the origin of the scene, with lighting, and a rotating animation.
+        /// <para/>This will also set the camera to look at the middle center of the object, with an appropriate viewing distance applied.
+        /// </summary>
+        /// <param name="Models"></param>
         public void SetObjects(Model3DCollection Models)
         {
             ortho_targetWidth = (currentCamera as OrthographicCamera)?.Width ?? 0;

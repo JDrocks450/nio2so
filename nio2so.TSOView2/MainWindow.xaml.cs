@@ -102,7 +102,8 @@ namespace nio2so.TSOView2
                 { NewWindowItem, CreateNewInstance },
                 { OpenAnyFARArchiveItem, () => FARShowExplorer(FAR3Control.FARMode.Auto) },
                 { OpenRASStreamItem, () => ShowPlugin(new TSORASUIPage()) },
-                { OpenCityBinFileItem, () => ShowPlugin(new TSOCityBinPage()) },
+                { OpenCityBinFileItem, () => ShowPlugin(new TSOCityBinPage(TSOCityBinPage.OpenMode.AutomaticTSODirectory)) },
+                { OpenCityBinManualFileItem, () => ShowPlugin(new TSOCityBinPage(TSOCityBinPage.OpenMode.ManualDirectorySelect)) },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

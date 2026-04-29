@@ -43,7 +43,7 @@ namespace nio2so.TSOView2.Formats.RAS
             ChunksListBox.SelectionChanged -= ChunksListBox_SelectionChanged; 
             ChunksListBox.ItemsSource = TableOfContentsListBox.ItemsSource = null;
             HexEditor.Stream?.Dispose();
-            HexEditor.Stream = null;
+            HexEditor.Close();
             HeaderDataGrid.ItemsSource = null;
 
             //** load state
@@ -71,7 +71,7 @@ namespace nio2so.TSOView2.Formats.RAS
             if (value is RASStream.RASArchive.RASChunk chunkData)
             {
                 MemoryStream stream = new(chunkData.Content);
-                HexEditor.Stream = stream;
+                HexEditor.OpenStream(stream);
                 return;
             }
         }

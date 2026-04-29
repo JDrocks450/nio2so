@@ -7,7 +7,12 @@
       mc:Ignorable="d" Loaded="Page_Loaded"
       d:DesignHeight="450" d:DesignWidth="800"
       Title="TSOView2 CityMap.bin Viewer">
-
+    <Page.Resources>
+        <ContextMenu x:Key="CopyImageMenu">
+            <MenuItem Header="Copy Image" Click="CopyButton_Click"/>
+        </ContextMenu>
+    </Page.Resources>
+    
     <Grid>
         <Grid Margin="10">
             <TabControl SelectionChanged="TabControl_SelectionChanged">
@@ -17,9 +22,9 @@
             </TabControl>
             <Grid Margin="0,30,0,0">
                 <Viewbox RenderOptions.BitmapScalingMode="NearestNeighbor">
-                    <StackPanel>
-                        <Image Name="RenderWindow" Width="{Binding Source.Width, ElementName=RenderWindow}" Height="{Binding Source.Height, ElementName=RenderWindow}"/>
-                        <Image Name="RenderWindow2" Width="{Binding Source.Width, ElementName=RenderWindow2}" Height="{Binding Source.Height, ElementName=RenderWindow2}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Name="RenderWindow" Width="{Binding Source.Width, ElementName=RenderWindow}" Height="{Binding Source.Height, ElementName=RenderWindow}" ContextMenu="{StaticResource CopyImageMenu}"/>
+                        <Image Name="RenderWindow2" Width="{Binding Source.Width, ElementName=RenderWindow2}" Height="{Binding Source.Height, ElementName=RenderWindow2}" ContextMenu="{StaticResource CopyImageMenu}"/>
                     </StackPanel>
                 </Viewbox>
                 <obj:MeshObjectViewer x:Name="MeshModelViewer" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"/>
@@ -27,8 +32,12 @@
         </Grid>
         <StackPanel VerticalAlignment="Top" HorizontalAlignment="Left" Margin="370,10,10,0" Orientation="Horizontal">
             <Button x:Name="RenderButton" Click="RenderButton_Click" Padding="10,0" Content="Refresh"/>
-            <Button x:Name="CopyButton" Click="CopyButton_Click" Padding="10,0" Content="Copy Image(s)"/>
-            <CheckBox Name="ThreeDBox" VerticalAlignment="Center" Margin="10,0" IsChecked="True">3D</CheckBox>
+            <CheckBox Name="ThreeDBox" VerticalAlignment="Top" Margin="10,0" IsChecked="True" Foreground="White">3D</CheckBox>
+            <TextBlock Margin="10,0,5,0" Foreground="White">
+                <Run>Water Level:</Run>
+                <Run Text="{Binding Value,ElementName=WaterSlider}"/>
+            </TextBlock>
+            <Slider x:Name="WaterSlider" Width="100" IsSnapToTickEnabled="True" TickFrequency="1"/>
         </StackPanel>
     </Grid>
 </Page>

@@ -33,7 +33,8 @@ namespace nio2so.TSOView2.Formats
             ErrorMessageWindow.Visibility = Visibility.Collapsed;
 
             _openedStream?.Dispose();
-            BytesDisplay.Stream = _openedStream = null;
+            _openedStream = null;
+            BytesDisplay.Close();
 
             string hexText = PastedText;
             _openedStream = new MemoryStream();
@@ -60,7 +61,7 @@ namespace nio2so.TSOView2.Formats
                     }
                 }
             }
-            BytesDisplay.Stream = _openedStream;
+            BytesDisplay.OpenStream(_openedStream);
             ByteLengthLabel.Text = _openedStream.Length.ToString();
         }
 

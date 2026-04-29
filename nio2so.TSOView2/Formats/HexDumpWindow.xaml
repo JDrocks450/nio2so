@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:nio2so.TSOView2.Formats" xmlns:wpfhexaeditor="clr-namespace:WpfHexaEditor;assembly=WPFHexaEditor"
+        xmlns:local="clr-namespace:nio2so.TSOView2.Formats" xmlns:wpfhexaeditor="clr-namespace:WpfHexEditor.HexEditor;assembly=WpfHexEditor.HexEditor"
         mc:Ignorable="d" Name="HOST" Foreground="White"
         Title="ResEdit Text Dump Window" Height="450" Width="800" Background="{StaticResource TSOWindowBackgroundBrush}">
     <DockPanel Margin="10">

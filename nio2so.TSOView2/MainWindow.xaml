@@ -13,7 +13,11 @@
                     <MenuItem Name="OpenUIsItem" Header="The Sims Online UIScript..."/>
                     <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
                     <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
-                    <MenuItem Name="OpenCityBinFileItem" Header="CityMap.bin File..."/>
+                    <MenuItem Header="SimCity 3000 Map">
+                        <MenuItem Name="OpenCityBinFileItem" Header="Open CityMap.BIN..."/>
+                        <MenuItem Name="OpenCityBinManualFileItem" Header="Choose a TSO/MatchMaker (CityMap.bin) folder..."/>
+                    </MenuItem>
+                    
                     <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
                     <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
                     <MenuItem Name="OpenRASStreamItem" Header="Open a RAS Stream"/>

@@ -37,6 +37,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.PreAlpha.Pro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.PlayTest.Protocol", "nio2so.Voltron.PlayTest.Protocol\nio2so.Voltron.PlayTest.Protocol.csproj", "{9A23F267-50DE-4776-808E-933E9F1158FF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B25890F-03D2-44C4-92A0-D11B2AD5CF44}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
