@@ -1,5 +1,6 @@
 ﻿using nio2so.Formats.Terrain;
 using nio2so.TSOView2.Formats.OBJ;
+using nio2so.TSOView2.Plugins;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,6 +29,11 @@ namespace nio2so.TSOView2.Formats.Terrain
         {
             IEnumerable<GeometryModel3D> models = CurrentMesh.To3DGeometry();
             ModelViewer.SetObjects([.. models]);
+        }
+
+        private void TransmogrifierButton_Click(object sender, RoutedEventArgs e)
+        {
+            TSOCityTransmogrifier.RunPlugin(CurrentCity.CityFolder);
         }
     }
 }

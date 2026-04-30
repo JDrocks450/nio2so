@@ -23,6 +23,11 @@ namespace nio2so.Formats.Terrain
         /// </summary>
         public TSOCityConstants Settings { get; }
         /// <summary>
+        /// The folder where this city's files are found
+        /// </summary>
+        public string CityFolder { get; }
+
+        /// <summary>
         /// Returns a <see cref="UtilImageIndexer"/> allowing you to read per-pixel Elevation information from the resource
         /// <para>Elevation is any color-component from the pixel read, so for example, the Red channel can be used.</para>
         /// <para>See: <see cref="GetElevationPoint(GeomPoint)"/></para>
@@ -102,8 +107,9 @@ namespace nio2so.Formats.Terrain
 
         [Obsolete] public async Task<TSOCityMesh> GenerateCityMeshAsync() => MeshGeometry = await TSOCityGeom.GlobalDefault.GenerateMeshGeometry(this);
 
-        public TSOCity(TSOCityConstants Settings)
+        public TSOCity(string CityFolder, TSOCityConstants Settings)
         {
+            this.CityFolder = CityFolder;
             this.Settings = Settings;
         }        
     }

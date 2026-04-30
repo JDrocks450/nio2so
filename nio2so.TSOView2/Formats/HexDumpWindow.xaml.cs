@@ -1,4 +1,5 @@
-﻿using nio2so.TSOView2.Util;
+﻿using nio2so.TSOView2.Plugins;
+using nio2so.TSOView2.Util;
 using System;
 using System.IO;
 using System.Linq;
@@ -12,18 +13,39 @@ namespace nio2so.TSOView2.Formats
     /// <summary>
     /// Interaction logic for HexDumpWindow.xaml
     /// </summary>
-    public partial class HexDumpWindow : Window
+    public partial class HexDumpWindow : Window, ITSOViewPlugin
     {
         MemoryStream? _openedStream;
 
         const string MY_DESCRIPTION = "This tool allows you to paste Hex data from " +
             "Edith (ResEdit) to easily format as bytes, save to disk, etc.";
 
-        public HexDumpWindow(Window? owner = default)
+        public string PluginName => "Edith Hex Helper";
+
+        public string PluginDescription => MY_DESCRIPTION;
+
+        public HexDumpWindow()
         {
             InitializeComponent();
 
-            Owner = owner;
+            Loaded += HexDumpWindow_Loaded;            
+        }
+
+        public void Do(ITSOView2Window Parent)
+        {
+            Owner = Parent as Window;
+            try
+            {
+                Show();
+            }
+            catch
+            {
+                new HexDumpWindow() { Owner = Parent as Window }.Show();
+            }
+        }
+
+        private void HexDumpWindow_Loaded(object sender, RoutedEventArgs e)
+        {
             BlurbMessageLabel.Text = MY_DESCRIPTION;
             ErrorMessageWindow.Visibility = Visibility.Collapsed;
         }
@@ -113,6 +135,11 @@ namespace nio2so.TSOView2.Formats
                 MessageBox.Show(ex.Message, "Open as Image");
                 return;
             }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Hide();
         }
     }
 }

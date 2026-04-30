@@ -8,11 +8,16 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="TSOView2 3D City Viewer">
 
-    <Grid Margin="0,40,0,0">
-        <obj:MeshObjectViewer x:Name="ModelViewer" Background="{StaticResource TSOWindowBackgroundBrush}"/>
-        <Border Padding="5" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Right" MaxWidth="128">
+    <Grid Margin="0,0,0,0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Button Name="TransmogrifierButton" Margin="10,0,0,0" Background="Green" HorizontalAlignment="Left" VerticalAlignment="Center" Width="233" Foreground="White" Click="TransmogrifierButton_Click">Send City to The Sims Online: Pre-Alpha</Button>
+        <obj:MeshObjectViewer x:Name="ModelViewer" Background="{StaticResource TSOWindowBackgroundBrush}" Grid.Row="1"/>
+        <Border Padding="5" Background="Transparent" VerticalAlignment="Bottom" HorizontalAlignment="Right" MaxWidth="128" Grid.Row="1">
             <Image Name="Mini_HUD_Image"/>
         </Border>
     </Grid>
-    
+
 </Page>

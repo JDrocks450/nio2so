@@ -23,8 +23,10 @@ namespace nio2so.Formats.Terrain
     /// Manages assets loaded into memory used for displaying a <see cref="TSOCity"/>
     /// <para>See: <see cref="TSOCityImporter"/></para>
     /// </summary>
-    public sealed class TSOCityContentManager : Dictionary<string, TSOCityContentItem>
+    public sealed class TSOCityContentManager : Dictionary<string, TSOCityContentItem>, IDisposable
     {
+        private bool disposedValue;
+
         /// <summary>
         /// Loads all accessible, supported Image files in the supplied directory
         /// </summary>
@@ -66,6 +68,31 @@ namespace nio2so.Formats.Terrain
                 }
                 return (loaded, total);
             });
+        }
+
+        /// <summary>
+        /// Dispose method, if final is true, destroy all image references and free resources used by <see cref="TSOCityContentItem"/>
+        /// </summary>
+        /// <param name="final"></param>
+        private void destroyAllItems(bool final)
+        {
+            if (!disposedValue)
+            {
+                if (final)
+                {
+                    foreach (var item in Values)
+                        item?.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        ~TSOCityContentManager() => destroyAllItems(false);
+
+        public void Dispose()
+        {
+            destroyAllItems(final: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

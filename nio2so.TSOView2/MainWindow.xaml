@@ -1,10 +1,11 @@
-﻿<Window x:Class="nio2so.TSOView2.MainWindow"
+﻿<local:TSOView2WindowBase 
+        x:Class="nio2so.TSOView2.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:nio2so.TSOView2"
-        mc:Ignorable="d" Name="HOST" Closing="HOST_Closing"
+        mc:Ignorable="d" Closing="HOST_Closing"
         Title="TSOView2 for The Sims Online - nio2so" Height="768" Width="1024">
     <DockPanel>
         <Menu Name="DefaultMenu" DockPanel.Dock="Top">
@@ -14,10 +15,11 @@
                     <MenuItem Name="OpenTSOPreAlphaWorldItem" Header="Pre-Alpha City Map..."/>
                     <MenuItem Name="OpenNIWorldItem" Header="New and Improved City Map..."/>
                     <MenuItem Header="SimCity 3000 Map">
+                        <MenuItem Name="OpenSC3KElevationBmpItem" Header="Open SC3K Elevation Bitmap..."/>
+                        <Separator/>
                         <MenuItem Name="OpenCityBinFileItem" Header="Open CityMap.BIN..."/>
                         <MenuItem Name="OpenCityBinManualFileItem" Header="Choose a TSO/MatchMaker (CityMap.bin) folder..."/>
                     </MenuItem>
-                    
                     <MenuItem Name="OpenTSODataFileItem" Header="TSO Data Definition file..."/>
                     <MenuItem Name="RefPackItem" Header="Compress/Decompress a RefPack File..."/>
                     <MenuItem Name="OpenRASStreamItem" Header="Open a RAS Stream"/>
@@ -52,10 +54,8 @@
                 </MenuItem>
                 <MenuItem Header="Configuration Settings" Name="ConfigMenuItem"/>
             </MenuItem>
-            <MenuItem Header="Plugin...">
-                <MenuItem Header="Format Constants Table to Enum" Name="EnumPluginItem"/>
-                <MenuItem Header="City Transmogrifier" Name="CityPluginItem"/>
-                <MenuItem Header="Edith ResEdit Hex Dumper" Name="HexDumperEdithPluginItem"/>
+            <MenuItem Header="Plugin..." Name="PluginsMenuItem">
+                
             </MenuItem>
             <MenuItem Header="Help...">
                 <MenuItem Header="About" Name="AboutItem"/>
@@ -71,7 +71,7 @@
                 <Border CornerRadius="15" Background="Transparent" Padding="20,2" DockPanel.Dock="Bottom" HorizontalAlignment="Center">
                     <TextBlock >
                         <Run FontSize="24" FontWeight="Bold" Text="Version: "/>
-                        <Run FontSize="24" FontWeight="SemiBold" Text="{Binding VersionString, ElementName=HOST, Mode=OneTime}"/>
+                        <Run FontSize="24" FontWeight="SemiBold" Text="{Binding VersionString, RelativeSource={RelativeSource AncestorType=local:TSOView2WindowBase}, Mode=OneTime}"/>
                     </TextBlock>
                 </Border>
                 <Image Source="/tsoview2logo.png" MaxWidth="512">
@@ -84,4 +84,4 @@
             <Frame Name="MainPageContent" NavigationUIVisibility="Hidden"/>
         </Grid>
     </DockPanel>
-</Window>
+</local:TSOView2WindowBase>

@@ -49,9 +49,7 @@ namespace nio2so.TSOView2.Formats.CityBIN
                 ValidateNames = true,
             };
             if (folderDialog.ShowDialog() ?? false)
-            {
                 return folderDialog.FolderName;
-            }
             return null;
         }
 

@@ -27,7 +27,7 @@ namespace nio2so.TSOView2.Formats.OBJ
     {
         Camera currentCamera => Camera;
 
-        const double MAX_ZOOM = 5;
+        const double MAX_ZOOM = 17;
         const double USER_MAX_ZOOM = 20;
 
         /// <summary>
@@ -229,7 +229,7 @@ namespace nio2so.TSOView2.Formats.OBJ
 
             var animation = new DoubleAnimation(ortho_targetWidth, TimeSpan.FromSeconds(.5))
             {
-                AccelerationRatio = .25,
+                AccelerationRatio = 0,
                 DecelerationRatio = .75,
                 FillBehavior = FillBehavior.Stop
             };

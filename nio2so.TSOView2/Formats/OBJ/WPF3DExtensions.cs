@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -42,63 +43,66 @@ internal static class WPF3DExtensions
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    private static Vector3D GetNormalAt(TSOCity City, int x, int y)
+    private static Task<Vector3D> GetNormalAt(TSOCity City, int x, int y)
     {
-        var sum = new Vector3();
-        var rotToNormalXY = Matrix4x4.CreateRotationZ((float)(Math.PI / 2));
-        var rotToNormalZY = Matrix4x4.CreateRotationX(-(float)(Math.PI / 2));
-        var reso = City.CityDataResolution;
-
-        if (x < reso.X-1)
+        return Task.Factory.StartNew(delegate
         {
-            var vec = new Vector3();
-            vec.X = 1;
-            vec.Y = City.GetElevationPoint(x + 1, y) - City.GetElevationPoint(x, y);
-            vec = Vector3.Transform(vec, rotToNormalXY);
-            sum += vec;
-        }
+            var sum = new Vector3();
+            var rotToNormalXY = Matrix4x4.CreateRotationZ((float)(Math.PI / 2));
+            var rotToNormalZY = Matrix4x4.CreateRotationX(-(float)(Math.PI / 2));
+            var reso = City.CityDataResolution;
 
-        if (x > 1)
-        {
-            var vec = new Vector3();
-            vec.X = 1;
-            vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x - 1, y);
-            vec = Vector3.Transform(vec, rotToNormalXY);
-            sum += vec;
-        }
+            if (x < reso.X - 1)
+            {
+                var vec = new Vector3();
+                vec.X = 1;
+                vec.Y = City.GetElevationPoint(x + 1, y) - City.GetElevationPoint(x, y);
+                vec = Vector3.Transform(vec, rotToNormalXY);
+                sum += vec;
+            }
 
-        if (y < reso.Y-1)
-        {
-            var vec = new Vector3();
-            vec.Z = 1;
-            vec.Y = City.GetElevationPoint(x, y + 1) - City.GetElevationPoint(x, y);
-            vec = Vector3.Transform(vec, rotToNormalZY);
-            sum += vec;
-        }
+            if (x > 1)
+            {
+                var vec = new Vector3();
+                vec.X = 1;
+                vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x - 1, y);
+                vec = Vector3.Transform(vec, rotToNormalXY);
+                sum += vec;
+            }
 
-        if (y > 1)
-        {
-            var vec = new Vector3();
-            vec.Z = 1;
-            vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x, y - 1);
-            vec = Vector3.Transform(vec, rotToNormalZY);
-            sum += vec;
-        }
-        if (sum != Vector3.Zero) sum = Vector3.Normalize(sum);
-        return new Vector3D(sum.X, -sum.Y, sum.Z);
+            if (y < reso.Y - 1)
+            {
+                var vec = new Vector3();
+                vec.Z = 1;
+                vec.Y = City.GetElevationPoint(x, y + 1) - City.GetElevationPoint(x, y);
+                vec = Vector3.Transform(vec, rotToNormalZY);
+                sum += vec;
+            }
+
+            if (y > 1)
+            {
+                var vec = new Vector3();
+                vec.Z = 1;
+                vec.Y = City.GetElevationPoint(x, y) - City.GetElevationPoint(x, y - 1);
+                vec = Vector3.Transform(vec, rotToNormalZY);
+                sum += vec;
+            }
+            if (sum != Vector3.Zero) sum = Vector3.Normalize(sum);
+            return new Vector3D(sum.X, -sum.Y, sum.Z);
+        });
     }
     /// <summary>
     /// Initializes the <see cref="GeomVertex.Normal"/> property as they come uninitialized
     /// </summary>
     /// <param name="Mesh"></param>
-    public static void FixNormals(this TSOCityMesh Mesh, TSOCity City)
+    public static async Task CalculateNormals(this TSOCityMesh Mesh, TSOCity City)
     {
         foreach(var vertCollection in Mesh.Vertices)
         {
             foreach(var vert in vertCollection.Value)
             {
                 var mapPos = vert.MapPosition;
-                var normal = GetNormalAt(City, (int)mapPos.X, (int)mapPos.Y);
+                var normal = await GetNormalAt(City, (int)mapPos.X, (int)mapPos.Y);
                 vert.Normal = new(normal.X, normal.Y, normal.Z);
             }
         }
