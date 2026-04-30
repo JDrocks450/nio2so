@@ -44,6 +44,9 @@ namespace nio2so.TSOView2.Plugins
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
             
             string sourceDirectory = null;
+            string outputDirectory = ExportFolder ?? Path.Combine(Environment.CurrentDirectory, "cityoutput");
+
+            bool resizeSucceeded = false;
             
             if (CityFolder != null)
             {
@@ -75,50 +78,52 @@ namespace nio2so.TSOView2.Plugins
                 goto error;
             }
 
-            //all files present -- choose output folder
-            string output = ExportFolder ?? Path.Combine(Environment.CurrentDirectory, "cityoutput");
+            //all files present -- choose output folder            
             OpenFolderDialog dlg = new OpenFolderDialog()
             {
                 Title = "Choose Export Folder",
-                InitialDirectory = output,
+                InitialDirectory = outputDirectory,
                 Multiselect = false,
             };
             if (!dlg.ShowDialog() ?? true)
                 return;
-            output = dlg.FolderName;
+            outputDirectory = dlg.FolderName;
 
             try
             {
-                ResizeAndSave(sourceDirectory, output);
+                ResizeAndSave(sourceDirectory, outputDirectory);
             }
             catch (Exception ex)
             {
                 obj = ex;
                 goto error;
             }
-            
+
             //**TRANSPORT NOW
+            resizeSucceeded = true;
             string destination = Path.Combine(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "FarZoom");
             if (MessageBox.Show($"Your city has been converted.\n\n{destination}\n\nReady to apply it to your The Sims Online: Pre-Alpha game?",
                 "Add city to The Sims Online: Pre-Alpha?", MessageBoxButton.YesNo)
                 != MessageBoxResult.Yes)
             {
-                Process.Start("explorer", output);
+                Process.Start("explorer", outputDirectory);
                 return;
             }
             
             try
             {
-                doAddToGame(output, destination);
+                doAddToGame(outputDirectory, destination);
             }
             catch (Exception ex)
             {
-                obj = ex;
+                obj = ex;                
                 goto error;
             }
         error:
             if (obj == null) return;
             MessageBox.Show(obj.Message);
+            if (resizeSucceeded)
+                Process.Start("explorer", outputDirectory);
         }
 
         private static void doAddToGame(string OutputFiles, string Destination)
@@ -191,14 +196,15 @@ namespace nio2so.TSOView2.Plugins
                 Bitmap bmp = new Bitmap(bmpFile);
                 PixelFormat format = bmp.PixelFormat;
                 bmp.Dispose();
-                bool success = false;
+                bool? success = null;
                 if (format == PixelFormat.Format8bppIndexed)
                     success = handle8bppindexedresize(bmpFile, DestinationDirectory);
                 else if (format == PixelFormat.Format24bppRgb)
-                    success = handleregresize(bmpFile, DestinationDirectory);
+                    handleregresize(bmpFile, DestinationDirectory);
                 else throw new InvalidDataException(Path.GetFileName(bmpFile) + " is: " + format.ToString() + " and cannot be resized. ");
-                if (!success)
-                    throw new Exception("Cannot resize this city." + troll);
+                
+                if (success.HasValue && !success.Value)
+                    throw new Exception($"Cannot resize this city. File: {bmpFile}" + troll);
             }
         }
 

@@ -292,7 +292,7 @@ internal static class WPF3DExtensions
             Material material = new DiffuseMaterial(brush);
 
             MaterialGroup group = new MaterialGroup();
-            group.Children.Add(material);                
+            group.Children.Add(material);
 
             //get mesh geometry
             MeshGeometry3D meshGeom = brushMeshKeyValue.Value.ToMeshGeometry();
@@ -312,6 +312,7 @@ internal static class WPF3DExtensions
         {
             Geometry = vertexColorMesh,
             Material = atlas,
+            BackMaterial = atlas,
             Transform = new TranslateTransform3D(0, -.000001, 0)
         };
         models.Add(vertColGeom);

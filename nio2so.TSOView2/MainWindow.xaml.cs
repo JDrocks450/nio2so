@@ -175,6 +175,7 @@ namespace nio2so.TSOView2
                 proc.CloseMainWindow(); // close cleanly to prevent data loss in case any pages override closing() behavior
                 proc.WaitForExit(); // wait for exit ... this certainly won't cause hangs. nope.
             }
+            Environment.Exit(0);
         }
     }
 }

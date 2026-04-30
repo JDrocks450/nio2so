@@ -36,6 +36,9 @@
             <Button x:Name="ResetCameraButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="ResetCameraButton_Click">Reset Camera</Button>
             <Button x:Name="PauseAnimationButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="PauseAnimationButton_Click">Stop Rotating</Button>
             <Button x:Name="RecenterButton" Foreground="{Binding Foreground, ElementName=HOST}" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Click="RecenterButton_Click">Center Camera</Button>
+            <Separator/>
+            <Button Name="CopyScreencapButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="CopyScreencapButton_Click">Copy Screenshot</Button>
+            <Button Name="SaveScreencapButton" HorizontalAlignment="Left" Background="{Binding Background, ElementName=HOST}" Foreground="{Binding Foreground, ElementName=HOST}" Click="SaveScreencapButton_Click">Save Screenshot</Button>
         </StackPanel>
     </Grid>
 </UserControl>
