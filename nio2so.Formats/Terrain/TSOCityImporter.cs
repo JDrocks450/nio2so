@@ -73,10 +73,12 @@ namespace nio2so.Formats.Terrain
             var totalTuple = await GlobalDefaultContent.LoadDirectory(new DirectoryInfo(TerrainDirectory));
             if (totalTuple.Loaded < totalTuple.TotalMatches)
                 goto error;
+
             //LOAD CITY DATA ITEMS
             totalTuple = await GlobalDefaultContent.LoadDirectory(new DirectoryInfo(CityDataDirectory));
             if (totalTuple.Loaded < totalTuple.TotalMatches)
                 goto error;
+
             //SET CONTEXT TODO MAKE BETTER
             CurrentTSODataContext = ContextTSOPAFileType ? _tsoPaCityNameDefaultMap : _tsoCityNameDefaultMap;
 
@@ -110,7 +112,7 @@ namespace nio2so.Formats.Terrain
                 //FIX SETTINGS (using the aforementioned map)
                 AdjustCitySettings(TerrainTypeMap);
 
-                TSOCity newCity = new TSOCity(CitySettings);
+                TSOCity newCity = new TSOCity(FarZoomDirectory, CitySettings);
 
                 //READ ELEVATION MAP
                 if (!TSOCityDataContentItems.TryGetValue(TSOCityDataFileTypes.ElevationMap, out TSOCityContentItem? currentContentItem))

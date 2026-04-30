@@ -3,12 +3,15 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:nio2so.TSOView2.Formats" xmlns:wpfhexaeditor="clr-namespace:WpfHexaEditor;assembly=WPFHexaEditor"
-        mc:Ignorable="d" Name="HOST" Foreground="White"
+        xmlns:local="clr-namespace:nio2so.TSOView2.Formats" xmlns:wpfhexaeditor="clr-namespace:WpfHexEditor.HexEditor;assembly=WpfHexEditor.HexEditor"
+        mc:Ignorable="d" Name="HOST" Foreground="White" WindowStyle="None"
         Title="ResEdit Text Dump Window" Height="450" Width="800" Background="{StaticResource TSOWindowBackgroundBrush}">
     <DockPanel Margin="10">
-        <TextBlock Name="BlurbMessageLabel" DockPanel.Dock="Top" Text="{Binding MY_DESCRIPTION, ElementName=HOST}" Margin="0,0,0,5"/>
-        <Grid>
+        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,5">
+            <Button x:Name="CloseButton" DockPanel.Dock="Left" Width="50" Background="Red" Foreground="White" Click="CloseButton_Click">Close</Button>
+            <TextBlock Name="BlurbMessageLabel" DockPanel.Dock="Right" Text="{Binding MY_DESCRIPTION, ElementName=HOST}" Margin="5,0,0,0"/>
+        </DockPanel>
+        <Grid DockPanel.Dock="Bottom">
             <Grid.RowDefinitions>
                 <RowDefinition/>
                 <RowDefinition Height="75"/>

@@ -1,7 +1,9 @@
 ﻿using nio2so.Formats.Terrain;
 using nio2so.TSOView2.Formats.Terrain;
+using nio2so.TSOView2.Util;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,6 +29,12 @@ namespace nio2so.TSOView2.Formats.OBJ
     {
         Camera currentCamera => Camera;
 
+        const double MAX_ZOOM = 17;
+        const double USER_MAX_ZOOM = 20;
+
+        bool animating = false;
+        Rect3D? objectBounds = null;
+
         /// <summary>
         /// Creates a new <see cref="MeshObjectViewer"/> instance"/>
         /// </summary>
@@ -43,6 +51,11 @@ namespace nio2so.TSOView2.Formats.OBJ
             Window.GetWindow(this).MouseWheel += CityView_MouseWheel;
         }
 
+        /// <summary>
+        /// Clears the 3D Object Canvas and places the new collection at the origin of the scene, with lighting, and a rotating animation.
+        /// <para/>This will also set the camera to look at the middle center of the object, with an appropriate viewing distance applied.
+        /// </summary>
+        /// <param name="Models"></param>
         public void SetObjects(Model3DCollection Models)
         {
             ortho_targetWidth = (currentCamera as OrthographicCamera)?.Width ?? 0;
@@ -66,6 +79,7 @@ namespace nio2so.TSOView2.Formats.OBJ
             if (MainSceneGroup.Children.Count < 1) return;
 
             Rect3D bounds = MainSceneGroup.Children.OrderByDescending(x => WPF3DExtensions.Area(x.Bounds.Size)).First().Bounds;
+            objectBounds = bounds;
 
             //set position to center
             Camera.Position = WPF3DExtensions.GetAppropriateViewingDistancePosition(
@@ -77,6 +91,7 @@ namespace nio2so.TSOView2.Formats.OBJ
 
             //set the rotation animation
             WPF3DExtensions.SetRotation3DAnimation(this, MainSceneGroup, bounds, TimeSpan.FromSeconds(30));
+            animating = true;
 
             Camera.Width = 140;
 
@@ -150,7 +165,8 @@ namespace nio2so.TSOView2.Formats.OBJ
         {
             var newPos = e.GetPosition(sender as IInputElement);
 
-            if (e.MouseDevice.LeftButton == MouseButtonState.Released)
+            if (e.MouseDevice.LeftButton == MouseButtonState.Released &&
+                e.MouseDevice.RightButton == MouseButtonState.Released)
             {
                 from = newPos;
                 return false;
@@ -160,16 +176,48 @@ namespace nio2so.TSOView2.Formats.OBJ
 
             double dx = ((newPos.X - from.X) / RenderSize.Width) * Camera.Width;
             double dy = ((newPos.Y - from.Y) / RenderSize.Height) * (Camera.Width / (RenderSize.Width / RenderSize.Height));
+            double distance = (newPos - from).Length;
+            int direction = from.X < newPos.X ? 1 : -1; // moving right
             from = newPos;
-
-            var distance = dx * dx + dy * dy;
-            if (distance <= 0d)
-                return false;
 
             double frameSpeed = sensitivity * Camera.Width;
 
-            NewPosition = new Point3D(Camera.Position.X - dx, Camera.Position.Y, Camera.Position.Z - dy);
-            return true;
+            if (e.MouseDevice.LeftButton == MouseButtonState.Pressed)
+            {
+                NewPosition = new Point3D(Camera.Position.X - dx, Camera.Position.Y, Camera.Position.Z - dy);
+                return true;
+            }
+            else
+            { // ROTATION
+                if (animating)
+                {
+                    StopAnimating();
+                }
+
+                Transform3DGroup? g = MainSceneGroup.Transform as Transform3DGroup;
+                RotateTransform3D t = null;
+
+                if (g == null)
+                {
+                    g = new Transform3DGroup();
+                    var s = new ScaleTransform3D(new Vector3D(1, 1, 1));
+                    g.Children.Add(s);
+                    MainSceneGroup.Transform = g;
+                }
+
+                if (g.Children.Count > 0)
+                    t = g.Children[0] as RotateTransform3D;
+
+                if (t == null)
+                {
+                    t = new RotateTransform3D(new AxisAngleRotation3D(new Vector3D(0, 1, 0), 0), WPF3DExtensions.CenterBounds(objectBounds.Value));
+                    g.Children.Add(t);
+                }
+
+                var a = (t.Rotation as AxisAngleRotation3D);
+                a.Angle = a.Angle + ((distance * frameSpeed * direction) / 180);
+            }
+            return false;
         }
 
         private bool OrthoHandleKeyboard(object sender, KeyEventArgs e, out Point3D NewPosition)
@@ -190,39 +238,62 @@ namespace nio2so.TSOView2.Formats.OBJ
 
         private void ResetCameraButton_Click(object sender, RoutedEventArgs e) => SetCamSettings();
 
-        private void PauseAnimationButton_Click(object sender, RoutedEventArgs e)
+        private void PauseAnimationButton_Click(object sender, RoutedEventArgs e) => StopAnimating();
+        private void StopAnimating()
         {
             WPF3DExtensions.StopRotation3DAnimation(this);
             PauseAnimationButton.Visibility = Visibility.Collapsed;
+            animating = false;
         }
 
         private void RecenterButton_Click(object sender, RoutedEventArgs e)
         {
-            Rect3D bounds = MainSceneGroup.Children.OrderByDescending(x => WPF3DExtensions.Area(x.Bounds.Size)).First().Bounds;
+            Rect3D bounds = objectBounds.Value;
             //look at the ground
             Camera.LookDirection = WPF3DExtensions.GetLookAt3D(Camera.Position, bounds);
             Camera.UpDirection = new Vector3D(0, 1, 0);
-        }
+        }        
 
         private void CityView_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (currentCamera is PerspectiveCamera) throw new NotImplementedException("Perspective Camera support has been removed.");
 
-            ortho_targetWidth += (-e.Delta / 5);
-            if (ortho_targetWidth <= 0)
-                ortho_targetWidth = 20; // bounce effect
+            double newZoom = ortho_targetWidth + (-e.Delta / 5);
+            OnCameraZooming(newZoom);
+        }
+
+        private void OnCameraZooming(double NewZoomWidth)
+        {
+            ortho_targetWidth = NewZoomWidth;
+
+            if (ortho_targetWidth <= MAX_ZOOM)
+                ortho_targetWidth = MAX_ZOOM;
 
             var animation = new DoubleAnimation(ortho_targetWidth, TimeSpan.FromSeconds(.5))
             {
-                AccelerationRatio = .25,
+                AccelerationRatio = 0,
                 DecelerationRatio = .75,
                 FillBehavior = FillBehavior.Stop
             };
             animation.Completed += delegate
             {
                 Camera.Width = ortho_targetWidth;
+                if (ortho_targetWidth < USER_MAX_ZOOM) // bounce effect
+                    OnCameraZooming(USER_MAX_ZOOM);
             };
             currentCamera.BeginAnimation(OrthographicCamera.WidthProperty, animation, HandoffBehavior.SnapshotAndReplace);
+        }
+
+        private async void CopyScreencapButton_Click(object sender, RoutedEventArgs e) => await WPFInteropExtensions.RenderElement2ClipboardAsync(CityView);
+
+        private async void SaveScreencapButton_Click(object sender, RoutedEventArgs e)
+        {
+            string basePath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "TSOView2 Screenshots");
+            using Stream s = WPFInteropExtensions.RenderElement(CityView);
+            Directory.CreateDirectory(basePath);
+            using FileStream fs = File.Create(System.IO.Path.Combine(basePath, DateTime.Now.ToFileTime().ToString() + ".png"));
+            s.Seek(0, SeekOrigin.Begin);
+            await s.CopyToAsync(fs);
         }
     }
 }

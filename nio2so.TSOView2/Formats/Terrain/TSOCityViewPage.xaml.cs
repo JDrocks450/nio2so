@@ -1,17 +1,10 @@
 ﻿using nio2so.Formats.Terrain;
 using nio2so.TSOView2.Formats.OBJ;
-using nio2so.TSOView2.Util;
-using System;
+using nio2so.TSOView2.Plugins;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
-using WpfHexaEditor.Core.MethodExtention;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 
 namespace nio2so.TSOView2.Formats.Terrain
 {   
@@ -36,6 +29,11 @@ namespace nio2so.TSOView2.Formats.Terrain
         {
             IEnumerable<GeometryModel3D> models = CurrentMesh.To3DGeometry();
             ModelViewer.SetObjects([.. models]);
+        }
+
+        private void TransmogrifierButton_Click(object sender, RoutedEventArgs e)
+        {
+            TSOCityTransmogrifier.RunPlugin(CurrentCity.CityFolder);
         }
     }
 }
