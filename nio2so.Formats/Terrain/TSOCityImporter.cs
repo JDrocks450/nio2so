@@ -264,7 +264,6 @@ namespace nio2so.Formats.Terrain
         /// <para>For TSO New Improved, it would be in the <c>cities</c> directory, in TSO Pre-Alpha this is <c>FarZoom</c></para>
         /// </summary>
         public string CityDataDirectory { get; protected set; }
-        public TSOThemeFile TSOThemeFile { get; private set; }
 
         /// <summary>
         /// The TSO GameData directory
@@ -328,8 +327,6 @@ namespace nio2so.Formats.Terrain
         /// Maps types of files to the content item the asset is connected to
         /// </summary>
         protected virtual Dictionary<TSOCityDataFileTypes, TSOCityContentItem> TSOCityDataContentItems { get; } = new();
-
-        public virtual void SetTheme(TSOThemeFile TSOThemeFile) => this.TSOThemeFile = TSOThemeFile;
 
         protected virtual void AdjustCitySettings(TSOCityContentItem terrainTypeMap)
         {

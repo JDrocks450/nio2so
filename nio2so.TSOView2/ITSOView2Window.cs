@@ -3,40 +3,54 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
 namespace nio2so.TSOView2
 {
     /// <summary>
-    /// Represents the current completion status for loading a map in TSOView2
+    /// Represents the current completion status for a task in TSOView2
     /// </summary>
     public struct TSOView2LoadingStatus
     {
-        public TSOView2LoadingStatus(string currentTask, double overallProgress, bool Completed, double TaskProgress = .1) : this()
+        public TSOView2LoadingStatus(string overallTaskName, string currentTask, double overallProgress, bool Completed, double TaskProgress = .1) : this()
         {
+            ArgumentException.ThrowIfNullOrEmpty(overallTaskName);
+            ArgumentException.ThrowIfNullOrEmpty(currentTask);
+            OverallTaskName = overallTaskName;
             CurrentTask = currentTask;
             OverallProgress = overallProgress;
             this.Completed = Completed;
             this.TaskProgress = TaskProgress;
         }
 
+        public string OverallTaskName { get; set; }
         public string CurrentTask { get; }
         public double TaskProgress { get; }
         public double OverallProgress { get; }
         public bool Completed { get; }
     }
-
+    /// <summary>
+    /// An interface for exposing Window functions to a <see cref="ITSOView2Page"/>
+    /// </summary>
     public interface ITSOView2Window
     {
         void ShowPlugin(Page NewPage);
         void ClosePlugin();
-        void ShowLoadingProgress(TSOView2LoadingStatus Status);
+        Task ShowLoadingProgress(TSOView2LoadingStatus Status);
         void HideLoadingProgress();
     }
+    /// <summary>
+    /// A <see cref="Page"/> intended for use in a rich application window as the primary content.
+    /// <para/>This has access to window functions through the <see cref="ParentWindow"/> property
+    /// </summary>
     internal interface ITSOView2Page
     {
-        public ITSOView2Page ParentWindow { get; set; }
+        /// <summary>
+        /// Allows easy integration of Window-level features like loading bars, redirections, etc.
+        /// </summary>
+        public ITSOView2Window ParentWindow { get; set; }
     }
 
     public abstract class TSOView2WindowBase : Window, ITSOView2Window
@@ -51,7 +65,7 @@ namespace nio2so.TSOView2
             IsEnabled = true;
         }
 
-        public async void ShowLoadingProgress(TSOView2LoadingStatus Status)
+        public async Task ShowLoadingProgress(TSOView2LoadingStatus Status)
         {
             await Dispatcher.InvokeAsync(delegate
             {
@@ -83,9 +97,9 @@ namespace nio2so.TSOView2
 
                     _loadingWindow = new Window()
                     {
-                        Width = 250,
+                        Width = 350,
                         Height = 100,
-                        Title = "Loading City",
+                        Title = Status.OverallTaskName,
                         WindowStartupLocation = WindowStartupLocation.CenterOwner,
                         WindowStyle = WindowStyle.ToolWindow,
                         Padding = new Thickness(10),

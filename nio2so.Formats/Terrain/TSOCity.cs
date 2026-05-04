@@ -27,6 +27,8 @@ namespace nio2so.Formats.Terrain
         /// </summary>
         public string CityFolder { get; }
 
+        double[]? _elevationMapCache;
+
         /// <summary>
         /// Returns a <see cref="UtilImageIndexer"/> allowing you to read per-pixel Elevation information from the resource
         /// <para>Elevation is any color-component from the pixel read, so for example, the Red channel can be used.</para>
@@ -34,12 +36,25 @@ namespace nio2so.Formats.Terrain
         /// </summary>
         /// <returns></returns>
         /// <exception cref="NullReferenceException"></exception>
-        public UtilImageIndexer<double> GetElevationMap()
+        public double[] GetElevationMap()
         {
-            if (!TryGetLayer(TSOCityImporter.TSOCityDataFileTypes.ElevationMap, out var img))
-                throw new NullReferenceException("Elevation Map not present!!");
-            double conv(Color c) => Settings.ElevationScale * c.R;
-            return new UtilImageIndexer<double>((Bitmap)img, conv);
+            //make a cache of the elevation map because this is an atrocious solution
+            if (_elevationMapCache == null)
+            {
+                if (!TryGetLayer(TSOCityImporter.TSOCityDataFileTypes.ElevationMap, out Image? img))
+                    throw new NullReferenceException("Elevation Map not present!!");
+                double conv(Color c) => Settings.ElevationScale * c.R;
+
+                Bitmap bmp = (Bitmap)img;
+                var indexer = new UtilImageIndexer<double>(bmp, conv);
+
+                int boundary = bmp.Height * bmp.Height;
+                _elevationMapCache = new double[boundary];
+
+                for (int i = 0; i < boundary; i++)
+                    _elevationMapCache[i] = indexer[i];
+            }
+            return _elevationMapCache;
         }
         public double GetElevationPoint(GeomPoint Position) => Settings.ElevationScale * GetElevationMap()[(int)(Position.Y * CityDataResolution.Y + Position.X)];
         public float GetElevationPoint(int x, int y) => (float)GetElevationPoint(new(x, y));

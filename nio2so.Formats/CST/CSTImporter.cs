@@ -2,7 +2,7 @@
 {
     public class CSTImporter : TSOFileImporterBase<CSTFile>
     {
-        public static CSTDirectory ImportDirectory(string Directory)
+        public static CSTDirectory ImportDirectory(string Directory, out string[] Errors)
         {
             if (!System.IO.Directory.Exists(Directory))
                 Directory = Path.Combine(Path.GetDirectoryName(Directory),Path.GetFileNameWithoutExtension(Directory));
@@ -11,6 +11,9 @@
             CSTDirectory retVal = new();
             DirectoryInfo info = new DirectoryInfo(Directory);
             if (!info.Exists) throw new DirectoryNotFoundException(Directory);
+
+            List<string> errors = new List<string>();
+
             uint noId = 9000;
             foreach (var file in info.GetFiles())
             {
@@ -24,8 +27,11 @@
                         if (char.IsDigit(c)) numberStr += c;
                     id = uint.Parse(numberStr);
                 }
-                retVal.Add(id, new CSTFile() { FilePath = file.FullName });
+                bool success = retVal.TryAdd(id, new CSTFile() { FilePath = file.FullName });
+                if (!success)
+                    errors.Add(file.Name);
             }
+            Errors = errors.ToArray();
             return retVal;
         }
         public static CSTFile Import(string FilePath)

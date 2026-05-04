@@ -33,7 +33,7 @@ namespace nio2so.TSOView2.Formats.Terrain
             Mesh = mesh;
         }
 
-        public static async Task<CityTerrainHandler?> PromptLoadCity(TSOVersion Version, Action<TSOView2LoadingStatus> OnStatusUpdateCallback)
+        public static async Task<CityTerrainHandler?> PromptLoadCity(TSOVersion Version, Func<TSOView2LoadingStatus, Task> OnStatusUpdateCallback)
         {
             //IS THE DIRECTORY SELECTED? 
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return null; // idk anymore
@@ -49,7 +49,7 @@ namespace nio2so.TSOView2.Formats.Terrain
             return await LoadCity(FileName, Version, OnStatusUpdateCallback);
         }        
 
-        public static async Task<CityTerrainHandler?> LoadCity(string FolderName, TSOVersion Version, Action<TSOView2LoadingStatus> OnStatusUpdateCallback)
+        public static async Task<CityTerrainHandler?> LoadCity(string FolderName, TSOVersion Version, Func<TSOView2LoadingStatus, Task> OnStatusUpdateCallback)
         {
             //TSO CONFIG FILE
             string? gamePath = TSOViewConfigHandler.CurrentConfiguration.GetDirectoryByVersion(Version);
@@ -60,17 +60,17 @@ namespace nio2so.TSOView2.Formats.Terrain
             TSOView2LoadingStatus? currentStatus = null;
 
             //run task fire and forget -- ui thread will need to use the dispatcher to maintain thread safety
-            void StatusUpdate(string verb, bool completed = false, double taskProgress = .1)
+            async Task StatusUpdate(string verb, bool completed = false, double taskProgress = .1)
             {
-                currentStatus = new TSOView2LoadingStatus(verb, ++currentTaskIndex / (double)TASKS, completed, taskProgress);
+                currentStatus = new TSOView2LoadingStatus("Loading City", verb, ++currentTaskIndex / (double)TASKS, completed, taskProgress);
                 if (OnStatusUpdateCallback != null) // fire and forget invoke()
-                    Task.Run(() => OnStatusUpdateCallback?.Invoke(currentStatus.Value));
+                    await OnStatusUpdateCallback?.Invoke(currentStatus.Value);
             }
 
             try
             {
                 //CREATE CITY LOADER
-                StatusUpdate("parsing city terrain files");                
+                await StatusUpdate("parsing city terrain files");                
                 TSOPreAlphaCityImporter importer = new(gamePath, FolderName)
                 {
                     CitySettings = new()
@@ -80,19 +80,19 @@ namespace nio2so.TSOView2.Formats.Terrain
                 };
 
                 //LOAD ASSETS
-                StatusUpdate("loading texture assets");
+                await StatusUpdate("loading texture assets");
                 await importer.LoadAssetsAsync(Version == TSOVersion.PreAlpha); // asset loader
 
                 //LOAD GEOMETRY TO MEM
-                StatusUpdate("generating mesh geometry");
+                await StatusUpdate("generating mesh geometry");
                 (TSOCity city, TSOCityMesh mesh) values = await importer.LoadCityAsync(); // parse assets into city render
 
                 //NORMALS
-                StatusUpdate("calculating normals");
-                await values.mesh.CalculateNormals(values.city); // mandatory                                  
+                await StatusUpdate("calculating normals");
+                //await values.mesh.CalculateNormals(values.city); // mandatory                                  
 
                 //LOAD PLUG-IN
-                StatusUpdate($"creating the {nameof(CityTerrainHandler)}");                
+                await StatusUpdate($"creating the {nameof(CityTerrainHandler)}");                
                 return new CityTerrainHandler(values.city, values.mesh);
             }
             catch (Exception e)
@@ -102,10 +102,10 @@ namespace nio2so.TSOView2.Formats.Terrain
             return default; // default fail-out
         }
 
-        public static async void PromptUserShowCityPlugin(Action<TSOView2LoadingStatus> OnStatusUpdateCallback) => 
+        public static async void PromptUserShowCityPlugin(Func<TSOView2LoadingStatus, Task> OnStatusUpdateCallback) => 
             await PromptUserShowCityPlugin(TSOVersion.PreAlpha, OnStatusUpdateCallback);
 
-        public static async Task PromptUserShowCityPlugin(TSOVersion Version, Action<TSOView2LoadingStatus> OnStatusUpdateCallback)
+        public static async Task PromptUserShowCityPlugin(TSOVersion Version, Func<TSOView2LoadingStatus, Task> OnStatusUpdateCallback)
         {
             var handler = await PromptLoadCity(Version, OnStatusUpdateCallback);
             if (handler == null) return; // process above failure
@@ -113,11 +113,11 @@ namespace nio2so.TSOView2.Formats.Terrain
             TSOCityViewPage page = new();
             page.Mini_HUD_Image.Source = Current.Mesh.VertexColorAtlas.Convert();
 
-            OnStatusUpdateCallback(new TSOView2LoadingStatus("Entering the City", 1.0, false));
+            await OnStatusUpdateCallback(new TSOView2LoadingStatus("Rendering City", "Entering the City", 1.0, false));
 
             (Application.Current.MainWindow as ITSOView2Window).ShowPlugin(page);
 
-            OnStatusUpdateCallback(new TSOView2LoadingStatus("Entering the City", 1.0, true)); // hide the loading window
+            await OnStatusUpdateCallback(new TSOView2LoadingStatus("Rendering City", "Entering the City", 1.0, true)); // hide the loading window
         }
     }
 }

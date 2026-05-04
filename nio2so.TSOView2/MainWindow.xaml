@@ -38,6 +38,7 @@
                     </MenuItem>
                     <MenuItem Header="Targa Images..." Name="ViewTGAItem"/>
                 </MenuItem>
+                <MenuItem Name="RedoLastActionItem" Header="RECENT_ITEM"/>
                 <Separator/>
                 <MenuItem Name="ClosePluginItem" Header="Close Page"/>
                 <MenuItem Name="NewWindowItem" Header="Create New Window"/>

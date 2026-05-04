@@ -1,4 +1,6 @@
-﻿namespace nio2so.Data.Common
+﻿using System.Numerics;
+
+namespace nio2so.Data.Common
 {
     /// <summary>
     /// A basic interface for Vertex object types.
@@ -10,5 +12,8 @@
     /// <param name="X"></param>
     /// <param name="Y"></param>
     /// <param name="Z"></param>
-    public record GeomVector3(double X, double Y, double Z);
+    public record GeomVector3(double X, double Y, double Z)
+    {
+        public GeomVector3(Vector3 Numerics) : this(Numerics.X, Numerics.Y, Numerics.Z) { }
+    }
 }

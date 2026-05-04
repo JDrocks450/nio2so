@@ -35,6 +35,7 @@ namespace nio2so.TSOView2
         /// Maps <see cref="MenuItem"/> controls defined in XAML to an action in code behind.
         /// </summary>
         private Dictionary<MenuItem, Action> uiInvokableActionMap { get; set; } = default;
+        private (string ActionName, Action InvokeAction)? _lastAction;
 
         public string VersionString => System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown";
         public MainWindow()
@@ -59,6 +60,8 @@ namespace nio2so.TSOView2
             ProjectLogo.Visibility = Visibility.Collapsed;
             Background = (Brush)FindResource("TSOWindowBackgroundBrush");
             MainPageContent.Content = NewPage;
+            if (NewPage is ITSOView2Page n2Page)
+                n2Page.ParentWindow = (ITSOView2Window)this;
             ClosePluginItem.Visibility = Visibility.Visible;
         }
 
@@ -121,7 +124,23 @@ namespace nio2so.TSOView2
             }
             //Set Plugin Items
             PluginsMenuItem.ItemsSource = UpdatePlugins();
+            //Redo Item
+            ProcessRedoAction();
         }                
+
+        private void ProcessRedoAction()
+        {
+            void ClickAction(object sender, RoutedEventArgs e) => _lastAction?.InvokeAction?.Invoke();
+
+            RedoLastActionItem.Visibility = Visibility.Collapsed;
+            RedoLastActionItem.Click -= ClickAction;
+
+            if (!_lastAction.HasValue) return;
+
+            RedoLastActionItem.Visibility = Visibility.Visible;
+            RedoLastActionItem.Header = _lastAction.Value.ActionName;
+            RedoLastActionItem.Click += ClickAction;
+        }
 
         private void PromptOpenCity() => PromptOpenCity(TSOVersion.PreAlpha);
         private async void PromptOpenCity(TSOVersion Version)
@@ -148,20 +167,28 @@ namespace nio2so.TSOView2
         }
         private void UIDefaultMenuStrip_InvokeAction(object sender, RoutedEventArgs e)
         {
+            MenuItem thisItem = sender as MenuItem;
+            if (thisItem == null) return; // ?? 
+
             //If this named MenuItem has an attached handler, it will be invoked here
-            if (uiInvokableActionMap.TryGetValue((MenuItem)sender, out Action? member))
+            if (uiInvokableActionMap.TryGetValue(thisItem, out Action? member))
+            {
+                //update the last action jump item
+                _lastAction = (thisItem.Header as String ?? "Reopen Last Selection", member);
+                ProcessRedoAction();
 #if !DEBUG
                 try
                 {
                     member(); // run while catching unhandled exceptions
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show($"An error occured in the plugin: {member.Method.DeclaringType.Name}.\r\n{ex.Message}");
                 }
 #else
                 member(); // run without exception catching
 #endif
+            }
         }
 
         private void HOST_Closing(object sender, System.ComponentModel.CancelEventArgs e)

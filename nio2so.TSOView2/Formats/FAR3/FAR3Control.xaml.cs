@@ -26,7 +26,7 @@ namespace nio2so.TSOView2.Formats.FAR3
     /// <summary>
     /// Interaction logic for FAR3Control.xaml
     /// </summary>
-    public partial class FAR3Control : Page, IDisposable
+    public partial class FAR3Control : Page, ITSOView2Page, IDisposable
     {
         public enum FARMode
         {
@@ -41,6 +41,8 @@ namespace nio2so.TSOView2.Formats.FAR3
         private FARMode mode { get; set; }
 
         public bool ArchiveOpened => archive != null;
+
+        public ITSOView2Window ParentWindow { get; set; }
 
         public FAR3Control(FARMode Mode = FARMode.FAR3)
         {
@@ -142,6 +144,8 @@ namespace nio2so.TSOView2.Formats.FAR3
                     ExtractDirectoryLabel.Visibility = Visibility.Visible;
                     (ExtractionDirectoryLabel.Inlines.ElementAt(0) as Run).Text = BaseDirectory;                    
                 });
+                if (!Directory.Exists(BaseDirectory))
+                    Directory.CreateDirectory(BaseDirectory);
                 await File.WriteAllBytesAsync(System.IO.Path.Combine(BaseDirectory, name), archive[name]);
                 ErrorReason = "OK.";
                 success = true;
@@ -189,7 +193,7 @@ namespace nio2so.TSOView2.Formats.FAR3
                         mode = (FARMode)i;
                         break;
                     }
-                    catch { }
+                    catch { } // crashes anticipated
                 }
                 if (autoDetected == null)
                     throw new InvalidDataException("Could not open this file as any FAR Archive version supported.");
@@ -240,10 +244,20 @@ namespace nio2so.TSOView2.Formats.FAR3
         async Task ExtractAll(bool ForceDirBrowser = false, params IFileEntry[] Entries)
         {
             if (!ArchiveOpened) return;
+
+            int totalItems = Entries.Length, currentIndex = 0;
+
+            Task updateProgress(string fName) => 
+                ParentWindow.ShowLoadingProgress(new("Extracting Archive", fName, currentIndex / (double)totalItems, false));
+
             StringBuilder errorBuilder = new();
-            string? baseDir = System.IO.Path.GetDirectoryName(archivePath);
+            string? baseDir = System.IO.Path.Combine(
+                System.IO.Path.GetDirectoryName(archivePath),
+                System.IO.Path.GetFileNameWithoutExtension(archivePath));
             if (ForceDirBrowser) baseDir = default;
             if (baseDir == default) PromptNewDir();
+
+            //**select a folder
             bool PromptNewDir()
             {
                 OpenFolderDialog fld = new OpenFolderDialog()
@@ -252,39 +266,54 @@ namespace nio2so.TSOView2.Formats.FAR3
                     InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                     Multiselect = false,
                     ValidateNames = true,
-                    DereferenceLinks= true,                    
+                    DereferenceLinks = true,
                 };
                 if (!fld?.ShowDialog() ?? true) return false;
                 baseDir = fld.FolderName;
                 return true;
             }
-            bool Nested = false;
-        retry:
-            foreach (var entry in Entries)
+
+            try
             {
-                var valueResult = await ExtractOne(baseDir, entry);
-                if (!valueResult.Result)
+                bool Nested = false;
+            retry:
+                currentIndex = -1;
+                foreach (var entry in Entries)
                 {
-                    if (valueResult.ErrorReason == "TSOVIEW_PROMPT_NEWDIR")
+                    //update loading box
+                    currentIndex++;
+                    await updateProgress(entry.Filename ?? "Item_" + currentIndex);
+
+                    var valueResult = await ExtractOne(baseDir, entry);
+                    if (!valueResult.Result)
                     {
-                        if (!Nested)
-                        {// select new dir
-                            Nested = true;
-                            PromptNewDir();
-                            goto retry;
+                        if (valueResult.ErrorReason == "TSOVIEW_PROMPT_NEWDIR")
+                        {
+                            if (!Nested)
+                            {// select new dir
+                                Nested = true;
+                                PromptNewDir();
+                                goto retry;
+                            }
+                            valueResult.ErrorReason = "Cannot access the directory: " + baseDir;
                         }
-                        valueResult.ErrorReason = "Cannot access the directory: " + baseDir;
+                        errorBuilder.AppendLine(valueResult.ErrorReason);
                     }
-                    errorBuilder.AppendLine(valueResult.ErrorReason);
                 }
+                if (errorBuilder.Length > 0)
+                    MessageBox.Show(errorBuilder.ToString(), "Completed with Errors");
             }
-            if (errorBuilder.Length > 0)
-                MessageBox.Show(errorBuilder.ToString(), "Completed with Errors");
+            finally
+            {
+                ParentWindow.HideLoadingProgress();
+            }
+            ParentWindow.HideLoadingProgress();
         }
 
         private async void AllButton_Click(object sender, RoutedEventArgs e)
         {
             if (!ArchiveOpened || archive == null) return;
+
             bool promptDir = false;
             if (Keyboard.GetKeyStates(Key.LeftShift) == KeyStates.Down) promptDir = true;
             await ExtractAll(promptDir, archive.GetAllFileEntries().ToArray());

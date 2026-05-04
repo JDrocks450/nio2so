@@ -189,10 +189,8 @@ namespace nio2so.TSOView2.Formats.OBJ
             }
             else
             { // ROTATION
-                if (animating)
-                {
-                    StopAnimating();
-                }
+                if (animating)                
+                    StopAnimating();                
 
                 Transform3DGroup? g = MainSceneGroup.Transform as Transform3DGroup;
                 RotateTransform3D t = null;

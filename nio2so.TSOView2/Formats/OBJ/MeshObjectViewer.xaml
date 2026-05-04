@@ -21,7 +21,8 @@
                 <ModelVisual3D>
                     <ModelVisual3D.Content>
                         <Model3DGroup>
-                            <DirectionalLight Color="#FFFFFFFF" Direction=".5,-1,.5"/>
+                            <DirectionalLight Color="#FFFFFFFF" Direction=".5,1,.5"/>
+                            <!--<AmbientLight Color="#FFFFFFFF"/>-->
                             <Model3DGroup x:Name="MainSceneGroup"/>
                         </Model3DGroup>
                     </ModelVisual3D.Content>

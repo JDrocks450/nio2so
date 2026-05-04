@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.Img.Targa;
+﻿using nio2so.Data.Common;
+using nio2so.Formats.Img.Targa;
 using nio2so.Formats.UI.UIScript;
 using System.Diagnostics;
 using System.Drawing;
@@ -94,7 +95,7 @@ namespace nio2so.Formats.UI.TSOTheme
     /// A Map of AssetIDs (See: <see cref="UIScript.UIScriptDefineComponent"/>) [assetid Property] to a definition providing context to display it correctly.
     /// <para>This context can consist to a filepath on the disk to find the image, etc.</para>
     /// </summary>
-    public class TSOThemeFile : Dictionary<ulong, TSOThemeDefinition>, ITSOImportable
+    public class TSOThemeFile : Dictionary<ulong, TSOThemeDefinition>, ITSOImportable, IDisposable
     {       
         /// <summary>
         /// Creates a new Theme File. Please use: <see cref="TSOThemeFile.TSOThemeFile(ThemeVersionNames)"/> for versioning
@@ -142,7 +143,7 @@ namespace nio2so.Formats.UI.TSOTheme
         /// Uses the packingslips.log file to update the current theme's database of asset IDs.
         /// </summary>
         /// <param name="TSODirectory"></param>
-        public void UpdateDatabaseWithMrsShipper(string TSODirectory) => MrsShipper.BreakdownPackingslips(TSODirectory, this);
+        public Task UpdateDatabaseWithMrsShipper(string TSODirectory, Action<AsyncStatusCompletion> Callback) => MrsShipper.BreakdownPackingslips(TSODirectory, this, Callback);
 
         public bool Initialize(string BaseDirectory, UIScriptFile Script, out string[] MissingItems)
         {
@@ -168,8 +169,8 @@ namespace nio2so.Formats.UI.TSOTheme
 
         private void Free()
         {
-            foreach (var img in Values.Where(x => x.TextureRef != null))
-                img.Dispose();
+            foreach (var img in Values)
+                img?.Dispose();
         }
 
         /// <summary>
@@ -309,11 +310,13 @@ namespace nio2so.Formats.UI.TSOTheme
         /// </summary>
         public new void Clear()
         {
-            Free(); // free memory
+            Dispose(); // free memory
             var versioning = this[0] as TSOThemeHeaderInformationDefinition;
             base.Clear();
             Add(0, versioning);
         }
+
+        public void Dispose() => Free();
     }
 
     public class TSOThemeFileImporter : TSOFileImporterBase<TSOThemeFile>

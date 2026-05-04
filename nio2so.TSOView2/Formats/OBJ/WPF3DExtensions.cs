@@ -241,7 +241,7 @@ internal static class WPF3DExtensions
         {
             Positions = new Point3DCollection(flattenedVerts.Select(y => y.Position.ToPoint3D())),
             TriangleIndices = new Int32Collection(indices),
-            Normals = new Vector3DCollection(flattenedVerts.Select(y => y.Normal.ToVector3D())),
+            Normals = new Vector3DCollection(flattenedVerts.Select(y => new Vector3D(y.Normal.X, y.Normal.Y, y.Normal.Z))),
             TextureCoordinates = new PointCollection(flattenedVerts.Select(y => y.VertexColorAtlasCoord.ToPoint2D()))
         };
         //set texture of vertex color atlas
@@ -268,7 +268,7 @@ internal static class WPF3DExtensions
         {
             Positions = new Point3DCollection(Mesh.Vertices.Select(x => x.Position.ToPoint3D())),
             TriangleIndices = new Int32Collection(Mesh.Indices),
-            Normals = new Vector3DCollection(Mesh.Vertices.Select(x => x.Normal.ToVector3D())),
+            Normals = new Vector3DCollection(Mesh.Vertices.Select(x => new Vector3D(x.Normal.X, x.Normal.Y, x.Normal.Z))),
             TextureCoordinates = new PointCollection(Mesh.Vertices.Select(x => x.TextureCoord.ToPoint2D()))
         };
         return meshGeometry;
@@ -288,7 +288,8 @@ internal static class WPF3DExtensions
         {
             //get brush
             Brush? brush = brushMeshKeyValue.Key.ToMediaBrush(CityTerrainHandler.Current.ContentManager);
-            if (brush == null) brush = new SolidColorBrush(Colors.Black);
+            if (brush == null) 
+                brush = new SolidColorBrush(Colors.Transparent);
             Material material = new DiffuseMaterial(brush);
 
             MaterialGroup group = new MaterialGroup();
@@ -301,7 +302,8 @@ internal static class WPF3DExtensions
             {
                 Geometry = meshGeom,
                 Material = group,
-                BackMaterial = group
+                BackMaterial = group,
+                Transform = new ScaleTransform3D(1,1,1)
             };
             models.Add(geom);
         }
