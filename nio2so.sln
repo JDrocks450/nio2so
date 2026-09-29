@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.6.33815.320
+# Visual Studio Version 18
+VisualStudioVersion = 18.11.12217.175 insiders
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "nio2so.TSOHTTPS", "TSOHTTPS\nio2so.TSOHTTPS.csproj", "{CB17B825-8A70-4F5F-A2AC-EED040925E1D}"
 EndProject
@@ -37,10 +37,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.PreAlpha.Pro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.PlayTest.Protocol", "nio2so.Voltron.PlayTest.Protocol\nio2so.Voltron.PlayTest.Protocol.csproj", "{9A23F267-50DE-4776-808E-933E9F1158FF}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0B25890F-03D2-44C4-92A0-D11B2AD5CF44}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nio2so.External", "nio2so.External", "{0B25890F-03D2-44C4-92A0-D11B2AD5CF44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.CrashHandler", "nio2so.CrashHandler\nio2so.CrashHandler.csproj", "{F8D210C3-9D97-4252-B819-E5686EAD11CA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -50,16 +49,16 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|Any CPU.Build.0 = Debug|x86
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|x86.ActiveCfg = Debug|x86
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Debug|x86.Build.0 = Debug|x86
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|x86.ActiveCfg = Release|x86
 		{CB17B825-8A70-4F5F-A2AC-EED040925E1D}.Release|x86.Build.0 = Release|x86
-		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|Any CPU.Build.0 = Debug|x86
 		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|x86.ActiveCfg = Debug|x86
 		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Debug|x86.Build.0 = Debug|x86
 		{F1955FD1-F272-40BF-B960-7F5212FB26BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -146,6 +145,14 @@ Global
 		{9A23F267-50DE-4776-808E-933E9F1158FF}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9A23F267-50DE-4776-808E-933E9F1158FF}.Release|x86.ActiveCfg = Release|Any CPU
 		{9A23F267-50DE-4776-808E-933E9F1158FF}.Release|x86.Build.0 = Release|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Debug|x86.Build.0 = Debug|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|x86.ActiveCfg = Release|Any CPU
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -163,6 +170,7 @@ Global
 		{F9231504-5183-42CA-004E-B5A151839467} = {6A46B55F-9570-4E15-B2B1-CF25CAE47F4A}
 		{CA53E3C2-FD31-4F80-B61E-BE7430D045A6} = {D8EEF804-6E81-4543-B0E7-99D7DDD64944}
 		{9A23F267-50DE-4776-808E-933E9F1158FF} = {D8EEF804-6E81-4543-B0E7-99D7DDD64944}
+		{F8D210C3-9D97-4252-B819-E5686EAD11CA} = {0B25890F-03D2-44C4-92A0-D11B2AD5CF44}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}
