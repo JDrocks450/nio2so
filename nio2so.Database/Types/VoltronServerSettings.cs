@@ -49,5 +49,18 @@ namespace nio2so.DataService.Common.Types
         /// </summary>
         [JsonIgnore]
         public string ServerConnectionAddress => $"{ServerIPAddress}:{ServerPort.ToString().Remove(2)}";
+
+        /// <summary>
+        /// This can be used to check whether your instance of <see cref="VoltronServerSettings"/> can be edited or not with any impact on the server it's used with.
+        /// </summary>
+        [JsonIgnore]
+        public bool IsReadOnly { get; set; } = false;
+
+        /// <summary>
+        /// Store (up to) 5 KB of runtime bitmap cache by default, more or less can be allocated to the user's preference.
+        /// <para/>Not all of this is allocated at once, and it the oldest ones will be purged as needed to make space for new Bitmaps.
+        /// <para>This is used by the Top100Protocols for a given TargetingPack.</para>
+        /// </summary>
+        public int Top100BitmapCacheSizeBytes => 5 * 1024;
     }
 }

@@ -37,9 +37,9 @@ namespace nio2so.Voltron.Core
         /// </summary>
         public TSOServerServiceManager Services { get; }
         public TSOLoggerServiceBase Logger { get; }
-
+        public VoltronServerSettings VoltronSettings => MutableSettings with { IsReadOnly = true };
         /// <summary>
-        /// True to pause the processing of any Voltron Packets until this is false
+        /// True to allow the processing of any Voltron Packets until this is false
         /// </summary>
         public bool IsRunning
         {
@@ -64,8 +64,21 @@ namespace nio2so.Voltron.Core
         public static string ServerVersionInfoString => $"==={nameof(nio2soVoltronProtocolVersion)}===\n {nio2soVoltronProtocolVersion}\n" +
                                                         $"==={nameof(QuaZarProtocolVersion)}===\n {QuaZarProtocolVersion}";
 
+        /// <summary>
+        /// The original instance of the <see cref="VoltronServerSettings"/> this server was created with. This can be edited.
+        /// </summary>
+        protected VoltronServerSettings MutableSettings
+        {
+            get
+            {
+                _settings.IsReadOnly = false;
+                return _settings;
+            }
+        }
         protected ManualResetEvent ServerPauseEvent = new(DefaultRunningState);
         protected bool _running = DefaultRunningState;
+
+        private VoltronServerSettings _settings;
 
         /// <summary>
         /// Creates a new <see cref="TSOVoltronBasicServer"/> with the specified name and <see cref="VoltronServerSettings"/>.
@@ -81,6 +94,9 @@ namespace nio2so.Voltron.Core
                 SendAmount = Settings.TSOAriesClientBufferLength
             })
         {
+            Settings.IsReadOnly = false;
+            _settings = Settings;
+
             Regulators = new(this);
             Services = new(this);
             Logger = TelemetryServer;

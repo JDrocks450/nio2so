@@ -21,7 +21,15 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     [TSORegulator("Top 100 Protocol")]
     internal class Top100Protocol : TSOProtocol
     {
-        private ConcurrentDictionary<string, byte[]> _resourceCache = new ConcurrentDictionary<string, byte[]>();        
+        private int DEFAULT_CACHE_SIZE_BYTES = 5 * 1024; // 5KB
+
+        /// <summary>
+        /// Stores a runtime-cache of converted BMP resources to RLE8 Bitmaps so they don't have to be re-converted every time.
+        /// </summary>
+        private ConcurrentDictionary<string, byte[]> _resourceCache = new ConcurrentDictionary<string, byte[]>();
+        private int runtimeCacheSize = 0;
+
+        public int BitmapCacheSize => Server?.VoltronSettings?.Top100BitmapCacheSizeBytes ?? DEFAULT_CACHE_SIZE_BYTES;
 
         [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.GetTopList_Request)]
         public void GET_TOP_LIST_REQUEST(TSODBRequestWrapper DBPDU)
@@ -71,7 +79,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     Enum.Parse<TSOGetTopListResponse.TSOTop100ListTypes>(dataSource.ListType),
                     dataSource.ListName, iconBytes);
             }
-            File.WriteAllBytes("C:\\Users\\Jeremy\\OneDrive\\Desktop\\dump.bmp", _resourceCache.First().Value);
 
             //flush the image cache
             FLUSH_CACHE();
@@ -113,8 +120,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
         private byte[] TO_RLE8(string ResourceURI)
         {
+            //check our cache
             if (_resourceCache.TryGetValue(ResourceURI, out var resource))
-                return resource;
+                return resource; // it was cached
+
+            //convert to RLE and cache it
             using (Bitmap bmp = (Bitmap)Image.FromFile(ResourceURI))
             {
                 var destinationFormat = PixelFormat.Format8bppIndexed;
@@ -122,15 +132,42 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 using (Bitmap top100listIcon = bmp.Clone(new Rectangle(0, 0, Math.Min(96, bmp.Width), Math.Min(23, bmp.Height)), destinationFormat))
                 {
                     byte[] encodedBytes = RLE8Bitmap.RunLengthEncodeBitmap(top100listIcon);
-                    _resourceCache.TryAdd(ResourceURI, encodedBytes);
+                    CACHE_BMP(ResourceURI, encodedBytes);
                     return encodedBytes;
                 }
             }
+        }        
+
+        private bool CACHE_BMP(string ResourceURI, byte[] encodedBytes)
+        {
+            int desiredCacheSize = BitmapCacheSize;
+            if (desiredCacheSize <= 0) // less than or 0
+                desiredCacheSize = DEFAULT_CACHE_SIZE_BYTES; // set to default as it is invalid.
+
+            //Purge the cache until it is under the allowed amount of bytes, try oldest to newest but doesn't really make any difference
+            while (runtimeCacheSize > desiredCacheSize)
+            {
+                if (!_resourceCache.Any())
+                    break; // in case we removed the last one and it is still over the limit (cache size too small?)
+                string removeKey = _resourceCache.Keys.Reverse().First();
+                _resourceCache.Remove(removeKey, out var bytes);
+                runtimeCacheSize -= bytes.Length;
+            }
+            //attempt to add resource
+            if (_resourceCache.TryAdd(ResourceURI, encodedBytes))
+            {
+                LogConsole($"Cached Top100 BMP ({ResourceURI}) which was {encodedBytes.Length} bytes. Cache Size: {runtimeCacheSize}/{desiredCacheSize}");
+                runtimeCacheSize += encodedBytes.Length;
+                return true;
+            }
+            //resource already there
+            return false;
         }
 
         private void FLUSH_CACHE()
         {
             _resourceCache.Clear();
+            runtimeCacheSize = 0;
         }
     }
 }
