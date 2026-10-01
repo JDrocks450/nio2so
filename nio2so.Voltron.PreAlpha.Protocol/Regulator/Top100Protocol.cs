@@ -1,4 +1,4 @@
-﻿using nio2so.DataService.Common.Types.Top100;
+using nio2so.DataService.Common.Types.Top100;
 using nio2so.Formats.Img.BMP;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
@@ -80,8 +80,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     dataSource.ListName, iconBytes);
             }
 
-            //flush the image cache
-            FLUSH_CACHE();
+            //flush the image cache - october 2026: added cache size to reduce reloads, removed flush after each response.
+            //FLUSH_CACHE(); // removed.
 
             //Respond with top 100 lists
             RespondTo(DBPDU, new TSOGetTopListResponse(tsoPAListFormat));
