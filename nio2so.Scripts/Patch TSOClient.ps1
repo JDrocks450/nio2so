@@ -88,34 +88,34 @@ param(
 [byte]$NewValue,
 [string]$TargetType
 )
- 
+Â 
 $currentType = Test-HouseSimExe $Path
- 
+Â 
 if (-not $currentType) {
 return
 }
- 
+Â 
 if ($currentType -eq $TargetType) {
 Write-Host ""
 Write-Host "This TSOClient is already a $TargetType." -ForegroundColor Yellow
 return
 }
- 
+Â 
 Backup-Exe $Path
- 
+Â 
 $bytes = [System.IO.File]::ReadAllBytes($Path)
- 
+Â 
 $oldValue = $bytes[$Offset]
 $bytes[$Offset] = $NewValue
- 
+Â 
 [System.IO.File]::WriteAllBytes($Path, $bytes)
- 
+Â 
 Write-Host ""
 Write-Host "Patched successfully!" -ForegroundColor Green
 Write-Host ("Offset 0x{0:X}: 0x{1:X2} -> 0x{2:X2}" -f $Offset, $oldValue, $NewValue)
- 
+Â 
 $newHash = Get-ExeHash $Path
- 
+Â 
 Write-Host ""
 Write-Host "New SHA256:"
 Write-Host $newHash
@@ -181,5 +181,8 @@ do {
         Write-Host ""
         Pause
     }
+		else {
+				break;
+		}
 
 } while ($true)
