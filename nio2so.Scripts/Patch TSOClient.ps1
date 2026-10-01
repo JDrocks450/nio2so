@@ -181,8 +181,8 @@ do {
         Write-Host ""
         Pause
     }
-		else {
-				break;
-		}
+	else {
+			break;
+	}
 
 } while ($true)
