@@ -17,7 +17,7 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = true;
+        public static bool SplitBuffersPDUEnabled = false;
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
@@ -66,11 +66,7 @@
 
         public const string MyFriendAvatarName = "FriendlyBuddy";
 
-        //**TEST
-        /// <summary>
-        /// Will set the server to always redirect a client into the HSB mode (hosting a lot without an avatar there)
-        /// <para/>Should be true if using the HSB test
-        /// </summary>
-        public const bool HSBAutoJoinHouse = false;
+        //**HSB
+        
     }
 }

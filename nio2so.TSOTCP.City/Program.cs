@@ -114,7 +114,7 @@ namespace nio2so.TSOTCP.Voltron.Server
 
                 //Go is a special color
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({settings.ServerConnectionAddress}) and" +
+                Console.WriteLine($"\n\n{nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({cityServer.MyIP}:{cityServer.PORT}) and" +
                     $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n");
                 Console.ForegroundColor = usingSSL ? ConsoleColor.Green : ConsoleColor.Red;
                 Console.WriteLine($"SSL: " + (usingSSL ? "Enabled" : "Disabled") + "\n");

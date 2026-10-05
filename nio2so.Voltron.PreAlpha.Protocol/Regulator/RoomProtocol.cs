@@ -5,6 +5,7 @@ using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
@@ -543,6 +544,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 return;
             }                    
 
+            if (Server.VoltronSettings.PreAlpha_HSBEnabled) // Attempt to wake up the HSB
+            {
+                if (joiningClient.AvatarID < Server.VoltronSettings.PreAlpha_HSBAvatarID)
+                    BroadcastToServer(new TSORoomServerInitializedPDU());
+            }
+
+            Thread.Sleep(1000);
+
             ENTER_LOT(joiningClient,roomPDU.HouseID);                   
         }
         private void ENTER_LOT(TSOAriesIDStruct JoiningClient, uint HouseID)
@@ -585,8 +594,13 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
                     throw new InvalidDataException(error);
 
+                /// <summary>
+                /// Set when a HSB is opening the room and hosting it.
+                /// </summary>
+                bool HSB_HOSTING = joiningAvatarID <= Server.VoltronSettings.PreAlpha_HSBAvatarID;
+
                 // check if i am one of those roommates (or the owner)
-                if (lotRoommates != null && lotRoommates.Contains(joiningAvatarID) || FORCE_ENTRY)
+                if (lotRoommates != null && lotRoommates.Contains(joiningAvatarID) || HSB_HOSTING)
                 {   // Initiate the host protocol
                     // ADD ROOM TO PROTOCOL (CreateRoom Now)
                     hosting = true;
@@ -699,8 +713,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             BroadcastToServer(msg);
             //RespondWith(new TSOChatMessageFailedPDU(msg.Message));
         }
-
-        bool FORCE_ENTRY = false;
+        
         /// <summary>
         /// INVOKES THE HSB MODE
         /// </summary>
@@ -732,26 +745,30 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
             //when that happens
-            if (houseID == 0 && TestingConstraints.HSBAutoJoinHouse)
+            if (houseID == 0 && Server.VoltronSettings.PreAlpha_HSBEnabled)
             { // HSB testing mode, redirect to hosting a lot ... host the lot they own
                 if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
                 { // identified
-                    if (TryDataServiceQuery(x => x.GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure)) 
+                    if (VoltronID.AvatarID != Server.VoltronSettings.PreAlpha_HSBAvatarID) return;
+                    if (TryDataServiceQuery(x => x.GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure))
                     { // download character file
                         uint hsbLot = character.MyLotID; // set hosting lot to my owned lot
                         if (hsbLot != 0 && !RoomIsOnline(hsbLot)) // check if the house is already online
                             houseID = hsbLot;
                     }
-                    else throw new InvalidDataException(failure);
+                    else
+                    {
+                        houseID = Server.VoltronSettings.PreAlpha_HSBHouseID;
+                        if (RoomIsOnline(houseID))
+                            throw new InvalidDataException(failure);
+                    }
                 }
                 else throw new Exception("Could not identify what Client sent this PDU.");
             }
             if (houseID == 0) return;
             ((TSOLoadHouseResponsePDU)PDU).HouseID = houseID;
             
-            FORCE_ENTRY = true;
             LOT_ENTRY_REQUEST_PDU(PDU);
-            FORCE_ENTRY = false;
             return; 
             
             //**BASIC REWRITE OF ENTER_LOT TO REMOVE CERTAIN PDUS

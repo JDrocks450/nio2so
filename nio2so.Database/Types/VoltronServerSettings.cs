@@ -62,5 +62,9 @@ namespace nio2so.DataService.Common.Types
         /// <para>This is used by the Top100Protocols for a given TargetingPack.</para>
         /// </summary>
         public int Top100BitmapCacheSizeBytes => 5 * 1024;
+
+        public bool PreAlpha_HSBEnabled = true;
+        public uint PreAlpha_HSBAvatarID = 90001;
+        public uint PreAlpha_HSBHouseID = 10944577;
     }
 }

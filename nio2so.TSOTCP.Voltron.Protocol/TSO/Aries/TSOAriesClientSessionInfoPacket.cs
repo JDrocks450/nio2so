@@ -1,4 +1,5 @@
 ﻿using QuazarAPI.Util.Endian;
+using System.Text;
 
 namespace nio2so.Voltron.Core.TSO.Aries
 {
@@ -36,6 +37,18 @@ namespace nio2so.Voltron.Core.TSO.Aries
                 ReconnectedPriorFlag: basePacket.ReadBodyUshort(Endianness.BigEndian),
                 Password: basePacket.ReadBodyNullTerminatedString((int)(basePacket.PayloadSize - 331))
             );
+        }
+        /// <summary>
+        /// This implementation is incomplete; only supports User parameter
+        /// </summary>
+        /// <returns></returns>
+        public TSOTCPPacket ToPacket()
+        {
+            var basePacket = new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,new byte[] { });
+            var bytes = Encoding.ASCII.GetBytes(User + "\0");
+            basePacket.AllocateBody(100);
+            basePacket.EmplaceBodyAt(0,bytes);
+            return basePacket;
         }
     }
 }

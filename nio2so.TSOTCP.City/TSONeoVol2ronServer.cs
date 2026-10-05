@@ -13,6 +13,7 @@ using nio2so.Voltron.Core.Factory;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Aries;
 using OpenSSL.X509;
 using System.Net.Http.Json;
 
@@ -87,18 +88,30 @@ namespace nio2so.TSOTCP.Voltron.Server
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
+            TSOPDUFactoryServiceBase pduFactory = null;
 #if TSOPLAYTEST
-            Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
+             pduFactory = new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory(); // REGISTER THE TSOPLAYTEST PDU FACTORY
 #endif
 #if TSOPREALPHA
-            Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
+            pduFactory = new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory(); // REGISTER THE TSOPREALPHA PDU FACTORY
 #endif
+            if (pduFactory == null) throw new NullReferenceException("PDU Factory was not initialized.");
+            Services.Register(pduFactory);
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
 
             //START THE SERVER
             BeginListening();
+
+            //HSB SERVER PROXY
+            StartHSBProxy();
+        }
+
+        private void StartHSBProxy()
+        {
+            TSOHSBProxyServer _proxyServer = new(this);
+            _proxyServer.Start();
         }
 
         public override void Stop()
