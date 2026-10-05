@@ -75,6 +75,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
         public TSOVoltronPacket GET_UPDATE_PLAYER(uint AvatarID, out string AvatarName)
         {
+
             TSOPlayerInfoStruct playerInfo = GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
             AvatarName = playerInfo.PlayerID.MasterID;
             return new TSOUpdatePlayerPDU(playerInfo);
