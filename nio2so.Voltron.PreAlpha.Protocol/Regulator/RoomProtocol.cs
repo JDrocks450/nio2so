@@ -542,7 +542,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             {
                 OnError("Cannot identify who sent this packet to Voltron.");
                 return;
-            }                    
+            }
 
             if (Server.VoltronSettings.PreAlpha_HSBEnabled) // Attempt to wake up the HSB
             {
@@ -550,10 +550,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     BroadcastToServer(new TSORoomServerInitializedPDU());
             }
 
-            Thread.Sleep(1000);
-
             ENTER_LOT(joiningClient,roomPDU.HouseID);                   
         }
+
+        RoomProtocolRoomInfo _debugJoiner = null;
+        TSOAriesIDStruct _debugJoinerID = null;
+
         private void ENTER_LOT(TSOAriesIDStruct JoiningClient, uint HouseID)
         {
             var joiningClient = JoiningClient;
@@ -567,6 +569,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint joiningAvatarID = (joiningClient as ITSONumeralStringStruct)?.NumericID ?? 0;
             if (joiningAvatarID == 0)
                 throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
+
+            if (Server.VoltronSettings.PreAlpha_HSBEnabled)
+                isOnline = !(joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID);// HSB Hosting            
 
             //get the roomname only if the lot is currently ONLINE
             string? RoomName = roomInfo?.RoomID?.RoomName;
@@ -597,7 +602,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 /// <summary>
                 /// Set when a HSB is opening the room and hosting it.
                 /// </summary>
-                bool HSB_HOSTING = joiningAvatarID <= Server.VoltronSettings.PreAlpha_HSBAvatarID;
+                bool HSB_HOSTING = joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID;
 
                 // check if i am one of those roommates (or the owner)
                 if (lotRoommates != null && lotRoommates.Contains(joiningAvatarID) || HSB_HOSTING)
@@ -629,6 +634,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             {   // room is ONLINE ... I am a visitor
                 // ask host if I can join and ensure the lot is ONLINE
 
+                _debugJoiner = roomInfo;
+                _debugJoinerID = JoiningClient;
+
+                return;
                 //idk if this is valid here
                 RespondWith(new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
                 //add this player to the room
@@ -760,7 +769,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     {
                         houseID = Server.VoltronSettings.PreAlpha_HSBHouseID;
                         if (RoomIsOnline(houseID))
-                            throw new InvalidDataException(failure);
+                            ;// throw new InvalidDataException(failure);
                     }
                 }
                 else throw new Exception("Could not identify what Client sent this PDU.");
@@ -794,6 +803,58 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             AddRoom(createRoomInfo);
             ClientUpdateRoom_EnterRoom(houseID, joiningClient, true, out _);
             return;      
-        }        
+        }
+
+        /// <summary>
+        /// Sent by the HSB Mode TSOClient when it has completed loading the house.
+        /// </summary>
+        /// <param name="PDU"></param>
+        [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
+        public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
+        {
+            Thread.Sleep(5000);
+
+            var roomInfo = _debugJoiner;
+            var joiningClient = _debugJoinerID;
+            var roomIDStruct = _debugJoiner.RoomID;
+            uint joiningAvatarID = _debugJoinerID.AvatarID;
+            uint HouseID = _debugJoiner.LotID;
+
+            string failureReason = "";
+
+            TrySendTo(joiningAvatarID, new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
+            //add this player to the room
+            bool successfulJoin = ClientUpdateRoom_EnterRoom(HouseID, joiningClient, false, out failureReason);
+
+            //**join failed            
+            if (!successfulJoin)
+            {
+                uint errorCode = 0;
+                RespondWith(new TSOJoinRoomFailedPDU(10, "", roomIDStruct));
+                LogConsole($"VoltronID: {joiningClient} FAILED to join HouseID: {HouseID}. Reason: {failureReason}");
+                return;
+            }
+
+            // refresh the room value after the dust settles
+            if (!_roomsByHouseID.TryGetValue(HouseID, out roomInfo) && roomInfo == null)
+                throw new InvalidOperationException("Joining is not possible due to an unknown error"); // cannot continue if this is null            
+
+            if (false)
+            { // add the host to the lot
+                if (!roomInfo.AdmitOccupant(GetPlayerInfoStruct(joiningAvatarID)))
+                    throw new InvalidOperationException($"Could not add avatar {joiningAvatarID} to the new room.");
+                return;
+            }
+
+            //**join succeeded
+            //tell the client to join this new room
+            //**set the room the client is in to be this new one
+            TrySendTo(joiningAvatarID, new TSOUpdateRoomPDU(0xFFFFFFFF, roomInfo.RoomInfo, true));
+            LogConsole($"Updated VoltronID: {joiningClient} to be in room: {roomInfo.RoomID}!");
+            return;
+            //UpdateLotOccupants(roomInfo);
+            throw new NotImplementedException();
+            //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
+        }
     }
 }

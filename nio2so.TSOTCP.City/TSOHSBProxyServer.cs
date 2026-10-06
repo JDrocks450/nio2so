@@ -116,8 +116,8 @@ namespace nio2so.TSOTCP.Voltron.Server
             HSB_ID = ID;
             ACTIVATED = false;
             
-            //_voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
-            ActivateHSB(ID);
+            _voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
+            //ActivateHSB(ID);
         }
 
         /// <summary>

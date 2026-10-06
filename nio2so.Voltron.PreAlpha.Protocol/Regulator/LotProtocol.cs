@@ -270,17 +270,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, RegulatorName,
                 $"SetLotByID_Request: ID: {req.LotID}"));
-        }
-
-        /// <summary>
-        /// Never seen sent to the server.
-        /// </summary>
-        /// <param name="PDU"></param>
-        [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
-        public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
-        {
-            throw new NotImplementedException();
-            //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
-        }        
+        }               
     }
 }
