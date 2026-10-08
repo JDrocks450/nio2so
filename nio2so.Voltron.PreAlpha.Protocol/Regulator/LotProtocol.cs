@@ -93,13 +93,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void GetRoommateInfoByLotID_Request(TSODBRequestWrapper PDU)
         {
             var roommatePDU = (TSOGetRoommateInfoByLotIDRequest)PDU;
-            uint HouseID = roommatePDU.HouseID;
+            uint HouseID = roommatePDU.HouseID;            
+
             if (HouseID == 0)
             {
                 //respond with empty response
                 RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID, roommatePDU.SenderSessionID.PlayerID.AvatarID));
                 return; // Seems to be mistaken to send in this scenario
-            }
+            }            
 
             //**download roommates from data service
             if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))
@@ -128,6 +129,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             // ** You can send this PDU as many times as needed for each house to add to the map **
             //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
         }
+
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetLotByID_Request"/>
         /// </summary>

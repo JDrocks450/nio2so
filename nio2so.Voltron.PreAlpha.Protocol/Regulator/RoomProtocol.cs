@@ -4,6 +4,7 @@ using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.Voltron.Core.Services;
+using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
@@ -12,6 +13,7 @@ using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers;
+using nio2so.Voltron.PreAlpha.Protocol.Regulator.Room;
 using nio2so.Voltron.PreAlpha.Protocol.Struct;
 using System.Collections.Concurrent;
 
@@ -21,84 +23,20 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     /// Manages the current online simulation rooms in Voltron
     /// </summary>
     [TSORegulator]
-    public class RoomProtocol : TSOProtocol
+    internal class RoomProtocol : TSOProtocol
     {
-        public const uint MAX_OCCUPANTS = 10;
+        public const uint MAX_OCCUPANTS = 24;
         public const double RESYNC_TIMEOUT = 0;
+        private readonly int HSB_AWAKE_TIMEOUT = 10000;
+        private DateTime _reSyncTime = DateTime.MinValue;
+        private RuntimeRoomController _roomController;
 
-        private class RoomProtocolRoomInfo
+        public RoomProtocol()
         {
-            private Dictionary<uint, TSOPlayerInfoStruct> occupants = new();
-            private Dictionary<uint, TSOAriesIDStruct> clients = new();
-
-            public RoomProtocolRoomInfo(TSORoomIDStruct roomID, TSOAriesIDStruct leaderID, uint lotID)
-            {
-                RoomID = roomID;
-                LeaderID = leaderID;
-                LotID = lotID;
-            }
-
-            public TSORoomIDStruct RoomID { get; set; }
-            public TSOAriesIDStruct LeaderID { get; set; }
-            public uint LeaderAvatarID => (LeaderID as ITSONumeralStringStruct).NumericID.Value;
-            public uint LotID { get; set; }
-            public IEnumerable<TSOPlayerInfoStruct> Occupants => occupants.Values;
-            public uint OccupantsCount => (uint)occupants.Count;
-            public uint MaxOccupants { get; set; } = MAX_OCCUPANTS;
-            public bool IsLocked { get; set; } = false;
-            public IEnumerable<TSOAriesIDStruct> Admins => [new("??1337","bisquick")];
-            /// <summary>
-            /// Gets if this room is online, meaning that the <see cref="LeaderID"/> is still connected to this room, hosting it.
-            /// </summary>
-            public bool IsOnline => clients.ContainsKey(LeaderAvatarID);
-            /// <summary>
-            /// Creates a new <see cref="TSORoomInfoStruct"/> matching the configuration for this <see cref="RoomProtocolRoomInfo"/>
-            /// </summary>
-            public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, LeaderID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
-
-            /// <summary>
-            /// Adds this client to the list of clients in this room. This VoltronID will now receive network transmissions related to this room.
-            /// <para/>To be a 'Client', means that this TSOClient instance is in the process of joining the lot, just after the user selects to join the lot.
-            /// </summary>
-            /// <param name="VoltronID"></param>
-            /// <returns></returns>
-            public bool ClientJoinRoom(TSOAriesIDStruct VoltronID) => clients.TryAdd(VoltronID.AvatarID, VoltronID);
-            /// <summary>
-            /// Once the Client leaves this room, they are also removed as an occupant, if they were admitted prior.
-            /// </summary>
-            /// <param name="VoltronID"></param>
-            /// <returns></returns>
-            public bool ClientLeaveRoom(TSOAriesIDStruct VoltronID)
-            {
-                bool result = clients.Remove(VoltronID.AvatarID, out _);
-                occupants.Remove(VoltronID.AvatarID);
-                return result;
-            }
-            /// <summary>
-            /// Attempts to admit the <paramref name="Player"/> to this room. They must be a Client of this room, first. See: <see cref="ClientJoinRoom(TSOAriesIDStruct)"/>
-            /// <para/> To 'Admit' means that the joining process has completed, where the client is now showing the lot on their screen. Otherwise, they're just a Client of the room, not yet admitted.
-            /// </summary>
-            /// <param name="Player"></param>
-            /// <returns></returns>
-            /// <exception cref="InvalidOperationException"></exception>
-            public bool AdmitOccupant(TSOPlayerInfoStruct Player)
-            {
-                if (clients.ContainsKey(Player.PlayerID.AvatarID))
-                {
-                    if (occupants.ContainsKey(Player.PlayerID.AvatarID)) return true; // already admitted into this room, rejoining?
-                    return occupants.TryAdd(Player.PlayerID.AvatarID, Player);
-                }
-                throw new InvalidOperationException($"This player, {Player.PlayerID} is not a client of this room. They cannot be admitted this way.");
-            }
-            public IEnumerable<TSOAriesIDStruct> GetConnectedClients() => clients.Values.ToArray();            
+            _roomController = new(this);
         }
 
-        private DateTime _reSyncTime = DateTime.MinValue;
-        private ConcurrentDictionary<uint, RoomProtocolRoomInfo> _roomsByHouseID { get; } = new();
-        /// <summary>
-        /// List of clients added to rooms using <see cref="ClientEnterRoom(uint, TSOAriesIDStruct, bool)"/>
-        /// </summary>
-        private ConcurrentDictionary<uint, uint> _playersInRooms { get; } = new();
+        #region NON_PDU_HANDLER
 
         /// <summary>
         /// Clears this player from any rooms they may be in from their play session (used when disconnecting/reconnecting)
@@ -107,6 +45,15 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// <exception cref="NotImplementedException"></exception>
         public bool AvatarPurgePlaySession(TSOAriesIDStruct? voltronID, out string FailureReason) => 
             ClientUpdateRoom_LeaveRoom(voltronID, out FailureReason);
+
+        /// <summary>
+        /// <inheritdoc cref="TSOProtocolBase.LogConsole(string, string, TSOLoggerServiceBase.LogSeverity)"/>
+        /// </summary>
+        /// <param name="Message"></param>
+        /// <param name="Caption"></param>
+        /// <param name="Severity"></param>
+        internal new void LogConsole(string Message) => base.LogConsole(Message);
+
         /// <summary>
         /// Creates a new <see cref="RoomProtocolRoomInfo"/> that is empty, uses the info from the given <paramref name="HouseID"/> and is lead by <paramref name="Leader"/>
         /// <para/><paramref name="Created"/> True if the room as just now created, false if it already was open. <b>Will migrate host to this passed one if already existed.</b>
@@ -126,7 +73,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithLeader));
             //add the room
             Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), Leader, HouseID));            
-            return _roomsByHouseID[HouseID];
+            return _roomController.GetByHouseID(HouseID);
         }
 
         /// <summary>
@@ -140,8 +87,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         private RoomProtocolRoomInfo EnsureRoomExists(uint HouseID, TSOAriesIDStruct? Leader, out bool Created)
         {
             Created = false;
-            if (RoomExists(HouseID))
-                return _roomsByHouseID[HouseID];
+            if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? Room))
+                return Room;
 
             //download lot profile
             var lot = GetLotProfile(HouseID);
@@ -150,20 +97,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             return CreateOrGetRoomWithLeader(HouseID, Leader, out Created);
         }
 
-        private bool AddRoom(RoomProtocolRoomInfo Room)
-        {
-            bool result = false;
-            if (Room.LeaderAvatarID == 0)
-                throw new InvalidDataException($"LeaderID is invalid: {Room.LeaderAvatarID}");
-            if (string.IsNullOrWhiteSpace(Room.LeaderID.MasterID)) // ensure this isn't blank for data integrity
-                Room.LeaderID = GetVoltronIDStruct(Room.LeaderAvatarID);
-            result = _roomsByHouseID.TryAdd(Room.LotID, Room);
-            if (!result) 
-                result = MigrateHost(Room.LotID, Room.LeaderID);
-            else
-                LogConsole($"HouseID: {Room.LotID} is ONLINE.");
-            return result;
-        }
+        private bool AddRoom(RoomProtocolRoomInfo Room) => _roomController.AddRoom(Room);
 
         /// <summary>
         /// Tells all connected clients that they're disconnected and closes the room
@@ -180,35 +114,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 ClientUpdateRoom_LeaveRoom(client, out string reason);
             }
             Room.ClientLeaveRoom(Room.LeaderID);
-        }
+        }        
 
         /// <summary>
-        /// Moves the <see cref="RoomProtocolRoomInfo.LeaderID"/> to be <paramref name="NewLeaderID"/>
-        /// </summary>
-        /// <param name="HouseID"></param>
-        /// <param name="NewLeaderID"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        private bool MigrateHost(uint HouseID, TSOAriesIDStruct NewLeaderID)
-        {
-            if (!_roomsByHouseID.ContainsKey(HouseID))
-                throw new Exception("Cannot migrate host of a room that's closed.");
-            var roomInfo = _roomsByHouseID[HouseID];
-            if (roomInfo.LeaderID.AvatarID != NewLeaderID.AvatarID)
-            {
-                roomInfo.LeaderID = NewLeaderID;
-                LogConsole($"HouseID: {HouseID} migrating host to: {NewLeaderID}.");
-            }
-            return true;
-        }
-
-        /// <summary>
-        /// Returns whether a room exists or not. You can use <see cref="EnsureRoomExists(uint, TSOAriesIDStruct?, out bool)"/> and <see cref="CreateOrGetRoomWithLeader(uint, TSOAriesIDStruct, out bool)"/>
-        /// to create rooms in the protocol.
+        /// <inheritdoc cref="RuntimeRoomController.RoomExists(uint)"/>
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        private bool RoomExists(uint HouseID) => _roomsByHouseID.ContainsKey(HouseID);
+        private bool RoomExists(uint HouseID) => _roomController.RoomExists(HouseID);
 
         /// <summary>
         /// Ensures every lot in the data service has a room entry <para/>
@@ -250,32 +163,46 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint avatarID = (JoinerVoltronID as ITSONumeralStringStruct)?.NumericID ?? 0;
             if (avatarID == 0)
                 throw new InvalidDataException($"AvatarID passed was {avatarID} (invalid)");
-            RoomProtocolRoomInfo roomInfo = _roomsByHouseID[HouseID];
+            RoomProtocolRoomInfo roomInfo = _roomController.GetByHouseID(HouseID);
+
+            // send the occupant arrived pdu to the host
             bool result = true;
             JoinFailureReason = "Couldn't communicate with the host using Voltron. (Did they disconnect?)";
-            if (!HSB) // the host should not get this packet received for themself, causes issues.
-                result = TrySendTo(roomInfo.LeaderID, new TSOOccupantArrivedPDU(playerInfo));
+            if (!HSB)
+            { // the host should not get this packet received for themself, causes issues.
+                result = true; 
+                BroadcastPDUToRoom(HouseID, new TSOOccupantArrivedPDU(playerInfo));
+            }
+            if (!result) return false;
+
+            // ensure the client isn't already in the room
             JoinFailureReason = "Your account is already in this room.";
-            if (result)
-                result = roomInfo.ClientJoinRoom(JoinerVoltronID);
+            result = roomInfo.ClientJoinRoom(JoinerVoltronID);
+            if (!result) return false;
+
+            // ensure we can set this avatar into the room in the protocol -- shouldn't fail
             JoinFailureReason = "Mapping which room your avatar is in failed.";
-            if (result)
-            {
-                if (!_playersInRooms.TryAdd(avatarID, HouseID))
-                    _playersInRooms[avatarID] = HouseID;
-                JoinFailureReason = "success.";
-                LogConsole($"VoltronID: {JoinerVoltronID} TSOClient has connected to HouseID: {HouseID} -- {(HSB ? "as a host" : "as a visitor")}.");
-            }            
+            _roomController.SetPlayerInRoom(avatarID, HouseID);
+            JoinFailureReason = "success.";
+            LogConsole($"VoltronID: {JoinerVoltronID} TSOClient has connected to HouseID: {HouseID} -- {(HSB ? "as a host" : "as a visitor")}.");
             return result;
-        }      
+        }
+
+        /// <summary>
+        /// Cleanly removes a <paramref name="VoltronID"/> from the room they're in
+        /// </summary>
+        /// <param name="VoltronID"></param>
+        /// <param name="FailureReason"></param>
+        /// <param name="HouseID"></param>
+        /// <returns></returns>
         bool ClientUpdateRoom_LeaveRoom(TSOAriesIDStruct VoltronID, out string FailureReason, uint HouseID = 0)
         {
             uint avatarID = VoltronID.AvatarID;
             FailureReason = $"{VoltronID} is not valid.";
             if (avatarID == 0)
                 return false;
-            FailureReason = $"AvatarID: {avatarID} isn't in a room and you didn't provide one to remove them from.";
-            _playersInRooms.TryGetValue(avatarID, out uint currentRoom);
+            FailureReason = $"AvatarID: {avatarID} isn't in a room and one wasn't provided to remove them from.";
+            _roomController.TryGetRoomAvatarIsIn(avatarID, out uint currentRoom);
             if (HouseID == 0)
                 HouseID = currentRoom;
             else if (HouseID != currentRoom)
@@ -286,9 +213,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (HouseID == 0)
                 return false;
 
-            _playersInRooms.Remove(avatarID, out HouseID);
-            var roomInfo = _roomsByHouseID[HouseID];
-            bool result = roomInfo.ClientLeaveRoom(VoltronID);            
+            _roomController.RemoveAvatarFromRoom(avatarID, out HouseID);
+            var roomInfo = _roomController.GetByHouseID(HouseID);
+            bool result = roomInfo.ClientLeaveRoom(VoltronID);
 
             //**update client to not be in a room
             TrySendTo(VoltronID, new TSOUpdateRoomPDU(134, TSORoomInfoStruct.NoRoom));
@@ -296,15 +223,20 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             //Check if this client is the host of the lot
             if (roomInfo.LeaderAvatarID == VoltronID.AvatarID) // Leader of the lot (host)
                 TakeRoomOffline(roomInfo);
+            else
+            {
+                TrySendTo(VoltronID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(roomInfo.LeaderAvatarID))); // testing
+                TrySendTo(roomInfo.LeaderID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(VoltronID)));
+            }
 
             //**notify all connected clients the updated avatar list
             UpdateLotOccupants(roomInfo);
             //**notify mapview that the playercount has changed
             NotifyLotsOnline();
 
-            LogConsole($"AvatarID: {avatarID} was removed from HouseID: {HouseID}.");
+            LogConsole($"AvatarID: {avatarID} was removed from room HouseID: {HouseID}.");
             return true;
-        }        
+        }       
 
         /// <summary>
         /// Adds the <paramref name="AvatarID"/> to this Occupants list of the room they're joining and broadcasts <see cref="TSOUpdateOccupantsPDU"/>
@@ -317,9 +249,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             try
             {
                 //refer to the map of clients to rooms to find which room I'm supposed to be in
-                if (!_playersInRooms.TryGetValue(AvatarID, out uint HouseID))
+                if (!_roomController.TryGetRoomAvatarIsIn(AvatarID, out uint HouseID))
                     throw new InvalidOperationException($"AvatarID {AvatarID} is not in a room, yet is sending a broadcast PDU.");
-                var roomInfo = _roomsByHouseID[HouseID];
+                var roomInfo = _roomController.GetByHouseID(HouseID);                            
 
                 //add the avatar to the occupants list
                 roomInfo.AdmitOccupant(GetPlayerInfoStruct(AvatarID));
@@ -354,7 +286,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// <param name="ExcludeHost">Do not send this PDU to the host if true</param>
         void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, bool ExcludeHost = false)
         {
-            RoomProtocolRoomInfo roomInfo = _roomsByHouseID[HouseID];
+            RoomProtocolRoomInfo roomInfo = _roomController.GetByHouseID(HouseID);
             BroadcastPDUToRoom(HouseID, PDU, ExcludeHost ? [roomInfo.LeaderAvatarID] : Array.Empty<uint>());
         }
         /// <summary>
@@ -365,7 +297,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// <param name="ExcludeAvatarIDs">Do not send this PDU to any avatar in this list</param>
         void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, params uint[] ExcludeAvatarIDs)
         {
-            RoomProtocolRoomInfo roomInfo = _roomsByHouseID[HouseID];
+            RoomProtocolRoomInfo roomInfo = _roomController.GetByHouseID(HouseID);
             IEnumerable<TSOAriesIDStruct> clients = roomInfo.GetConnectedClients();
             foreach (var client in clients)
             {
@@ -391,8 +323,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
         public TSORoomInfoStruct GetRoomByPlayerID(uint AvatarID)
         {
-            _playersInRooms.TryGetValue(AvatarID, out uint HouseID);
-            _roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInfo);
+            _roomController.TryGetRoomAvatarIsIn(AvatarID, out uint HouseID);
+            _roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? roomInfo);
             return roomInfo?.RoomInfo ?? TSORoomInfoStruct.NoRoom;
         }
         /// <summary>
@@ -400,7 +332,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        public bool RoomIsOnline(uint HouseID) => _roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? RoomInfo) && RoomInfo.IsOnline;
+        public bool RoomIsOnline(uint HouseID) => _roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? RoomInfo) && RoomInfo.IsOnline;
 
         /// <summary>
         /// Returns a <see cref="TSOListOccupantsResponsePDU"/> with the occupants of a given room.
@@ -412,7 +344,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public TSOListOccupantsResponsePDU GetOccupantsPDUByRoomID(uint HouseID, out bool IsOnline)
         {
             //check if room is online
-            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInstance))
+            if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? roomInstance))
             { // online room
                 IsOnline =  true;
                 return new TSOListOccupantsResponsePDU(roomInstance.RoomID, [..roomInstance.Occupants]); // respond with occupants
@@ -434,7 +366,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             OccupantsPDU = default;
             //check if room is online
-            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInstance))
+            if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? roomInstance))
             { // online room
                 if (roomInstance.Occupants?.Any() ?? false)
                 {
@@ -459,14 +391,238 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// <para/>If all lots are offline when a client connects to the MapView, this NEEDS to be called to get them to refresh their room list, as they
         /// will never automatically ask again if this is true.
         /// </summary>
-        private void NotifyLotsOnline() => BroadcastToServer(new TSOListRoomsResponsePDU([.. _roomsByHouseID.Select(x => x.Value.RoomInfo)]));
+        private void NotifyLotsOnline() => 
+            BroadcastToServer(new TSOListRoomsResponsePDU(_roomController.GetAllRoomStructs(true)));
 
         protected override bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)
         {
             OnStandardMessage(PDU);
             return true;
+        }        
+
+        private void AvatarEnteringLot(TSOAriesIDStruct JoiningClient, uint HouseID)
+        {
+            var joiningClient = JoiningClient;
+
+            //is the lot online?
+            bool isOnline = false;
+            if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? roomInfo) && roomInfo != null)
+                isOnline = roomInfo.IsOnline; // is only online if there is an active room entry
+
+            //get the joining player's ID
+            uint joiningAvatarID = (joiningClient as ITSONumeralStringStruct)?.NumericID ?? 0;
+            if (joiningAvatarID == 0)
+                throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
+
+            /// <summary>
+            /// Set when a HSB is opening the room and hosting it.
+            /// </summary>
+            bool IsHSB = joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID;           
+
+            //get the roomname only if the lot is currently ONLINE
+            string? RoomName = roomInfo?.RoomID?.RoomName;
+            TSORoomIDStruct? roomIDStruct = roomInfo?.RoomID;
+
+            bool successfulJoin = false;
+            bool hosting = false;
+            string failureReason = "none set.";
+
+            LogConsole($"AvatarID: {joiningAvatarID} (HSB?:{IsHSB}) is joining house: {HouseID} ({(isOnline ? "Online" : "Offline")})");
+
+            //is this lot online?
+            if (!isOnline)
+            {   // room is OFFLINE ... try to host a new lobby using an available HSB or set me as a delayed joiner
+                // remember that when a Client selects an offline lot as an owner or roommate they need to join the HSB that comes online to host their lot
+
+                if (IsHSB)
+                { // ah, our host has arrived. Do the host join process.
+                    successfulJoin = HSB_BeginHosting(HouseID, joiningClient, out failureReason, ref RoomName, ref roomIDStruct);
+                    hosting = true;
+                }
+                else
+                { // the lot owner is here, but their room isn't ready yet! set them into the joiner queue.
+                    if (!_roomController.AddJoinerToQueue(joiningAvatarID, HouseID, out failureReason))
+                        throw new InvalidOperationException("A lot owner waiting for an HSB to host their lot failed: " + failureReason);
+                    return;
+                }
+            }
+            else if (isOnline) // redundant -- clarity only
+            {   // room is ONLINE ... I am a visitor
+                // ask host if I can join and ensure the lot is ONLINE
+
+                if (IsHSB)
+                    throw new InvalidOperationException($"An HSB Client (ID: {joiningAvatarID}) is trying to join an already online lot! Ignoring...");
+                
+                //idk if this is valid here
+                TrySendTo(JoiningClient, new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
+                //add this player to the room
+                successfulJoin = ClientUpdateRoom_EnterRoom(HouseID, joiningClient, false, out failureReason);
+            }
+
+            //**join failed            
+            if (!successfulJoin)
+            {
+                ClientJoinHouseFailed(10,failureReason,joiningClient,roomIDStruct);
+                return;
+            }
+
+            //**join succeeded
+            //tell the client to join this new room
+            //**set the room the client is in to be this new one
+            ClientJoinHouse(HouseID, joiningClient, hosting);
         }
 
+        private void ClientJoinHouseFailed(uint errorCode, string FailureReason, TSOAriesIDStruct JoiningClient, TSORoomIDStruct RoomIDStruct)
+        {
+            TrySendTo(JoiningClient, new TSOJoinRoomFailedPDU(errorCode, FailureReason, RoomIDStruct));
+            LogConsole($"VoltronID: {JoiningClient} FAILED to join HouseID: {RoomIDStruct?.HouseID}. Reason: {FailureReason}");
+        }
+        
+        private void ClientJoinHouse(uint HouseID, TSOAriesIDStruct joiningClient, bool hosting = false)
+        {
+            uint joiningAvatarID = joiningClient.AvatarID;
+
+            // refresh the room value after the dust settles
+            if (!_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? roomInfo) && roomInfo == null)
+                throw new InvalidOperationException("Joining is not possible due to an unknown error"); // cannot continue if this is null            
+
+            if (hosting)
+            { // add the host to the lot
+                if (!roomInfo.AdmitOccupant(GetPlayerInfoStruct(joiningAvatarID)))
+                    throw new InvalidOperationException($"Could not add avatar {joiningAvatarID} to the new room.");
+                return;
+            }
+
+            //**join succeeded
+            //tell the client to join this new room
+            //**set the room the client is in to be this new one
+            TrySendTo(joiningClient, new TSOUpdateRoomPDU(0xFFFFFFFF, roomInfo.RoomInfo, true));
+            LogConsole($"Updated VoltronID: {joiningClient} to be in room: {roomInfo.RoomID}!");
+
+            UpdateLotOccupants(roomInfo);
+        }
+
+        /// <summary>
+        /// Procedure for setting up an HSB TSOClient (-hsb_mode) to host the lot
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <param name="HSBID"></param>
+        /// <param name="failureReason"></param>
+        /// <param name="RoomName"></param>
+        /// <param name="roomIDStruct"></param>
+        /// <returns></returns>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
+        private bool HSB_BeginHosting(uint HouseID, TSOAriesIDStruct HSBID, out string failureReason, ref string RoomName, ref TSORoomIDStruct roomIDStruct)
+        {
+            // get the lot profile first  
+            LotProfile thisLot = GetLotProfile(HouseID);
+            if (thisLot == null)
+                throw new NullReferenceException($"LotID: {HouseID} was not found in the data service!");
+
+            //update these with the actual lot info
+            RoomName = thisLot.Name ?? "BloatyWorld";
+            roomIDStruct = new(thisLot.HouseID, RoomName);
+
+            //download the roommates of this house
+            if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
+                throw new InvalidDataException(error);
+
+            uint joiningAvatarID = HSBID.AvatarID;
+            bool IsHSB = joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID; // double verification
+            failureReason = "success.";
+            bool successful = false;
+
+            // check if this is an HSB client
+            if (IsHSB)
+            {   // Initiate the host protocol
+                // ADD ROOM TO PROTOCOL (CreateRoom Now)
+
+                //get create pdu with room details
+                //add this room to the RoomProtocol Voltron Protocol
+                var createRoomInfo = CreateOrGetRoomWithLeader(HouseID, HSBID, out bool Created);
+
+                successful = true;
+                if (successful) // TELL THE CLIENT TO START THE HOST PROTOCOL   
+                {
+                    TrySendTo(HSBID, new TSOCreateRoomResponsePDU(createRoomInfo.RoomID));
+                    TrySendTo(HSBID, new TSOHouseSimConstraintsResponsePDU(HouseID)); // transition to lot view as Host
+                    successful = ClientUpdateRoom_EnterRoom(thisLot.HouseID, HSBID, true, out failureReason); // join this avatar into the new room as an HSB
+                }
+                //**list of online rooms (or data about the room) has changed ... tell everyone.
+                NotifyLotsOnline();
+            }
+            else
+            {
+                failureReason = $"Room is OFFLINE and this client ({HSBID}) is NOT an HSB client (Server Setting: AvatarID: {Server.VoltronSettings.PreAlpha_HSBAvatarID}).";
+                successful = false;
+            }
+            return successful;
+        }              
+
+        /// <summary>
+        /// Gets the HouseID that this newly allocated HSB Client should be hosting
+        /// </summary>
+        /// <param name="PDU">A PDU to use to reverse-lookup this client for its AvatarID</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        uint HSB_GetNextHouseIDToHost(TSOVoltronPacket PDU)
+        {
+            // HSB clients will ask for a house they should be hosting, now we will provide it.
+            uint houseID = 0;
+
+            //identify which client is sending this by AvatarID
+            if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
+            { // identified -- are they an HSB avatar?
+                if (VoltronID.AvatarID != Server.VoltronSettings.PreAlpha_HSBAvatarID) return 0; // they are not an HSB avatar, they cannot host
+
+                if (!_roomController.GetNextHouseIDForHSB(VoltronID, out houseID))
+                    return 0;
+
+                if (RoomIsOnline(houseID))
+                    ;// throw new InvalidDataException(failure);                    
+            }
+            else throw new Exception("Could not identify what Client sent this PDU."); // not good if this happens, indicates a Login to Voltron issue. Client needs to be initialized using Aries ClientSessionInfo
+            return houseID;
+        }        
+
+        /// <summary>
+        /// Procedure for when the HSB comes online and the lot is ready to accept visitors
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <param name="JoiningAvatarIDs"></param>
+        void HSB_LotIsOnline(uint HouseID, Queue<uint> JoiningAvatarIDs)
+        {         
+            //**hsb is online, let all the joiners into the room
+            // i dont think that the game can support multiple joiners at once... HOWEVER, the game has the necessary infrastructure to handle this failure on its own.
+
+            var roomInfo = _roomController.GetByHouseID(HouseID);
+            var roomIDStruct = roomInfo.RoomID;
+
+            foreach (var AvatarID in JoiningAvatarIDs)
+            { // let each joiner in, one by one
+                var joiningClient = GetVoltronIDStruct(AvatarID);                
+                uint joiningAvatarID = joiningClient.AvatarID;
+
+                string failureReason = "";
+
+                TrySendTo(joiningAvatarID, new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
+                //add this player to the room
+                bool successfulJoin = ClientUpdateRoom_EnterRoom(HouseID, joiningClient, false, out failureReason);
+
+                //**join failed            
+                if (!successfulJoin)
+                {
+                    ClientJoinHouseFailed(10, failureReason, joiningClient, roomIDStruct);
+                    return;
+                }
+
+                ClientJoinHouse(HouseID, joiningClient, false);
+            }
+        }
+        #endregion
+
+        #region PDU_HANDLER
         [TSOProtocolDatablobHandler((uint)TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage)]
         public void OnStandardMessage(ITSODataBlobPDU PDU)
         {
@@ -475,9 +631,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint avatarID = (sender as ITSONumeralStringStruct)?.NumericID ?? 0;
             if (avatarID == 0)
                 throw new InvalidDataException($"AvatarID sending a broadcast PDU is {avatarID}, ARIESID: {sender}");
-            if (!_playersInRooms.TryGetValue(avatarID, out uint HouseID))
+            if (!_roomController.TryGetRoomAvatarIsIn(avatarID, out uint HouseID))
                 throw new InvalidOperationException($"AvatarID {avatarID} is not in a room, yet is sending a broadcast PDU.");
-            var roomInfo = _roomsByHouseID[HouseID];
+            var roomInfo = _roomController.GetByHouseID(HouseID);
 
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
             {
@@ -485,7 +641,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 TrySendTo(transmitPDU.DestinationSessionID, broadcastPDU);
             }
             if (PDU is TSOBroadcastDatablobPacket && broadcastPDU != null)
-            {                                
+            {
                 if (avatarID != roomInfo.LeaderAvatarID)
                 {
                     broadcastPDU.SenderSessionID = GetPlayerInfoStruct(roomInfo.LeaderID);
@@ -499,10 +655,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     if (!AdmitAvatarToRoom(avatarID))
                         throw new InvalidOperationException($"Could not admit: {avatarID} into room {HouseID} after {TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived}!");
         }
-
-
         /// <summary>
         /// This function is invoked when the <see cref="RoomProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
+        /// <para/>This seems to disable the 30 second house timeout when it matches the joining avatar ID
         /// </summary>
         /// <param name="PDU"></param>
         /// <exception cref="NullReferenceException"></exception>
@@ -510,7 +665,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void GetHouseLeaderByLotID_Request(TSODBRequestWrapper PDU)
         {
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
-            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? room))
+            if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? room))
                 RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LeaderAvatarID));
         }
 
@@ -535,7 +690,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 RespondWith(new TSOJoinRoomFailedPDU(10, ErrorMessage, TSORoomIDStruct.Error));
                 throw new InvalidOperationException(ErrorMessage);
             }
-            
+
             //identify client
             nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
             if (!clientSessionService.GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? joiningClient) || joiningClient == null)
@@ -550,129 +705,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     BroadcastToServer(new TSORoomServerInitializedPDU());
             }
 
-            ENTER_LOT(joiningClient,roomPDU.HouseID);                   
+            AvatarEnteringLot(joiningClient, roomPDU.HouseID);
         }
-
-        RoomProtocolRoomInfo _debugJoiner = null;
-        TSOAriesIDStruct _debugJoinerID = null;
-
-        private void ENTER_LOT(TSOAriesIDStruct JoiningClient, uint HouseID)
-        {
-            var joiningClient = JoiningClient;
-
-            //is the lot online?
-            bool isOnline = false;
-            if (_roomsByHouseID.TryGetValue(HouseID, out RoomProtocolRoomInfo? roomInfo) && roomInfo != null)
-                isOnline = roomInfo.IsOnline; // is only online if there is an active room entry
-
-            //get the joining player's ID
-            uint joiningAvatarID = (joiningClient as ITSONumeralStringStruct)?.NumericID ?? 0;
-            if (joiningAvatarID == 0)
-                throw new Exception("Joining client is not identified. AvatarID: " + joiningAvatarID);
-
-            if (Server.VoltronSettings.PreAlpha_HSBEnabled)
-                isOnline = !(joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID);// HSB Hosting            
-
-            //get the roomname only if the lot is currently ONLINE
-            string? RoomName = roomInfo?.RoomID?.RoomName;
-            TSORoomIDStruct? roomIDStruct = roomInfo?.RoomID;
-
-            bool successfulJoin = false;
-            bool hosting = false;
-            string failureReason = "none set.";
-
-            LogConsole($"AvatarID: {joiningAvatarID} is joining house: {HouseID} ({(isOnline ? "Online" : "Offline")})");
-
-            //is this lot online?
-            if (!isOnline)
-            {   // room is OFFLINE ... try to host a new lobby
-                // get the lot profile first
-                LotProfile thisLot = GetLotProfile(HouseID);
-                if (thisLot == null)
-                    throw new NullReferenceException($"LotID: {HouseID} was not found in the data service!");
-
-                //update these with the lot info
-                RoomName = thisLot.Name ?? "BloatyWorld";
-                roomIDStruct = new(thisLot.HouseID, RoomName);
-
-                //download the roommates of this house
-                if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? lotRoommates, out string error))
-                    throw new InvalidDataException(error);
-
-                /// <summary>
-                /// Set when a HSB is opening the room and hosting it.
-                /// </summary>
-                bool HSB_HOSTING = joiningAvatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID;
-
-                // check if i am one of those roommates (or the owner)
-                if (lotRoommates != null && lotRoommates.Contains(joiningAvatarID) || HSB_HOSTING)
-                {   // Initiate the host protocol
-                    // ADD ROOM TO PROTOCOL (CreateRoom Now)
-                    hosting = true;
-
-                    //get create pdu with room details
-                    //add this room to the RoomProtocol Voltron Protocol
-                    var createRoomInfo = CreateOrGetRoomWithLeader(HouseID, joiningClient, out bool Created);
-
-                    successfulJoin = true;
-                    if (successfulJoin) // TELL THE CLIENT TO START THE HOST PROTOCOL   
-                    {
-                        RespondWith(new TSOCreateRoomResponsePDU(createRoomInfo.RoomID));
-                        RespondWith(new TSOHouseSimConstraintsResponsePDU(HouseID)); // transition to lot view as Host
-                        successfulJoin = ClientUpdateRoom_EnterRoom(thisLot.HouseID, joiningClient, true, out failureReason); // join this avatar into the new room as an HSB
-                    }
-                    //**list of online rooms (or data about the room) has changed ... tell everyone.
-                    NotifyLotsOnline();
-                }
-                else
-                {
-                    failureReason = "Room is OFFLINE and you're NOT a roommate.";
-                    successfulJoin = false;
-                }
-            }
-            else if (isOnline) // redundant -- clarity only
-            {   // room is ONLINE ... I am a visitor
-                // ask host if I can join and ensure the lot is ONLINE
-
-                _debugJoiner = roomInfo;
-                _debugJoinerID = JoiningClient;
-
-                return;
-                //idk if this is valid here
-                RespondWith(new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
-                //add this player to the room
-                successfulJoin = ClientUpdateRoom_EnterRoom(HouseID, joiningClient, false, out failureReason);
-            }
-
-            //**join failed            
-            if (!successfulJoin)
-            {
-                uint errorCode = 0;
-                RespondWith(new TSOJoinRoomFailedPDU(10, "", roomIDStruct));
-                LogConsole($"VoltronID: {joiningClient} FAILED to join HouseID: {HouseID}. Reason: {failureReason}");
-                return;
-            }
-
-            // refresh the room value after the dust settles
-            if (!_roomsByHouseID.TryGetValue(HouseID, out roomInfo) && roomInfo == null)
-                throw new InvalidOperationException("Joining is not possible due to an unknown error"); // cannot continue if this is null            
-
-            if (hosting)
-            { // add the host to the lot
-                if (!roomInfo.AdmitOccupant(GetPlayerInfoStruct(joiningAvatarID)))
-                    throw new InvalidOperationException($"Could not add avatar {joiningAvatarID} to the new room.");
-                return;
-            }
-
-            //**join succeeded
-            //tell the client to join this new room
-            //**set the room the client is in to be this new one
-            RespondWith(new TSOUpdateRoomPDU(0xFFFFFFFF, roomInfo.RoomInfo, true));
-            LogConsole($"Updated VoltronID: {joiningClient} to be in room: {roomInfo.RoomID}!");
-
-            UpdateLotOccupants(roomInfo);
-        }
-
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
         public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
         {
@@ -681,11 +715,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             //*disconnect from room first
             DETACH_FROM_ROOM_PDU(new TSODetachFromRoomPDU(destroyingRoom));
-            
+
             RespondWith(new TSODestroyRoomResponsePDU(TSOStatusReasonStruct.Online, destroyingRoom));
 
             //get room info
-            var roomInfo = _roomsByHouseID[((ITSONumeralStringStruct)destroyingRoom).NumericID.Value];
+            var roomInfo = _roomController.GetByHouseID(((ITSONumeralStringStruct)destroyingRoom).NumericID.Value);
             TakeRoomOffline(roomInfo);
         }
 
@@ -696,33 +730,31 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             TSORoomIDStruct leavingRoom = detachPDU.RoomID;
 
             //Get the avatar who is trying to leave and destroy the room behind them
-            uint RoomID = (leavingRoom as ITSONumeralStringStruct)?.NumericID ?? 0;
-            if (RoomID == 0)
+            uint HouseID = (leavingRoom as ITSONumeralStringStruct)?.NumericID ?? 0;
+            if (HouseID == 0)
             {   //TODO send detach from room failed
                 //RespondWith();
-                throw new InvalidDataException($"{nameof(DETACH_FROM_ROOM_PDU)}(): {nameof(RoomID)} is {RoomID}! Ignoring...");
+                throw new InvalidDataException($"{nameof(DETACH_FROM_ROOM_PDU)}(): {nameof(HouseID)} is {HouseID}! Ignoring...");
             }
+
             //get room info
-            var roomInfo = _roomsByHouseID[RoomID];
+            var roomInfo = _roomController.GetByHouseID(HouseID);
+
             //invoke the session service
             if (!GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
                 throw new InvalidOperationException("Could not identify the client who sent this PDU.");
 
-            ClientUpdateRoom_LeaveRoom(VoltronID, out string failReason, RoomID);  
-            if (VoltronID.AvatarID != roomInfo.LeaderAvatarID)
-                TrySendTo(roomInfo.LeaderID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(VoltronID)));
+            ClientUpdateRoom_LeaveRoom(VoltronID, out string failReason, HouseID);            
 
             RespondWith(detachPDU);
         }
-
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.CHAT_MSG_PDU)]
         public void CHAT_MSG_PDU(TSOVoltronPacket PDU)
         {
-            var msg = (TSOChatMessagePDU)PDU;            
+            var msg = (TSOChatMessagePDU)PDU;
             BroadcastToServer(msg);
             //RespondWith(new TSOChatMessageFailedPDU(msg.Message));
         }
-        
         /// <summary>
         /// INVOKES THE HSB MODE
         /// </summary>
@@ -750,59 +782,24 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             ** LoadHouseResponsePDU without us ever having sent it a LoadHousePDU. ;)
             */
 
-            var houseID = ((TSOLoadHouseResponsePDU)PDU).HouseID;
-
-            //The client will always send a LoadHouseResponsePDU with a blank houseID, so this can be ignored
-            //when that happens
-            if (houseID == 0 && Server.VoltronSettings.PreAlpha_HSBEnabled)
-            { // HSB testing mode, redirect to hosting a lot ... host the lot they own
-                if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
-                { // identified
-                    if (VoltronID.AvatarID != Server.VoltronSettings.PreAlpha_HSBAvatarID) return;
-                    if (TryDataServiceQuery(x => x.GetCharacterFileByAvatarID(VoltronID.AvatarID), out TSODBChar character, out string failure))
-                    { // download character file
-                        uint hsbLot = character.MyLotID; // set hosting lot to my owned lot
-                        if (hsbLot != 0 && !RoomIsOnline(hsbLot)) // check if the house is already online
-                            houseID = hsbLot;
-                    }
-                    else
-                    {
-                        houseID = Server.VoltronSettings.PreAlpha_HSBHouseID;
-                        if (RoomIsOnline(houseID))
-                            ;// throw new InvalidDataException(failure);
-                    }
-                }
-                else throw new Exception("Could not identify what Client sent this PDU.");
-            }
-            if (houseID == 0) return;
-            ((TSOLoadHouseResponsePDU)PDU).HouseID = houseID;
-            
-            LOT_ENTRY_REQUEST_PDU(PDU);
-            return; 
-            
-            //**BASIC REWRITE OF ENTER_LOT TO REMOVE CERTAIN PDUS
-            
-            // FILE OFFSET 0x1856 is the value in the .data section of the application storing the client type:
+            // FILE OFFSET 0x1856 is the value in the .data section of the application (TSOClient.exe) storing the client type:
             // 0x01 for HouseSimServer and 0x02 for TSOClient
             // 00469FE8 is the bit that controls hosting or not
 
-            //im in a lot -- send it the lot im supposed to be in
-            RespondWith(new TSOHouseSimConstraintsResponsePDU(houseID)); // dictate what lot to load here.
-            LotProfile thisLot = GetLotProfile(houseID);
-            if (thisLot == null)
-                throw new NullReferenceException($"LotID: {houseID} was not found in the data service!");
-            nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
-            if (!clientSessionService.GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? joiningClient) || joiningClient == null)
-                throw new InvalidOperationException("Cannot identify who sent this packet to Voltron.");
-            //update these with the lot info
-            var RoomName = thisLot.Name ?? "BloatyWorld";
-            TSORoomIDStruct roomIDStruct = new(thisLot.HouseID, RoomName);
-            //get create pdu with room details
-            var createRoomInfo = new RoomProtocolRoomInfo(roomIDStruct, joiningClient, thisLot.HouseID);
-            //add this room to the RoomProtocol Voltron Protocol
-            AddRoom(createRoomInfo);
-            ClientUpdateRoom_EnterRoom(houseID, joiningClient, true, out _);
-            return;      
+            //read the houseID to make sure its 0 -- if not, how did that happen?
+            var houseID = ((TSOLoadHouseResponsePDU)PDU).HouseID;
+
+            if (houseID == 0 && Server.VoltronSettings.PreAlpha_HSBEnabled)
+            { // HSB hosting mode, redirect to hosting a lot ... host the lot that we need hosted by an HSB
+                houseID = HSB_GetNextHouseIDToHost(PDU);
+                //**if 0, there are no more houses that need hosted at this time. this HSB will safely close after a timeout on its own.
+            }
+
+            if (houseID == 0) return;
+            ((TSOLoadHouseResponsePDU)PDU).HouseID = houseID;
+
+            // fib a LotEntry Request PDU to Voltron for this client
+            LOT_ENTRY_REQUEST_PDU(PDU);
         }
 
         /// <summary>
@@ -812,49 +809,24 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
         public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
         {
-            Thread.Sleep(5000);
+            var loadHousePDU = (TSOLoadHousePDU)PDU;
 
-            var roomInfo = _debugJoiner;
-            var joiningClient = _debugJoinerID;
-            var roomIDStruct = _debugJoiner.RoomID;
-            uint joiningAvatarID = _debugJoinerID.AvatarID;
-            uint HouseID = _debugJoiner.LotID;
+            //identify which client is sending this by AvatarID
+            if (!GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID))
+                throw new InvalidOperationException("Client could not be identified when the HSB is alerting us it is ready to accept visitors.");
 
-            string failureReason = "";
+            // identified -- wait some time then let the pending visitors join in.
 
-            TrySendTo(joiningAvatarID, new TSOJoinRoomPDU(roomInfo.RoomID, "bloatytime3!"));
-            //add this player to the room
-            bool successfulJoin = ClientUpdateRoom_EnterRoom(HouseID, joiningClient, false, out failureReason);
+            //get host info
+            bool success = _roomController.PopHouseHostingInfoForHSB(VoltronID, out (uint HouseID, Queue<uint> JoiningQueue)? info, out string failureReason);
+            if (!success)
+                throw new InvalidOperationException("When HSB was alerting us the lot is ready, a failure happened: " + failureReason);
 
-            //**join failed            
-            if (!successfulJoin)
-            {
-                uint errorCode = 0;
-                RespondWith(new TSOJoinRoomFailedPDU(10, "", roomIDStruct));
-                LogConsole($"VoltronID: {joiningClient} FAILED to join HouseID: {HouseID}. Reason: {failureReason}");
-                return;
-            }
-
-            // refresh the room value after the dust settles
-            if (!_roomsByHouseID.TryGetValue(HouseID, out roomInfo) && roomInfo == null)
-                throw new InvalidOperationException("Joining is not possible due to an unknown error"); // cannot continue if this is null            
-
-            if (false)
-            { // add the host to the lot
-                if (!roomInfo.AdmitOccupant(GetPlayerInfoStruct(joiningAvatarID)))
-                    throw new InvalidOperationException($"Could not add avatar {joiningAvatarID} to the new room.");
-                return;
-            }
-
-            //**join succeeded
-            //tell the client to join this new room
-            //**set the room the client is in to be this new one
-            TrySendTo(joiningAvatarID, new TSOUpdateRoomPDU(0xFFFFFFFF, roomInfo.RoomInfo, true));
-            LogConsole($"Updated VoltronID: {joiningClient} to be in room: {roomInfo.RoomID}!");
-            return;
-            //UpdateLotOccupants(roomInfo);
-            throw new NotImplementedException();
-            //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
+            //wait a bit
+            Thread.Sleep(HSB_AWAKE_TIMEOUT);
+            //run hsb joiner process 
+            HSB_LotIsOnline(info.Value.HouseID, info.Value.JoiningQueue);
         }
+        #endregion
     }
 }

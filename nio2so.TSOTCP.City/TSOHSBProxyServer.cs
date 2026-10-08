@@ -86,11 +86,14 @@ namespace nio2so.TSOTCP.Voltron.Server
         uint HSB_ID = 0;
         bool ACTIVATED = false;
         private TSOPDUFactoryServiceBase _PDUFactory => Server.Services.Get<TSOPDUFactoryServiceBase>();
+        //private nio2so.Voltron.PreAlpha.Protocol.Regulator.SplitBufferPDUProtocol _splitBufferInterface;
+
         public TSONeoVol2ronServer Server { get; }
 
         public TSOHSBProxyServer(TSONeoVol2ronServer Server, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(Name, Port)
         {
             this.Server = Server;
+            //_splitBufferInterface = new();
         }
 
         public override async void Start()
@@ -99,25 +102,41 @@ namespace nio2so.TSOTCP.Voltron.Server
             bool connected = await CreateClientAsync();
             if (connected)
             {
-                CONSOLE_LOG("Voltron is ONLINE! Creating HSB Proxy server now...");
+                CONSOLE_LOG("Creating HSB Proxy server now...");
 
-                OnIncomingPacket += TSOHSBProxyServer_OnIncomingPacket;
-                _voltronClient.OnPacketReceived += Voltron_PacketReceived;
-
+                OnIncomingPacket += TSOHSBProxyServer_OnIncomingPacket;                
                 BeginListening();
 
-                CONSOLE_LOG("HSB Proxy is ONLINE!");
+                CONSOLE_LOG("HSB Proxy is online and connected to Voltron!");
             }
         }        
 
-        protected override void OnClientConnect(TcpClient Connection, uint ID)
+        protected override async void OnClientConnect(TcpClient Connection, uint ID)
         {
             base.OnClientConnect(Connection, ID);
+
+            CONSOLE_LOG("HSB Simulator Client has arrived, authenticating with Voltron...");
+
+            //just in-case
+            DeactivateHSB();
+
             HSB_ID = ID;
-            ACTIVATED = false;
             
-            _voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
-            //ActivateHSB(ID);
+            await _voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
+            uint avatarID = 90001;
+            CONSOLE_LOG("Authentication sent for HSB Avatar ID: " + avatarID);
+        }
+
+        protected override async void OnClientDisconnect(uint ID)
+        {
+            base.OnClientDisconnect(ID);
+
+            CONSOLE_LOG($"HSB Client on connection: {ID} disconnected, resetting connection (Read PDU Mode: ON)....");
+
+            DeactivateHSB();
+
+            DestroyClient();
+            await CreateClientAsync();
         }
 
         /// <summary>
@@ -125,9 +144,21 @@ namespace nio2so.TSOTCP.Voltron.Server
         /// </summary>
         void ActivateHSB(uint QuazarID)
         {
+            //read pdu mode off is raw data mode: OnDataReceived()
+            CONSOLE_LOG("HSB Simulator Client has received it's awake signal, TSOClient is entering Voltron (Read PDU Mode: OFF)...");
+
             //ARIES_GETCLIENTINFO -- needed to get the TSOClient to actually send anything.
             Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
             ACTIVATED = true;
+        }
+
+        /// <summary>
+        /// Waits for a Magic Packet to get the HSB to advance to asking for which Lot to host.
+        /// </summary>
+        void DeactivateHSB()
+        {
+            HSB_ID = 0;
+            ACTIVATED = false;
         }
 
         /// <summary>
@@ -151,23 +182,34 @@ namespace nio2so.TSOTCP.Voltron.Server
             if (e.Data == null)
                 return;
 
+            IEnumerable<TSOVoltronPacket>? packets = null; 
+
             if (!ACTIVATED)
             {
                 try
                 {
-                    var packets = _PDUFactory.CreatePacketObjectsFromAriesPacket(e.Data);
+                    packets = _PDUFactory.CreatePacketObjectsFromAriesPacket(e.Data);
                     if (packets.Any(x => x.VoltronPacketType == (ushort)TSO_PreAlpha_VoltronPacketTypes.ROOMSERVER_INITIALIZED_PDU))
                         ActivateHSB(HSB_ID);
+                    //** Activation switches to raw data OnDataReceived event exclusively -- this method no longer powers client function to ensure less error arise
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    CONSOLE_LOG("An error has occured: " + ex);
                 }
             }
 
             if (TestingConstraints.VerboseLogging)
-                CONSOLE_LOG("[PROXY -> HSB] " + e.Data);
+            {
+                if (packets == null)
+                    packets = _PDUFactory.CreatePacketObjectsFromAriesPacket(e.Data);
+                foreach (var packet in packets)
+                    CONSOLE_LOG("[PROXY -> HSB] -- " + packet.ToString());
+            }
+        }
 
+        private void VoltronClient_OnDataReceived(object? sender, QEventArgs<byte[]> e)
+        { // forward raw data as it comes in, no need to check packets.
             if (ACTIVATED)
                 Send(HSB_ID, e.Data);
         }
@@ -176,10 +218,26 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             _voltronClient = new TSOHSBProxyClient();
             await _voltronClient.Connect();
+            if (_voltronClient.IsConnected)
+            {
+                _voltronClient.OnPacketReceived += Voltron_PacketReceived;
+                _voltronClient.OnDataReceived += VoltronClient_OnDataReceived;
+                CONSOLE_LOG("Voltron connection has been established!");
+            }
             return _voltronClient.IsConnected;
-        }        
+        }   
+        
+        void DestroyClient()
+        {
+            _voltronClient?.Dispose();
+            _voltronClient = null;
+        }
 
-        private void CONSOLE_LOG(string message) => Console.WriteLine("DEBUG_HSBTEST: " + message);
+        private void CONSOLE_LOG(string message)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
+            Console.WriteLine("***\n\nDEBUG_HSBTEST: " + message + "\n\n***");
+        }
 
 
         public override void Stop()

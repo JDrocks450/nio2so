@@ -11,7 +11,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     /// Handles incoming <see cref="TSOPreAlphaSplitBufferPDU"/> PDUs from a remote connection
     /// </summary>
     [TSORegulator("TSOPreAlphaSplitBufferPDUProtocol")]
-    internal class SplitBufferPDUProtocol : TSOProtocol
+    public class SplitBufferPDUProtocol : TSOProtocol
     {
         internal class SplitBufferPDUThreadContext : IDisposable
         {

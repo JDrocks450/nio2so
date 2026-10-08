@@ -13,7 +13,7 @@ namespace nio2so.TSOTCP.Voltron.Server
     {
         public TSOHSBProxyClient() : base("TSO_HSB_Client_1", IPAddress.Loopback, 49100)
         {
-            Strategy = ClientRecvStrategy.EVENT_BASED;
+            Strategy = ClientRecvStrategy.EVENT_BASED_PACKET;
         }                
     }
 }

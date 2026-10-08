@@ -65,6 +65,5 @@ namespace nio2so.DataService.Common.Types
 
         public bool PreAlpha_HSBEnabled = true;
         public uint PreAlpha_HSBAvatarID = 90001;
-        public uint PreAlpha_HSBHouseID = 10944577;
     }
 }

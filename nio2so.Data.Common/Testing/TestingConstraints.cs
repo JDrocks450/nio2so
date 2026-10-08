@@ -17,7 +17,7 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = false;
+        public static bool SplitBuffersPDUEnabled = true;
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>

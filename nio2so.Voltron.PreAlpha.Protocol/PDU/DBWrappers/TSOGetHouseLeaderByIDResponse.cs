@@ -9,7 +9,7 @@
     {
         [TSOVoltronDBWrapperField] public uint HouseID { get; set; }
         [TSOVoltronDBWrapperField] public uint LeaderID { get; set; }
-        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x0;
+        [TSOVoltronDBWrapperField] public uint Filler { get; set; } = 0x1;
 
         /// <summary>
         /// Default parameterless constructor. Please use overload for programmatically creating PDUs.
