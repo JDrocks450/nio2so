@@ -31,6 +31,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         private DateTime _reSyncTime = DateTime.MinValue;
         private RuntimeRoomController _roomController;
 
+        private uint HSB_AVATAR_ID => Server.VoltronSettings.PreAlpha_HSBAvatarID;
+
         public RoomProtocol()
         {
             _roomController = new(this);
@@ -73,7 +75,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithLeader));
             if (Server.VoltronSettings.PreAlpha_HSBEnabled)
             { // HSB_TEST requires the leader in all aspects to be the HSB
-                Leader = GetVoltronIDStruct(90001);
+                Leader = GetVoltronIDStruct(HSB_AVATAR_ID);
             }
             //add the room
             Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), Leader, HouseID));            
@@ -478,8 +480,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             ClientJoinHouse(HouseID, joiningClient, hosting);
         }
 
-        private void ClientJoinHouseFailed(uint errorCode, string FailureReason, TSOAriesIDStruct JoiningClient, TSORoomIDStruct RoomIDStruct)
+        private void ClientJoinHouseFailed(uint errorCode, string FailureReason, TSOAriesIDStruct JoiningClient, TSORoomIDStruct? RoomIDStruct)
         {
+            if (RoomIDStruct == null)
+                RoomIDStruct = new();
             TrySendTo(JoiningClient, new TSOJoinRoomFailedPDU(errorCode, FailureReason, RoomIDStruct));
             LogConsole($"VoltronID: {JoiningClient} FAILED to join HouseID: {RoomIDStruct?.HouseID}. Reason: {FailureReason}");
         }
@@ -630,6 +634,18 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             //Needed to prevent the client from shutting down after 30 seconds
             TrySendTo(roomInfo.LeaderID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.LeaderID.AvatarID));
         }
+
+        /// <summary>
+        /// Attempts to direct ping a TSOClient in HSB mode with an avatar id equal to the HSB Avatar ID setting in Voltron Settings to come online.
+        /// </summary>
+        /// <exception cref="InvalidOperationException"></exception>
+        private bool CheckAvailableHSB()
+        {
+            if (!Server.VoltronSettings.PreAlpha_HSBEnabled) // Are we in an HSB context?
+                throw new InvalidOperationException("Attempting HSB operations when it is disabled.");
+
+            return TrySendTo(HSB_AVATAR_ID, new TSORoomServerInitializedPDU());
+        }
         #endregion
 
         #region PDU_HANDLER
@@ -677,7 +693,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
             if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? room))
             {
-                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.LeaderAvatarID != 90001) // HSB_TEST
+                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.LeaderAvatarID != HSB_AVATAR_ID) // HSB_TEST
                     throw new InvalidDataException("HSB is enabled but we're telling a client that the host is NOT the HSB.");
                 RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LeaderAvatarID));
             }
@@ -716,11 +732,16 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (Server.VoltronSettings.PreAlpha_HSBEnabled) // Attempt to wake up the HSB
             {
                 if (joiningClient.AvatarID < Server.VoltronSettings.PreAlpha_HSBAvatarID)
-                    BroadcastToServer(new TSORoomServerInitializedPDU());
+                {
+                    bool hsb_available = CheckAvailableHSB();
+                    if (!hsb_available)
+                        ClientJoinHouseFailed(1,"No free simulators!", joiningClient, null);
+                }
             }
 
             AvatarEnteringLot(joiningClient, roomPDU.HouseID);
-        }
+        }        
+
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.DESTROY_ROOM_PDU)]
         public void DESTROY_ROOM_PDU(TSOVoltronPacket PDU)
         {
