@@ -31,7 +31,7 @@
         {
             this.HouseID = HouseID;
             this.LeaderID = LeaderID;
-            Filler = LeaderID;
+            //Filler = LeaderID;
 
             MakeBodyFromProperties();
         }

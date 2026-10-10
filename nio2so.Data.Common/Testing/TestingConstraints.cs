@@ -19,6 +19,11 @@
         /// </summary>
         public static bool SplitBuffersPDUEnabled = true;
         /// <summary>
+        /// Prevents databases from saving to disk for testing and debugging
+        /// </summary>
+        public static bool DatabaseSaveEnabled;
+
+        /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
         public const bool VerboseLogging = false;

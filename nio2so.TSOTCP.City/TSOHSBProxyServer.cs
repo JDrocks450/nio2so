@@ -146,6 +146,7 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             //read pdu mode off is raw data mode: OnDataReceived()
             CONSOLE_LOG("HSB Simulator Client has received it's awake signal, TSOClient is entering Voltron (Read PDU Mode: OFF)...");
+            _voltronClient.EventParameters = new() { OnPacketReceivedEnabled = false };
 
             //ARIES_GETCLIENTINFO -- needed to get the TSOClient to actually send anything.
             Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
@@ -159,6 +160,8 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             HSB_ID = 0;
             ACTIVATED = false;
+
+            _voltronClient.EventParameters = new() { OnPacketReceivedEnabled = true };
         }
 
         /// <summary>

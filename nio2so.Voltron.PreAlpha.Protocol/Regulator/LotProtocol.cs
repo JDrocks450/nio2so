@@ -107,7 +107,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                   throw new InvalidDataException(error);
             //**
             if (roommates == null) throw new NullReferenceException($"HouseID: {HouseID} was not found.");
-
+            if (Server.VoltronSettings.PreAlpha_HSBEnabled) // HSB_TEST requires the HSB to be a roommate (for now!)
+                roommates = [90001, ..roommates]; // add the owner to the list of roommates
             RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID,roommates.Select(x=>(uint)x).ToArray()));
         }
         /// <summary>

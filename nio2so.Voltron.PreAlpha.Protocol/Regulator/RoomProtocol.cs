@@ -27,7 +27,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     {
         public const uint MAX_OCCUPANTS = 24;
         public const double RESYNC_TIMEOUT = 0;
-        private readonly int HSB_AWAKE_TIMEOUT = 10000;
+        private readonly int HSB_AWAKE_TIMEOUT = 1000;
         private DateTime _reSyncTime = DateTime.MinValue;
         private RuntimeRoomController _roomController;
 
@@ -71,6 +71,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             var lot = GetLotProfile(HouseID);
             if (Leader == null)
                 throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithLeader));
+            if (Server.VoltronSettings.PreAlpha_HSBEnabled)
+            { // HSB_TEST requires the leader in all aspects to be the HSB
+                Leader = GetVoltronIDStruct(90001);
+            }
             //add the room
             Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), Leader, HouseID));            
             return _roomController.GetByHouseID(HouseID);
@@ -274,6 +278,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (GetRoomUpdateOccupantsPDUByRoomID(roomInfo.LotID, roomInfo.LeaderAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
                 BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU, true);
 
+            //TEST
+            return;
             TSOListOccupantsResponsePDU occupantsPDU = GetOccupantsPDUByRoomID(roomInfo.LotID, out _);
             BroadcastPDUToRoom(roomInfo.LotID, occupantsPDU);
         }
@@ -580,7 +586,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                     return 0;
 
                 if (RoomIsOnline(houseID))
-                    ;// throw new InvalidDataException(failure);                    
+                    throw new InvalidOperationException("Room is ALREADY being hosted!");                    
             }
             else throw new Exception("Could not identify what Client sent this PDU."); // not good if this happens, indicates a Login to Voltron issue. Client needs to be initialized using Aries ClientSessionInfo
             return houseID;
@@ -618,7 +624,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 }
 
                 ClientJoinHouse(HouseID, joiningClient, false);
+                break;
             }
+
+            //Needed to prevent the client from shutting down after 30 seconds
+            TrySendTo(roomInfo.LeaderID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.LeaderID.AvatarID));
         }
         #endregion
 
@@ -666,7 +676,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
             if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? room))
+            {
+                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.LeaderAvatarID != 90001) // HSB_TEST
+                    throw new InvalidDataException("HSB is enabled but we're telling a client that the host is NOT the HSB.");
                 RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LeaderAvatarID));
+            }
         }
 
         [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LIST_ROOMS_PDU)]

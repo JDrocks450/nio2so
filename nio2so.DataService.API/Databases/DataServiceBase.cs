@@ -1,4 +1,5 @@
-﻿using nio2so.DataService.API.Databases.Libraries;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.API.Databases.Libraries;
 using nio2so.DataService.Common.Types;
 
 namespace nio2so.DataService.API.Databases
@@ -45,6 +46,9 @@ namespace nio2so.DataService.API.Databases
         /// <returns></returns>
         protected async Task Save()
         {
+            //enable / disable database save
+            if (!TestingConstraints.DatabaseSaveEnabled)
+                return;
             foreach (var library in Libraries)
             {
                 try
