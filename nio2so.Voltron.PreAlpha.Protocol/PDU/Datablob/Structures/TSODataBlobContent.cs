@@ -86,6 +86,29 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures
             }
             return Object != default;
         }
+        /// <summary>
+        /// <inheritdoc cref="TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable, out ITSODataBlobContentObject?)"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="CLSID"></param>
+        /// <param name="Object"></param>
+        /// <returns></returns>
+        public bool TryGetByCLSID<T>(TSO_PreAlpha_MasterConstantsTable CLSID, out T? Object) where T : ITSODataBlobContentObject
+        {
+            Object = default;
+            bool foo = TryGetByCLSID(CLSID, out ITSODataBlobContentObject? obj) && obj is T;
+            if (foo)
+                Object = (T)obj;
+            return foo;
+        }
+        /// <summary>
+        /// Utility function to get the content of this object as a <see cref="TSOStandardMessageContent"/>.
+        /// <para/> See: <see cref="TryGetByCLSID{T}(TSO_PreAlpha_MasterConstantsTable, out T?)"/>
+        /// </summary>
+        /// <param name="Content"></param>
+        /// <returns></returns>
+        public bool TryGetAsStandardContent(out TSOStandardMessageContent Content) =>
+            TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage, out Content);
         public override string ToString()
         {
             if (_contentCLSID.HasValue)

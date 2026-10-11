@@ -1,12 +1,9 @@
-﻿using nio2so.Data.Common.Testing;
-using nio2so.DataService.Common.Queries;
+﻿using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
-using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
-using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
@@ -15,7 +12,6 @@ using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers;
 using nio2so.Voltron.PreAlpha.Protocol.Regulator.Room;
 using nio2so.Voltron.PreAlpha.Protocol.Struct;
-using System.Collections.Concurrent;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 {
@@ -406,8 +402,17 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             OnStandardMessage(PDU);
             return true;
-        }        
+        }
 
+        /// <summary>
+        /// This is the central artery function for when a client is joining a lot. 
+        /// <para/> If the joining avatar is an HSB, it will use the handler: <see cref="HSB_BeginHosting(uint, TSOAriesIDStruct, out string, ref string, ref TSORoomIDStruct)"/>
+        /// <para/> If the joining avatar is a non-HSB, it will either queue the joiner as a delayed joiner or attempt to join the lot if it is online and being actively hosted.
+        /// </summary>
+        /// <param name="JoiningClient"></param>
+        /// <param name="HouseID"></param>
+        /// <exception cref="Exception"></exception>
+        /// <exception cref="InvalidOperationException"></exception>
         private void AvatarEnteringLot(TSOAriesIDStruct JoiningClient, uint HouseID)
         {
             var joiningClient = JoiningClient;
@@ -479,7 +484,13 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             //**set the room the client is in to be this new one
             ClientJoinHouse(HouseID, joiningClient, hosting);
         }
-
+        /// <summary>
+        /// Sends the remote party the <see cref="TSOJoinRoomFailedPDU"/> and logs the failure to the console
+        /// </summary>
+        /// <param name="errorCode"></param>
+        /// <param name="FailureReason"></param>
+        /// <param name="JoiningClient"></param>
+        /// <param name="RoomIDStruct"></param>
         private void ClientJoinHouseFailed(uint errorCode, string FailureReason, TSOAriesIDStruct JoiningClient, TSORoomIDStruct? RoomIDStruct)
         {
             if (RoomIDStruct == null)
@@ -654,32 +665,40 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             TSOBroadcastDatablobPacket? broadcastPDU = PDU as TSOBroadcastDatablobPacket;
             TSOAriesIDStruct sender = PDU.SenderSessionID.PlayerID;
-            uint avatarID = (sender as ITSONumeralStringStruct)?.NumericID ?? 0;
-            if (avatarID == 0)
-                throw new InvalidDataException($"AvatarID sending a broadcast PDU is {avatarID}, ARIESID: {sender}");
-            if (!_roomController.TryGetRoomAvatarIsIn(avatarID, out uint HouseID))
-                throw new InvalidOperationException($"AvatarID {avatarID} is not in a room, yet is sending a broadcast PDU.");
+            uint sender_avatarID = (sender as ITSONumeralStringStruct)?.NumericID ?? 0;
+            if (sender_avatarID == 0)
+                throw new InvalidDataException($"AvatarID sending a broadcast PDU is {sender_avatarID}, ARIESID: {sender}");
+            if (!_roomController.TryGetRoomAvatarIsIn(sender_avatarID, out uint HouseID))
+                throw new InvalidOperationException($"AvatarID {sender_avatarID} is not in a room, yet is sending a broadcast PDU.");
             var roomInfo = _roomController.GetByHouseID(HouseID);
 
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
-            {
+            { // *** PDU is being sent from one Client to another Client, so we need to wrap it in a broadcast PDU and send it to the destination client
                 broadcastPDU = new TSOBroadcastDatablobPacket(transmitPDU);
-                TrySendTo(transmitPDU.DestinationSessionID, broadcastPDU);
+                bool successful = TrySendTo(transmitPDU.DestinationSessionID, broadcastPDU);
+                if (!successful) // client no longer reachable via Voltron. they must have disconnected
+                    throw new InvalidOperationException($"Could not send broadcast PDU to {transmitPDU.DestinationSessionID} from {transmitPDU.SenderSessionID}. Did the destination " +
+                        $"TSOClient disconnect from Voltron?");
             }
+
             if (PDU is TSOBroadcastDatablobPacket && broadcastPDU != null)
-            {
-                if (avatarID != roomInfo.LeaderAvatarID)
-                {
+            { // this is a broadcast PDU, so we need to send it to all clients in the room except the sender
+                if (sender_avatarID != roomInfo.LeaderAvatarID)
+                { // clients should accept broadcast PDUs from the host, but not from other clients. We should correct this before sending
                     broadcastPDU.SenderSessionID = GetPlayerInfoStruct(roomInfo.LeaderID);
                 }
                 BroadcastPDUToRoom(HouseID, broadcastPDU); // host to room
             }
 
-            //check if this is confirming entry to a room, in which case transition this avatar into the room they're joining
-            if (PDU.DataBlobContentObject.TryGetByCLSID(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cCrDMStandardMessage, out ITSODataBlobContentObject? obj))
-                if ((obj as TSOStandardMessageContent).kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived)
-                    if (!AdmitAvatarToRoom(avatarID))
-                        throw new InvalidOperationException($"Could not admit: {avatarID} into room {HouseID} after {TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived}!");
+            // *** this section can be used to monitor the room for certain messages
+            
+            if (PDU.DataBlobContentObject.TryGetAsStandardContent(out TSOStandardMessageContent? obj))
+            {
+                //check if this is confirming entry to a room, in which case transition this avatar into the room they're joining
+                if (obj.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived)
+                    if (!AdmitAvatarToRoom(sender_avatarID))
+                        throw new InvalidOperationException($"Could not admit: {sender_avatarID} into room {HouseID} after {TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived}!");
+            }
         }
         /// <summary>
         /// This function is invoked when the <see cref="RoomProtocol"/> receives an incoming <see cref="TSOGetHouseLeaderByIDRequest"/>
@@ -735,9 +754,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 {
                     bool hsb_available = CheckAvailableHSB();
                     if (!hsb_available)
-                        ClientJoinHouseFailed(1,"No free simulators!", joiningClient, null);
+                    { // HSB is not connected to Voltron in a pending status, so for now the client should be denied entry
+                        ClientJoinHouseFailed(1, "No free simulators!", joiningClient, null);
+                        return;
+                    }
                 }
             }
+
+            // ** at this point, the HSB (if enabled) should be now loading into the lot
 
             AvatarEnteringLot(joiningClient, roomPDU.HouseID);
         }        
