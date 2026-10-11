@@ -1,4 +1,5 @@
-﻿using nio2so.DataService.Common.Queries;
+﻿using nio2so.Data.Common.Testing;
+using nio2so.DataService.Common.Queries;
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.Voltron.Core;
@@ -265,8 +266,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message,
                 RegulatorName, $"AvatarID: {debitcreditPDU.AvatarID} Account: {debitcreditPDU.Account} +/-: {debitcreditPDU.Amount}"));
 
-            RespondTo(PDU, new TSODebitCreditResponsePDU(
-                debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount));
+            if (TestingConstraints.DebitCreditResponseEnabled)
+                RespondTo(PDU, new TSODebitCreditResponsePDU(
+                    debitcreditPDU.AvatarID, debitcreditPDU.Account, debitcreditPDU.Amount));
         }
 
         /// <summary>
