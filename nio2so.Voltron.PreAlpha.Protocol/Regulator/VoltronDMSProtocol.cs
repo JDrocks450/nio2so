@@ -25,6 +25,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             var versionPDU = (TSOComponentVersionRequestPDU)PDU;
             string message = $"TSOClient Component Version: ID: {versionPDU.ComponentID}, Name: {versionPDU.ComponentName}, Version: {versionPDU.ComponentVersion}";
             LogConsole("cVoltronDMS_ComponentVersion: " + message);
+            //RespondWith(new TSOComponentVersionResponsePDU());
         }
 
         [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request)]
@@ -100,7 +101,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void BC_VERSION_LIST_PDU(TSOVoltronPacket PDU)
         {
             TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)PDU;
-            RespondWith(new TSOBCVersionListPDU(pdu.VersionString, "", 0x01));
+            RespondWith(new TSOBCVersionListPDU(pdu.AvatarID, "", 0x01));
         }
     }
 }
