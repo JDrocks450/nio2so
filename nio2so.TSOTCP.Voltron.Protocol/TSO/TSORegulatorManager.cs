@@ -140,11 +140,26 @@ namespace nio2so.Voltron.Core.TSO
         /// <exception cref="Exception"></exception>
         public T Get<T>()
         {
+            if (TryGet<T>(out T Regulator)) return Regulator;
+            throw new Exception($"Regulator {typeof(T).Name} is not found.");
+        }
+        /// <summary>
+        /// <inheritdoc cref="Get{T}"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Regulator"></param>
+        /// <returns></returns>
+        public bool TryGet<T>(out T? Regulator)
+        {
+            Regulator = default;
             Type searchType = typeof(T);
             foreach (var regulator in typeMap)
-                if (regulator.GetType().IsAssignableTo(searchType)) 
-                    return (T)regulator;
-            throw new Exception($"Regulator {searchType.Name} is not found.");
+                if (regulator.GetType().IsAssignableTo(searchType))
+                {
+                    Regulator = (T)regulator;
+                    return true;
+                }
+            return false;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         {
             StatusCode = statusCode;
             ReasonText = reasonText;
-            RoomID = roomID;
+            RoomID = roomID ?? TSORoomIDStruct.Error;
             MakeBodyFromProperties();
         }
     }

@@ -15,6 +15,19 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     /// </summary>
     internal class VoltronDMSProtocol : TSOProtocol, IDMSProtocol
     {
+        /// <summary>
+        /// The client will send this to indicate the version of the game network component it is running.
+        /// </summary>
+        /// <param name="PDU"></param>
+        [TSOProtocolHandler((ushort)TSO_PreAlpha_VoltronPacketTypes.COMPONENT_VERSION_REQUEST_PDU)]
+        public void COMPONENT_VERSION_REQUEST_PDU(TSOVoltronPacket PDU)
+        {
+            var versionPDU = (TSOComponentVersionRequestPDU)PDU;
+            string message = $"TSOClient Component Version: ID: {versionPDU.ComponentID}, Name: {versionPDU.ComponentName}, Version: {versionPDU.ComponentVersion}";
+            LogConsole("cVoltronDMS_ComponentVersion: " + message);
+            //RespondWith(new TSOComponentVersionResponsePDU());
+        }
+
         [TSOProtocolDatabaseHandler((uint)TSO_PreAlpha_DBActionCLSIDs.InsertGenericLog_Request)]
         public void InsertGenericLog_Request(TSODBRequestWrapper PDU)
         {
@@ -88,7 +101,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void BC_VERSION_LIST_PDU(TSOVoltronPacket PDU)
         {
             TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)PDU;
-            RespondWith(new TSOBCVersionListPDU(pdu.VersionString, "", 0x01));
+            RespondWith(new TSOBCVersionListPDU(pdu.AvatarID, "", 0x01));
         }
     }
 }

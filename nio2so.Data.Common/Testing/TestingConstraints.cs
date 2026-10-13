@@ -17,7 +17,16 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = false;
+        public static bool SplitBuffersPDUEnabled = true;
+        /// <summary>
+        /// Prevents databases from saving to disk for testing and debugging
+        /// </summary>
+        public static bool DatabaseSaveEnabled;
+        /// <summary>
+        /// This can crash HSBs, don't want this being disabled to go unnoticed in the future.
+        /// </summary>
+        public const bool DebitCreditResponseEnabled = false;
+
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>

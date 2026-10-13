@@ -1,4 +1,8 @@
-﻿using nio2so.Data.Common.Testing;
+﻿#define OVERFLOW_CRASH
+#undef OVERFLOW_CRASH
+
+using nio2so.Data.Common.Testing;
+using QuazarAPI;
 using QuazarAPI.Networking.Data;
 
 namespace nio2so.Voltron.Core.TSO.Aries
@@ -50,6 +54,7 @@ namespace nio2so.Voltron.Core.TSO.Aries
         public Stream BodyStream => _bodyBuffer;
 
         public const byte ARIES_FRAME_HEADER_LEN = sizeof(uint) * 3;
+        public const uint NIO2SO_ARIES_MAX_ALLOC_SIZE = (1024 ^ 2) * 100; // 100MB -- really should never need anything larger than this.
 
         public TSOTCPPacket() : base() { }
         public TSOTCPPacket(uint Type, uint Time, uint Size) : this()
@@ -113,6 +118,16 @@ namespace nio2so.Voltron.Core.TSO.Aries
             endIndex = bytes.Length;
             var headerSuccess = TryGetAriesHeader(bytes, out uint pType, out uint time, out uint size);
             if (!headerSuccess) return default;
+            if (size > NIO2SO_ARIES_MAX_ALLOC_SIZE)
+            {
+                string error = $"Reported packet is likely corrupt. Attempted to allocate enough data for Aries Packet Reported size: {size}, " +
+                    $"{nameof(NIO2SO_ARIES_MAX_ALLOC_SIZE)}: {NIO2SO_ARIES_MAX_ALLOC_SIZE}";
+#if OVERFLOW_CRASH
+                throw new InvalidOperationException(error);
+#endif
+                QConsole.WriteLine(this.GetType().Name, error);
+                return default;
+            }
             byte[] bodyArray = new byte[size];
             Array.Copy(bytes, ARIES_FRAME_HEADER_LEN, bodyArray, 0, (int)size);
             return new TSOTCPPacket(pType, time, bodyArray) as T;

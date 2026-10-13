@@ -25,12 +25,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
             [TSOVoltronArrayLength(nameof(Words))] public ushort NumberOfWords { get; set; }
             public TSOPascalString[] Words { get; set; } = Array.Empty<TSOPascalString>();
 
-            public TSOHostReservedWordsStruct(params string[] ReservedWords) => Words = ReservedWords.Select(x => new TSOPascalString(x)).ToArray();    
+            public TSOHostReservedWordsStruct() { }
+            public TSOHostReservedWordsStruct(params string[] ReservedWords) : this() => Words = ReservedWords.Select(x => new TSOPascalString(x)).ToArray();    
         }
 
         public record TSOHostParamsStruct
         {
-            public TSOHostParamsStruct(ushort clientBufferSize = PACKET_SIZE_LIMIT, ushort hostVersion = 0x0)
+            public TSOHostParamsStruct() { }
+            public TSOHostParamsStruct(ushort clientBufferSize = PACKET_SIZE_LIMIT, ushort hostVersion = 0x0) : this()
             {
                 HostVersion = hostVersion;
                 ClientBufferSize = clientBufferSize;
