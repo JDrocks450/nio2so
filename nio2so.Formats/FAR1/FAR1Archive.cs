@@ -41,7 +41,7 @@ namespace nio2so.Formats.FAR1
             get { return m_NumFiles; }
         }
 
-        byte[] IFileArchive<string>.this[string Filename] => throw new NotImplementedException();
+        byte[] IFileArchive<string>.this[string Filename] => GetEntry(Filename);
 
         public byte[] this[string Filename] => GetEntry(Filename);
 

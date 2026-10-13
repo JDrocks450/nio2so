@@ -1,4 +1,5 @@
-﻿using nio2so.Voltron.Core.Telemetry;
+﻿using nio2so.DataService.Common.Types;
+using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 
 namespace nio2so.Voltron.Core
@@ -14,6 +15,10 @@ namespace nio2so.Voltron.Core
         TSOServerServiceManager Services { get; }
         TSOLoggerServiceBase Logger { get; }
         TSORegulatorManager Regulators { get; }
+        /// <summary>
+        /// An instance of <see cref="VoltronServerSettings"/> that is Read Only.
+        /// </summary>
+        VoltronServerSettings VoltronSettings { get; }
         string Name { get; }
         public bool IsRunning { get; set; }
     }

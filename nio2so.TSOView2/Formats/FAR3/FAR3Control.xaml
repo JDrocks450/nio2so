@@ -14,7 +14,7 @@
             </Grid.ColumnDefinitions>
             <DockPanel Margin="0,0,5,0">
                 <TextBlock DockPanel.Dock="Top" Margin="0,0,0,10">
-                    <Run>Archive Explorer</Run><Run>(</Run><Run x:Name="FARVersionLabel"/><Run>)</Run></TextBlock>
+                    <Run>Archive Explorer</Run><Run Text=" ("/><Run x:Name="FARVersionLabel"/><Run>)</Run></TextBlock>
                 <UniformGrid Columns="2" DockPanel.Dock="Bottom">
                     <Button Name="FileButton" Click="FileButton_Click">
                         <TextBlock>
@@ -22,7 +22,12 @@
                             <Run Text="{Binding SelectedItem, ElementName=FileTree, Mode=OneWay}"/>
                         </TextBlock>
                     </Button>
-                    <Button Name="AllButton" Click="AllButton_Click">Extract All</Button>
+                    <Button Name="AllButton" Click="AllButton_Click">
+                        <Button.ToolTip>
+                            Hold Left-Shift to Select Directory     
+                        </Button.ToolTip>
+                        Extract All                        
+                    </Button>
                     <Button Name="CloseButton" Click="CloseButton_Click" Visibility="Collapsed">Refresh</Button>
                 </UniformGrid>
                 <TextBlock x:Name="ExtractDirectoryLabel" DockPanel.Dock="Bottom" Margin="0,5">
@@ -31,8 +36,9 @@
                 </TextBlock>
                 <TreeView Name="FileTree" SelectedItemChanged="FileTree_SelectedItemChanged"/>
             </DockPanel>
+            <GridSplitter Background="Gainsboro" Width="2"/>
             <DockPanel Margin="5,0,0,0" Grid.Column="2">
-                <DockPanel DockPanel.Dock="Top">
+                <DockPanel DockPanel.Dock="Top" >
                     <Button Name="CopyButton" DockPanel.Dock="Left" Width="75" Click="CopyButton_Click">Copy</Button>
                     <TextBlock  Margin="10,0,0,10">
                         <Run>Preview</Run>

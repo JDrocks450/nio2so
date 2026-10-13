@@ -1,8 +1,10 @@
-﻿using nio2so.Formats.UI.UIScript;
+﻿using nio2so.Data.Common;
+using nio2so.Formats.UI.UIScript;
 using nio2so.TSOView2.Formats.UIs.Controls;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,12 +15,14 @@ namespace nio2so.TSOView2.Formats.UIs
     /// <summary>
     /// Interaction logic for TSOUIDialogViewerPage.xaml
     /// </summary>
-    public partial class TSOUIDialogViewerPage : Page
+    public partial class TSOUIDialogViewerPage : Page, ITSOView2Page
     {
         /// <summary>
         /// Gets the <see cref="UIsHandler.CurrentFile"/>
         /// </summary>
-        public UIScriptFile CurrentUIScriptFile => UIsHandler.Current.CurrentFile;        
+        public UIScriptFile CurrentUIScriptFile => UIsHandler.Current.CurrentFile;
+
+        public ITSOView2Window ParentWindow { get; set; }
 
         public TSOUIDialogViewerPage()
         {
@@ -32,13 +36,13 @@ namespace nio2so.TSOView2.Formats.UIs
             
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
+        private async void OnLoaded(object sender, RoutedEventArgs e)
         {            
             //LOAD LIVE VIEW
             ReloadUIViewer();
         }
         
-        private void ReloadUIViewer()
+        private async Task ReloadUIViewer()
         {
             UIGizmo.Visibility = Visibility.Collapsed;
             bool retriedOnce = false;
@@ -102,8 +106,15 @@ namespace nio2so.TSOView2.Formats.UIs
                         //skip reloading the packingslips
                         goto skip;
                     }
-                    theme.UpdateDatabaseWithMrsShipper(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory);
-                    theme.Save(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnlinePreAlpha_ThemePath);
+                    try
+                    {
+                        await theme.UpdateDatabaseWithMrsShipper(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory, UpdateMrsShipperStatus);
+                        theme.Save(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnlinePreAlpha_ThemePath);
+                    }
+                    finally
+                    {
+                        ParentWindow.HideLoadingProgress();
+                    }
                     retriedOnce = true;
 
                     goto retry;
@@ -187,7 +198,13 @@ namespace nio2so.TSOView2.Formats.UIs
             foreach(var element in elements)
                 //ADD CONTROL TO THE CANVAS
                 UICanvas.Children.Add(element);
-        }        
+        }
+
+        private void UpdateMrsShipperStatus(AsyncStatusCompletion completion) => ParentWindow.ShowLoadingProgress(new TSOView2LoadingStatus(completion.OverallTaskName,
+                                                                                                                                            completion.CurrentTask,
+                                                                                                                                            completion.OverallProgress ?? 0,
+                                                                                                                                            completion.Completed,
+                                                                                                                                            completion.TaskProgress ?? 0));
 
         private void MakeExpanderGroup(int HorizontalPadding, string Title, out Expander expander, out StackPanel groupStack)
         {

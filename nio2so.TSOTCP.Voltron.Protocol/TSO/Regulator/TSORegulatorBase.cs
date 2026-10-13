@@ -186,12 +186,12 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             }
         }
         /// <summary>
-        /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
+        /// <inheritdoc cref="GetService{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Service"></param>
         /// <returns></returns>
-        protected bool TryGetService<T>(out T Service) where T : ITSOService => Server.Services.TryGet(out Service);
+        protected bool TryGetService<T>(out T? Service) where T : ITSOService => Server.Services.TryGet(out Service);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
@@ -199,6 +199,12 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="Service"></param>
         /// <returns></returns>
         protected T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
+        /// <summary>
+        /// <inheritdoc cref="GetRegulator{T}"/>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        protected bool TryGetRegulator<T>(out T? Regulator) where T : ITSOProtocolRegulator => Server.Regulators.TryGet<T>(out Regulator);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> other <see cref="ITSOProtocolRegulator"/> from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
@@ -213,6 +219,10 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="ResponsePacket"></param>
         protected void RespondWith(TSOVoltronPacket ResponsePacket) =>
             ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).Add(ResponsePacket);
+        /// <summary>
+        /// <inheritdoc cref="RespondWith(TSOVoltronPacket)"/>
+        /// </summary>
+        /// <param name="Responses"></param>
         protected void RespondWithAll(params TSOVoltronPacket[] Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
 
         protected void RespondWithAriesFrame(params TSOTCPPacket[] AriesFrames) => ((List<TSOTCPPacket>)CurrentResponse.AriesFrames).AddRange(AriesFrames);

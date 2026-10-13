@@ -4,6 +4,7 @@ using nio2so.Formats.UI.TSOTheme;
 using nio2so.Formats.UI.UIScript;
 using System;
 using System.IO;
+using System.Linq;
 using System.Windows;
 
 namespace nio2so.TSOView2.Formats.UIs
@@ -86,19 +87,28 @@ namespace nio2so.TSOView2.Formats.UIs
                     var directory = CSTImporter.ImportDirectory(
                         System.IO.Path.Combine(
                             TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "UIText.dir"
-                        ));
+                        ), out string[] Errors);
                     if (directory != null)
                         StringTables = directory;
                     defaultImporter.SetCST(StringTables);
+                    if (Errors != null && Errors.Length > 0)
+                        MessageBox.Show("The following CST files were not imported:\n\n" +
+                            $"{string.Join('\n', Errors)}");
                 }
-                catch(DirectoryNotFoundException e)
+                catch (DirectoryNotFoundException e)
                 {
-                    MessageBox.Show($"You may want to double-check the chosen directory: {NewGameDirectoryPath}." +
+                    MessageBox.Show($"You may want to double-check the chosen directory: " +
+                        $"{NewGameDirectoryPath ?? TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory ?? "Unknown"}." +
                         $"\n{e.Message}\nPlease restart the application.");
                     TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_BaseDirectory = null;
                     TSOViewConfigHandler.SaveConfiguration();
                     Application.Current.Shutdown();
                     return;
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"There was a problem loading CSTs (Strings) from your The Sims Online installation. \n" +
+                        $"{e.Message}. The UIScript Editor may not be usable.");
                 }
 
                 if (NewGameDirectoryPath != default)

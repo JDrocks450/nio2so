@@ -2,6 +2,7 @@
 using nio2so.DataService.Common.Tokens;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
+using nio2so.Formats.Streams;
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
@@ -92,20 +93,22 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void GetRoommateInfoByLotID_Request(TSODBRequestWrapper PDU)
         {
             var roommatePDU = (TSOGetRoommateInfoByLotIDRequest)PDU;
-            uint HouseID = roommatePDU.HouseID;
+            uint HouseID = roommatePDU.HouseID;            
+
             if (HouseID == 0)
             {
                 //respond with empty response
                 RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID, roommatePDU.SenderSessionID.PlayerID.AvatarID));
                 return; // Seems to be mistaken to send in this scenario
-            }
+            }            
 
             //**download roommates from data service
             if (!TryDataServiceQuery(x => x.GetRoommatesByHouseID(HouseID), out IEnumerable<AvatarIDToken>? roommates, out string error))
                   throw new InvalidDataException(error);
             //**
             if (roommates == null) throw new NullReferenceException($"HouseID: {HouseID} was not found.");
-
+            if (Server.VoltronSettings.PreAlpha_HSBEnabled) // HSB_TEST requires the HSB to be a roommate (for now!)
+                roommates = [90001, ..roommates]; // add the owner to the list of roommates
             RespondTo(roommatePDU, new TSOGetRoommateInfoByLotIDResponse(HouseID,roommates.Select(x=>(uint)x).ToArray()));
         }
         /// <summary>
@@ -127,6 +130,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             // ** You can send this PDU as many times as needed for each house to add to the map **
             //RespondTo(PDU, new TSOGetLotListResponse(TestingConstraints.BuyLotID+1, _houseCreateX+1, _houseCreateY+1));
         }
+
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOGetLotByID_Request"/>
         /// </summary>
@@ -235,9 +239,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             TSOSetHouseBlobByIDRequest housePDU = (TSOSetHouseBlobByIDRequest)PDU;
 
             uint HouseID = housePDU.HouseID;
-            if (!housePDU.TryUnpack(out SetHouseBlobByIDRequestStreamStructure? Structure)) // decompress the Serializable stream
-                throw new InvalidDataException("Unable to read incoming HouseBlob data!");            
-            var housChunk = Structure.ChunkPackage.GetChunk(TSO_PreAlpha_HouseStreamChunkHeaders.hous);
+            if (!housePDU.TryUnpack(out RASStream.RASArchive? Structure)) // decompress the Serializable stream
+                throw new InvalidDataException("Unable to read incoming HouseBlob data!");
+
+            RASStream.RASArchive.RASChunk? housChunk = Structure.GetChunk((uint)TSO_PreAlpha_HouseStreamChunkHeaders.hous1);
             if (housChunk == null) // get hous chunk in the package
                 throw new InvalidDataException("Unable to read incoming HouseBlob data!");
             // send decompressed houseblob to the data service
@@ -268,17 +273,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, RegulatorName,
                 $"SetLotByID_Request: ID: {req.LotID}"));
-        }
-
-        /// <summary>
-        /// Never seen sent to the server.
-        /// </summary>
-        /// <param name="PDU"></param>
-        [TSOProtocolHandler((uint)TSO_PreAlpha_VoltronPacketTypes.LOAD_HOUSE_PDU)]
-        public void LOAD_HOUSE_PDU(TSOVoltronPacket PDU)
-        {
-            throw new NotImplementedException();
-            //RespondWith(new TSOLoadHouseResponsePDU(TestingConstraints.MyHouseID));
-        }        
+        }               
     }
 }

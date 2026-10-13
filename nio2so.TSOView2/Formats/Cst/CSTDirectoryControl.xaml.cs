@@ -108,7 +108,7 @@ namespace nio2so.TSOView2.Formats.Cst
             CloseDirectory();
             if (!path.Exists)
                 throw new DirectoryNotFoundException($"The directory '{path.FullName}' does not exist.");
-            Directory = CSTImporter.ImportDirectory(path.FullName);
+            Directory = CSTImporter.ImportDirectory(path.FullName, out string[] errors);
 
             Dispatcher.Invoke(ReevaluateUIComponents, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
         }

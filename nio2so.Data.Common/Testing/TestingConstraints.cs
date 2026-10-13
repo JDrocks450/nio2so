@@ -19,6 +19,15 @@
         /// </summary>
         public static bool SplitBuffersPDUEnabled = true;
         /// <summary>
+        /// Prevents databases from saving to disk for testing and debugging
+        /// </summary>
+        public static bool DatabaseSaveEnabled;
+        /// <summary>
+        /// This can crash HSBs, don't want this being disabled to go unnoticed in the future.
+        /// </summary>
+        public const bool DebitCreditResponseEnabled = false;
+
+        /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
         public const bool VerboseLogging = false;
@@ -66,11 +75,7 @@
 
         public const string MyFriendAvatarName = "FriendlyBuddy";
 
-        //**TEST
-        /// <summary>
-        /// Will set the server to always redirect a client into the HSB mode (hosting a lot without an avatar there)
-        /// <para/>Should be true if using the HSB test
-        /// </summary>
-        public const bool HSBAutoJoinHouse = false;
+        //**HSB
+        
     }
 }

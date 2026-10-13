@@ -16,6 +16,15 @@ namespace nio2so.DataService.API.Controllers
         public TopListController(ILogger<TopListController> Logger) : base()
         {
             logger = Logger;
+
+            CheckLog();
+        }
+
+        private void CheckLog()
+        {
+            string? summary = dataService?.GetRepairSummary();
+            if (string.IsNullOrWhiteSpace(summary)) return;
+            logger.Log(LogLevel.Warning, summary);
         }
 
         /// <summary>
@@ -33,6 +42,8 @@ namespace nio2so.DataService.API.Controllers
         [HttpGet("{ListID}")]
         public ActionResult<Top100ListItemsInfo> GetTop100ListsAsync(int ListID)
         {
+            CheckLog();
+
             Top100ListItemsInfo? data = dataService.GetItemsByListID((uint)ListID);
             if (data == null) return NotFound();
             return Ok(data);

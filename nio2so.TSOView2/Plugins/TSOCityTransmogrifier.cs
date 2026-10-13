@@ -1,4 +1,5 @@
-﻿using nio2so.TSOView2.FileDialog;
+﻿using Microsoft.Win32;
+using nio2so.TSOView2.FileDialog;
 using nio2so.TSOView2.Formats;
 using System;
 using System.Diagnostics;
@@ -6,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Security.Policy;
 using System.Windows;
 
 namespace nio2so.TSOView2.Plugins
@@ -14,70 +16,114 @@ namespace nio2so.TSOView2.Plugins
     /// This plugin will take a The Sims Online Release / New & Improved city and make it viewable in
     /// The Sims Online Pre-Alpha
     /// </summary>
-    internal static class TSOCityTransmogrifier
+    internal class TSOCityTransmogrifier : TSOViewPluginBase
     {
         /// <summary>
         /// Change all Grass tiles to be Snow terrain tiles
         /// </summary>
         public static Boolean LetItSnow { get; set; } = false;
 
+        public override string PluginName => "Convert to Pre-Alpha City (City Transmogrifier)";
+
+        public override string PluginDescription => WELCOMEWAGON;
+
+        const string troll = "Are you resizing a Pre-Alpha map for use in Pre-Alpha? If so, my job is done already!";
+
         const string WELCOMEWAGON = "Welcome to the TSO: Pre-Alpha city Transmogrifier!\r\n" +
             "First you will select a city from The Sims Online Release 1.0 or onward, then this tool " +
             "will make city files compatible with The Sims Online Pre-Alpha which you can then replace with " +
             "the original GameData/FarZoom folder.";
 
-        public static void Do()
+        public override void Do(ITSOView2Window Parent)
+        {
+            RunPlugin();
+        }
+
+        public static void RunPlugin(string? CityFolder = null, string? ExportFolder = default)
         {
             if (!TSOViewConfigHandler.EnsureSetGameDirectoryFirstRun()) return;
+            
+            string sourceDirectory = null;
+            string outputDirectory = ExportFolder ?? Path.Combine(Environment.CurrentDirectory, "cityoutput");
 
-            MessageBox.Show(WELCOMEWAGON);
+            bool resizeSucceeded = false;
+            
+            if (CityFolder != null)
+            {
+                MessageBoxResult result = MessageBox.Show($"Your city is stored here:\n\n{CityFolder}\n\nIs that right?", 
+                    "Question", MessageBoxButton.YesNoCancel, MessageBoxImage.Question);
+                if (result == MessageBoxResult.Cancel) return;
+                if (result == MessageBoxResult.Yes) sourceDirectory = CityFolder;
+            }            
+            if (sourceDirectory == null)
+            {
+                MessageBox.Show(WELCOMEWAGON);
 
-            //PROMPT FOR CITY DIRECTORY
-            if (!FileDialogHandler.ShowUser_SelectCityFolder(out string FileName) ?? true)
-                return; // user dismissed the dialog away
-            string sourceDirectory = FileName;
+                //PROMPT FOR CITY DIRECTORY
+                if (!FileDialogHandler.ShowUser_SelectCityFolder(out string? FileName) ?? true)
+                    return; // user dismissed the dialog away
+                sourceDirectory = FileName;
+            }
+            if (string.IsNullOrEmpty(sourceDirectory)) return;
+
             //make sure the directory is valid
             Exception obj = null;
             try
             {
                 checkDirectory(sourceDirectory);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 obj = ex;
                 goto error;
             }
-            //all files present
-            string output = Path.Combine(Environment.CurrentDirectory, "cityoutput");
+
+            //all files present -- choose output folder            
+            OpenFolderDialog dlg = new OpenFolderDialog()
+            {
+                Title = "Choose Export Folder",
+                InitialDirectory = outputDirectory,
+                Multiselect = false,
+            };
+            if (!dlg.ShowDialog() ?? true)
+                return;
+            outputDirectory = dlg.FolderName;
+
             try
             {
-                ResizeAndSave(sourceDirectory, output);
+                ResizeAndSave(sourceDirectory, outputDirectory);
             }
             catch (Exception ex)
             {
                 obj = ex;
                 goto error;
             }
-            if (MessageBox.Show("Your city has been converted. Prepare for transport?", "Add city to The Sims Online: Pre-Alpha?", MessageBoxButton.YesNo)
+
+            //**TRANSPORT NOW
+            resizeSucceeded = true;
+            string destination = Path.Combine(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "FarZoom");
+            if (MessageBox.Show($"Your city has been converted.\n\n{destination}\n\nReady to apply it to your The Sims Online: Pre-Alpha game?",
+                "Add city to The Sims Online: Pre-Alpha?", MessageBoxButton.YesNo)
                 != MessageBoxResult.Yes)
             {
-                Process.Start("explorer", output);
+                Process.Start("explorer", outputDirectory);
                 return;
             }
-            //**TRANSPORT NOW
-            string destination = Path.Combine(TSOViewConfigHandler.CurrentConfiguration.TheSimsOnline_GameDataDirectory, "FarZoom");
+            
             try
             {
-                doAddToGame(output, destination);
+                doAddToGame(outputDirectory, destination);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                obj = ex;
+                obj = ex;                
                 goto error;
             }
-            error:
+        error:
             if (obj == null) return;
             MessageBox.Show(obj.Message);
+            if (resizeSucceeded)
+                Process.Start("explorer", outputDirectory);
         }
 
         private static void doAddToGame(string OutputFiles, string Destination)
@@ -91,7 +137,7 @@ namespace nio2so.TSOView2.Plugins
                 recurscpy(destination, backupDir);
                 if (!Directory.Exists(backupDir)) throw new DirectoryNotFoundException(backupDir);
             }
-            foreach (var file in Directory.GetFiles(output))
+            foreach (string file in Directory.GetFiles(output))
                 File.Copy(file, Path.Combine(destination, Path.GetFileName(file)), true);
 
         }
@@ -123,12 +169,14 @@ namespace nio2so.TSOView2.Plugins
         {
             string makedirstring(string fname) => Path.Combine(Directory, fname);
             string currentFile = "elevation.bmp";
-            if (!File.Exists(makedirstring(currentFile))) throw new FileNotFoundException(currentFile);
+            if (!File.Exists(makedirstring(currentFile))) goto onError;
             currentFile = "terraintype.bmp";
-            if (!File.Exists(makedirstring(currentFile))) throw new FileNotFoundException(currentFile);
+            if (!File.Exists(makedirstring(currentFile))) goto onError;
             currentFile = "vertexcolor.bmp";
-            if (!File.Exists(makedirstring(currentFile))) throw new FileNotFoundException(currentFile);
+            if (!File.Exists(makedirstring(currentFile))) goto onError;
             return true;
+        onError:
+            throw new FileNotFoundException($"The file {currentFile} was not found in the directory:\n\n{Directory}\n\n{troll}");
         }
         /// <summary>
         /// All files in the city in Release and onward are 512x512... pre-alpha is only 256x256.
@@ -140,24 +188,30 @@ namespace nio2so.TSOView2.Plugins
             string makesoucdirstring(string fname) => Path.Combine(SourceDirectory, fname);
             Directory.CreateDirectory(DestinationDirectory);
 
-            var fileList = Directory.GetFiles(SourceDirectory, "*.bmp");
+            string[] fileList = Directory.GetFiles(SourceDirectory, "*.bmp");
             if (!fileList.Any()) throw new FileNotFoundException("No bmps in " + SourceDirectory);
 
-            foreach (var bmpFile in fileList)
+            foreach (string bmpFile in fileList)
             {
                 Bitmap bmp = new Bitmap(bmpFile);
                 PixelFormat format = bmp.PixelFormat;
                 bmp.Dispose();
+                bool? success = null;
                 if (format == PixelFormat.Format8bppIndexed)
-                    handle8bppindexedresize(bmpFile, DestinationDirectory);
+                    success = handle8bppindexedresize(bmpFile, DestinationDirectory);
                 else if (format == PixelFormat.Format24bppRgb)
                     handleregresize(bmpFile, DestinationDirectory);
-                else MessageBox.Show(Path.GetFileName(bmpFile) + " is: " + format.ToString() + " and cannot be resized.");
+                else throw new InvalidDataException(Path.GetFileName(bmpFile) + " is: " + format.ToString() + " and cannot be resized. ");
+                
+                if (success.HasValue && !success.Value)
+                    throw new Exception($"Cannot resize this city. File: {bmpFile}" + troll);
             }
         }
 
-        private static void handle8bppindexedresize(string bmpFile, string DestinationDirectory)
+        private static bool handle8bppindexedresize(string bmpFile, string DestinationDirectory)
         {
+            bool success = false;
+
             string makedestdirstring(string fname) => Path.Combine(DestinationDirectory, fname);
 
             ColorPalette colorPalette = null;
@@ -167,7 +221,8 @@ namespace nio2so.TSOView2.Plugins
             //load the city we want to transfer to Pre-Alpha
             Bitmap8bpp releaseTSOBmp = new Bitmap8bpp(bmpFile);
             //check the size
-            if (releaseTSOBmp.Width != 512 || releaseTSOBmp.Height != 512) goto imdone;
+            if (releaseTSOBmp.Width != 512 || releaseTSOBmp.Height != 512)            
+                goto imdone;            
             //make a new 8bppindexed bmp -- has to be 256 color palette indexed bmp to work ugh
             Bitmap8bpp compatBmp = new Bitmap8bpp(256, 256, colorPalette);            
             //make the name what it would be in TSO pre alpha
@@ -210,11 +265,15 @@ namespace nio2so.TSOView2.Plugins
                 compatBmp.Save(makedestdirstring(mynewname));
             }
             compatBmp.Dispose();
+            success = true;
         imdone:
             releaseTSOBmp.Dispose();
+            return success;
         }
-        private static void handleregresize(string bmpFile, string DestinationDirectory)
+        private static bool handleregresize(string bmpFile, string DestinationDirectory)
         {
+            bool success = false;
+
             string makedestdirstring(string fname) => Path.Combine(DestinationDirectory, fname);
             //load the city we want to transfer to Pre-Alpha
             Bitmap releaseTSOBmp = new Bitmap(bmpFile);
@@ -240,8 +299,10 @@ namespace nio2so.TSOView2.Plugins
                 compatBmp.Save(makedestdirstring(mynewname), ImageFormat.Bmp);
             }
             compatBmp.Dispose();
+            success = true;
         imdone:
             releaseTSOBmp.Dispose();
+            return success;
         }
     }
 }

@@ -6,6 +6,21 @@ using System.Windows.Controls;
 
 namespace nio2so.TSOView2.Plugins
 {
+    internal interface ITSOViewPlugin
+    {
+        string PluginName { get; }
+        string PluginDescription { get; }
+        void Do(ITSOView2Window Parent);
+    }
+
+    internal abstract class TSOViewPluginBase : ITSOViewPlugin
+    {
+        public abstract string PluginName { get; }
+        public abstract string PluginDescription { get; }
+
+        public abstract void Do(ITSOView2Window Window);
+    }
+
     /// <summary>
     /// This plugin will take in a constants table formatted like so:
     /// <code>0xFFFFFFFF: ConstantName</code>
@@ -13,7 +28,7 @@ namespace nio2so.TSOView2.Plugins
     /// <code>ConstantName = 0xFFFFFFFF,</code>
     /// because these can then be used as <see langword="enum"/> in the codebase
     /// </summary>
-    internal static class EnumFixerUpperPlugin
+    internal class EnumFixerUpperPlugin : TSOViewPluginBase
     {
         const string MYMSG = "This plugin will take in a constants table formatted like so:\r\n" +
             "\"0xFFFFFFFF: ConstantName\"\r\n" +
@@ -22,10 +37,15 @@ namespace nio2so.TSOView2.Plugins
             "because these can then be used as enums in the codebase.";
         const string THANKYOUMSG = "Here you go :)";
 
+        public override string PluginName => "Format to C# Enum";
+        public override string PluginDescription => MYMSG;
+
+
+
         /// <summary>
         /// Prompts the user for text, spits out the formatted version
         /// </summary>
-        public static void Do()
+        public override void Do(ITSOView2Window Parent)
         {
             var window = makeWindow("Enter Text", MYMSG, out var TextBox);
             if (!window.ShowDialog() ?? true) return;
