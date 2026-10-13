@@ -14,5 +14,7 @@ namespace nio2so.Formats.TSOData
 
         [JsonConverter(typeof(JsonStringEnumConverter))]
         public TSODataStringCategories Category { get; set; }
+
+        public override string ToString() => Value;
     }
 }

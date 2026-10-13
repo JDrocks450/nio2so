@@ -103,9 +103,13 @@ namespace nio2so.TSOTCP.Voltron.Server
             //API Url from local settings
             string APIUrl = LocalServerSettings.Default.APIUrl;
 
+            string TSODataDefinitionPath = @"C:\Program Files\Maxis\The Sims Online NI\The Sims Online\TSOClient\TSOData_datadefinition.dat";
+
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
+            Services.Register(new TSODataDefinitionService(TSODataDefinitionPath)); // REGISTER THE TSO DATA DEFINITION SERVICE
+
             TSOPDUFactoryServiceBase pduFactory = null;
 #if TSOPLAYTEST
              Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
