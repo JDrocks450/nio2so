@@ -169,14 +169,14 @@ namespace nio2so.Voltron.Core
                         //Download player avatar name from data service.
                         try
                         {
-                            //download the player's name from data service.
-                            var UpdatePlayerPDU = dmsProtocol.GET_UPDATE_PLAYER(AvatarID, out string AvatarName);
-                            if (UpdatePlayerPDU == null)
-                                throw new NullReferenceException(nameof(UpdatePlayerPDU));
+                            string AvatarName = "default";
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
+                            bool success = dmsProtocol.ON_CLIENT_JOIN_VOLTRON(AvatarID, out IEnumerable<TSOVoltronPacket> sendPackets);
+                            if (!success)                            
+                                throw new InvalidOperationException($"UserLogin(): Failed to initialize client session for AvatarID: {AvatarID}");                            
                             //send the update player PDU to the client
-                            SubmitAriesFrame(ID, UpdatePlayerPDU);
+                            SubmitAriesFrame(ID, sendPackets);
                             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
                         }
                         catch (Exception ex)
@@ -333,6 +333,24 @@ namespace nio2so.Voltron.Core
             }
             return packets;
         }
+
+        /// <summary>
+        /// <inheritdoc cref="SubmitAriesFrame(uint, TSOVoltronPacket)"/>
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="voltronPackets"></param>
+        private void SubmitAriesFrame(uint ID, IEnumerable<TSOVoltronPacket> voltronPackets)
+        {
+            foreach (var voltronPacket in voltronPackets)
+                SubmitAriesFrame(ID, voltronPacket);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="SubmitAriesFrame(uint, TSOVoltronPacket)"/>
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="voltronPackets"></param>
+        private void SubmitAriesFrame(uint ID, params TSOVoltronPacket[] voltronPackets) => SubmitAriesFrame(ID, voltronPackets);
 
         /// <summary>
         /// Submits the <see cref="TSOVoltronPacket"/> to be sent to the remote connection <paramref name="ID"/> 

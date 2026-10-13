@@ -1,4 +1,5 @@
-﻿using nio2so.Voltron.Core.Services;
+﻿using nio2so.Voltron.Core;
+using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
@@ -14,7 +15,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
     /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientOnlinePDU"/>, <see cref="TSOClientBye"/>
     /// </summary>
     internal class VoltronDMSProtocol : TSOProtocol, IDMSProtocol
-    {
+    {                
         [TSOProtocolHandler((uint)TSO_NewImproved_VoltronPacketTypes.ClientByePDU)]
         public void BYE_PDU(TSOVoltronPacket PDU)
         {
@@ -65,11 +66,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         }
 
         public TSOVoltronPacket GET_UPDATE_PLAYER(uint AvatarID, out string AvatarName)
-        {
+        {            
             AvatarName = "default";
             return new TSOUpdatePlayerPDU(new TSOPlayerInfoStruct(new TSOAriesIDStruct(AvatarID,AvatarName)));
         }
 
         public TSOVoltronPacket GET_HOST_ONLINE(ushort ClientBufferLength, params string[] Badwords) => new TSOHostOnlinePDU(ClientBufferLength, Badwords);
+
+        public bool ON_CLIENT_JOIN_VOLTRON(uint AvatarID, out IEnumerable<TSOVoltronPacket> SendPackets)
+        {
+            SendPackets = [];
+            return true;
+        }
     }
 }

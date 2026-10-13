@@ -14,6 +14,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
     {
         //CONST/TUNING
         public const ushort PACKET_SIZE_LIMIT = (ushort)TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
+        public const ushort HOST_VERSION = 32767;
 
         public record TSOHostReservedWordsStruct
         {
@@ -25,7 +26,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
 
         public record TSOHostParamsStruct
         {
-            public TSOHostParamsStruct(ushort clientBufferSize = PACKET_SIZE_LIMIT, ushort hostVersion = 0x0)
+            public TSOHostParamsStruct(ushort clientBufferSize = PACKET_SIZE_LIMIT, ushort hostVersion = HOST_VERSION)
             {
                 HostVersion = hostVersion;
                 ClientBufferSize = clientBufferSize;

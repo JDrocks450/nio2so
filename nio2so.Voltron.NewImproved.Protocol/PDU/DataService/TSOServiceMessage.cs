@@ -8,7 +8,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.DataService
     {
         const int WIDTH = sizeof(TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs) + (2*sizeof(ushort));
 
-
         /// <summary>
         /// The length of the <see cref="ContentBytes"/> property
         /// </summary>       
@@ -45,7 +44,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.DataService
 
         public override string ToString()
         {
-            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} (reported: {ContentLength-WIDTH}" +
+            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} (reported: {ContentLength-WIDTH}) " +
                 $"{nameof(MessageFormat)}: {MessageFormat}";
         }
     }

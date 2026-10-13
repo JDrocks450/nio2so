@@ -103,5 +103,15 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)PDU;
             RespondWith(new TSOBCVersionListPDU(pdu.AvatarID, "", 0x01));
         }
+
+        public bool ON_CLIENT_JOIN_VOLTRON(uint AvatarID, out IEnumerable<TSOVoltronPacket> SendPackets)
+        {
+            //download the player's name from data service.
+            var UpdatePlayerPDU = GET_UPDATE_PLAYER(AvatarID, out string AvatarName);
+            if (UpdatePlayerPDU == null)
+                throw new NullReferenceException(nameof(UpdatePlayerPDU));
+            SendPackets = new[] { UpdatePlayerPDU };
+            return true;
+        }
     }
 }

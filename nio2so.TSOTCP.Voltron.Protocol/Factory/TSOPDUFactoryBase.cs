@@ -229,8 +229,19 @@ namespace nio2so.Voltron.Core.Factory
         public bool LogDiscoveryPacketToDisk(ushort VoltronPacketType, byte[] PacketData)
         {
             string? displayName = GetVoltronPacketTypeName(VoltronPacketType);
-            Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
-            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory, $"cTSOPDU [{displayName}].dat");
+            string baseDir = TSOVoltronConst.DiscoveriesDirectory;
+            Directory.CreateDirectory(baseDir);
+            //attempt to sort into the TargetingPack folder if we have one mapped
+            if (_assemblies.Any())
+            { // get the assembly (that isnt voltron.core) name
+                string name = _assemblies.FirstOrDefault(x => x != GetType().Assembly)?.GetName()?.Name ?? "";
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    baseDir = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,name);
+                    Directory.CreateDirectory(baseDir);
+                }
+            }
+            string fileName = Path.Combine(baseDir, $"cTSOPDU [{displayName}].dat");
             bool existing = File.Exists(fileName);
             File.WriteAllBytes(fileName, PacketData);
             return !existing;

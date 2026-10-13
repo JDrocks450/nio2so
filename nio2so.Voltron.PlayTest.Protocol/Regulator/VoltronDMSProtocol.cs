@@ -69,5 +69,11 @@ namespace nio2so.Voltron.PlayTest.Protocol.Regulator
         }
 
         public TSOVoltronPacket GET_HOST_ONLINE(ushort ClientBufferLength, params string[] Badwords) => new TSOHostOnlinePDU(ClientBufferLength, Badwords);
+
+        public bool ON_CLIENT_JOIN_VOLTRON(uint AvatarID, out IEnumerable<TSOVoltronPacket> SendPackets)
+        {
+            SendPackets = [];
+            return true;
+        }
     }
 }

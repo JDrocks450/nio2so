@@ -3,7 +3,7 @@
 #define TSOPLAYTEST
 #define TSONANDI
 */
-#define TSOPREALPHA
+#define TSONANDI
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST
@@ -108,17 +108,14 @@ namespace nio2so.TSOTCP.Voltron.Server
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
             TSOPDUFactoryServiceBase pduFactory = null;
 #if TSOPLAYTEST
-             pduFactory = new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory(); // REGISTER THE TSOPLAYTEST PDU FACTORY
+             Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
 #endif
 #if TSOPREALPHA
-            pduFactory = new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory(); // REGISTER THE TSOPREALPHA PDU FACTORY
+            Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
 #endif
 #if TSONANDI
-            pduFactory = new nio2so.Voltron.NewImproved.Protocol.Services.TSONewImprovedPDUFactory(); // REGISTER THE TSO New & Improved PDU FACTORY
+            Services.Register(new nio2so.Voltron.NewImproved.Protocol.Services.TSONewImprovedPDUFactory()); // REGISTER THE TSO New & Improved PDU FACTORY
 #endif
-            if (pduFactory == null) throw new NullReferenceException("PDU Factory was not initialized.");
-            Services.Register(pduFactory);
-
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
@@ -126,8 +123,10 @@ namespace nio2so.TSOTCP.Voltron.Server
             //START THE SERVER
             BeginListening();
 
+#if TSOPREALPHA
             //HSB SERVER PROXY
             StartHSBProxy();
+#endif
         }
 
         private void StartHSBProxy()
