@@ -50,6 +50,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{500F
 		nio2so.Scripts\run nio2so.bat = nio2so.Scripts\run nio2so.bat
 		nio2so.Scripts\Setup nio2so.bat = nio2so.Scripts\Setup nio2so.bat
 	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "nio2so.Voltron.NewImproved.Protocol", "nio2so.Voltron.NewImproved.Protocol\nio2so.Voltron.NewImproved.Protocol.csproj", "{71309A1B-C383-A182-8BD4-A4CC28BDE14B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -163,6 +164,14 @@ Global
 		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|x86.ActiveCfg = Release|Any CPU
 		{F8D210C3-9D97-4252-B819-E5686EAD11CA}.Release|x86.Build.0 = Release|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Debug|x86.Build.0 = Debug|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Release|x86.ActiveCfg = Release|Any CPU
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -182,6 +191,7 @@ Global
 		{9A23F267-50DE-4776-808E-933E9F1158FF} = {D8EEF804-6E81-4543-B0E7-99D7DDD64944}
 		{F8D210C3-9D97-4252-B819-E5686EAD11CA} = {0B25890F-03D2-44C4-92A0-D11B2AD5CF44}
 		{500FBF65-8FA0-457C-A58A-552E6BC8251E} = {0B25890F-03D2-44C4-92A0-D11B2AD5CF44}
+		{71309A1B-C383-A182-8BD4-A4CC28BDE14B} = {D8EEF804-6E81-4543-B0E7-99D7DDD64944}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A551AD78-050D-47F1-A2E8-D17449A45C45}

@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\TCPQuaZar\TCPQuaZar.csproj" />
     <ProjectReference Include="..\nio2so.CrashHandler\nio2so.CrashHandler.csproj" />
     <ProjectReference Include="..\nio2so.Formats\nio2so.Formats.csproj" />
+    <ProjectReference Include="..\nio2so.Voltron.NewImproved.Protocol\nio2so.Voltron.NewImproved.Protocol.csproj" />
     <ProjectReference Include="..\nio2so.Voltron.PlayTest.Protocol\nio2so.Voltron.PlayTest.Protocol.csproj" />
     <ProjectReference Include="..\nio2so.Voltron.PreAlpha.Protocol\nio2so.Voltron.PreAlpha.Protocol.csproj" />
   </ItemGroup>
