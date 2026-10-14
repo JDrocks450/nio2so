@@ -29,7 +29,16 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
 
         public TSODataServiceWrapperPDU() : base()
         {
-            
+            MakeBodyFromProperties();
+        }
+
+        public TSODataServiceWrapperPDU(uint SendingAvatarID, uint TSODataDefinitionID, TSOServiceMessage MessageContent) : this()
+        {
+            this.SendingAvatarID = SendingAvatarID;
+            DefinitionStringID = TSODataDefinitionID;
+            Message = MessageContent;
+
+            MakeBodyFromProperties();
         }
     }
 }

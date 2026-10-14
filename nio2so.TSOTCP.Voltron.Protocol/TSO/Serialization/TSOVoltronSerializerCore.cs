@@ -354,7 +354,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     Array? myArrayValue = foundArrayProperty.GetValue(Instance) as Array;
                     if (myArrayValue == null)
                         error($"{arrLegAtt.ArrayPropertyName} is an array type, but its value is null. You really should not be doing this. It should be an empty array when using these attributes.");
-                    SerializeValue = Convert.ChangeType(myArrayValue.Length + arrLegAtt.Arithmetic, property.PropertyType); // set myvalue to be the length of the array
+                    SerializeValue = Convert.ChangeType(myArrayValue.Length - arrLegAtt.Arithmetic, property.PropertyType); // set myvalue to be the length of the array
                 }
             }
 

@@ -31,6 +31,78 @@ namespace nio2so.Voltron.NewImproved.Protocol
         /// </summary>
         kSimRequestMsg = 0x1B6F221B,
     }
+
+    public enum TSO_NewImproved_GZMSGIDs : uint
+    {
+        GZMSGID_cITSOApprovedTopicUpdate = 0xA97360C5,
+    }
+
+    public enum TSO_NewImproved_TSOValueBase_CLSIDs : uint
+    {
+        cTSOTopicUpdateMessage = 0x09736027,
+
+        cTSOValueVector_Uint8 = 0x097608AB,
+        cTSOValueVector_Sint8 = 0x097608AF,
+        cTSOValueVector_Uint16 = 0x097608B3,
+        cTSOValueVector_Sint16 = 0x097608B6,
+
+        cTSODataTransportBuffer = 0x0A2C6585,
+
+        cTSOTopic = 0x29739B14,
+        cTSOTopicUpdateErrorMessage = 0x2A404946,
+
+        cTSODataDefinitionContainer = 0x496A78BC,
+
+        cTSOValue_Bool = 0x696D1183,
+        cTSOValue_Uint32 = 0x696D1189,
+        cTSOValue_Uint64 = 0x69D3E3DB,
+
+        cTSOValue_Sint32 = 0x896D1196,
+        cTSOValueMap_Property = 0x896D11A2,
+        cTSOValue_String = 0x896D1688,
+
+        cTSOValueBVector = 0x89738492,
+        cTSOValueVector_Uint32 = 0x89738496,
+        cTSOValueVector_Sint32 = 0x8973849A,
+        cTSOValueVector_String = 0x8973849E,
+
+        cTSOProperty = 0x89739A79,
+
+        cTSOValue_Sint64 = 0x89D3E3EF,
+        cTSOValueMap_Uint64 = 0x89D3E40E,
+
+        cTSOValueMap_Uint32 = 0xA96E38A0,
+        cTSOValueMap_Sint32 = 0xA96E38A8,
+        cTSOValueMap_String = 0xA96E38AC,
+
+        cTSOValue_Property = 0xA96E7E5B,
+
+        cTSODataService = 0xA97353EE,
+        cTSOValueVector_Property = 0xA97384A3,
+        cTSODataServiceClient = 0xA975FA6E,
+
+        cTSOValueMap_Unknown = 0xA99AF3A8,
+        cTSOValueVector_Unknown = 0xA99AF3AC,
+        cTSOValue_Unknown = 0xA99AF3B7,
+
+        cTSOValueMap_Sint64 = 0xA9D3E412,
+        cTSOValueVector_Uint64 = 0xA9D3E428,
+        cTSOValueVector_Sint64 = 0xA9D3E42D,
+
+        cTSOValue_Uint8 = 0xC976087C,
+        cTSOValueMap_Bool = 0xC97757F5,
+
+        cTSOValue_Sint8 = 0xE976088A,
+        cTSOValue_Uint16 = 0xE9760891,
+        cTSOValue_Sint16 = 0xE9760897,
+
+        cTSOValueMap_Uint8 = 0xE976089F,
+        cTSOValueMap_Sint8 = 0xE97608A2,
+        cTSOValueMap_Uint16 = 0xE97608A5,
+        cTSOValueMap_Sint16 = 0xE97608A8
+    }
+
+
     public enum TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs : uint
     {
         /// <summary>
