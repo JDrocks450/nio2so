@@ -1,4 +1,5 @@
-﻿using nio2so.Voltron.Core;
+﻿using nio2so.Formats.TSOData;
+using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
@@ -10,6 +11,7 @@ using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -113,39 +115,48 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     0x00
             };
 
+        const uint Avatar_DerivedID = 0x05600332; // ID of the Derived Struct Avatar
+
         [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.DataServiceWrapperPDU)]
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
         {
-            if (PDU is not TSODataServiceWrapperPDU dataService)
+            if (PDU is not TSODataServiceWrapperPDU Query)
                 throw new InvalidOperationException("Invalid PDU type for DATA_SERVICE_REQUEST handler.");
 
-            var stdMsg = dataService.Message.GetMessageAs<TSONetMessageStandard>();
+            var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();
 
-            if (dataService.DefinitionStringID != 0xA46E47DC) return;
+            if (Query.DefinitionStringID != 0xA46E47DC) return;
 
             if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
 
-            uint DefinitionStringID = dataService.DefinitionStringID;
-            uint SendingAvatarID = dataService.SendingAvatarID;
+            uint MyAvatarID = 0x0539;
 
-            object obj = service.GetObject(DefinitionStringID, out string structName);
+            //TESTING FOR LATER
+            dynamic obj = service.GetObject(Query.DefinitionStringID, out ITSODataStruct Struct);
 
-            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), /*MyAvatar.Avatar_Name*/ 0x4FFE270C, 0x05600332, 0x00000539);
-            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), /*MyAvatar.Avatar_Description*/ 0x54B99C9A, 0x05600332, 0x00000539);
+            obj.Avatar_Name = "Testing";
+            obj.Avatar_Description = "Completed.";
+
+            RespondToWithObject(Query, Struct, obj, MyAvatarID);
+
             TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
                 new TSOValue_TSODataStructPropertyWrapper(
                     /*AvatarAppearance (Struct ID)*/ 0x3B0430BF,
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
-                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, 0x05600332, 0x00000539);
-            TSOTopicUpdateMessage avatarLotXY = new(new TSOValue_Uint32(0x00B800D5), /*MyAvatar.Avatar_LotXY*/ 0x7E0DD35C, 0x05600332, 0x00000539);
+                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_DerivedID, 0x00000539);
+            RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, Struct.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
+            return;
+
+#if false
+            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), /*MyAvatar.Avatar_Name*/ 0x4FFE270C, Avatar_DerivedID, 0x00000539);
+            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), /*MyAvatar.Avatar_Description*/ 0x54B99C9A, Avatar_DerivedID, 0x00000539);
+            
+            TSOTopicUpdateMessage avatarLotXY = new(new TSOValue_Uint32(0x00B800D5), /*MyAvatar.Avatar_LotXY*/ 0x7E0DD35C, Avatar_DerivedID, 0x00000539);
 
             var test = new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarAppearance));
-            test.MakeBodyFromProperties();
-            var testBytes = TSOVoltronSerializer.Serialize(test);
-
             RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarName)));
             RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarDescription)
             /*{
@@ -154,12 +165,35 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             }*/));
             RespondWith(test);
             RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
+#endif
+        }
 
-            if (false)
+        private void RespondToWithObject(TSODataServiceWrapperPDU Query, ITSODataStruct Struct, object Instance, uint ObjectID)
+        {
+            foreach (var property in Struct.Fields)
             {
-                TSOTCPPacket packet = TSOTCPPacket.Parse<TSOTCPPacket>(packet_data, out _);
-                var testPackets = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectsFromAriesPacket(packet);
-                RespondWithAll(testPackets.Skip(2).ToArray());
+                string PropertyName = property.NameString;
+                object value = ((ExpandoObject)Instance).First(x => x.Key == PropertyName).Value;
+
+                TSODataField? Field = Struct.GetFieldByName(PropertyName);                
+
+                //Todo: Test for Struct types here
+
+                ITSOValue valueType = default;
+                try
+                {
+                    valueType = TSOValueConverter.Convert(value);
+                }
+                catch(NotImplementedException e)
+                {
+                    ;
+                }
+                if (valueType == null)
+                {
+                    continue;
+                }
+                TSOTopicUpdateMessage propertyValue = new(valueType, Field.NameID, ((TSODerivedStruct)Struct).ParentID, ObjectID);
+                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, Struct.NameID, new PDU.DataService.TSOServiceMessage(propertyValue)));
             }
         }
     }

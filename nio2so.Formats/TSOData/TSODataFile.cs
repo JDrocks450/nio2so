@@ -1,13 +1,20 @@
 ﻿using System.Dynamic;
 using System.Reflection.Metadata;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace nio2so.Formats.TSOData
 {
+    public interface ITSODataStringIDAccessor
+    {
+        TSODataString GetStringByID(uint ID);
+        uint GetIDByString(string Value);
+    }
+
     /// <summary>
     /// Check out the file structure here: <see href="http://wiki.niotso.org/TSOData"/>
     /// </summary>
-    public class TSODataFile : ITSOImportable
+    public class TSODataFile : ITSOImportable, ITSODataStringIDAccessor
     {
         [Flags]
         public enum Levels
@@ -73,24 +80,24 @@ namespace nio2so.Formats.TSOData
             }
 
             //**try level one struct 
-            return GetObject(TypeName);
+            return GetObject(TypeName, out _);
 
             throw new ArgumentException($"Unknown type: {TypeName}");
         }
 
-        public object GetObject(uint StringID, out string StructName)
+        public object GetObject(uint StringID, out ITSODataStruct TSODataStruct)
         {
-            StructName = Strings[StringID].Value;
-            return GetObject(StructName);
+            string StructName = Strings[StringID].Value;
+            return GetObject(StructName, out TSODataStruct);
         }
 
-        public object GetObject(string StringName)
+        public object GetObject(string StringName, out ITSODataStruct TSODataStruct)
         {
-            if (!TryGetStructByName(StringName, out TSODataObject tsoStruct, Levels.All))
+            if (!TryGetStructByName(StringName, out TSODataStruct, Levels.All))
                 throw new ArgumentException("Struct matching name not found", nameof(StringName));
-            if (tsoStruct is TSODerivedStruct derived)
+            if (TSODataStruct is TSODerivedStruct derived)
                 return getDerivedObject(derived);
-            else if (tsoStruct is TSODataStruct data)
+            else if (TSODataStruct is TSODataStruct data)
                 return getStructObject(data);
             throw new FileNotFoundException("Struct not found by name.");
         }
@@ -124,28 +131,35 @@ namespace nio2so.Formats.TSOData
 
         private object getDerivedObject(TSODerivedStruct tsoStruct)
         {
-            var parent = GetObject(tsoStruct.ParentString);
+            var parent = GetObject(tsoStruct.ParentString, out _);
             if (parent == null)
                 throw new InvalidOperationException($"Failed to get parent struct for derived struct {tsoStruct.NameString} with Base Struct {tsoStruct.ParentString}");
             if (parent is not ExpandoObject expandoParent)
                 throw new InvalidOperationException($"Parent struct for derived struct {tsoStruct.NameString} is not an {nameof(ExpandoObject)}");
-            string[] names = expandoParent.ToDictionary().Select(x => x.Key).ToArray();
-            foreach(var property in names)
-            {
-                var mask = tsoStruct.FieldMasks.FirstOrDefault(x => x.NameString == property);
-                if (mask == null || mask.Values == TSOFieldMaskValues.Remove)
-                {
-                    string fieldName = property;
-                    expandoParent.Remove(fieldName, out object? value);
-                }
-            }
+            
             return expandoParent;
         }        
 
         public bool StringExists(uint StringID) => Strings.ContainsKey(StringID);
         public bool TryGetStringByID(uint ID, out TSODataString str) => Strings.TryGetValue(ID, out str);
 
-        public bool TryGetStructByName(string Name, out TSODataObject Struct, Levels Level = Levels.All)
+        public bool TryGetStructByID(uint ID, out ITSODataStruct Struct, Levels Level = Levels.All)
+        {
+            Struct = null;
+            if (Level.HasFlag(Levels.One))
+                Struct = LevelOneStructs.FirstOrDefault(x => x.NameID == ID);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Two))
+                Struct = LevelTwoStructs.FirstOrDefault(x => x.NameID == ID);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Derived))
+                Struct = DerivedStructs.FirstOrDefault(x => x.NameID == ID);
+            return Struct != null;
+        }
+
+        public bool TryGetStructByName(string Name, out ITSODataStruct Struct, Levels Level = Levels.All)
         {
             Struct = null;
             if (Level.HasFlag(Levels.One))
@@ -184,5 +198,9 @@ namespace nio2so.Formats.TSOData
                 $"}}\n" +
                 $"End of file."; */            
         }
+
+        public TSODataString GetStringByID(uint ID) => Strings[ID];
+
+        public uint GetIDByString(string Value) => Strings.First(x => x.Value.Value == Value).Key;
     }
 }

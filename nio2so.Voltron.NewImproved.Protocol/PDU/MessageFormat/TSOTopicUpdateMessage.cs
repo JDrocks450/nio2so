@@ -22,7 +22,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             this.Vector = VectorData.Select(x => new UInt32Wrapper(x)).ToArray();
             Value = value;
         }
-        public TSOTopicUpdateMessage(ITSOValue value, uint TSODataDefinitionFieldID, params uint[] AdditionalVectorData) : this(value, [..AdditionalVectorData,TSODataDefinitionFieldID])
+        public TSOTopicUpdateMessage(ITSOValue value, uint TSODataDefinitionFieldID, uint TSODataDefinitionTypeID, uint ObjectID) : this(value, [TSODataDefinitionTypeID, ObjectID, TSODataDefinitionFieldID])
         {
 
         }
@@ -33,7 +33,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         [TSOVoltronArrayLength(nameof(Vector))]
         public uint VectorCount { get; set; }
         public UInt32Wrapper[] Vector { get; set; } = Array.Empty<UInt32Wrapper>();
-
         public ITSOValue Value { get; set; }
 
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Length_Prefixed_Byte)]
