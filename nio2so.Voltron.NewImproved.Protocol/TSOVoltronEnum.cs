@@ -66,7 +66,7 @@ namespace nio2so.Voltron.NewImproved.Protocol
         cTSOValueVector_Sint32 = 0x8973849A,
         cTSOValueVector_String = 0x8973849E,
 
-        cTSOProperty = 0x89739A79,
+        cTSOProperty = 0x89739A79, // Property
 
         cTSOValue_Sint64 = 0x89D3E3EF,
         cTSOValueMap_Uint64 = 0x89D3E40E,
@@ -75,7 +75,7 @@ namespace nio2so.Voltron.NewImproved.Protocol
         cTSOValueMap_Sint32 = 0xA96E38A8,
         cTSOValueMap_String = 0xA96E38AC,
 
-        cTSOValue_Property = 0xA96E7E5B,
+        cTSOValue_Property = 0xA96E7E5B, // ValueProperty
 
         cTSODataService = 0xA97353EE,
         cTSOValueVector_Property = 0xA97384A3,

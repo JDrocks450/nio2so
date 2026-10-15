@@ -1,7 +1,9 @@
-﻿using nio2so.Voltron.Core.Services;
+﻿using nio2so.Voltron.Core;
+using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Services;
@@ -77,8 +79,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     0x05,0x60,0x03,0x32,
                     0x00,0x00,0x05,0x39,
                     0xF1,0xB9,0x2C,0x99, // Variable: AvatarAppearance Avatar_Appearance
-                    0xA9,0x6E,0x7E,0x5B,
-                    0x89,0x73,0x9A,0x79,
+                    0xA9,0x6E,0x7E,0x5B, // cTSOValue_Property
+                    0x89,0x73,0x9A,0x79, // cTSOPropertyObject
                     0x3B,0x04,0x30,0xBF, // AvatarAppearance (type)
                     0x00,0x00,0x00,0x03,
                     0x1D,0x53,0x02,0x75, // BODYOUTFITID
@@ -119,30 +121,46 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             var stdMsg = dataService.Message.GetMessageAs<TSONetMessageStandard>();
 
+            if (dataService.DefinitionStringID != 0xA46E47DC) return;
+
             if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
 
-            if (dataService.DefinitionStringID != 0xA46E47DC) return;
+            uint DefinitionStringID = dataService.DefinitionStringID;
+            uint SendingAvatarID = dataService.SendingAvatarID;
 
-            object obj = service.GetObject(dataService.DefinitionStringID, out string structName);
+            object obj = service.GetObject(DefinitionStringID, out string structName);
 
-            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), 0x4FFE270C, 0x05600332, 0x00000539);
-            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), 0x54B99C9A, 0x05600332, 0x00000539);
+            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), /*MyAvatar.Avatar_Name*/ 0x4FFE270C, 0x05600332, 0x00000539);
+            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), /*MyAvatar.Avatar_Description*/ 0x54B99C9A, 0x05600332, 0x00000539);
+            TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
+                new TSOValue_TSODataStructPropertyWrapper(
+                    /*AvatarAppearance (Struct ID)*/ 0x3B0430BF,
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
+                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, 0x05600332, 0x00000539);
+            TSOTopicUpdateMessage avatarLotXY = new(new TSOValue_Uint32(0x00B800D5), /*MyAvatar.Avatar_LotXY*/ 0x7E0DD35C, 0x05600332, 0x00000539);
 
-            RespondWith(new TSODataServiceWrapperPDU(dataService.SendingAvatarID, dataService.DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarName)));
-            RespondWith(new TSODataServiceWrapperPDU(dataService.SendingAvatarID, dataService.DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarDescription)
+            var test = new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarAppearance));
+            test.MakeBodyFromProperties();
+            var testBytes = TSOVoltronSerializer.Serialize(test);
+
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarName)));
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarDescription)
             /*{
                 Unknown_Flags = 0x0FE8,
                 ParameterLength = 0x803B
             }*/));
+            RespondWith(test);
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
 
-            //TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bloaty"), 0x4FFE270C, 0x05600332, 0x00000539);            
-
-            TSOTCPPacket packet = TSOTCPPacket.Parse<TSOTCPPacket>(packet_data, out _);
-
-            var testPackets = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectsFromAriesPacket(packet);            
-
-            RespondWithAll(testPackets.Skip(2).ToArray());
+            if (false)
+            {
+                TSOTCPPacket packet = TSOTCPPacket.Parse<TSOTCPPacket>(packet_data, out _);
+                var testPackets = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectsFromAriesPacket(packet);
+                RespondWithAll(testPackets.Skip(2).ToArray());
+            }
         }
     }
 }

@@ -412,6 +412,10 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                 Stream.EmplaceBody(endianConverter.GetBytes((uint)SerializeValue));
             else if (PropertyType == typeof(int))
                 Stream.EmplaceBody(endianConverter.GetBytes((int)SerializeValue));
+            else if (PropertyType.IsAssignableTo(typeof(ulong)))
+                Stream.EmplaceBody(endianConverter.GetBytes((ulong)SerializeValue));
+            else if (PropertyType == typeof(long))
+                Stream.EmplaceBody(endianConverter.GetBytes((long)SerializeValue));
             else if (PropertyType == typeof(byte))
                 Stream.EmplaceBody((byte)SerializeValue);
             else if (PropertyType == typeof(DateTime))
@@ -446,7 +450,8 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             }
 
             //--SERIALIZABLES
-            if (PropertyType.IsClass)
+            if (PropertyType.IsClass || 
+                PropertyType.IsInterface)
             {
                 TSOVoltronSerializer.Serialize(Stream, SerializeValue, property);
                 _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property, PropertyType, SerializeValue, Stream.Position - startLen));

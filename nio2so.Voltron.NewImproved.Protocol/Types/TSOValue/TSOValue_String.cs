@@ -8,22 +8,16 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
-    internal class TSOValue_String : TSOValueBase
+    internal class TSOValue_String : TSOValueBase<string>
     {
         const TSO_NewImproved_TSOValueBase_CLSIDs MYID = TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_String;
 
-        public TSOValue_String()
-        {
-            TypeClassID = MYID;
-        }
-
-        public TSOValue_String(string value) : this()
-        {            
-            Value = value;
-        }
-
         public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;
+
         [TSOVoltronString(TSOVoltronValueTypes.Length_Prefixed_Byte)]
-        public string Value { get; set; } = "";
+        public override string Value { get; set; } = "";
+
+        public TSOValue_String() : base() { }
+        public TSOValue_String(string Value) : base(Value) { }
     }
 }
