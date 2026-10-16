@@ -80,7 +80,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                 {
                     var typeItem = new TreeViewItem()
                     {
-                        Header = $"{type.NameString} ({type.FieldCount})",
+                        Header = $"[{type.NameID:X}] {type.NameString} ({type.FieldCount})",
                         IsExpanded = true
                     };
                     typeItem.Selected += delegate
@@ -111,7 +111,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                 {
                     var typeItem = new TreeViewItem()
                     {
-                        Header = $"{type.NameString} ({type.ParentString})",
+                        Header = $"[{type.NameID:X}] {type.NameString} ({type.ParentString})",
                         IsExpanded = true
                     };
                     typeItem.Selected += delegate
@@ -123,7 +123,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                     {
                         typeItem.Items.Add(new TreeViewItem()
                         {
-                            Header = $"{field.Values} {field.NameString}"
+                            Header = $"{field.Values} {field.NameString} ({field.NameID:X})"
                         });
                     }
                 }
