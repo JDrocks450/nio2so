@@ -16,6 +16,7 @@ namespace nio2so.Formats.TSOData
 
     public interface ITSODataStruct : ITSODataStringIDAccessor
     {
+        bool IsDerived => this is TSODerivedStruct;
         /// <summary>
         /// Gets the fields on the <see cref="ITSODataStruct"/>
         /// <para/>For <see cref="TSODerivedStruct"/> objects, this is a list of <see cref="TSOFieldMaskValues.Keep"/> properties.

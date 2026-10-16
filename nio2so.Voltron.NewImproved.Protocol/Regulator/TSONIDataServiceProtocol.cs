@@ -7,6 +7,7 @@ using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
+using System.Dynamic;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -119,7 +120,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
         }
 
-        const uint Avatar_DerivedID = 0x05600332; // ID of the Derived Struct Avatar
+        const uint Avatar_TypeID = 0x05600332; // ID of the Level Two Struct Avatar
+        const uint Lot_TypeID = 0x7A6CECEE; // ID of the Level Two Struct Lot
 
         [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.DataServiceWrapperPDU)]
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
@@ -127,21 +129,43 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (PDU is not TSODataServiceWrapperPDU Query)
                 throw new InvalidOperationException("Invalid PDU type for DATA_SERVICE_REQUEST handler.");
 
-            var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();
+            var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();                       
 
-            if (Query.DefinitionStringID != 0xA46E47DC) return;            
-
-            uint MyAvatarID = 0x0539;
+            uint ObjectID = (stdMsg.HasData1 && stdMsg.Data1.HasValue) ? stdMsg.Data1.Value : 0xFEEDF00D;
 
             //TESTING FOR LATER
             bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataServiceRuntimeObject? StructObject);
 
             dynamic obj = StructObject.GetObjectAsDynamic();
 
-            obj.Avatar_Name = "Testing";
-            obj.Avatar_Description = "Completed.";
+            if ((StructObject.Structure as TSODerivedStruct).ParentID == Avatar_TypeID)
+            {
+                obj.Avatar_Name = "Testing";
+                obj.Avatar_Description = "Completed.";
 
-            RespondToWithObject(Query, StructObject, MyAvatarID);
+                obj.Avatar_Appearance.AvatarAppearance_BodyOutfitID = 0x000001600000000D;
+                obj.Avatar_Appearance.AvatarAppearance_HeadOutfitID = 0x0000040F0000000D;
+                obj.Avatar_Appearance.AvatarAppearance_SkinTone = 0x01;
+
+                obj.Avatar_LotGridXY = 0x00B800D5;
+
+                obj.Avatar_IsOnline = true;
+            }
+
+            if ((StructObject.Structure as TSODerivedStruct).ParentID == Lot_TypeID)
+            {
+                obj.Lot_Name = "Bisquick's Testing Zone";
+                obj.Lot_Description = "You can't enter this lot yet because the server doesn't know how to do that.";
+                obj.Lot_NeighborhoodName = "Admin Zone";
+
+                obj.Lot_Price = 3000;
+
+                obj.Lot_IsOnline = true;
+
+                obj.Lot_Category = 0x30;
+            }
+
+            RespondToWithObject(Query, StructObject, ObjectID);
 
             return;
 
@@ -151,7 +175,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
-                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_DerivedID, 0x00000539);
+                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_TypeID, 0x00000539);
             RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
             return;
 
@@ -205,17 +229,26 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 string PropertyName = property.NameString;
                 object? value = StructObject.GetFieldValue(property.NameID, out TSODataField? Field);
 
+                if (Field == null)
+                    throw new Exception($"{nameof(Field)} ({property}) could not be loaded from TSODataDefinition file.");
+
+                if (Field.Classification != TSODataFieldClassification.SingleField)
+                    continue;
+
                 //try basic value types
-                TSOValueConverter.TryConvert(value, out ITSOValue? tsoValue);
-                if (tsoValue == null)
+                TSOValueConverter.TryConvert(property.TypeString, value, out ITSOValue? tsoValue);
+                if (tsoValue == null && value is ExpandoObject)
                 { // try struct type
                     uint typeID = Field.TypeID;
 
                     if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
                         tsoValue = CreateStructObjectValue(new TSODataServiceRuntimeObject(SubTypeStruct, value));
                 }
-                if (tsoValue == null) 
+                if (tsoValue == null)
+                {
+                    LogConsole($"{Field.TypeID} {Field.TypeString} not implemented yet! Skipping...");
                     continue; // hm, not supported yet?
+                }
                 yield return new TSODataServiceProperty(Field, tsoValue);
             }
         }
@@ -225,8 +258,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             var properties = TSOData_GetProperties(StructObject);
             var FieldValues = properties.Select(x => new TSOValue_DataFieldValueWrapper(x.FieldInfo.NameID, x.Value));
 
-            return new TSOValue_TSODataStructProperty(
-                new TSOValue_TSODataStructPropertyWrapper(StructObject.NameID, FieldValues.ToArray()));
+            return new TSOValue_TSODataStructProperty(new TSOValue_TSODataStructPropertyWrapper(StructObject.NameID, FieldValues.ToArray()));
 
 #if false
             return new TSOValue_TSODataStructProperty(

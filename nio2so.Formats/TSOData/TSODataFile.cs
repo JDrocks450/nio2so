@@ -73,7 +73,7 @@ namespace nio2so.Formats.TSOData
                     return "";
 
                 case "iunknown":
-                    return getDefault(typeof(byte[]));  
+                    return Array.CreateInstance(typeof(byte), 0);  
 
                 default:
                     break;
@@ -96,13 +96,13 @@ namespace nio2so.Formats.TSOData
             if (!TryGetStructByName(StringName, out TSODataStruct, Levels.All))
                 throw new ArgumentException("Struct matching name not found", nameof(StringName));
             if (TSODataStruct is TSODerivedStruct derived)
-                return getDerivedObject(derived);
+                return getStructObject(derived);
             else if (TSODataStruct is TSODataStruct data)
                 return getStructObject(data);
             throw new FileNotFoundException("Struct not found by name.");
         }
 
-        private object getStructObject(TSODataStruct data)
+        private object getStructObject(ITSODataStruct data)
         {
             ExpandoObject obj = new ExpandoObject();
             for(int i =0; i < data.Fields.Count; i++)
@@ -127,18 +127,7 @@ namespace nio2so.Formats.TSOData
                 obj.TryAdd(field.NameString, fieldValue);
             }   
             return obj;
-        }
-
-        private object getDerivedObject(TSODerivedStruct tsoStruct)
-        {
-            var parent = GetObject(tsoStruct.ParentString, out _);
-            if (parent == null)
-                throw new InvalidOperationException($"Failed to get parent struct for derived struct {tsoStruct.NameString} with Base Struct {tsoStruct.ParentString}");
-            if (parent is not ExpandoObject expandoParent)
-                throw new InvalidOperationException($"Parent struct for derived struct {tsoStruct.NameString} is not an {nameof(ExpandoObject)}");
-            
-            return expandoParent;
-        }        
+        }       
 
         public bool StringExists(uint StringID) => Strings.ContainsKey(StringID);
         public bool TryGetStringByID(uint ID, out TSODataString str) => Strings.TryGetValue(ID, out str);
