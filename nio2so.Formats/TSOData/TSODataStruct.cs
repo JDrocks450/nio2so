@@ -31,6 +31,7 @@ namespace nio2so.Formats.TSOData
         string NameString => GetStringByID(NameID).Value;
 
         TSODataField? GetFieldByName(string propertyName) => Fields.FirstOrDefault(x => x.NameString == propertyName);
+        TSODataField? GetFieldByID(uint FieldID) => Fields.FirstOrDefault(x => x.NameID == FieldID);
     }
 
     public class TSODataStruct : TSODataObject, ITSODataStruct

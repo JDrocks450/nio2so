@@ -63,6 +63,10 @@ namespace nio2so.Voltron.Core
         /// </summary>
         public static string ServerVersionInfoString => $"==={nameof(nio2soVoltronProtocolVersion)}===\n {nio2soVoltronProtocolVersion}\n" +
                                                         $"==={nameof(QuaZarProtocolVersion)}===\n {QuaZarProtocolVersion}";
+        /// <summary>
+        /// Indicates that Server initialization completed
+        /// </summary>
+        public bool Ready { get; protected set; }
 
         /// <summary>
         /// The original instance of the <see cref="VoltronServerSettings"/> this server was created with. This can be edited.
@@ -100,7 +104,11 @@ namespace nio2so.Voltron.Core
             Regulators = new(this);
             Services = new(this);
             Logger = TelemetryServer;
-            Services.Register(TelemetryServer);
+            Services.Register(TelemetryServer);            
+        }
+
+        protected virtual void OnServerReady() {
+            Regulators.NotifyServerReady(this);
         }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)

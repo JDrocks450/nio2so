@@ -41,5 +41,7 @@ namespace nio2so.Voltron.Core.Services
         }
 
         private void LoadDefinition() => file = TSODataImporter.Import(TSODataDefinitionPath);
+
+        public bool TryGetDataStruct(uint TSOData_TypeID, out ITSODataStruct Struct) => file.TryGetStructByID(TSOData_TypeID, out Struct);
     }
 }

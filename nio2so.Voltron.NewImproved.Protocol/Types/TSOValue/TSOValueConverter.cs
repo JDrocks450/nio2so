@@ -1,4 +1,6 @@
-﻿using System;
+﻿using nio2so.Formats.TSOData;
+using nio2so.Voltron.NewImproved.Protocol.Regulator;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,8 +22,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
     internal class TSOValueConverter
     {
-
-        public static ITSOValue Convert(object value)
+        static ITSOValue? convertBase(object value)
         {
             if (value is String)
                 return new TSOValue_String((string)value);
@@ -53,7 +54,21 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
             if (value is ulong)
                 return new TSOValue_Uint64((ulong)value);
 
-            throw new NotImplementedException($"Type {value.GetType()} not implemented yet!");
+            return null;
+        }
+
+        public static ITSOValue Convert(object value)
+        {
+            ITSOValue? val = convertBase(value);
+            if (val == null)
+                throw new NotSupportedException($"Type {value.GetType()} not supported.");
+            return val;
+        }
+
+        public static bool TryConvert(object value, out ITSOValue? Converted)
+        {
+            Converted = convertBase(value);
+            return (Converted != null);
         }
     }
 }

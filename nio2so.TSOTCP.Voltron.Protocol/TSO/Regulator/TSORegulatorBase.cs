@@ -136,6 +136,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             LogConsole($"Initialized {GetType().Name} Regulator", "Initialization");
         }
 
+        public virtual void ServerReady(ITSOServer Server) { }
+
         /// <summary>
         /// Maps all <see cref="TSOProtocolMatchingOption.AttributeType"/> adorned methods as VoltronPDU handlers to this <see cref="TSOProtocolBase"/> instance.
         /// </summary>

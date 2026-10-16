@@ -2,22 +2,15 @@
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
-using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
-using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
-using nio2so.Voltron.NewImproved.Protocol.Services;
+using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
-using System;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
+
     /// <summary>
     /// Handles all incoming DataService requests from the TSOClient
     /// </summary>
@@ -115,6 +108,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     0x00
             };
 
+        public override void ServerReady(ITSOServer Server)
+        {
+            base.ServerReady(Server);
+
+            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
+                throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
+
+            if (!service.Ready)
+                throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
+        }
+
         const uint Avatar_DerivedID = 0x05600332; // ID of the Derived Struct Avatar
 
         [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.DataServiceWrapperPDU)]
@@ -125,20 +129,21 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();
 
-            if (Query.DefinitionStringID != 0xA46E47DC) return;
-
-            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
-                throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
+            if (Query.DefinitionStringID != 0xA46E47DC) return;            
 
             uint MyAvatarID = 0x0539;
 
             //TESTING FOR LATER
-            dynamic obj = service.GetObject(Query.DefinitionStringID, out ITSODataStruct Struct);
+            bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataServiceRuntimeObject? StructObject);
+
+            dynamic obj = StructObject.GetObjectAsDynamic();
 
             obj.Avatar_Name = "Testing";
             obj.Avatar_Description = "Completed.";
 
-            RespondToWithObject(Query, Struct, obj, MyAvatarID);
+            RespondToWithObject(Query, StructObject, MyAvatarID);
+
+            return;
 
             TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
                 new TSOValue_TSODataStructPropertyWrapper(
@@ -147,7 +152,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
                     new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
                     )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_DerivedID, 0x00000539);
-            RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, Struct.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
+            RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
             return;
 
 #if false
@@ -168,33 +173,70 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 #endif
         }
 
-        private void RespondToWithObject(TSODataServiceWrapperPDU Query, ITSODataStruct Struct, object Instance, uint ObjectID)
+        private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataServiceRuntimeObject StructObject)
         {
-            foreach (var property in Struct.Fields)
+            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
+                throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
+            dynamic obj = service.GetObject(TSOData_TypeID, out ITSODataStruct Struct);
+            StructObject = new(Struct,obj);
+            return obj != null;
+        }
+
+        private bool TSOData_GetDataStruct(uint TSOData_TypeID, out ITSODataStruct Struct)
+        {
+            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
+                throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
+            return service.TryGetDataStruct(TSOData_TypeID, out Struct);
+        }
+
+        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataServiceRuntimeObject StructObject, uint ObjectID)
+        {
+            foreach (var property in TSOData_GetProperties(StructObject))
+            {
+                TSOTopicUpdateMessage propertyValue = new(property.Value, property.FieldInfo.NameID, ((TSODerivedStruct)StructObject.Structure).ParentID, ObjectID);
+                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue)));
+            }
+        }
+
+        private IEnumerable<TSODataServiceProperty> TSOData_GetProperties(TSODataServiceRuntimeObject StructObject)
+        {
+            foreach (var property in StructObject.Structure.Fields)
             {
                 string PropertyName = property.NameString;
-                object value = ((ExpandoObject)Instance).First(x => x.Key == PropertyName).Value;
+                object? value = StructObject.GetFieldValue(property.NameID, out TSODataField? Field);
 
-                TSODataField? Field = Struct.GetFieldByName(PropertyName);                
+                //try basic value types
+                TSOValueConverter.TryConvert(value, out ITSOValue? tsoValue);
+                if (tsoValue == null)
+                { // try struct type
+                    uint typeID = Field.TypeID;
 
-                //Todo: Test for Struct types here
-
-                ITSOValue valueType = default;
-                try
-                {
-                    valueType = TSOValueConverter.Convert(value);
+                    if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
+                        tsoValue = CreateStructObjectValue(new TSODataServiceRuntimeObject(SubTypeStruct, value));
                 }
-                catch(NotImplementedException e)
-                {
-                    ;
-                }
-                if (valueType == null)
-                {
-                    continue;
-                }
-                TSOTopicUpdateMessage propertyValue = new(valueType, Field.NameID, ((TSODerivedStruct)Struct).ParentID, ObjectID);
-                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, Struct.NameID, new PDU.DataService.TSOServiceMessage(propertyValue)));
+                if (tsoValue == null) 
+                    continue; // hm, not supported yet?
+                yield return new TSODataServiceProperty(Field, tsoValue);
             }
+        }
+
+        private ITSOValue CreateStructObjectValue(TSODataServiceRuntimeObject StructObject)
+        {
+            var properties = TSOData_GetProperties(StructObject);
+            var FieldValues = properties.Select(x => new TSOValue_DataFieldValueWrapper(x.FieldInfo.NameID, x.Value));
+
+            return new TSOValue_TSODataStructProperty(
+                new TSOValue_TSODataStructPropertyWrapper(StructObject.NameID, FieldValues.ToArray()));
+
+#if false
+            return new TSOValue_TSODataStructProperty(
+                new TSOValue_TSODataStructPropertyWrapper(
+                    /*AvatarAppearance (Struct ID)*/ TSOData_TypeStruct.NameID,
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
+                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_DerivedID, 0x00000539);
+#endif
         }
     }
 }

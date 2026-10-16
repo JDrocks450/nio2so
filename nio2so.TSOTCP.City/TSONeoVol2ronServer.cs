@@ -124,6 +124,9 @@ namespace nio2so.TSOTCP.Voltron.Server
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
 
+            Ready = true;
+            OnServerReady();
+
             //START THE SERVER
             BeginListening();
 
