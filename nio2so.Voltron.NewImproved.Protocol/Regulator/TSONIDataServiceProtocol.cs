@@ -5,12 +5,32 @@ using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
+using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System.Dynamic;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
+    /// <summary>
+    /// Attribute for Methods that are handlers for TSOData structs
+    /// </summary>
+    [System.AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
+    sealed class TSODataServiceTypeHandler : Attribute
+    {
+        public TSODataServiceTypeHandler(string StructName)
+        {
+            this.StructName = StructName;            
+        }
+        public TSODataServiceTypeHandler(string StructName, uint NameID)
+        {
+            this.StructName = StructName;
+            this.NameID = NameID;
+        }
+
+        public string StructName { get; }
+        public uint? NameID { get; } = null;
+    }
 
     /// <summary>
     /// Handles all incoming DataService requests from the TSOClient
@@ -113,15 +133,21 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         {
             base.ServerReady(Server);
 
+            //REGISTER THE TYPE SERVICE
+            TSODataDataServiceManager typeService = new();
+            Server.Services.Register(typeService);
+
+            //ATTEMPT TO REACH THE TSODATADEFINITION SERVICE
             if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
 
+            //ENSURE SERVICE IS READY
             if (!service.Ready)
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
         }
 
-        const uint Avatar_TypeID = 0x05600332; // ID of the Level Two Struct Avatar
-        const uint Lot_TypeID = 0x7A6CECEE; // ID of the Level Two Struct Lot
+        const uint Avatar_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Avatar; // ID of the Level Two Struct Avatar
+        const uint Lot_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Lot; // ID of the Level Two Struct Lot
 
         [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.DataServiceWrapperPDU)]
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
@@ -136,36 +162,15 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             //TESTING FOR LATER
             bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataServiceRuntimeObject? StructObject);
 
-            dynamic obj = StructObject.GetObjectAsDynamic();
-
-            if ((StructObject.Structure as TSODerivedStruct).ParentID == Avatar_TypeID)
+            if (success)
             {
-                obj.Avatar_Name = "Testing";
-                obj.Avatar_Description = "Completed.";
+                TSODataServiceControllerBase.HandlerContext ctx = new(Query, StructObject);
 
-                obj.Avatar_Appearance.AvatarAppearance_BodyOutfitID = 0x000001600000000D;
-                obj.Avatar_Appearance.AvatarAppearance_HeadOutfitID = 0x0000040F0000000D;
-                obj.Avatar_Appearance.AvatarAppearance_SkinTone = 0x01;
+                var typeService = GetService<TSODataDataServiceManager>();
+                typeService.Invoke(this, ctx);
 
-                obj.Avatar_LotGridXY = 0x00B800D5;
-
-                obj.Avatar_IsOnline = true;
-            }
-
-            if ((StructObject.Structure as TSODerivedStruct).ParentID == Lot_TypeID)
-            {
-                obj.Lot_Name = "Bisquick's Testing Zone";
-                obj.Lot_Description = "You can't enter this lot yet because the server doesn't know how to do that.";
-                obj.Lot_NeighborhoodName = "Admin Zone";
-
-                obj.Lot_Price = 3000;
-
-                obj.Lot_IsOnline = true;
-
-                obj.Lot_Category = 0x30;
-            }
-
-            RespondToWithObject(Query, StructObject, ObjectID);
+                RespondToWithObject(Query, StructObject, ObjectID);
+            }            
 
             return;
 

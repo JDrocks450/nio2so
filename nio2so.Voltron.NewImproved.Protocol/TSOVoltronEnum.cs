@@ -32,6 +32,18 @@ namespace nio2so.Voltron.NewImproved.Protocol
         kSimRequestMsg = 0x1B6F221B,
     }
 
+    public enum TSO_NewImproved_TSOData_StructIDs : uint
+    {
+        /// <summary>
+        /// ID of the Level Two Struct Avatar
+        /// </summary>
+        Avatar = 0x05600332, 
+        /// <summary>
+        /// ID of the Level Two Struct Lot
+        /// </summary>
+        Lot = 0x7A6CECEE, 
+    }
+
     public enum TSO_NewImproved_GZMSGIDs : uint
     {
         GZMSGID_cITSOApprovedTopicUpdate = 0xA97360C5,

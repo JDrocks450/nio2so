@@ -193,26 +193,26 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <typeparam name="T"></typeparam>
         /// <param name="Service"></param>
         /// <returns></returns>
-        protected bool TryGetService<T>(out T? Service) where T : ITSOService => Server.Services.TryGet(out Service);
+        public bool TryGetService<T>(out T? Service) where T : ITSOService => Server.Services.TryGet(out Service);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Service"></param>
         /// <returns></returns>
-        protected T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
+        public T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
         /// <summary>
         /// <inheritdoc cref="GetRegulator{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        protected bool TryGetRegulator<T>(out T? Regulator) where T : ITSOProtocolRegulator => Server.Regulators.TryGet<T>(out Regulator);
+        public bool TryGetRegulator<T>(out T? Regulator) where T : ITSOProtocolRegulator => Server.Regulators.TryGet<T>(out Regulator);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> other <see cref="ITSOProtocolRegulator"/> from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        protected T GetRegulator<T>() where T : ITSOProtocolRegulator => Server.Regulators.Get<T>();
+        public T GetRegulator<T>() where T : ITSOProtocolRegulator => Server.Regulators.Get<T>();
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
