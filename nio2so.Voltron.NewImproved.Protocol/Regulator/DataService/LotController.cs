@@ -8,7 +8,7 @@
         public LotController() { }
 
         [TSODataServiceTypeHandler("Lot", (uint)TSO_NewImproved_TSOData_StructIDs.Lot)]
-        public void Lot_StructHandler(HandlerContext Context)
+        public void Lot_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             dynamic obj = Context.DataObject.GetObjectAsDynamic();
 

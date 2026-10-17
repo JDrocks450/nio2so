@@ -57,5 +57,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.DataService
         /// <param name="FieldName"></param>
         /// <returns></returns>
         public object? GetFieldValue(string FieldName) => GetObjectAsExpando()?.ToDictionary()[FieldName];
+
+        public override string ToString() => Structure.ToString() ?? base.ToString();
     }
 }

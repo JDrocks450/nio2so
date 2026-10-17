@@ -35,6 +35,14 @@ namespace nio2so.Voltron.NewImproved.Protocol
     public enum TSO_NewImproved_TSOData_StructIDs : uint
     {
         /// <summary>
+        /// Accepts type: Avatar
+        /// </summary>
+        SimPage_Main = 0xD042E9D6,
+        /// <summary>
+        /// Accepts type: Avatar
+        /// </summary>
+        MyAvatar = 0xA46E47DC,
+        /// <summary>
         /// ID of the Level Two Struct Avatar
         /// </summary>
         Avatar = 0x05600332, 

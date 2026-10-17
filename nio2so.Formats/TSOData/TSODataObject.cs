@@ -12,5 +12,10 @@ namespace nio2so.Formats.TSOData
 
         public TSODataString GetStringByID(uint ID) => ParentFile.GetStringByID(ID);
         public uint GetIDByString(string Value) => ParentFile.GetIDByString(Value);
+
+        public override string ToString()
+        {
+            return $"{GetType().Name} {NameString} ({NameID:X})";
+        }
     }
 }

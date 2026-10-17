@@ -1,4 +1,5 @@
-﻿using nio2so.Voltron.Core;
+﻿using nio2so.Formats.TSOData;
+using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
@@ -87,7 +88,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             {
                 if (!type.IsClass) continue;
 
-                IEnumerable<MethodInfo> handlers = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic).Where(x => x.GetCustomAttribute<TSODataServiceTypeHandler>() != null);
+                IEnumerable<MethodInfo> handlers = type.GetMethods().Where(x => x.GetCustomAttribute<TSODataServiceTypeHandler>() != null);
+
+                if (!handlers.Any()) continue;
+
                 if (!_instances.TryGetValue(type, out object Instance))
                 {
                     Instance = Activator.CreateInstance(type);
@@ -102,13 +106,23 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
                     if (attribute == null)
                         throw new NullReferenceException(nameof(handlerFunction));
 
-                    HandlerFunction signature = (HandlerFunction)handlerFunction.CreateDelegate(typeof(HandlerFunction), Instance);
+                    HandlerFunction signature = null;
+                    try
+                    {
+                        signature = (HandlerFunction)handlerFunction.CreateDelegate(typeof(HandlerFunction), Instance);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogConsole($"ERROR: [{handlerFunction.Name}] Your function declaration is likely incorrect. See: {nameof(HandlerFunction)}\n\n{ex}",TSOLoggerServiceBase.LogSeverity.Errors);
+                    }
+                    if (signature == null)
+                        continue;
 
                     _handlerFunctionsByName.Add(attribute.StructName, signature);
                     if (attribute.NameID != null)
                         _handlerFunctionsByID.Add(attribute.NameID.Value, signature);
 
-                    LogConsole($"Mapped Function {handlerFunction.Name} -> Struct {attribute.StructName}");
+                    LogConsole($"Mapped Function {handlerFunction.Name} -> Struct {attribute.StructName}" + (attribute.NameID.HasValue ? $" {attribute.NameID:X}" : ""));
                 }
             }
         }
@@ -116,17 +130,46 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         protected void LogConsole(string Message, TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
            Parent?.Logger?.LogConsole(new TSOLoggerServiceBase.ConsoleLogEntry(Severity, GetType().Name, Message));
 
-        internal void Invoke(TSOProtocol Sender, HandlerContext ctx)
+        /// <summary>
+        /// Invokes the corresponding <see cref="HandlerFunction"/> for the given <paramref name="ctx"/> <see cref="HandlerContext.DataObject"/> Structure
+        /// <para/>Use: <paramref name="ForceExplicitHandlers"/> to dictate whether the protocol will peel back a <see cref="TSODerivedStruct"/> and attempt to invoke the base type handler, if one exists
+        /// </summary>
+        /// <param name="Sender"></param>
+        /// <param name="ctx"></param>
+        /// <param name="ForceExplicitHandlers"></param>
+        /// <exception cref="InvalidDataException"></exception>
+        internal void Invoke(TSOProtocol Sender, HandlerContext ctx, bool ForceExplicitHandlers = false)
         {
             string name = ctx.DataObject.Structure.NameString;
             uint id = ctx.DataObject.Structure.NameID;
 
-            if (_handlerFunctionsByID.TryGetValue(id, out HandlerFunction handlerFunction))
-                handlerFunction.Invoke(Sender,ctx);
-            else if (_handlerFunctionsByName.TryGetValue(name, out handlerFunction))
-                handlerFunction.Invoke(Sender,ctx);
-            else
-                throw new InvalidDataException($"Handler function for {ctx.DataObject.Structure} not found!");
+            bool attemptInvoke()
+            {
+                if (_handlerFunctionsByID.TryGetValue(id, out HandlerFunction handlerFunction))
+                    handlerFunction.Invoke(Sender, ctx);
+                else if (_handlerFunctionsByName.TryGetValue(name, out handlerFunction))
+                    handlerFunction.Invoke(Sender, ctx);
+                else return false;
+
+                return true;
+            }
+
+            if (attemptInvoke() && ctx.Handled)
+                return;
+            
+            if (!ForceExplicitHandlers && ctx.DataObject.Structure.IsDerived)
+            { // attempt parent invoke
+                TSODerivedStruct? newType = (ctx.DataObject.Structure as TSODerivedStruct);
+                if (newType != null)
+                {
+                    name = newType.ParentString;
+                    id = newType.NameID;
+                    if (attemptInvoke() && ctx.Handled)
+                        return;
+                }
+            }
+
+            throw new InvalidDataException($"Handler function for {ctx.DataObject.Structure} not found, or the function did not set Handled!");
         }
     }
 }

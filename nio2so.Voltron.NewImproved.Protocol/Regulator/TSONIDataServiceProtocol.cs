@@ -167,7 +167,14 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 TSODataServiceControllerBase.HandlerContext ctx = new(Query, StructObject);
 
                 var typeService = GetService<TSODataDataServiceManager>();
-                typeService.Invoke(this, ctx);
+                try
+                {
+                    typeService.Invoke(this, ctx);
+                }
+                catch (Exception ex)
+                {
+                    LogError(ex);
+                }
 
                 RespondToWithObject(Query, StructObject, ObjectID);
             }            
