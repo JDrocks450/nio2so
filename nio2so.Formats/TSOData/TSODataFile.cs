@@ -102,6 +102,19 @@ namespace nio2so.Formats.TSOData
             throw new FileNotFoundException("Struct not found by name.");
         }
 
+        public bool TryGetObject(string StringName, out TSODataRuntimeObject Object)
+        {
+            dynamic instance = GetObject(StringName, out ITSODataStruct struc);
+            Object = new(struc, instance);
+            return instance != null;
+        }
+        public bool TryGetObject(uint StringID, out TSODataRuntimeObject Object)
+        {
+            dynamic instance = GetObject(StringID, out ITSODataStruct struc);
+            Object = new(struc, instance);
+            return instance != null;
+        }
+
         private object getStructObject(ITSODataStruct data)
         {
             ExpandoObject obj = new ExpandoObject();

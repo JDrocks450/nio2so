@@ -14,19 +14,22 @@
         /// 1.3.2.81
         /// </summary>
         TSO_PlayTest,
-        TSO_Release
+        /// <summary>
+        /// The Sims Online: New and Improved v1.1097.1.0
+        /// </summary>
+        TSO_NI_1_1097_1_0,
     }
     public class TSOStringProvider
     {
         public const string 
             TSO_PreAlphaName = "The Sims Online: Pre-Alpha", 
             TSO_PlayTestName = "The Sims Online: Play-Test", 
-            TSO_ReleaseName = "The Sims Online: Release Build";
+            TSO_ReleaseName = "The Sims Online: New and Improved v1.1097.1.0";
         private static Dictionary<TSOVersions, string> _buildNames = new Dictionary<TSOVersions, string>
         {
             { TSOVersions.TSO_PreAlpha,TSO_PreAlphaName },
             { TSOVersions.TSO_PlayTest,TSO_PlayTestName },
-            { TSOVersions.TSO_Release,TSO_ReleaseName }
+            { TSOVersions.TSO_NI_1_1097_1_0, TSO_ReleaseName }
         };
         static string[] _mapNames =
                 {

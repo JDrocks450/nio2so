@@ -209,7 +209,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 #endif
         }
 
-        private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataServiceRuntimeObject StructObject)
+        private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataRuntimeObject StructObject)
         {
             if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
@@ -225,7 +225,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             return service.TryGetDataStruct(TSOData_TypeID, out Struct);
         }
 
-        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataServiceRuntimeObject StructObject, uint ObjectID)
+        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID)
         {
             foreach (var property in TSOData_GetProperties(StructObject))
             {

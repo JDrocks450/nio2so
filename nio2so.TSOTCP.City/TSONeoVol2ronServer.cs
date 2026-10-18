@@ -103,7 +103,7 @@ namespace nio2so.TSOTCP.Voltron.Server
             //API Url from local settings
             string APIUrl = LocalServerSettings.Default.APIUrl;
 
-            string TSODataDefinitionPath = @"C:\Program Files\Maxis\The Sims Online NI\The Sims Online\TSOClient\TSOData_datadefinition.dat";
+            string TSODataDefinitionPath = VoltronSettings.TSODataFilePath;
 
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE

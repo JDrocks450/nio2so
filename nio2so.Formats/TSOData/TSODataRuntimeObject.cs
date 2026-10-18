@@ -1,20 +1,19 @@
-﻿using nio2so.Formats.TSOData;
-using System.Dynamic;
+﻿using System.Dynamic;
 
-namespace nio2so.Voltron.NewImproved.Protocol.Types.DataService
+namespace nio2so.Formats.TSOData
 {
     /// <summary>
-    /// Provides access to instances of a <see cref="ITSODataStruct"/> at runtime, keeping the TSODataStruct and dynamic object instance together
+    /// Provides access to instances of a <see cref="ITSODataStruct"/> at runtime, keeping the <see cref="TSODataStruct"/> and dynamic object instance together
     /// </summary>
-    internal class TSODataServiceRuntimeObject
+    public class TSODataRuntimeObject
     {
         /// <summary>
-        /// Creates a new instance of <see cref="TSODataServiceRuntimeObject"/> with the given <paramref name="Structure"/> and dy <paramref name="Instance"/> of that structure
+        /// Creates a new instance of <see cref="TSODataRuntimeObject"/> with the given <paramref name="Structure"/> and dy <paramref name="Instance"/> of that structure
         /// </summary>
         /// <param name="Structure"></param>
         /// <param name="Instance"></param>
         /// <exception cref="ArgumentException"></exception>
-        public TSODataServiceRuntimeObject(ITSODataStruct Structure, object Instance)
+        public TSODataRuntimeObject(ITSODataStruct Structure, object Instance)
         {
             this.Structure = Structure;
             if (Instance == null)
