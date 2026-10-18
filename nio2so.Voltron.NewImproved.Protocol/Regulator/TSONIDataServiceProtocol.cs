@@ -1,4 +1,5 @@
-﻿using nio2so.Formats.TSOData;
+﻿using nio2so.DataService.Common;
+using nio2so.Formats.TSOData;
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
@@ -9,6 +10,7 @@ using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System.Dynamic;
+using System.Text.Json;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -144,6 +146,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             //ENSURE SERVICE IS READY
             if (!service.Ready)
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
+
+            if (service.TryGetDataStruct((uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar, out ITSODataStruct structInfo))
+            {
+                TSODataRuntimeObject data = TSODataService_GetRemoteObjectData(structInfo, 1337).Result;
+            }
         }
 
         const uint Avatar_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Avatar; // ID of the Level Two Struct Avatar
@@ -159,10 +166,21 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             uint ObjectID = (stdMsg.HasData1 && stdMsg.Data1.HasValue) ? stdMsg.Data1.Value : 0xFEEDF00D;
 
-            //TESTING FOR LATER
-            bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataRuntimeObject? StructObject);
+            //REMOTE DATA SERVICE REQUEST
 
-            if (success)
+            TSODataRuntimeObject StructObject = null;
+
+            //Get requested data structure info
+            if (GetService<TSODataDefinitionService>().TryGetDataStruct(Query.DefinitionStringID, out ITSODataStruct structInfo))            
+                StructObject = TSODataService_GetRemoteObjectData(structInfo, ObjectID).Result; // do remote data service query now
+
+            if (StructObject == null)
+            { // Data Service returned null or the structure was not found.
+                throw new InvalidDataException($"nio2so Data Service returned null or the structure was not found.");
+                TSOData_TryGetObjectInstance(Query.DefinitionStringID, out StructObject);
+            }
+
+            if (StructObject != null)
             {
                 TSODataServiceControllerBase.HandlerContext ctx = new(Query, StructObject);
 
@@ -207,6 +225,29 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             RespondWith(test);
             RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
 #endif
+        }
+
+        /// <summary>
+        /// Makes a data service request to the nio2so Data Service for the specified data object
+        /// </summary>
+        /// <returns></returns>
+        private async Task<TSODataRuntimeObject> TSODataService_GetRemoteObjectData(ITSODataStruct Struct, uint ObjectID)
+        {
+            async Task<object?> DoRemote()
+            {
+                if (!TryGetService<nio2soVoltronDataServiceClient>(out nio2soVoltronDataServiceClient? service))
+                    throw new InvalidOperationException($"Failed to get {nameof(nio2soDataServiceClient)}.");
+                HTTPServiceClientBase.HTTPServiceResult<object> result = await service.GetTSODataServiceObjectByID("1.1097.1.0", Struct.NameString, ObjectID, Struct.NameID);
+                if (!result.IsSuccessful)
+                    throw new InvalidOperationException("Data Service returned: " + result.FailureReason);
+                if (result.Result is JsonElement)
+                    return ((JsonElement)result.Result).Deserialize<ExpandoObject>();
+                return result.Result;
+            }
+            object? instance = await DoRemote();
+            if (instance is null)
+                throw new NullReferenceException($"Returned instance data from data service is null.");
+            return new TSODataRuntimeObject(Struct, instance);
         }
 
         private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataRuntimeObject StructObject)

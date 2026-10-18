@@ -4,6 +4,7 @@ using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.DataService.Common.Types.Top100;
+using nio2so.DataService.Common.Types.TSOData;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -391,6 +392,15 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <returns></returns>
         public Task<HTTPServiceResult<Top100ListItemsInfo>> GetTop100ListItemsByID(uint ListID) => GetQueryAs<Top100ListItemsInfo>($"top100/{ListID}");
+        /// <summary>
+        /// Retrieves an instance of a TSOData Definition object matching the <paramref name="StructName"/> and optionally <paramref name="StructID"/>
+        /// matching the given <paramref name="ObjectID"/>
+        /// </summary>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<object>> GetTSODataServiceObjectByID(string TSOVersion, string StructName, uint ObjectID, uint StructID = 0) =>
+            GetQueryAs<object>($"tso/{TSOVersion}/data/{StructName}", 
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()));
 
     }
 }

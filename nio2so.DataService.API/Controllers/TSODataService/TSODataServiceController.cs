@@ -11,7 +11,7 @@ namespace nio2so.DataService.API.Controllers.TSODataService
     /// and it is build around the following versions:
     /// <para/><inheritdoc cref="TSOVersions.TSO_NI_1_1097_1_0"/>
     /// </summary>
-    [Route("tso/")]
+    [Route("api/tso/")]
     [ApiController]
     public class TSODataServiceController : DataServiceControllerBase
     {

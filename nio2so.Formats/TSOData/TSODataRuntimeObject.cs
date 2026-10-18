@@ -105,7 +105,7 @@ namespace nio2so.Formats.TSOData
 
             //safe to proceed
 
-            if (!Original.Structure.GetSourceFile().TryGetObject(type2, out var Copied))
+            if (!Original.Structure.GetSourceFile().TryGetObject(NewType.NameID, out var Copied))
                 throw new InvalidOperationException("Failed to create an object of type: "+ NewType);            
 
             foreach(var field in NewType.Fields)

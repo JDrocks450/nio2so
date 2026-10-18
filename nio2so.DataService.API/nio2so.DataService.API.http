@@ -21,6 +21,6 @@ Accept: application/json
 ###
 
 # GET TSODATAOBJECT TEST
-GET {{nio2so.DataService.API_HostAddress}}/tso/1.1097.1.0/data/Avatar?StructID=0&ObjectID=1337
+GET {{nio2so.DataService.API_HostAddress}}/api/tso/1.1097.1.0/data/Avatar?StructID=0&ObjectID=1337
 Accept: application/json
 ###
