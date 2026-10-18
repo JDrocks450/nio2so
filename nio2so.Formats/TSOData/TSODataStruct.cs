@@ -30,6 +30,7 @@ namespace nio2so.Formats.TSOData
         /// The de-referenced <see cref="NameID"/> property, the string value
         /// </summary>
         string NameString => GetStringByID(NameID).Value;
+        TSODataFile GetSourceFile();
 
         TSODataField? GetFieldByName(string propertyName) => Fields.FirstOrDefault(x => x.NameString == propertyName);
         TSODataField? GetFieldByID(uint FieldID) => Fields.FirstOrDefault(x => x.NameID == FieldID);
@@ -43,6 +44,6 @@ namespace nio2so.Formats.TSOData
             NameID = strID;
         }
         public uint FieldCount => (uint)Fields.Count;
-        public List<TSODataField> Fields { get; } = new();
+        public List<TSODataField> Fields { get; } = new();        
     }
 }

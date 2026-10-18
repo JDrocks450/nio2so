@@ -43,6 +43,7 @@ namespace nio2so.DataService.Common.Types
         public string AvatarBlobLibraryPath => Path.Combine(DatabaseDirectoryToken, "charblob");
         public string InboxServiceFile => DatabaseDirectoryToken + @"\inboxmessages.json";
         public string Top100ListsLibraryPath => DatabaseDirectoryToken + @"\top100.json";
+        public string TSOData_DataServiceDirectoryPath => DatabaseDirectoryToken + @"\tsodata";
 
         /// <summary>
         /// Accounts that are always present in the <see cref="AccountsFile"/>

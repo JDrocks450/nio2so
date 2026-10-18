@@ -17,5 +17,7 @@ namespace nio2so.Formats.TSOData
         {
             return $"{GetType().Name} {NameString} ({NameID:X})";
         }
+
+        public TSODataFile GetSourceFile() => ParentFile;
     }
 }

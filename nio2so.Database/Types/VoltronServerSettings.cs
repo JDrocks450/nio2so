@@ -63,7 +63,7 @@ namespace nio2so.DataService.Common.Types
         /// </summary>
         public int Top100BitmapCacheSizeBytes => 5 * 1024;
 
-        public string TSODataFilePath { get; set; } = @"C:\Program Files\Maxis\The Sims Online NI\The Sims Online\TSOClient\TSOData_datadefinition.dat"
+        public string TSODataFilePath { get; set; } = @"C:\Program Files\Maxis\The Sims Online NI\The Sims Online\TSOClient\TSOData_datadefinition.dat";
 
         public bool PreAlpha_HSBEnabled = true;
         public uint PreAlpha_HSBAvatarID = 90001;

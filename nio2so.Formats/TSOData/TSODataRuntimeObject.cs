@@ -1,4 +1,5 @@
-﻿using System.Dynamic;
+﻿using System.Diagnostics;
+using System.Dynamic;
 
 namespace nio2so.Formats.TSOData
 {
@@ -35,12 +36,14 @@ namespace nio2so.Formats.TSOData
         /// </summary>
         public object Instance { get; }
 
+        public IDictionary<string, object>? GetObjectAsDictionary() => GetObjectAsExpando();
         public ExpandoObject? GetObjectAsExpando() => Instance as ExpandoObject;
         public dynamic GetObjectAsDynamic() => Instance;
         public T GetObjectAs<T>() => (T)Instance;
 
         /// <summary>
-        /// Accesses a property on the <see cref="Instance"/> by the <see cref="TSODataField.TypeID"/> of the property
+        /// Accesses a property on the <see cref="Instance"/> by the <see cref="TSODataField.TypeID"/> of the property.
+        /// <para/>Could be slightly slower, maybe use String overload in batch processes
         /// </summary>
         /// <param name="FieldID"></param>
         /// <param name="StructField"></param>
@@ -55,8 +58,71 @@ namespace nio2so.Formats.TSOData
         /// </summary>
         /// <param name="FieldName"></param>
         /// <returns></returns>
-        public object? GetFieldValue(string FieldName) => GetObjectAsExpando()?.ToDictionary()[FieldName];
+        public object? GetFieldValue(string FieldName) => GetObjectAsDictionary()[FieldName];
+        /// <summary>
+        /// Sets the value of a <see cref="TSODataField"/> from the <see cref="Structure"/> onto the <see cref="Instance"/>
+        /// <para/>Danger: match the expected type of the <see cref="TSODataField.TypeString"/> property or this can cause problems!
+        /// </summary>
+        /// <param name="FieldID"></param>
+        /// <param name="Value"></param>
+        public void SetFieldValue(uint FieldID, object Value) => SetFieldValue(Structure.GetFieldByID(FieldID).NameString, Value);
+        /// <summary>
+        /// <inheritdoc cref="SetFieldValue(uint, object)"/>
+        /// </summary>
+        /// <param name="FieldName"></param>
+        /// <param name="Value"></param>
+        public void SetFieldValue(string FieldName, object Value) => GetObjectAsDictionary()[FieldName] = Value;
 
         public override string ToString() => Structure.ToString() ?? base.ToString();
+
+        /// <summary>
+        /// Copies to the <paramref name="Original"/> object's <see cref="TSODataRuntimeObject.Instance"/> properties to a new instance.
+        /// <para/>This function can be used to change the type of the Destination struct instance. If using <see cref="TSODerivedStruct"/>, the Parent type of 
+        /// both types must match.
+        /// <para/>Returned type is guaranteed to be <paramref name="NewType"/>
+        /// </summary>
+        /// <param name="NewType"></param>
+        /// <param name="Original"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="NullReferenceException"></exception>
+        public static TSODataRuntimeObject CopyTo(ITSODataStruct NewType, TSODataRuntimeObject Original)
+        {
+            ITSODataStruct type1 = Original.Structure;
+            uint type2 = NewType.NameID;
+
+            // find the original file types for these two objects
+
+            if (type1.IsDerived)
+                if (!type1.GetSourceFile().TryGetStructByID((type1 as TSODerivedStruct).ParentID, out type1))
+                    throw new InvalidOperationException("Failed to dereference this Derived Struct's original type: " + type1);
+
+            if (NewType.IsDerived)
+                type2 = (NewType as TSODerivedStruct).ParentID;
+
+            if (type1.NameID != type2) // same source type
+                throw new InvalidOperationException($"{type1.NameString} is not compatible with type ID: {type2}.");
+
+            //safe to proceed
+
+            if (!Original.Structure.GetSourceFile().TryGetObject(type2, out var Copied))
+                throw new InvalidOperationException("Failed to create an object of type: "+ NewType);            
+
+            foreach(var field in NewType.Fields)
+            {
+                object? value = Original.GetFieldValue(field.NameID, out TSODataField? FieldInfo);
+
+                if (value == null || FieldInfo == null)
+                    throw new NullReferenceException($"Failed to get Field value/information for field: " + field.NameString);
+
+                Copied.SetFieldValue(field.NameID, value);
+            }
+
+            //guard function
+            if (Copied.Structure.NameID != NewType.NameID)
+                throw new InvalidDataException($"Instance created: {Copied.Structure} does not match the requested type: {NewType}");
+
+            return Copied;
+        }        
     }
 }

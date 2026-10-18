@@ -160,7 +160,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             uint ObjectID = (stdMsg.HasData1 && stdMsg.Data1.HasValue) ? stdMsg.Data1.Value : 0xFEEDF00D;
 
             //TESTING FOR LATER
-            bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataServiceRuntimeObject? StructObject);
+            bool success = TSOData_TryGetObjectInstance(Query.DefinitionStringID, out TSODataRuntimeObject? StructObject);
 
             if (success)
             {
@@ -234,7 +234,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             }
         }
 
-        private IEnumerable<TSODataServiceProperty> TSOData_GetProperties(TSODataServiceRuntimeObject StructObject)
+        private IEnumerable<TSODataServiceProperty> TSOData_GetProperties(TSODataRuntimeObject StructObject)
         {
             foreach (var property in StructObject.Structure.Fields)
             {
@@ -254,7 +254,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     uint typeID = Field.TypeID;
 
                     if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
-                        tsoValue = CreateStructObjectValue(new TSODataServiceRuntimeObject(SubTypeStruct, value));
+                        tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, value));
                 }
                 if (tsoValue == null)
                 {
@@ -265,7 +265,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             }
         }
 
-        private ITSOValue CreateStructObjectValue(TSODataServiceRuntimeObject StructObject)
+        private ITSOValue CreateStructObjectValue(TSODataRuntimeObject StructObject)
         {
             var properties = TSOData_GetProperties(StructObject);
             var FieldValues = properties.Select(x => new TSOValue_DataFieldValueWrapper(x.FieldInfo.NameID, x.Value));

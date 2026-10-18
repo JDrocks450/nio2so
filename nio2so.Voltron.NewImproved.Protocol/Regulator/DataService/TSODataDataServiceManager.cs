@@ -16,7 +16,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         public class HandlerContext
         {
             public TSODataServiceWrapperPDU Query { get; }
-            public TSODataServiceRuntimeObject DataObject { get; }
+            public TSODataRuntimeObject DataObject { get; }
             public bool Handled { get; set; }
             public uint? ObjectID
             {
@@ -27,9 +27,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
                 }
             }
 
-            private List<TSODataServiceRuntimeObject> _responseObjects = new();
+            private List<TSODataRuntimeObject> _responseObjects = new();
 
-            public HandlerContext(TSODataServiceWrapperPDU query, TSODataServiceRuntimeObject dataObject)
+            public HandlerContext(TSODataServiceWrapperPDU query, TSODataRuntimeObject dataObject)
             {
                 Query = query;
                 Handled = false;
@@ -39,7 +39,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             public T GetMessageAs<T>() where T : class, ITSOMessage, new() => Query.Message.GetMessageAs<T>();
             public TSONetMessageStandard GetMessageAs() => GetMessageAs<TSONetMessageStandard>();
 
-            internal void RespondWithObject(TSODataServiceRuntimeObject Object) => _responseObjects.Add(Object);
+            internal void RespondWithObject(TSODataRuntimeObject Object) => _responseObjects.Add(Object);
         }
 
         /// <summary>

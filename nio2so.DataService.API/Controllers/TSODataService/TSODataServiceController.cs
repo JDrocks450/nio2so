@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using nio2so.DataService.API.Databases;
 using nio2so.DataService.Common.Types.TSOData;
 using nio2so.Formats;
 using nio2so.Formats.TSOData;
@@ -10,11 +11,12 @@ namespace nio2so.DataService.API.Controllers.TSODataService
     /// and it is build around the following versions:
     /// <para/><inheritdoc cref="TSOVersions.TSO_NI_1_1097_1_0"/>
     /// </summary>
-    [Route("tso/data")]
+    [Route("tso/")]
     [ApiController]
     public class TSODataServiceController : DataServiceControllerBase
     {
         TSODataFile tsoDataDefinition;
+        TSODataObjectsDataService dataService => APIDataServices.TSOData_DataService;
 
         public TSODataServiceController(ILogger<TSODataServiceController> Logger)
         {
@@ -23,12 +25,13 @@ namespace nio2so.DataService.API.Controllers.TSODataService
             tsoDataDefinition = new TSODataImporter().ImportFromFile(TSODataPath);
         }
 
-        [HttpGet("{Version}/{DataDefinitionStructName}")]
+        [HttpGet("{Version}/data/{DataDefinitionStructName}")]
         public ActionResult TSODataServiceRequest(string Version, string DataDefinitionStructName, [FromQuery] TSODataServiceQuery Query) 
+        
         {
             ITSODataStruct RequestedDataType = null;
 
-            if (!string.IsNullOrWhiteSpace(Query.StructID))
+            if (!string.IsNullOrWhiteSpace(Query.StructID) && Query.GetDataDefinitionStructID()!=0)
                 tsoDataDefinition.TryGetStructByID(Query.GetDataDefinitionStructID(), out RequestedDataType);
             else if (DataDefinitionStructName != null)             
                 tsoDataDefinition.TryGetStructByName(DataDefinitionStructName, out RequestedDataType);
@@ -46,20 +49,41 @@ namespace nio2so.DataService.API.Controllers.TSODataService
 
         private TSODataRuntimeObject GetRequestedData(ITSODataStruct DataStructure, uint ObjectID)
         {
-            //**this is where you would normally load the data
-            uint databaseTypeID = DataStructure.NameID;
-            if (DataStructure.IsDerived) // Get the parent data type -- this is what we would store in the database.            
-                databaseTypeID = (DataStructure as TSODerivedStruct).ParentID;
-            if (!Database_TryGetObject(databaseTypeID, ObjectID, out TSODataRuntimeObject? databaseData) || databaseData == null)
-                throw new InvalidDataException("Not found.");
-            return TSODataRuntimeObject.Clone(DataStructure, databaseData); // write clone function
+            TSODataRuntimeObject databaseData = Database_GetObject(DataStructure, ObjectID);
+            return TSODataRuntimeObject.CopyTo(DataStructure, databaseData); // write clone function
         }
 
-        private bool Database_TryGetObject(uint DataStructID, uint ObjectID, out TSODataRuntimeObject Object)
+        private TSODataRuntimeObject Database_GetObject(ITSODataStruct RequestedType, uint ObjectID)
         {
-            //TEMPORARY
-            TSOData_TryGetObjectInstance(DataStructID, out Object);
-            return true;
+            ITSODataStruct DatabaseStructType = RequestedType;
+            if (DatabaseStructType.IsDerived) // Get the parent data type -- this is what we would store in the database.
+            {
+                uint databaseTypeID = (DatabaseStructType as TSODerivedStruct).ParentID;
+                //**get requested struct type
+                if (!tsoDataDefinition.TryGetStructByID(databaseTypeID, out DatabaseStructType) || DatabaseStructType == null)
+                    throw new InvalidDataException($"Cannot get TSOData struct {databaseTypeID:X} from the TSODataDefinition file.");
+            }
+
+            TSODataRuntimeObject Object = null;
+
+            //attempt to load this data from the database libraries
+            if (!dataService.TryGetTSODataObject(DatabaseStructType.NameString, ObjectID, out var StoredValue))
+            { // object value does not exist yet -- create a default value now and save that to the database.
+                if (!TSOData_TryGetObjectInstance(DatabaseStructType.NameID, out Object))
+                    throw new InvalidDataException($"Cannot load TSOData Object {DatabaseStructType} with ID: {ObjectID}. Object creation failed.");
+                dataService.TrySetTSODataObject(ObjectID, Object);
+            }
+            else
+            {
+                if (DatabaseStructType.NameID != StoredValue.TSOData_DataStructID)
+                    throw new InvalidDataException("Catastropic failure: Database data structure somehow doesn't match returned data structure. Database corruption likely.");
+                Object = new(RequestedType,StoredValue.TSODataObject);
+            }
+
+            if (Object == null)
+                throw new NullReferenceException(nameof(Object));
+
+            return Object;
         }
 
         private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataRuntimeObject StructObject) => 
