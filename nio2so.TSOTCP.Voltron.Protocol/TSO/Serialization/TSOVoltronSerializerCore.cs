@@ -4,6 +4,7 @@ using QuazarAPI.Networking.Data;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 using nio2so.Data.Common.Serialization.Voltron;
 using QuazarAPI.Util.Endian;
+using System.Collections;
 
 namespace nio2so.Voltron.Core.TSO.Serialization
 {
@@ -205,6 +206,10 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             { // BYTE
                 return (byte)Stream.ReadBodyByte();
             }
+            else if (PropertyType == typeof(sbyte))
+            {
+                return (sbyte)Stream.ReadBodyByte();
+            }
             else if (PropertyType == typeof(bool))
             { // TRUE FALSE
                 byte value = (byte)Stream.ReadBodyByte();
@@ -269,7 +274,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                 PropertyType = Enum.GetUnderlyingType(PropertyType);            
 
             //---NUMBERS
-            if (PropertyType == typeof(byte))
+            if (PropertyType == typeof(byte) || PropertyType == typeof(sbyte))
             { // BYTE
                 property.SetValue(Instance, (byte)Stream.ReadBodyByte());
                 return true;
@@ -390,16 +395,24 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     _lastGraphItems.Push(new(property, arr.GetType(), arr, 0, "An empty array (0 bytes)"));
                 foreach (var item in arr)
                 {
-                    if (!arr.GetType().GetElementType().IsClass) throw new NotImplementedException("Arrays with an element type that isn't a class isn't supported right now.");
+                    object serializeValue = item;
+                    if (!arr.GetType().GetElementType().IsClass)
+                    {
+                        serializeValue = new
+                        {
+                            Value = item
+                        };
+                        //throw new NotImplementedException("Arrays with an element type that isn't a class isn't supported right now.");
+                    }
                     startLen = Stream.Position;
-                    TSOVoltronSerializer.Serialize(Stream, item);
-                    _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", item.GetType(), item, Stream.Position - startLen));
+                    TSOVoltronSerializer.Serialize(Stream, serializeValue);
+                    _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property.Name + $"[{i}]", serializeValue.GetType(), serializeValue, Stream.Position - startLen));
                     i++;
                 }
                 return true;
             }
 
-            Type PropertyType = property.PropertyType;
+            Type PropertyType = SerializeValue.GetType();
             while (PropertyType.IsEnum)
                 PropertyType = Enum.GetUnderlyingType(PropertyType);
 
@@ -417,6 +430,8 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             else if (PropertyType == typeof(long))
                 Stream.EmplaceBody(endianConverter.GetBytes((long)SerializeValue));
             else if (PropertyType == typeof(byte))
+                Stream.EmplaceBody((byte)SerializeValue);
+            else if (PropertyType == typeof(sbyte))
                 Stream.EmplaceBody((byte)SerializeValue);
             else if (PropertyType == typeof(DateTime))
                 Stream.EmplaceBody((uint)((DateTime)SerializeValue).Minute); // probably not right
@@ -453,6 +468,8 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             if (PropertyType.IsClass || 
                 PropertyType.IsInterface)
             {
+                if (PropertyType.IsAssignableTo(typeof(IDictionary)))
+                    throw new InvalidDataException($"{nameof(IDictionary)} is not supported at this time.");
                 TSOVoltronSerializer.Serialize(Stream, SerializeValue, property);
                 _lastGraphItems.Push(TSOVoltronSerializer.GetLastGraph() ?? new(property, PropertyType, SerializeValue, Stream.Position - startLen));
                 return true;

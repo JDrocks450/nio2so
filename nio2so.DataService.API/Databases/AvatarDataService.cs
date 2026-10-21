@@ -258,7 +258,8 @@ namespace nio2so.DataService.API.Databases
             newInfo.AvatarCharacter.Funds = TestingConstraints.StartingFunds;
             await Save();
             //add the avatar to this account
-            if (!APIDataServices.UserDataService.AddAvatarToAccount(user, AvatarID, out _))
+            (bool Result, Common.Types.AvatarInfo.AvatarSlots? AvatarIndex) = await APIDataServices.UserDataService.AddAvatarToAccount(user, AvatarID);
+            if (!Result)
                 throw new InvalidOperationException("Tried to link an avatar to an account that is full.");
             return AvatarID;
         }
@@ -311,8 +312,7 @@ namespace nio2so.DataService.API.Databases
         {
             if (AvatarsLibrary.TryGetValue(AvatarID, out AvatarInfo? info))
             {
-                info.IsOnline = IsOnline;
-                await Save();
+                info.IsOnline = IsOnline;                
                 return info.IsOnline;
             }
             return false;

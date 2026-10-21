@@ -1,6 +1,8 @@
 ﻿using nio2so.DataService.Common.Types.Avatar;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
+using System.ComponentModel;
+using System.Dynamic;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 {
@@ -14,6 +16,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         [TSODataServiceTypeHandler("Avatar", (uint)TSO_NewImproved_TSOData_StructIDs.Avatar)]
         public void Avatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
+            Context.Handled = true;
+            return;
+
+            // Old test code here ... using data service for this now
+
             //**download avatar data from nio2so
             if (!Sender.TryGetService<nio2soVoltronDataServiceClient>(out nio2soVoltronDataServiceClient? dataServiceClient) || dataServiceClient == null)
                 throw new NullReferenceException(nameof(nio2soVoltronDataServiceClient));
@@ -40,6 +47,25 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         }
 
         [TSODataServiceTypeHandler("MyAvatar", (uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar)]
-        public async void MyAvatar_StructHandler(TSOProtocol Sender, HandlerContext Context) => Avatar_StructHandler(Sender, Context);
+        public async void MyAvatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
+        {
+            dynamic obj = Context.DataObject.GetObjectAsDynamic();
+
+            var financialHistoryRec = new ExpandoObject();
+
+            financialHistoryRec.TryAdd("FinancialHistoryRec_Amount", (int)10000);
+            financialHistoryRec.TryAdd("FinancialHistoryRec_Date", "October 24th");
+
+            var financialHistory = new ExpandoObject();
+
+            financialHistory.TryAdd("FinancialHistory_TimeScale", (sbyte)0);
+            financialHistory.TryAdd("FinancialHistory_Type", (sbyte)1);
+            financialHistory.TryAdd("FinancialHistory_History", new object[] { financialHistoryRec });
+
+            obj.Avatar_FinancialHistoryVec = new object[] { financialHistory };
+
+            Context.Handled = true;
+            return;
+        }
     }
 }

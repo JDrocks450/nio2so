@@ -49,7 +49,10 @@ namespace nio2so.Voltron.NewImproved.Protocol
         /// <summary>
         /// ID of the Level Two Struct Lot
         /// </summary>
-        Lot = 0x7A6CECEE, 
+        Lot = 0x7A6CECEE,
+        City = 0xED56D057,
+        Neighborhood = 0xD432C523,
+        MapView_NearZoom_Neighborhood = 0x9702D009,
     }
 
     public enum TSO_NewImproved_GZMSGIDs : uint

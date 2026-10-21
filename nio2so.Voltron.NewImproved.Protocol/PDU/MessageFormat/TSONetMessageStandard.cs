@@ -1,4 +1,6 @@
 ﻿using nio2so.Formats.Util.Endian;
+using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using QuazarAPI.Networking.Data;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -26,13 +28,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// </summary>
         public byte Flags { get; set; }
         /// <summary>
-        /// The ID attached to this transaction. Should match the response to this query
-        /// </summary>
-        public TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs kMSG { get; set; }                
-        /// <summary>
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
-        public TSONewImprovedTSODataEnum DataDefinitionID { get; set; }
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public TSONewImprovedTSODataEnum DataDefinitionID { get; set; }
         /// <summary>
         /// The content of the message
         /// </summary>
@@ -72,13 +70,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public uint? Data3 { get; set; }
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public bool HasEmbeddedMessage => EmbeddedMessageCLSID.HasValue && EmbeddedMessage != null;
+        public bool HasEmbeddedMessage => EmbeddedServiceMessage != null;
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs? EmbeddedMessageCLSID { get; set; }
-        [TSOVoltronIgnorable]
-        [IgnoreDataMember]
-        public byte[]? EmbeddedMessage { get; set; }
+        public TSOServiceMessage? EmbeddedServiceMessage { get; set; }
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
         public bool HasStringContent => StringContent != null; // can be empty only check for null
@@ -131,8 +126,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 Data3 = readUInt(Endianness.BigEndian);
             if ((Flags & (1 << 5)) != 0)
             {
-                EmbeddedMessageCLSID = (TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs)readUInt(Endianness.BigEndian);
-                EmbeddedMessage = stream.ReadToEnd();
+                byte[] embeddedTSOMessage = stream.ReadToEnd();
+                EmbeddedServiceMessage = TSOVoltronSerializer.Deserialize<TSOServiceMessage>(embeddedTSOMessage);
                 return;
             }
             if ((Flags & (1 << 6)) != 0)
@@ -146,8 +141,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         private void ClearPreviousMessage()
         {
             Data1 = Data2 = Data3 = Data4 = null;
-            EmbeddedMessage = null;
-            EmbeddedMessageCLSID = null;
+            EmbeddedServiceMessage = null;
             StringContent = null;
         }
     }

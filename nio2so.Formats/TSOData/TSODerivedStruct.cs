@@ -28,7 +28,7 @@ namespace nio2so.Formats.TSOData
                 foreach (var Field in Struct.Fields)
                 {
                     var mask = FieldMasks.FirstOrDefault(x => x.NameID == Field.NameID);
-                    if (mask != null && mask.Values == TSOFieldMaskValues.Keep)
+                    if (mask != null)// && mask.Values == TSOFieldMaskValues.Keep)
                     {
                         returnList.Add(Field);
                         continue;

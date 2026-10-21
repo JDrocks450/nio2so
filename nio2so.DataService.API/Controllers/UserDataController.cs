@@ -24,13 +24,13 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/<AccountsController>/bloaty@1
         [HttpGet("{UserTokenString}")]
-        public ActionResult<UserInfo> Get(string UserTokenString)
+        public async Task<ActionResult<UserInfo>> Get(string UserTokenString)
         {
             UserToken token = UserTokenString;
             UserInfo? info = null;
             try
             {
-                info = APIDataServices.UserDataService.GetUserInfoByUserToken(token);
+                info = await APIDataServices.UserDataService.GetUserInfoByUserToken(token);
             }
             catch (Exception ex)
             {

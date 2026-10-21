@@ -1,8 +1,81 @@
 ﻿using System.Diagnostics;
 using System.Dynamic;
+using System.Text.Json;
 
 namespace nio2so.Formats.TSOData
 {
+    public interface ITSODataValueConverter<TInput, TOutput>
+    {
+        TOutput? Convert2(TInput Input);
+        bool TryConvert2(string TypeHint, TInput Input, out TOutput? Output);
+    }
+
+    public class TSODataBasicJsonConverter : ITSODataValueConverter<JsonElement, object>
+    {
+        public ITSODataStruct ThisType { get; }
+
+        public TSODataBasicJsonConverter(ITSODataStruct ThisType)
+        {
+            this.ThisType = ThisType;
+        }
+
+        object? ConvertJsonElement(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    IDictionary<string, object?> expando = new ExpandoObject();
+                    foreach (var prop in element.EnumerateObject())
+                    {
+                        expando[prop.Name] = ConvertJsonElement(prop.Value);
+                        /*
+                        TSODataField? fieldInfo = ThisType.GetFieldByName(prop.Name);
+                        if (fieldInfo == null)
+                            throw new NullReferenceException("FieldInfo is null.");
+                        if (!TryConvert2(fieldInfo.Classification.ToString(), prop.Value, out object? value) || value == null)
+                            throw new Exception("Value not converted.");
+                        expando[prop.Name] = value;*/
+                    }
+                    return (ExpandoObject)expando;
+
+                case JsonValueKind.Array:
+                    return element.EnumerateArray()
+                        .Select(ConvertJsonElement)
+                        .ToList();
+
+                case JsonValueKind.String:
+                    return element.GetString();
+
+                case JsonValueKind.Number:
+                    if (element.TryGetInt64(out long l))
+                        return l;
+
+                    return element.GetDouble();
+
+                case JsonValueKind.True:
+                    return true;
+
+                case JsonValueKind.False:
+                    return false;
+
+                case JsonValueKind.Null:
+                case JsonValueKind.Undefined:
+                    return null;
+
+                default:
+                    return element.ToString();
+            }
+        }
+
+        public object? Convert2(JsonElement Input) => ConvertJsonElement(Input);
+
+        public bool TryConvert2(string TypeHint, JsonElement Input, out object? Output)
+        {
+            Output = ConvertJsonElement(Input);
+            return Output != null;
+        }
+    }
+
     /// <summary>
     /// Provides access to instances of a <see cref="ITSODataStruct"/> at runtime, keeping the <see cref="TSODataStruct"/> and dynamic object instance together
     /// </summary>
@@ -14,14 +87,11 @@ namespace nio2so.Formats.TSOData
         /// <param name="Structure"></param>
         /// <param name="Instance"></param>
         /// <exception cref="ArgumentException"></exception>
-        public TSODataRuntimeObject(ITSODataStruct Structure, object Instance)
+        public TSODataRuntimeObject(ITSODataStruct Structure, object Instance, ITSODataValueConverter<JsonElement, object>? ValueConverter = default)
         {
-            this.Structure = Structure;
-            if (Instance == null)
-                throw new ArgumentException(nameof(Instance));
-            if (Instance is not ExpandoObject)
-                throw new ArgumentException("Currently only compatible with ExpandoObject", nameof(Instance));
-            this.Instance = Instance;
+            this.Structure = Structure;  
+            valueConverter = new TSODataBasicJsonConverter(Structure);          
+            this.Instance = Instance;            
         }
         /// <summary>
         /// Accesses the <see cref="Structure"/> <see cref="ITSODataStruct.NameID"/> property
@@ -34,12 +104,37 @@ namespace nio2so.Formats.TSOData
         /// <summary>
         /// The dynamic object instance of the <see cref="Structure"/>
         /// </summary>
-        public object Instance { get; }
+        public object Instance
+        {
+            get => _instance;
+            private set
+            {
+                if (value == null)
+                    throw new ArgumentException(nameof(Instance));
+                if (value is JsonElement)
+                    value = (ExpandoObject)valueConverter.Convert2((JsonElement)value);
+                if (value is not ExpandoObject)
+                    throw new ArgumentException("Currently only compatible with ExpandoObject", nameof(Instance));
+                _instance = value;
+            }
+        }
+        private object _instance;
+        private readonly ITSODataValueConverter<JsonElement, object>? valueConverter;
 
         public IDictionary<string, object>? GetObjectAsDictionary() => GetObjectAsExpando();
         public ExpandoObject? GetObjectAsExpando() => Instance as ExpandoObject;
         public dynamic GetObjectAsDynamic() => Instance;
         public T GetObjectAs<T>() => (T)Instance;
+
+        /// <summary>
+        /// Runs an algorithm that ensures all properties on the <see cref="Instance"/> are fully deserialized.
+        /// </summary>
+        private static void EnsureDeserialized(object Instance)
+        {
+            
+            if (Instance is not ExpandoObject)
+                throw new ArgumentException("Currently only compatible with ExpandoObject", nameof(Instance));
+        }        
 
         /// <summary>
         /// Accesses a property on the <see cref="Instance"/> by the <see cref="TSODataField.TypeID"/> of the property.

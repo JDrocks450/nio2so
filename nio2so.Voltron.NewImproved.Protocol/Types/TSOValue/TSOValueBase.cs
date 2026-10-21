@@ -15,6 +15,14 @@
         /// <returns></returns>
         object? GetValue();
     }
+    public interface ITSOValueVector : ITSOValue
+    {
+        IEnumerable<object>? GetItems() => (IEnumerable<object>)GetValue();
+    }
+    public interface ITSOValueMap : ITSOValue
+    {
+        IDictionary<int,object>? GetItems() => (IDictionary<int, object>?)GetValue();
+    }
 
     /// <summary>
     /// <inheritdoc cref="ITSOValue"/>

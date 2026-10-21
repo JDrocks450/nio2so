@@ -41,7 +41,15 @@ namespace nio2so.DataService.Common.Types
             /// </summary>
             public Dictionary<uint, AvatarRelationship> Outgoing { get; set; } = new();
         }
-
+        /// <summary>
+        /// Describes which slot the avatar file is in for the User Account in Select-A-Avatar
+        /// </summary>
+        public enum AvatarSlots
+        {
+            One,
+            Two,
+            Three
+        }
         /// <summary>
         /// The account owner of this avatar
         /// </summary>

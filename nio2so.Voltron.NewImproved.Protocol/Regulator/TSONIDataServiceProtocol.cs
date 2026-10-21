@@ -142,7 +142,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             //ATTEMPT TO REACH THE TSODATADEFINITION SERVICE
             if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
-
+            
             //ENSURE SERVICE IS READY
             if (!service.Ready)
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
@@ -164,7 +164,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();                       
 
-            uint ObjectID = (stdMsg.HasData1 && stdMsg.Data1.HasValue) ? stdMsg.Data1.Value : 0xFEEDF00D;
+            uint ObjectID = (stdMsg.HasData2 && stdMsg.Data2.HasValue) ? stdMsg.Data2.Value : 0xFEEDF00D;
+
+            bool HasEmbeddedData = stdMsg.HasEmbeddedMessage;
+            if (HasEmbeddedData)
+                ;
 
             //REMOTE DATA SERVICE REQUEST
 
@@ -240,8 +244,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 HTTPServiceClientBase.HTTPServiceResult<object> result = await service.GetTSODataServiceObjectByID("1.1097.1.0", Struct.NameString, ObjectID, Struct.NameID);
                 if (!result.IsSuccessful)
                     throw new InvalidOperationException("Data Service returned: " + result.FailureReason);
-                if (result.Result is JsonElement)
-                    return ((JsonElement)result.Result).Deserialize<ExpandoObject>();
                 return result.Result;
             }
             object? instance = await DoRemote();
@@ -271,7 +273,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             foreach (var property in TSOData_GetProperties(StructObject))
             {
                 TSOTopicUpdateMessage propertyValue = new(property.Value, property.FieldInfo.NameID, ((TSODerivedStruct)StructObject.Structure).ParentID, ObjectID);
-                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue)));
+                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, 
+                    new PDU.DataService.TSOServiceMessage(propertyValue)));
             }
         }
 
@@ -285,15 +288,43 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 if (Field == null)
                     throw new Exception($"{nameof(Field)} ({property}) could not be loaded from TSODataDefinition file.");
 
-                if (Field.Classification != TSODataFieldClassification.SingleField)
-                    continue;
-
-                //try basic value types
-                TSOValueConverter.TryConvert(property.TypeString, value, out ITSOValue? tsoValue);
+                uint typeID = Field.TypeID;
+                ITSOValue? tsoValue = default;
+                
+                try
+                {
+                    switch (Field.Classification)
+                    {
+                        case TSODataFieldClassification.SingleField:
+                            //try basic value types
+                            TSOValueConverter.TryConvert(property.TypeString, value, out tsoValue);
+                            break;
+                        case TSODataFieldClassification.TypedList:
+                            var structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
+                            if (!structFound)
+                            { // try basic types: bool,uint,etc.
+                                TSOValueConverter.TryConvertArray(property.TypeString, value, out ITSOValueVector? tsoValueVector);
+                                tsoValue = tsoValueVector;
+                            }
+                            else
+                            { // try TSODataStructs vector
+                                var tsoObjectList = (IEnumerable<object>)value;
+                                tsoValue = new TSOValue_PropertyVector(tsoObjectList.Select(x => CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, x))).ToArray());
+                            }
+                            break;
+                        case TSODataFieldClassification.Map:
+                            continue;
+                            TSOValueConverter.TryConvertMap(property.TypeString, value, out ITSOValueMap? tsoValueMap);
+                            tsoValue = tsoValueMap;
+                            break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogError(ex);
+                }
                 if (tsoValue == null && value is ExpandoObject)
-                { // try struct type
-                    uint typeID = Field.TypeID;
-
+                { // try struct type                   
                     if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
                         tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, value));
                 }

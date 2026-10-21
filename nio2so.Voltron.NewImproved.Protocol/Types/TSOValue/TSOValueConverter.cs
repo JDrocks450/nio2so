@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
@@ -21,7 +22,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         public Type RuntimeType { get; }
     }
 
-    internal class TSOValueConverter
+    internal abstract class TSOValueConverterBase<TInput, TOutput> : ITSODataValueConverter<TInput, TOutput>
     {
         static ITSOValue? convertBase(string? typeHint, object value)
         {
@@ -88,6 +89,68 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
             return null;
         }
+        static ITSOValueVector convertBaseArray(string typeHint, ITSOValue[] Source)
+        {
+            //todo: map these types...? is it even worth the effort? this works fine for now tho kinda ugly
+
+            //** convert to type based on typeHint
+            if (string.IsNullOrWhiteSpace(typeHint))
+                throw new ArgumentException(nameof(typeHint));
+            ITSOValueVector? returnType = typeHint.ToLowerInvariant() switch
+            {
+                "string" => new TSOValue_StringVector(Source.Select(x => System.Convert.ToString(x.GetValue())!).ToArray()),
+
+                "bool" => new TSOValue_BooleanVector(Source.Select(x => System.Convert.ToBoolean(x.GetValue())).ToArray()),
+
+                "uint8" => new TSOValue_Uint8Vector(Source.Select(x => System.Convert.ToByte(x.GetValue())).ToArray()),
+                "sint8" => new TSOValue_Sint8Vector(Source.Select(x => System.Convert.ToSByte(x.GetValue())).ToArray()),
+
+                "uint16" => new TSOValue_Uint16Vector(Source.Select(x => System.Convert.ToUInt16(x.GetValue())).ToArray()),
+                "sint16" => new TSOValue_Sint16Vector(Source.Select(x => System.Convert.ToInt16(x.GetValue())).ToArray()),
+
+                "uint32" => new TSOValue_Uint32Vector(Source.Select(x => System.Convert.ToUInt32(x.GetValue())).ToArray()),
+                "sint32" => new TSOValue_Sint32Vector(Source.Select(x => System.Convert.ToInt32(x.GetValue())).ToArray()),
+
+                "uint64" => new TSOValue_Uint64Vector(Source.Select(x => System.Convert.ToUInt64(x.GetValue())).ToArray()),
+                "sint64" => new TSOValue_Sint64Vector(Source.Select(x => System.Convert.ToInt64(x.GetValue())).ToArray()),
+
+                _ => null
+            };
+            if (returnType == null)
+                throw new InvalidDataException($"Type: {typeHint} could not be made into a {nameof(ITSOValueVector)}");
+            return returnType;
+        }
+
+        static ITSOValueMap convertBaseMap(string typeHint, params KeyValuePair<uint,ITSOValue>[] Pairs)
+        {
+            //todo: map these types...? is it even worth the effort? this works fine for now tho kinda ugly
+
+            //** convert to type based on typeHint
+            if (string.IsNullOrWhiteSpace(typeHint))
+                throw new ArgumentException(nameof(typeHint));
+            ITSOValueMap? returnType = typeHint.ToLowerInvariant() switch
+            {
+                /*"string" => new TSOValue_StringVector(Source.Select(x => System.Convert.ToString(x.GetValue())!).ToArray()),
+
+                "uint8" => new TSOValue_Uint8Vector(Source.Select(x => System.Convert.ToByte(x.GetValue())).ToArray()),
+                "sint8" => new TSOValue_Sint8Vector(Source.Select(x => System.Convert.ToSByte(x.GetValue())).ToArray()),
+
+                "uint16" => new TSOValue_Uint16Vector(Source.Select(x => System.Convert.ToUInt16(x.GetValue())).ToArray()),
+                "sint16" => new TSOValue_Sint16Vector(Source.Select(x => System.Convert.ToInt16(x.GetValue())).ToArray()),
+
+                
+                "sint32" => new TSOValue_Sint32Vector(Source.Select(x => System.Convert.ToInt32(x.GetValue())).ToArray()),
+
+                "uint64" => new TSOValue_Uint64Vector(Source.Select(x => System.Convert.ToUInt64(x.GetValue())).ToArray()),
+                "sint64" => new TSOValue_Sint64Vector(Source.Select(x => System.Convert.ToInt64(x.GetValue())).ToArray()),*/
+                "bool" => new TSOValue_BooleanMap(Pairs.Select(x => new KeyValuePair<uint, bool>(x.Key, System.Convert.ToBoolean(x.Value.GetValue()))).ToArray()),
+                "uint32" => new TSOValue_Uint32Map(Pairs.Select(x => new KeyValuePair<uint, uint>(x.Key, System.Convert.ToUInt32(x.Value.GetValue()))).ToArray()),
+                _ => null
+            };
+            if (returnType == null)
+                throw new InvalidDataException($"Type: {typeHint} could not be made into a {nameof(ITSOValueMap)}");
+            return returnType;
+        }
 
         public static ITSOValue Convert(object value)
         {
@@ -122,5 +185,59 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
             Converted = convertBase(null, value);
             return (Converted != null);
         }
+
+        public static bool TryConvertArray(string TypeHint, object Value, out ITSOValueVector TypedList)
+        {
+            if (Value is not IEnumerable<object>)
+                throw new InvalidCastException();
+            IEnumerable<object> list = (IEnumerable<object>)Value;
+            ITSOValue[] valueArray = new ITSOValue[list.Count()];
+            int i = 0;
+            foreach(var value in list)
+            {
+                TryConvert(TypeHint, value, out ITSOValue? converted);
+                valueArray[i] = converted;
+                i++;
+            }
+            TypedList = convertBaseArray(TypeHint, valueArray);
+            return true;
+        }
+
+        public static bool TryConvertMap(string TypeHint, object Value, out ITSOValueMap Map)
+        {
+            IDictionary<uint, object> sourceValue = null ;
+            if (Value is IDictionary<string, object> expando) // expandoObject -- convert to int - type map            
+                sourceValue = expando.Select(x => new KeyValuePair<uint, object>(System.Convert.ToUInt32(x.Key), x.Value)).ToDictionary();
+            else if (Value is not IDictionary<uint, object>)
+                throw new InvalidCastException();
+            else sourceValue = (IDictionary<uint, object>?)Value;
+            
+            KeyValuePair<uint, ITSOValue>[] valueArray = new KeyValuePair<uint, ITSOValue>[sourceValue.Count()];
+            int i = 0;
+            foreach (var pair in sourceValue)
+            {
+                TryConvert(TypeHint, pair.Value, out ITSOValue? converted);
+                valueArray[i] = new KeyValuePair<uint, ITSOValue>(pair.Key, converted);
+                i++;
+            }
+            Map = convertBaseMap(TypeHint, valueArray);
+            return true;
+        }
+
+        public abstract TOutput Convert2(TInput Input);
+        public abstract bool TryConvert2(string TypeHint, TInput Input, out TOutput? Output);
+    }
+
+    internal class TSOValueConverter : TSOValueConverterBase<object, ITSOValue>
+    {
+        public override ITSOValue Convert2(object Input) => Convert(Input);
+
+        public override bool TryConvert2(string TypeHint, object Input, out ITSOValue? Output) => TryConvert(TypeHint, Input, out Output);
+    }
+    internal class TSOValueJsonConverter : TSOValueConverterBase<JsonElement, ITSOValue>
+    {
+        public override ITSOValue Convert2(JsonElement Input) => Convert(Input);
+
+        public override bool TryConvert2(string TypeHint, JsonElement Input, out ITSOValue? Output) => TryConvert(TypeHint, Input, out Output);
     }
 }

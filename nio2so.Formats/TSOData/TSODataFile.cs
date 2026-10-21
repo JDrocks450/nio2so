@@ -133,7 +133,6 @@ namespace nio2so.Formats.TSOData
                         fieldValue = Array.CreateInstance(fieldValue.GetType(), 0);
                         break;
                     case TSODataFieldClassification.Map:
-                        throw new NotImplementedException("Map field classification is not implemented yet.");
                         fieldValue = new Dictionary<string, object>();
                         break;
                 }

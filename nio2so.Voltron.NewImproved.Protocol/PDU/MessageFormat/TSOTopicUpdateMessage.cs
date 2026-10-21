@@ -28,7 +28,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
 
         }
 
-        //public uint UpdateCounter { get; set; }
+        //public uint UpdateCounter { get; set; } = 0x2EEC92A5;
         public TSO_NewImproved_GZMSGIDs MessageID { get; set; } = TSO_NewImproved_GZMSGIDs.GZMSGID_cITSOApprovedTopicUpdate;
         public uint StatusCode { get; set; } = 0;
         [TSOVoltronArrayLength(nameof(Vector))]

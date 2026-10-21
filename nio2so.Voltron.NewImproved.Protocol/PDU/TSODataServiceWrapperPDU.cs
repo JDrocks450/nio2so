@@ -1,5 +1,6 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU
 {
@@ -21,6 +22,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// The ID of the string in the TSODataDefinition.dat this data service query structure        
         /// </summary>
         public uint DefinitionStringID { get; set; }
+
+        /// <summary>
+        /// The length of the <see cref="ContentBytes"/> property
+        /// </summary>
+        [TSOVoltronDistanceToEnd]
+        public uint ContentLength { get; set; }
 
         /// <summary>
         /// The message contained in this <see cref="TSODataServiceWrapperPDU"/>
