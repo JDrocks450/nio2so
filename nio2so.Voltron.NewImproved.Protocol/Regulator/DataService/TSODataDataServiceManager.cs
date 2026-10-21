@@ -36,8 +36,20 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
                 DataObject = dataObject;
             }
 
-            public T GetMessageAs<T>() where T : class, ITSOMessage, new() => Query.Message.GetMessageAs<T>();
-            public TSONetMessageStandard GetMessageAs() => GetMessageAs<TSONetMessageStandard>();
+            /// <summary>
+            /// <inheritdoc cref="TSOMessageFormatBase.GetMessageAs{T}(byte[])"/>
+            /// <para/> See: <see cref="TSOMessageFormatBase.GetMessageAs{T}(byte[])"/>
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <returns></returns>
+            public T GetMessageAs<T>() where T : TSOMessageFormatBase, new() => Query.Message.GetMessageAs<T>();
+            /// <summary>
+            /// <inheritdoc cref="TSOMessageFormatBase.GetMessageAs(TSO_NewImproved_TSOMessageType_CLSIDs, byte[])"/>
+            /// <para/> See: <see cref="TSOMessageFormatBase.GetMessageAs(TSO_NewImproved_TSOMessageType_CLSIDs, byte[])"/>
+            /// </summary>
+            /// <typeparam name="T"></typeparam>
+            /// <returns></returns>
+            public ITSOMessage GetMessageAs() => Query.Message.GetMessageAs();
 
             internal void RespondWithObject(TSODataRuntimeObject Object) => _responseObjects.Add(Object);
         }

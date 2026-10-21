@@ -5,6 +5,7 @@ using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
+using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
@@ -160,28 +161,81 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
         {
             if (PDU is not TSODataServiceWrapperPDU Query)
-                throw new InvalidOperationException("Invalid PDU type for DATA_SERVICE_REQUEST handler.");
+                throw new InvalidOperationException("Invalid PDU type for DATA_SERVICE_REQUEST handler.");            
 
-            var stdMsg = Query.Message.GetMessageAs<TSONetMessageStandard>();                       
+            OnServiceMessageReceived(Query, Query.Message);
 
-            uint ObjectID = (stdMsg.HasData2 && stdMsg.Data2.HasValue) ? stdMsg.Data2.Value : 0xFEEDF00D;
+#if false
+            TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
+                new TSOValue_TSODataStructPropertyWrapper(
+                    /*AvatarAppearance (Struct ID)*/ 0x3B0430BF,
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
+                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
+                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_TypeID, 0x00000539);
+            RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
+            return;
 
-            bool HasEmbeddedData = stdMsg.HasEmbeddedMessage;
-            if (HasEmbeddedData)
-                ;
+            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), /*MyAvatar.Avatar_Name*/ 0x4FFE270C, Avatar_DerivedID, 0x00000539);
+            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), /*MyAvatar.Avatar_Description*/ 0x54B99C9A, Avatar_DerivedID, 0x00000539);
+            
+            TSOTopicUpdateMessage avatarLotXY = new(new TSOValue_Uint32(0x00B800D5), /*MyAvatar.Avatar_LotXY*/ 0x7E0DD35C, Avatar_DerivedID, 0x00000539);
+
+            var test = new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarAppearance));
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarName)));
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarDescription)
+            /*{
+                Unknown_Flags = 0x0FE8,
+                ParameterLength = 0x803B
+            }*/));
+            RespondWith(test);
+            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
+#endif
+        }
+
+        private void OnServiceMessageReceived(TSODataServiceWrapperPDU Query, TSOServiceMessage ServiceMessage)
+        {
+            ITSOMessage MessageContent = ServiceMessage.GetMessageAs();
+
+            switch (MessageContent.GetMessageType())
+            {
+                case TSO_NewImproved_TSOMessageType_CLSIDs.cTSONetMessageStandard:
+                    bool HasEmbeddedData = ((TSONetMessageStandard)MessageContent).HasEmbeddedMessage;
+                    if (HasEmbeddedData)
+                    {
+                        OnServiceMessageReceived(Query, ((TSONetMessageStandard)MessageContent).EmbeddedServiceMessage);
+                        return;
+                    }
+                    else
+                        OnNetMessageStandard(Query, (TSONetMessageStandard)MessageContent);
+                    break;
+                case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage:
+                    OnTopicUpdateMessage(Query, (TSOTopicUpdateMessage)MessageContent);
+                    break;
+            }
+        }
+
+        private void OnTopicUpdateMessage(TSODataServiceWrapperPDU Query, TSOTopicUpdateMessage ServiceMessage)
+        {
+
+        }
+
+        private void OnNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage)
+        {
+            uint ObjectID = (ServiceMessage.HasData2 && ServiceMessage.Data2.HasValue) ? ServiceMessage.Data2.Value : 0xFEEDF00D;            
 
             //REMOTE DATA SERVICE REQUEST
 
             TSODataRuntimeObject StructObject = null;
 
             //Get requested data structure info
-            if (GetService<TSODataDefinitionService>().TryGetDataStruct(Query.DefinitionStringID, out ITSODataStruct structInfo))            
+            if (GetService<TSODataDefinitionService>().TryGetDataStruct((uint)Query.DefinitionStringID, out ITSODataStruct structInfo))
                 StructObject = TSODataService_GetRemoteObjectData(structInfo, ObjectID).Result; // do remote data service query now
 
             if (StructObject == null)
             { // Data Service returned null or the structure was not found.
                 throw new InvalidDataException($"nio2so Data Service returned null or the structure was not found.");
-                TSOData_TryGetObjectInstance(Query.DefinitionStringID, out StructObject);
+                TSOData_TryGetObjectInstance((uint)Query.DefinitionStringID, out StructObject);
             }
 
             if (StructObject != null)
@@ -199,36 +253,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 }
 
                 RespondToWithObject(Query, StructObject, ObjectID);
-            }            
-
-            return;
-
-            TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
-                new TSOValue_TSODataStructPropertyWrapper(
-                    /*AvatarAppearance (Struct ID)*/ 0x3B0430BF,
-                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.BodySuitID*/0x1D530275, new TSOValue_Uint64(0x000001600000000D)),
-                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.SkinTone*/0x2511B29C, new TSOValue_Uint8(0x00)),
-                    new TSOValue_DataFieldValueWrapper(/*AvatarAppearance.HeadSuitID*/0x687475BF, new TSOValue_Uint64(0x0000040F0000000D))
-                    )), /*MyAvatar.Avatar_Appearance (which is STRUCT type)*/ 0xF1B92C99, Avatar_TypeID, 0x00000539);
-            RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, new PDU.DataService.TSOServiceMessage(avatarAppearance)));
-            return;
-
-#if false
-            TSOTopicUpdateMessage avatarName = new(new TSOValue_String("Bisquick"), /*MyAvatar.Avatar_Name*/ 0x4FFE270C, Avatar_DerivedID, 0x00000539);
-            TSOTopicUpdateMessage avatarDescription = new(new TSOValue_String("Cheese'd to meet you."), /*MyAvatar.Avatar_Description*/ 0x54B99C9A, Avatar_DerivedID, 0x00000539);
-            
-            TSOTopicUpdateMessage avatarLotXY = new(new TSOValue_Uint32(0x00B800D5), /*MyAvatar.Avatar_LotXY*/ 0x7E0DD35C, Avatar_DerivedID, 0x00000539);
-
-            var test = new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarAppearance));
-            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarName)));
-            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarDescription)
-            /*{
-                Unknown_Flags = 0x0FE8,
-                ParameterLength = 0x803B
-            }*/));
-            RespondWith(test);
-            RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
-#endif
+            }
         }
 
         /// <summary>
@@ -273,8 +298,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             foreach (var property in TSOData_GetProperties(StructObject))
             {
                 TSOTopicUpdateMessage propertyValue = new(property.Value, property.FieldInfo.NameID, ((TSODerivedStruct)StructObject.Structure).ParentID, ObjectID);
-                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructObject.NameID, 
-                    new PDU.DataService.TSOServiceMessage(propertyValue)));
+                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, (TSO_NewImproved_TSOData_StructIDs)StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue,Query.Message.SequenceID)));
             }
         }
 

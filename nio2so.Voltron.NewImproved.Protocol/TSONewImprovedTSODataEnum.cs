@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace nio2so.Voltron.NewImproved.Protocol
 {
-    public enum TSONewImprovedTSODataEnum : uint
+    public enum TSO_NewImproved_TSOData_StructIDs : uint
     {
         AdmitInfo_Lot = 0xB2C6ED04,
         Avatar = 0x05600332,

@@ -112,5 +112,17 @@
 
             }
         }
+        /// <summary>
+        /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable
+        /// </summary>
+        [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+        public class TSOVoltronCustomDeserializationBehavior : Attribute
+        {
+            public TSOVoltronCustomDeserializationBehavior(Type DeserializeableReference)
+            {
+                this.DeserializeableReference = DeserializeableReference;
+            }
+            public Type DeserializeableReference { get; }
+        }
     }
 }

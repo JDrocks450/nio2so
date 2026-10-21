@@ -1,4 +1,8 @@
-﻿namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
+﻿using nio2so.Data.Common.Serialization.Voltron;
+using nio2so.Formats.Util.Endian;
+using System.Runtime.Serialization;
+
+namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
     /// <summary>
     /// Represents a data type that contains a <see cref="TSO_NewImproved_TSOValueBase_CLSIDs"/> CLSID for a value type, followed by its typed-value
@@ -14,6 +18,7 @@
         /// </summary>
         /// <returns></returns>
         object? GetValue();
+        static Func<Stream, object> OnDeserialize => TSOValueBase<object>.OnDeserialize;
     }
     public interface ITSOValueVector : ITSOValue
     {
@@ -35,11 +40,21 @@
         {
             this.Value = Value;
         }
+
         public abstract TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; }
         /// <summary>
         /// The value contained in this <see cref="TSOValueBase{T}"/> must match the type defined in <see cref="TypeClassID"/>
         /// </summary>
         public virtual T Value { get; set; } = default(T);
         public object? GetValue() => Value;
+        
+        public static object OnDeserialize(Stream Stream)
+        {
+            EndianBitConverter conv = EndianBitConverter.Big;
+            byte[] typeBytes = new byte[4];
+            Stream.ReadExactly(typeBytes, 0, 4);
+            TSO_NewImproved_TSOValueBase_CLSIDs clsID = (TSO_NewImproved_TSOValueBase_CLSIDs)conv.ToUInt32(typeBytes,0);
+            return null;
+        }
     }
 }

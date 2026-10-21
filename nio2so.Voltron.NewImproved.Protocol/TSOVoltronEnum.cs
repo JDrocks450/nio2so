@@ -32,29 +32,6 @@ namespace nio2so.Voltron.NewImproved.Protocol
         kSimRequestMsg = 0x1B6F221B,
     }
 
-    public enum TSO_NewImproved_TSOData_StructIDs : uint
-    {
-        /// <summary>
-        /// Accepts type: Avatar
-        /// </summary>
-        SimPage_Main = 0xD042E9D6,
-        /// <summary>
-        /// Accepts type: Avatar
-        /// </summary>
-        MyAvatar = 0xA46E47DC,
-        /// <summary>
-        /// ID of the Level Two Struct Avatar
-        /// </summary>
-        Avatar = 0x05600332, 
-        /// <summary>
-        /// ID of the Level Two Struct Lot
-        /// </summary>
-        Lot = 0x7A6CECEE,
-        City = 0xED56D057,
-        Neighborhood = 0xD432C523,
-        MapView_NearZoom_Neighborhood = 0x9702D009,
-    }
-
     public enum TSO_NewImproved_GZMSGIDs : uint
     {
         GZMSGID_cITSOApprovedTopicUpdate = 0xA97360C5,
@@ -126,7 +103,7 @@ namespace nio2so.Voltron.NewImproved.Protocol
     }
 
 
-    public enum TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs : uint
+    public enum TSO_NewImproved_TSOMessageType_CLSIDs : uint
     {
         /// <summary>
         /// A standard message, the most common type of message found in TSO

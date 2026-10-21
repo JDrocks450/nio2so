@@ -8,9 +8,9 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
 {
-    internal partial class TSOTopicUpdateMessage : ITSOMessage
+    internal partial class TSOTopicUpdateMessage : TSOMessageFormatBase
     {
-        public record UInt32Wrapper(uint Value);
+        const TSO_NewImproved_TSOMessageType_CLSIDs MYID = TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage;
 
         public TSOTopicUpdateMessage() {
         
@@ -19,7 +19,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public TSOTopicUpdateMessage(ITSOValue value, params uint[] VectorData)
         {
             //UpdateCounter = updateCounter;
-            this.Vector = VectorData.Select(x => new UInt32Wrapper(x)).ToArray();
+            this.Vector = VectorData;
             Value = value;
         }
 
@@ -33,14 +33,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public uint StatusCode { get; set; } = 0;
         [TSOVoltronArrayLength(nameof(Vector))]
         public uint VectorCount { get; set; }
-        public UInt32Wrapper[] Vector { get; set; } = Array.Empty<UInt32Wrapper>();
+        public uint[] Vector { get; set; } = Array.Empty<uint>();
+        [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>))]
         public ITSOValue Value { get; set; }
 
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Length_Prefixed_Byte)]
         public string StatusMessage { get; set; } = "";
 
-        public uint GetTSODataDefinitionDetail_TypeID() => Vector[0].Value;
-        public uint GetTSODataDefinitionDetail_ObjectID() => Vector[2].Value;
-        public uint GetTSODataDefinitionDetail_FieldID() => Vector[1].Value;
+        public uint GetTSODataDefinitionDetail_TypeID() => Vector[0];
+        public uint GetTSODataDefinitionDetail_ObjectID() => Vector[2];
+        public uint GetTSODataDefinitionDetail_FieldID() => Vector[1];
+
+        public override TSO_NewImproved_TSOMessageType_CLSIDs GetMessageType() => MYID;
     }
 }

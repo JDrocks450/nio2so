@@ -12,7 +12,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Services
     /// </summary>
     public class TSONewImprovedPDUFactory : TSOPDUFactoryServiceBase
     {
-        private Dictionary<TSO_NewImproved_VoltronPacketTypes_MsgCLSIDs, Type> _dataServicetypeMap = new();
+        private Dictionary<TSO_NewImproved_TSOMessageType_CLSIDs, Type> _dataServicetypeMap = new();
 
         /// <summary>
         /// Maps the given assemblies to the factory.

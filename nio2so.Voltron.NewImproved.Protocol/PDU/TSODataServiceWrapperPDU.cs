@@ -21,7 +21,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// <summary>
         /// The ID of the string in the TSODataDefinition.dat this data service query structure        
         /// </summary>
-        public uint DefinitionStringID { get; set; }
+        public TSO_NewImproved_TSOData_StructIDs DefinitionStringID { get; set; }
 
         /// <summary>
         /// The length of the <see cref="ContentBytes"/> property
@@ -39,7 +39,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
             MakeBodyFromProperties();
         }
 
-        public TSODataServiceWrapperPDU(uint SendingAvatarID, uint TSODataDefinitionID, TSOServiceMessage MessageContent) : this()
+        public TSODataServiceWrapperPDU(uint SendingAvatarID, TSO_NewImproved_TSOData_StructIDs TSODataDefinitionID, TSOServiceMessage MessageContent) : this()
         {
             this.SendingAvatarID = SendingAvatarID;
             DefinitionStringID = TSODataDefinitionID;

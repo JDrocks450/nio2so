@@ -101,6 +101,14 @@ namespace nio2so.Voltron.Core.TSO.Serialization
         {
             Stream _bodyBuffer = Stream;
 
+            var onDeserialize = property.GetCustomAttribute<TSOVoltronCustomDeserializationBehavior>();
+            if (onDeserialize != null)
+            {                
+                Type deserializeRef = onDeserialize.DeserializeableReference;
+                Func<Stream, object> OnDeserializeDelegate = (Func<Stream, object>)Delegate.CreateDelegate(typeof(Func<Stream, object>), deserializeRef.GetMethod("OnDeserialize", BindingFlags.Public | BindingFlags.Static));
+                property.SetValue(Instance,OnDeserializeDelegate(Stream));
+            }
+
             if (property.PropertyType.IsArray)
             {
                 PropertyInfo? arrayLengthProp = Instance.GetType().GetProperties().Where(x => x.GetCustomAttribute<TSOVoltronArrayLength>() != null)
