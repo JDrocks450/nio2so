@@ -34,7 +34,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         [TSOVoltronArrayLength(nameof(Vector))]
         public uint VectorCount { get; set; }
         public uint[] Vector { get; set; } = Array.Empty<uint>();
-        [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>))]
+        [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>),nameof(TSOValueBase<object>.OnDeserialize))]
         public ITSOValue Value { get; set; }
 
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Length_Prefixed_Byte)]

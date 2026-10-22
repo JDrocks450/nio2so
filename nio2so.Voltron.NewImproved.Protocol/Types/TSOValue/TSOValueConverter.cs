@@ -24,6 +24,98 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
     internal abstract class TSOValueConverterBase<TInput, TOutput> : ITSODataValueConverter<TInput, TOutput>
     {
+
+        public static Type TypeFromCLSID(TSO_NewImproved_TSOValueBase_CLSIDs ValueCLSID)
+        {
+            switch (ValueCLSID)
+            {
+                //***VALUE TYPES
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Uint8:
+                    return typeof(TSOValue_Uint8);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Sint8:
+                    return typeof(TSOValue_Sint8);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Uint16:
+                    return typeof(TSOValue_Uint16);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Sint16:
+                    return typeof(TSOValue_Sint16);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Uint32:
+                    return typeof(TSOValue_Uint32);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Sint32:
+                    return typeof(TSOValue_Sint32);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Uint64:
+                    return typeof(TSOValue_Uint64);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Sint64:
+                    return typeof(TSOValue_Sint64);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_String:
+                    return typeof(TSOValue_String);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Bool:
+                    return typeof(TSOValue_Boolean);
+
+                    //***VECTORS
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Uint8:
+                    return typeof(TSOValue_Uint8Vector);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Sint8:
+                    return typeof(TSOValue_Sint8Vector);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Uint16:
+                    return typeof(TSOValue_Uint16Vector);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Sint16:
+                    return typeof(TSOValue_Sint16Vector);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Uint32:
+                    return typeof(TSOValue_Uint32Vector);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Sint32:
+                    return typeof(TSOValue_Sint32Vector);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Uint64:
+                    return typeof(TSOValue_Uint64Vector);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Sint64:
+                    return typeof(TSOValue_Sint64Vector);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_String:
+                    return typeof(TSOValue_StringVector);
+
+                //***MAPS -- INCOMPLETE
+
+#if false
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Uint8:
+                    return typeof(TSOValue_Uint8);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Sint8:
+                    return typeof(TSOValue_Sint8);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Uint16:
+                    return typeof(TSOValue_Uint16);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Sint16:
+                    return typeof(TSOValue_Sint16);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Uint32:
+                    return typeof(TSOValue_Uint32Map);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Sint32:
+                    return typeof(TSOValue_Sint32);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Uint64:
+                    return typeof(TSOValue_Uint64);
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Sint64:
+                    return typeof(TSOValue_Sint64);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_String:
+                    return typeof(TSOValue_String);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueMap_Bool:
+                    return typeof(TSOValue_BooleanMap);
+#endif
+                default:
+                    throw new NotImplementedException(ValueCLSID.ToString());
+            }
+        }
+
         static ITSOValue? convertBase(string? typeHint, object value)
         {
             //todo: map these types...? is it even worth the effort? this works fine for now tho kinda ugly

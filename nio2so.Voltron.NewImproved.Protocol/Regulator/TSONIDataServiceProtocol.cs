@@ -1,13 +1,18 @@
-﻿using nio2so.DataService.Common;
+﻿#define TSOTEST
+#undef TSOTEST
+
+using nio2so.DataService.Common;
 using nio2so.Formats.TSOData;
 using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
+using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System.Dynamic;
@@ -148,10 +153,38 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (!service.Ready)
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
 
-            if (service.TryGetDataStruct((uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar, out ITSODataStruct structInfo))
+            //TSO TEST serialization/deserialization of ITSOValue
+#if TSOTEST
+            if (!Directory.GetFiles("C:/nio2so/tsotcppackets").Any())
             {
-                TSODataRuntimeObject data = TSODataService_GetRemoteObjectData(structInfo, 1337).Result;
+                if (service.TryGetDataStruct((uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar, out ITSODataStruct structInfo))
+                {
+                    TSODataRuntimeObject data = TSODataService_GetRemoteObjectData(structInfo, 1337).Result;
+                    var pdus = MakeTSODataWrapperPDU(data, 1337, 0xFEEDF00D, 0x01);
+                    int i = 0;
+                    foreach (var pdu in pdus)
+                    {
+                        i++;
+                        pdu.MakeBodyFromProperties();
+                        File.WriteAllBytes(Path.Combine("C:/nio2so/tsotcppackets", $"{pdu.FriendlyPDUName} {structInfo.NameString} [{i}].dat"), pdu.Body);
+                    }
+                }
             }
+            foreach(string file in Directory.GetFiles("C:/nio2so/tsotcppackets"))
+            {
+                using Stream fileStream = File.OpenRead(file);
+                TSODataServiceWrapperPDU pdu = (TSODataServiceWrapperPDU)GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(fileStream);
+                try
+                {
+                    TSOTopicUpdateMessage message = (TSOTopicUpdateMessage)pdu.Message.GetMessageAs();
+                    LogConsole(message.Value.ToString());
+                }
+                catch (Exception ex)
+                {
+                    LogError(ex);
+                }
+            }
+#endif
         }
 
         const uint Avatar_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Avatar; // ID of the Level Two Struct Avatar
@@ -293,14 +326,18 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             return service.TryGetDataStruct(TSOData_TypeID, out Struct);
         }
 
-        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID)
+        private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDU(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint SequenceID)
         {
             foreach (var property in TSOData_GetProperties(StructObject))
             {
                 TSOTopicUpdateMessage propertyValue = new(property.Value, property.FieldInfo.NameID, ((TSODerivedStruct)StructObject.Structure).ParentID, ObjectID);
-                RespondWith(new TSODataServiceWrapperPDU(Query.SendingAvatarID, (TSO_NewImproved_TSOData_StructIDs)StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue,Query.Message.SequenceID)));
+                yield return new TSODataServiceWrapperPDU(SendingAvatarID, 
+                    (TSO_NewImproved_TSOData_StructIDs)StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
             }
         }
+
+        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID) => 
+            RespondWithAll(MakeTSODataWrapperPDU(StructObject, ObjectID, Query.SendingAvatarID, Query.Message.SequenceID));
 
         private IEnumerable<TSODataServiceProperty> TSOData_GetProperties(TSODataRuntimeObject StructObject)
         {

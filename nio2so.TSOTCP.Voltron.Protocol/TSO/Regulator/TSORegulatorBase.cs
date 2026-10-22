@@ -226,6 +226,11 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// </summary>
         /// <param name="Responses"></param>
         protected void RespondWithAll(params TSOVoltronPacket[] Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
+        /// <summary>
+        /// <inheritdoc cref="RespondWithAll(TSOVoltronPacket[])"/>
+        /// </summary>
+        /// <param name="Responses"></param>
+        protected void RespondWithAll(IEnumerable<TSOVoltronPacket> Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
 
         protected void RespondWithAriesFrame(params TSOTCPPacket[] AriesFrames) => ((List<TSOTCPPacket>)CurrentResponse.AriesFrames).AddRange(AriesFrames);
 

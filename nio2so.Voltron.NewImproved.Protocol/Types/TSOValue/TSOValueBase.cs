@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.Util.Endian;
+using nio2so.Voltron.Core.TSO.Serialization;
 using System.Runtime.Serialization;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
@@ -18,7 +19,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// </summary>
         /// <returns></returns>
         object? GetValue();
-        static Func<Stream, object> OnDeserialize => TSOValueBase<object>.OnDeserialize;
+        /// <summary>
+        /// <inheritdoc cref="TSOValueBase{T}.OnDeserialize(Stream)"/>
+        /// <para/>See: <see cref="TSOValueBase{T}.OnDeserialize(Stream)"/>
+        /// </summary>
+        static TSOVoltron_OnDeserializeDelegate OnDeserialize => TSOValueBase<object>.OnDeserialize;
     }
     public interface ITSOValueVector : ITSOValue
     {
@@ -47,14 +52,26 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// </summary>
         public virtual T Value { get; set; } = default(T);
         public object? GetValue() => Value;
-        
+
+        public override string ToString() => $"{TypeClassID} {GetType().Name} = ({typeof(T).Name}) {Value}";
+
+        /// <summary>
+        /// Custom deserialize method that automatically populates the embedded <see cref="ITSOValue"/> in the <paramref name="Stream"/>
+        /// <para/>See: <see cref="TSOVoltron_OnDeserializeDelegate"/>
+        /// </summary>
+        /// <param name="Stream"></param>
+        /// <returns></returns>
         public static object OnDeserialize(Stream Stream)
         {
             EndianBitConverter conv = EndianBitConverter.Big;
             byte[] typeBytes = new byte[4];
             Stream.ReadExactly(typeBytes, 0, 4);
             TSO_NewImproved_TSOValueBase_CLSIDs clsID = (TSO_NewImproved_TSOValueBase_CLSIDs)conv.ToUInt32(typeBytes,0);
-            return null;
+
+            Stream.Seek(-4, SeekOrigin.Current);
+
+            Type valueType = TSOValueConverter.TypeFromCLSID(clsID);
+            return TSOVoltronSerializer.Deserialize(Stream, valueType);
         }
     }
 }

@@ -113,16 +113,30 @@
             }
         }
         /// <summary>
-        /// Tells the parser/decoder logic in <see cref="TSOVoltronPacket"/> to just ignore this variable
+        /// Redirects Deserialization by the <c>TSOVoltronSerializer</c> of an object's Property to a custom type that implements a <see cref="TSOVoltron_OnDeserializeDelegate"/> method
+        /// to handle the deserialization and return an object instance of the property type.
         /// </summary>
         [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
         public class TSOVoltronCustomDeserializationBehavior : Attribute
         {
-            public TSOVoltronCustomDeserializationBehavior(Type DeserializeableReference)
+            public const string MethodName = "OnDeserialize";
+            /// <summary>
+            /// <paramref name="DeserializeableReference"/> <inheritdoc cref="DeserializeableReference"/>
+            /// </summary>
+            /// <param name="DeserializeableReference"></param>
+            public TSOVoltronCustomDeserializationBehavior(Type DeserializeableReference, string MethodTargetName = MethodName)
             {
                 this.DeserializeableReference = DeserializeableReference;
+                this.MethodTargetName = MethodTargetName;
             }
+            /// <summary>
+            /// <see cref="Type"/> must implement <see cref="TSOVoltron_OnDeserializeDelegate"/>
+            /// </summary>
             public Type DeserializeableReference { get; }
+            /// <summary>
+            /// The name of the target method on the <see cref="DeserializeableReference"/>
+            /// </summary>
+            public string MethodTargetName { get; }
         }
     }
 }

@@ -101,13 +101,22 @@ namespace nio2so.Voltron.Core.TSO.Serialization
         {
             Stream _bodyBuffer = Stream;
 
-            var onDeserialize = property.GetCustomAttribute<TSOVoltronCustomDeserializationBehavior>();
+            //**check for custom deserialize before anything
+
+            TSOVoltronCustomDeserializationBehavior? onDeserialize = property.GetCustomAttribute<TSOVoltronCustomDeserializationBehavior>();
             if (onDeserialize != null)
             {                
                 Type deserializeRef = onDeserialize.DeserializeableReference;
-                Func<Stream, object> OnDeserializeDelegate = (Func<Stream, object>)Delegate.CreateDelegate(typeof(Func<Stream, object>), deserializeRef.GetMethod("OnDeserialize", BindingFlags.Public | BindingFlags.Static));
+                TSOVoltron_OnDeserializeDelegate OnDeserializeDelegate = 
+                    (TSOVoltron_OnDeserializeDelegate)Delegate.CreateDelegate(
+                        typeof(TSOVoltron_OnDeserializeDelegate), 
+                        deserializeRef.GetMethod(onDeserialize.MethodTargetName, BindingFlags.Public | BindingFlags.Static));
+
                 property.SetValue(Instance,OnDeserializeDelegate(Stream));
+                return true;
             }
+
+            //**array types
 
             if (property.PropertyType.IsArray)
             {
