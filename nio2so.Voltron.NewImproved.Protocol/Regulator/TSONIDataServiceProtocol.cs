@@ -15,8 +15,10 @@ using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
+using OpenSSL.Core;
 using System.Dynamic;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -196,7 +198,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (PDU is not TSODataServiceWrapperPDU Query)
                 throw new InvalidOperationException("Invalid PDU type for DATA_SERVICE_REQUEST handler.");            
 
-            OnServiceMessageReceived(Query, Query.Message);
+            OnIncomingServiceMessage(Query, Query.Message);
 
 #if false
             TSOTopicUpdateMessage avatarAppearance = new(new TSOValue_TSODataStructProperty(
@@ -226,7 +228,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 #endif
         }
 
-        private void OnServiceMessageReceived(TSODataServiceWrapperPDU Query, TSOServiceMessage ServiceMessage)
+        private void OnIncomingServiceMessage(TSODataServiceWrapperPDU Query, TSOServiceMessage ServiceMessage)
         {
             ITSOMessage MessageContent = ServiceMessage.GetMessageAs();
 
@@ -236,24 +238,39 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     bool HasEmbeddedData = ((TSONetMessageStandard)MessageContent).HasEmbeddedMessage;
                     if (HasEmbeddedData)
                     {
-                        OnServiceMessageReceived(Query, ((TSONetMessageStandard)MessageContent).EmbeddedServiceMessage);
+                        OnIncomingServiceMessage(Query, ((TSONetMessageStandard)MessageContent).EmbeddedServiceMessage);
                         return;
                     }
                     else
-                        OnNetMessageStandard(Query, (TSONetMessageStandard)MessageContent);
+                        OnIncomingNetMessageStandard(Query, (TSONetMessageStandard)MessageContent);
                     break;
                 case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage:
-                    OnTopicUpdateMessage(Query, (TSOTopicUpdateMessage)MessageContent);
+                    OnIncomingTopicUpdateMessage(Query, (TSOTopicUpdateMessage)MessageContent);
                     break;
             }
         }
 
-        private void OnTopicUpdateMessage(TSODataServiceWrapperPDU Query, TSOTopicUpdateMessage ServiceMessage)
+        private void OnIncomingTopicUpdateMessage(TSODataServiceWrapperPDU Query, TSOTopicUpdateMessage ServiceMessage)
         {
+            uint StructID = ServiceMessage.GetTSODataDefinitionDetail_TypeID();
+            uint ObjectID = ServiceMessage.GetTSODataDefinitionDetail_ObjectID();
+            uint FieldID = ServiceMessage.GetTSODataDefinitionDetail_FieldID();
 
+            //Get requested data structure info
+            if (!GetService<TSODataDefinitionService>().TryGetDataStruct(StructID, out ITSODataStruct structInfo))
+                throw new InvalidOperationException($"Cannot locate the DataStruct: {StructID:X} (Query: {Query.DefinitionStringID:X})");
+
+            TSODataField? fieldInfo = structInfo.GetFieldByID(FieldID);
+            if (fieldInfo == null)
+                throw new NullReferenceException(nameof(fieldInfo));
+
+            bool successful = TSODataService_SetRemoteObjectDataField(structInfo, fieldInfo, ObjectID, ServiceMessage.Value).Result; // do remote data service query now
+
+            if (successful)
+                RespondTo(Query, MakeTSODataWrapperPDUForProperty(structInfo, FieldID, ObjectID, ServiceMessage.Value.GetValue(), 0, 0));
         }
 
-        private void OnNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage)
+        private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage)
         {
             uint ObjectID = (ServiceMessage.HasData2 && ServiceMessage.Data2.HasValue) ? ServiceMessage.Data2.Value : 0xFEEDF00D;            
 
@@ -309,6 +326,27 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 throw new NullReferenceException($"Returned instance data from data service is null.");
             return new TSODataRuntimeObject(Struct, instance);
         }
+        /// <summary>
+        /// Makes a data service request to the nio2so Data Service for the specified data object
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> TSODataService_SetRemoteObjectDataField(ITSODataStruct Struct, TSODataField FieldInfo, uint ObjectID, ITSOValue TSOValue)
+        {
+            object? value = TSOValue.GetValue();
+            if (value == null)
+            {
+                LogError($"Submitted value to change in the data service was NULL. {Struct} {ObjectID}: null");
+                return false;
+            }
+
+            async Task<HttpResponseMessage> DoRemote()
+            {
+                if (!TryGetService<nio2soVoltronDataServiceClient>(out nio2soVoltronDataServiceClient? service))
+                    throw new InvalidOperationException($"Failed to get {nameof(nio2soDataServiceClient)}.");
+                return await service.PostTSODataServiceObjectFieldByID("1.1097.1.0", Struct.NameString, FieldInfo.NameString, ObjectID, value, Struct.NameID, FieldInfo.NameID);
+            }
+            return (await DoRemote()).IsSuccessStatusCode;
+        }
 
         private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataRuntimeObject StructObject)
         {
@@ -326,76 +364,117 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             return service.TryGetDataStruct(TSOData_TypeID, out Struct);
         }
 
-        private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDU(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, TSODataServiceProperty Property, uint ObjectID, uint SendingAvatarID, uint SequenceID)
         {
-            foreach (var property in TSOData_GetProperties(StructObject))
-            {
-                TSOTopicUpdateMessage propertyValue = new(property.Value, property.FieldInfo.NameID, ((TSODerivedStruct)StructObject.Structure).ParentID, ObjectID);
-                yield return new TSODataServiceWrapperPDU(SendingAvatarID, 
-                    (TSO_NewImproved_TSOData_StructIDs)StructObject.NameID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
-            }
+            uint StructID = Struct.GetBaseStructID();
+            TSOTopicUpdateMessage propertyValue = new(Property.Value, Property.FieldInfo.NameID, StructID, ObjectID);
+            return new TSODataServiceWrapperPDU(SendingAvatarID, (TSO_NewImproved_TSOData_StructIDs)StructID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
+        }
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, uint FieldID, uint ObjectID, object Value, uint SendingAvatarID, uint SequenceID)
+        {
+            TSODataServiceProperty property = TSOData_GetProperty(Struct, FieldID, Value);
+            return MakeTSODataWrapperPDUForProperty(Struct, property, ObjectID, SendingAvatarID, SequenceID);
+        }
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(TSODataRuntimeObject StructObject, uint FieldID, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        {
+            TSODataServiceProperty property = TSOData_GetProperty(StructObject, FieldID);
+            return MakeTSODataWrapperPDUForProperty(StructObject.Structure, property, ObjectID, SendingAvatarID, SequenceID);
         }
 
+        private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDUs(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        {
+            foreach (var property in TSOData_GetProperties(StructObject))
+                yield return MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, SequenceID);
+        }
+
+        private void RespondTo(TSODataServiceWrapperPDU Query, TSODataServiceWrapperPDU Response)
+        {
+            Response.SendingAvatarID = Query.SendingAvatarID;
+            Response.Message.SequenceID = Query.Message.SequenceID;
+            RespondWith(Response);
+        }
         private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID) => 
-            RespondWithAll(MakeTSODataWrapperPDU(StructObject, ObjectID, Query.SendingAvatarID, Query.Message.SequenceID));
+            RespondWithAll(MakeTSODataWrapperPDUs(StructObject, ObjectID, Query.SendingAvatarID, Query.Message.SequenceID));
+
+        private TSODataServiceProperty TSOData_GetProperty(TSODataRuntimeObject StructObject, uint FieldID) => TSOData_GetProperty(StructObject.Structure, FieldID, StructObject.GetFieldValue(FieldID, out _));
+        private TSODataServiceProperty TSOData_GetProperty(ITSODataStruct Struct, uint FieldID, object Value)
+        {
+            object? value = Value;
+            if (value == null)
+                throw new NullReferenceException(nameof(value));
+
+            TSODataField? property = Struct.GetFieldByID(FieldID);
+            if (property == null)
+                throw new NullReferenceException(nameof(property));
+
+            string PropertyName = property.NameString;
+
+            if (property == null)
+                throw new Exception($"{FieldID:X} ({property}) could not be loaded from TSODataDefinition file.");
+
+            void ThrowNotImplemented()
+            {
+                string error = $"{property.TypeID} {property.TypeString} not implemented yet! ";
+                throw new NotImplementedException(error);
+            }
+
+            uint typeID = property.TypeID;
+            ITSOValue? tsoValue = default;
+
+            switch (property.Classification)
+            {
+                case TSODataFieldClassification.SingleField:
+                    //try basic value types
+                    TSOValueConverter.TryConvert(property.TypeString, value, out tsoValue);
+                    break;
+                case TSODataFieldClassification.TypedList:
+                    var structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
+                    if (!structFound)
+                    { // try basic types: bool,uint,etc.
+                        TSOValueConverter.TryConvertArray(property.TypeString, value, out ITSOValueVector? tsoValueVector);
+                        tsoValue = tsoValueVector;
+                    }
+                    else
+                    { // try TSODataStructs vector
+                        var tsoObjectList = (IEnumerable<object>)value;
+                        tsoValue = new TSOValue_PropertyVector(tsoObjectList.Select(x => CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, x))).ToArray());
+                    }
+                    break;
+                case TSODataFieldClassification.Map:
+                    ThrowNotImplemented();
+
+                    TSOValueConverter.TryConvertMap(property.TypeString, value, out ITSOValueMap? tsoValueMap);
+                    tsoValue = tsoValueMap;
+                    break;
+            }
+
+            if (tsoValue == null && value is ExpandoObject)
+            { // try struct type                   
+                if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
+                    tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, value));
+            }
+            if (tsoValue == null)
+            {
+                ThrowNotImplemented();
+            }
+            return new TSODataServiceProperty(property, tsoValue);
+        }
 
         private IEnumerable<TSODataServiceProperty> TSOData_GetProperties(TSODataRuntimeObject StructObject)
         {
+            List<TSODataServiceProperty> properties = new();
             foreach (var property in StructObject.Structure.Fields)
             {
-                string PropertyName = property.NameString;
-                object? value = StructObject.GetFieldValue(property.NameID, out TSODataField? Field);
-
-                if (Field == null)
-                    throw new Exception($"{nameof(Field)} ({property}) could not be loaded from TSODataDefinition file.");
-
-                uint typeID = Field.TypeID;
-                ITSOValue? tsoValue = default;
-                
                 try
                 {
-                    switch (Field.Classification)
-                    {
-                        case TSODataFieldClassification.SingleField:
-                            //try basic value types
-                            TSOValueConverter.TryConvert(property.TypeString, value, out tsoValue);
-                            break;
-                        case TSODataFieldClassification.TypedList:
-                            var structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
-                            if (!structFound)
-                            { // try basic types: bool,uint,etc.
-                                TSOValueConverter.TryConvertArray(property.TypeString, value, out ITSOValueVector? tsoValueVector);
-                                tsoValue = tsoValueVector;
-                            }
-                            else
-                            { // try TSODataStructs vector
-                                var tsoObjectList = (IEnumerable<object>)value;
-                                tsoValue = new TSOValue_PropertyVector(tsoObjectList.Select(x => CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, x))).ToArray());
-                            }
-                            break;
-                        case TSODataFieldClassification.Map:
-                            continue;
-                            TSOValueConverter.TryConvertMap(property.TypeString, value, out ITSOValueMap? tsoValueMap);
-                            tsoValue = tsoValueMap;
-                            break;
-                    }
+                    properties.Add(TSOData_GetProperty(StructObject, property.NameID));
                 }
-                catch (Exception ex)
+                catch(Exception ex)
                 {
-                    LogError(ex);
+                    LogError(ex.Message + " Skipping...");
                 }
-                if (tsoValue == null && value is ExpandoObject)
-                { // try struct type                   
-                    if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
-                        tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, value));
-                }
-                if (tsoValue == null)
-                {
-                    LogConsole($"{Field.TypeID} {Field.TypeString} not implemented yet! Skipping...");
-                    continue; // hm, not supported yet?
-                }
-                yield return new TSODataServiceProperty(Field, tsoValue);
             }
+            return properties;
         }
 
         private ITSOValue CreateStructObjectValue(TSODataRuntimeObject StructObject)

@@ -25,8 +25,8 @@ namespace nio2so.DataService.API.Controllers.TSODataService
             tsoDataDefinition = new TSODataImporter().ImportFromFile(TSODataPath);
         }
 
-        [HttpGet("{Version}/data/{DataDefinitionStructName}")]
-        public ActionResult TSODataServiceRequest(string Version, string DataDefinitionStructName, [FromQuery] TSODataServiceQuery Query) 
+        [HttpGet("{Version}/data/object/{DataDefinitionStructName}")]
+        public ActionResult TSODataServiceObjectGetRequest(string Version, string DataDefinitionStructName, [FromQuery] TSODataServiceQuery Query) 
         
         {
             ITSODataStruct RequestedDataType = null;
@@ -46,6 +46,80 @@ namespace nio2so.DataService.API.Controllers.TSODataService
             TSODataRuntimeObject obj = GetRequestedData(RequestedDataType, Query.GetObjectID());
             return Ok(obj.Instance);
         }
+
+        [HttpGet("{Version}/data/object/{DataDefinitionStructName}/field/{DataFieldName}")]
+        public ActionResult TSODataServiceFieldGetRequest(string Version, string DataDefinitionStructName, string DataFieldName, [FromQuery] TSODataServiceQuery Query)
+
+        {
+            ITSODataStruct RequestedDataType = null;
+            TSODataField field = null;
+
+            //**check struct info
+
+            if (!string.IsNullOrWhiteSpace(Query.StructID) && Query.GetDataDefinitionStructID() != 0)
+                tsoDataDefinition.TryGetStructByID(Query.GetDataDefinitionStructID(), out RequestedDataType);
+            else if (DataDefinitionStructName != null)
+                tsoDataDefinition.TryGetStructByName(DataDefinitionStructName, out RequestedDataType);
+
+            //detect errors
+            if (RequestedDataType == null)
+                return NotFound();
+            if (RequestedDataType.NameString != DataDefinitionStructName)
+                return Problem("Internal server error occured. This could be due to your StructID being incorrect.");
+
+            //**check field info
+
+            if (!string.IsNullOrWhiteSpace(Query.FieldID))
+                field = RequestedDataType.GetFieldByID(Query.GetFieldID());
+            if (!string.IsNullOrWhiteSpace(DataFieldName) && field == null)
+                field = RequestedDataType.GetFieldByName(DataFieldName);
+            if (field == null)
+                return NotFound();
+
+            //get object
+            TSODataRuntimeObject obj = GetRequestedData(RequestedDataType, Query.GetObjectID());
+
+            //return field
+            object? instanceFieldValue = obj.GetFieldValue(field);
+
+            return Ok(instanceFieldValue);
+        }
+
+        [HttpPost("{Version}/data/object/{DataDefinitionStructName}/field/{DataFieldName}")]
+        public async Task<ActionResult> TSODataServicePostFieldRequest(string Version, string DataDefinitionStructName, string DataFieldName, [FromQuery] TSODataServiceQuery Query, [FromBody] object Value)
+
+        {
+            ITSODataStruct RequestedDataType = null;
+            TSODataField field = null;
+
+            //**check struct info
+
+            if (!string.IsNullOrWhiteSpace(Query.StructID) && Query.GetDataDefinitionStructID() != 0)
+                tsoDataDefinition.TryGetStructByID(Query.GetDataDefinitionStructID(), out RequestedDataType);
+            else if (DataDefinitionStructName != null)
+                tsoDataDefinition.TryGetStructByName(DataDefinitionStructName, out RequestedDataType);
+
+            //detect errors
+            if (RequestedDataType == null)
+                return NotFound();
+            if (RequestedDataType.NameString != DataDefinitionStructName)
+                return Problem("Internal server error occured. This could be due to your StructID being incorrect.");
+
+            //**check field info
+
+            if (!string.IsNullOrWhiteSpace(Query.FieldID))
+                field = RequestedDataType.GetFieldByID(Query.GetFieldID());
+            if (!string.IsNullOrWhiteSpace(DataFieldName) && field == null)
+                field = RequestedDataType.GetFieldByName(DataFieldName);
+            if (field == null)
+                return NotFound();
+
+            bool success = await TrySetDataObjectField(RequestedDataType, field, Query.GetObjectID(), Value);
+
+            return success ? Ok() : Problem();
+        }
+
+        private Task<bool> TrySetDataObjectField(ITSODataStruct Struct, TSODataField Field, uint ObjectID, object value) => dataService.TrySetTSODataObjectProperty(Struct, Field, ObjectID, value);
 
         private TSODataRuntimeObject GetRequestedData(ITSODataStruct DataStructure, uint ObjectID)
         {

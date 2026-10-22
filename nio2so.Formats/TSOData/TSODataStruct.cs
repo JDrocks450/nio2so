@@ -27,13 +27,18 @@ namespace nio2so.Formats.TSOData
         /// </summary>
         uint NameID { get; }
         /// <summary>
+        /// If this is <see cref="IsDerived"/> Struct, gets the base type <see cref="TSODataStruct"/> ID, otherwise returns <see cref="TSODataObject.NameID"/>
+        /// </summary>
+        /// <returns></returns>
+        uint GetBaseStructID();
+        /// <summary>
         /// The de-referenced <see cref="NameID"/> property, the string value
         /// </summary>
         string NameString => GetStringByID(NameID).Value;
         TSODataFile GetSourceFile();
 
         TSODataField? GetFieldByName(string propertyName) => Fields.FirstOrDefault(x => x.NameString == propertyName);
-        TSODataField? GetFieldByID(uint FieldID) => Fields.FirstOrDefault(x => x.NameID == FieldID);
+        TSODataField? GetFieldByID(uint FieldID) => Fields.FirstOrDefault(x => x.NameID == FieldID);        
     }
 
     public class TSODataStruct : TSODataObject, ITSODataStruct
@@ -44,6 +49,7 @@ namespace nio2so.Formats.TSOData
             NameID = strID;
         }
         public uint FieldCount => (uint)Fields.Count;
-        public List<TSODataField> Fields { get; } = new();        
+        public List<TSODataField> Fields { get; } = new();
+        public uint GetBaseStructID() => NameID;
     }
 }

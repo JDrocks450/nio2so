@@ -398,9 +398,23 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <returns></returns>
         public Task<HTTPServiceResult<object>> GetTSODataServiceObjectByID(string TSOVersion, string StructName, uint ObjectID, uint StructID = 0) =>
-            GetQueryAs<object>($"tso/{TSOVersion}/data/{StructName}", 
+            GetQueryAs<object>($"tso/{TSOVersion}/data/object/{StructName}", 
                 (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
                 (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()));
+        /// <summary>
+        /// <inheritdoc cref="GetTSODataServiceObjectByID"/>, then returns the value of the <paramref name="FieldName"/> and optionally matching <paramref name="FieldID"/>
+        /// </summary>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<object>> GetTSODataServiceObjectFieldByID(string TSOVersion, string StructName, string FieldName, uint ObjectID, uint StructID = 0, uint FieldID = 0) =>
+            GetQueryAs<object>($"tso/{TSOVersion}/data/object/{StructName}/field/{FieldName}",
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()),
+                (nameof(TSODataServiceQuery.FieldID), FieldID.ToString()));
+        public Task<HttpResponseMessage> PostTSODataServiceObjectFieldByID(string TSOVersion, string StructName, string FieldName, uint ObjectID, object Value, uint StructID = 0, uint FieldID = 0) =>
+            QueryPostAs($"tso/{TSOVersion}/data/object/{StructName}/field/{FieldName}", Value,
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()),
+                (nameof(TSODataServiceQuery.FieldID), FieldID.ToString()));
 
     }
 }

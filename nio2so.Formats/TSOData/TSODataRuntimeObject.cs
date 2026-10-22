@@ -155,6 +155,12 @@ namespace nio2so.Formats.TSOData
         /// <returns></returns>
         public object? GetFieldValue(string FieldName) => GetObjectAsDictionary()[FieldName];
         /// <summary>
+        /// <inheritdoc cref="GetFieldValue(string)"/>
+        /// </summary>
+        /// <param name="FieldInfo"></param>
+        /// <returns></returns>
+        public object? GetFieldValue(TSODataField FieldInfo) => GetFieldValue(FieldInfo.NameString);
+        /// <summary>
         /// Sets the value of a <see cref="TSODataField"/> from the <see cref="Structure"/> onto the <see cref="Instance"/>
         /// <para/>Danger: match the expected type of the <see cref="TSODataField.TypeString"/> property or this can cause problems!
         /// </summary>
@@ -167,6 +173,12 @@ namespace nio2so.Formats.TSOData
         /// <param name="FieldName"></param>
         /// <param name="Value"></param>
         public void SetFieldValue(string FieldName, object Value) => GetObjectAsDictionary()[FieldName] = Value;
+        /// <summary>
+        /// <inheritdoc cref="SetFieldValue(string, object)"/>
+        /// </summary>
+        /// <param name="FieldInfo"></param>
+        /// <param name="Value"></param>
+        public void SetFieldValue(TSODataField FieldInfo, object Value) => SetFieldValue(FieldInfo.NameString, Value); 
 
         public override string ToString() => Structure.ToString() ?? base.ToString();
 

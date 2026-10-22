@@ -41,8 +41,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public string StatusMessage { get; set; } = "";
 
         public uint GetTSODataDefinitionDetail_TypeID() => Vector[0];
-        public uint GetTSODataDefinitionDetail_ObjectID() => Vector[2];
-        public uint GetTSODataDefinitionDetail_FieldID() => Vector[1];
+        public uint GetTSODataDefinitionDetail_ObjectID() => Vector[1];
+        public uint GetTSODataDefinitionDetail_FieldID() => Vector[2];
 
         public override TSO_NewImproved_TSOMessageType_CLSIDs GetMessageType() => MYID;
     }

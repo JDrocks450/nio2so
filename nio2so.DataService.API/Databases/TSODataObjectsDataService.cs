@@ -70,6 +70,7 @@ namespace nio2so.DataService.API.Databases
             }
             return found;
         }
+
         public void TrySetTSODataObject(uint ObjectID, TSODataRuntimeObject Value)
         {
             JSONDictionaryLibrary<uint, TSODataObjectStoredValue> lib = GetOrCreateLibrary(Value.Structure.NameString);
@@ -87,6 +88,18 @@ namespace nio2so.DataService.API.Databases
             if (returnValue)
                 Save().Wait();            
         }                
+
+        public async Task<bool> TrySetTSODataObjectProperty(ITSODataStruct Struct, TSODataField Field, uint ObjectID, object Value)
+        {
+            if (!TryGetTSODataObject(Struct.NameString, ObjectID, out TSODataObjectStoredValue? dbValue))
+                return false;
+
+            TSODataRuntimeObject obj = new TSODataRuntimeObject(Struct, dbValue.TSODataObject);
+            obj.SetFieldValue(Field, Value);
+
+            await Save();
+            return true;
+        }
 
         /// <summary>
         /// Does nothing, currently.

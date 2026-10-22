@@ -14,6 +14,7 @@ namespace nio2so.Formats.TSOData
         public string ParentString => ParentFile.Strings[ParentID].Value;
         [JsonIgnore]
         public uint ParentID { get; set; }
+        public uint GetBaseStructID() => ParentID;
         [JsonIgnore]
         public uint FieldMasksCount => (uint)FieldMasks.Count;
         public List<TSOFieldMask> FieldMasks { get; } = new();
