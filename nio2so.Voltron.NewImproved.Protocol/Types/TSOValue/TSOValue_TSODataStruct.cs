@@ -1,4 +1,7 @@
-﻿using System.Dynamic;
+﻿using nio2so.Formats.TSOData;
+using nio2so.Voltron.Core.Services;
+using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
+using System.Dynamic;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
@@ -12,18 +15,15 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     {
         public TSOValue_DataFieldValueWrapper() { }
 
-        public TSOValue_DataFieldValueWrapper(uint TSODataDefinitionFieldID, string TSODataDefinitionFieldName, ITSOValue TSOValue)
+        public TSOValue_DataFieldValueWrapper(uint TSODataDefinitionFieldID, ITSOValue TSOValue)
         {
             this.TSODataDefinitionFieldID = TSODataDefinitionFieldID;
-            this.TSODataDefinitionFieldName = TSODataDefinitionFieldName;
             this.TSOValue = TSOValue;
         }
 
         public uint TSODataDefinitionFieldID { get; set; }        
         [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>), nameof(TSOValueBase<object>.OnDeserialize))]
         public ITSOValue TSOValue { get; set; }
-
-        internal string TSODataDefinitionFieldName;
     }
 
     /// <summary>
@@ -74,6 +74,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     [Serializable]
     internal class TSOValue_TSODataStructProperty : TSOValueBase<TSOValue_TSODataStructPropertyWrapper>
     {
+        /// <summary>
+        /// You can use this switch to force GetValue() to work without proper variable names, but this is VERY EASY to mess up - leave it false.
+        /// </summary>
+        public static bool ForceGetValue = false;
+
         const TSO_NewImproved_TSOValueBase_CLSIDs MYID = TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Property; // 0xA96E7E5B
         public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;        
 
@@ -82,10 +87,28 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
         public override object? GetValue()
         {
+            if(!ForceGetValue)
+                throw new InvalidOperationException($"You cannot call ITSOValue.GetValue() on a {GetType().Name}. You must use the overload that uses the TSODataService to get variable field names.");
+
             ExpandoObject obj = new();
             foreach(var field in Value.Fields)            
-                obj.TryAdd(field.TSODataDefinitionFieldName, field.TSOValue.GetValue());
+                obj.TryAdd(field.TSODataDefinitionFieldID.ToString(), field.TSOValue.GetValue());
             return obj;
         }
+        /// <summary>
+        /// This overload automatically dereferences the type names into 
+        /// </summary>
+        /// <param name="TSOData"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public TSODataRuntimeObject GetValue(TSODataDefinitionService TSOData)
+        {            
+            if(!TSOData.TryGetDataStruct(Value.TSODataDefinition_TypeStructID, out ITSODataStruct Struct))
+                throw new Exception($"{Value.TSODataDefinition_TypeStructID} not found!");
+            ExpandoObject obj = new();
+            foreach (var field in Value.Fields)
+                obj.TryAdd(Struct.GetFieldByID(field.TSODataDefinitionFieldID).NameString, field.TSOValue.GetValue());
+            return new TSODataRuntimeObject(Struct, obj);
+        }                
     }
 }

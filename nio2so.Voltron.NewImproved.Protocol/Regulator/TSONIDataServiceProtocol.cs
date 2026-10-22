@@ -244,16 +244,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     else
                         OnIncomingNetMessageStandard(Query, (TSONetMessageStandard)MessageContent);
                     break;
-                case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage:
-                    if (((TSOTopicUpdateMessage)MessageContent).Value is TSOValue_TSODataStructProperty property)
-                    {
-                        foreach (var field in property.Value.Fields)
-                        {
-                            if (!TSOData_GetDataStruct(property.Value.TSODataDefinition_TypeStructID, out ITSODataStruct? typeStruct))
-                                throw new Exception($"{property.Value.TSODataDefinition_TypeStructID} not found!");
-                            field.TSODataDefinitionFieldName = typeStruct.GetFieldByID(field.TSODataDefinitionFieldID).NameString;
-                        }
-                    }
+                case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage:                    
                     OnIncomingTopicUpdateMessage(Query, (TSOTopicUpdateMessage)MessageContent);
                     break;
             }
@@ -340,13 +331,20 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         /// </summary>
         /// <returns></returns>
         private async Task<bool> TSODataService_SetRemoteObjectDataField(ITSODataStruct Struct, TSODataField FieldInfo, uint ObjectID, ITSOValue TSOValue)
-        {            
-            object? value = TSOValue.GetValue();
+        {
+            object? value = null;
+            if (TSOValue is TSOValue_TSODataStructProperty dataStructProperty)
+                value = dataStructProperty.GetValue(GetService<TSODataDefinitionService>()); // get TSODataRuntimeObject with the correct field names
+            else value = TSOValue.GetValue();
+
             if (value == null)
             {
                 LogError($"Submitted value to change in the data service was NULL. {Struct} {ObjectID}: null");
                 return false;
             }
+
+            if (value is TSODataRuntimeObject runtimeObject)
+                value = runtimeObject.Instance;
 
             async Task<HttpResponseMessage> DoRemote()
             {
@@ -502,7 +500,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         private ITSOValue CreateStructObjectValue(TSODataRuntimeObject StructObject)
         {
             var properties = TSOData_GetProperties(StructObject);
-            var FieldValues = properties.Select(x => new TSOValue_DataFieldValueWrapper(x.FieldInfo.NameID, x.FieldInfo.NameString, x.Value));
+            var FieldValues = properties.Select(x => new TSOValue_DataFieldValueWrapper(x.FieldInfo.NameID, x.Value));
 
             return new TSOValue_TSODataStructProperty(new TSOValue_TSODataStructPropertyWrapper(StructObject.NameID, FieldValues.ToArray()));
 
