@@ -14,7 +14,7 @@
             
             dynamic obj = Context.DataObject.GetObjectAsDynamic();
 
-            obj.Lot_IsOnline = true;
+            //obj.Lot_IsOnline = true;
         }
     }
 }

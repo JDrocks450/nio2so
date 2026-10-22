@@ -2,6 +2,7 @@
 using nio2so.Voltron.NewImproved.Protocol.Regulator;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Text;
@@ -56,6 +57,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
                 case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Bool:
                     return typeof(TSOValue_Boolean);
+
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Property:
+                    return typeof(TSOValue_TSODataStructProperty);
 
                     //***VECTORS
 
@@ -314,14 +318,14 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
             }
             Map = convertBaseMap(TypeHint, valueArray);
             return true;
-        }
+        }        
 
         public abstract TOutput Convert2(TInput Input);
         public abstract bool TryConvert2(string TypeHint, TInput Input, out TOutput? Output);
     }
 
     internal class TSOValueConverter : TSOValueConverterBase<object, ITSOValue>
-    {
+    {       
         public override ITSOValue Convert2(object Input) => Convert(Input);
 
         public override bool TryConvert2(string TypeHint, object Input, out ITSOValue? Output) => TryConvert(TypeHint, Input, out Output);

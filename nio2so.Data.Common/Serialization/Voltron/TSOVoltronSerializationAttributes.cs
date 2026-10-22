@@ -1,4 +1,6 @@
-﻿namespace nio2so.Data.Common.Serialization.Voltron
+﻿using System.Collections;
+
+namespace nio2so.Data.Common.Serialization.Voltron
 {
     /// <summary>
     /// Attributes for Data Members intended to be used in with a <c>TSOVoltronSerializer</c>
@@ -68,7 +70,7 @@
             public TSOVoltronDistanceToEnd() { }
         }
         /// <summary>
-        /// Dictates to the <see cref="TSOVoltronPacket"/> serializer that this property should be set to the <see cref="Array.Length"/> property of the given
+        /// Dictates to the <see cref="TSOVoltronPacket"/> serializer that this property should be set to the <see cref="ICollection.Count"/> property of the given
         /// Property on this object that matches the <see cref="ArrayPropertyName"/> value of this <see cref="TSOVoltronArrayLength"/> attribute
         /// <para/>Perfect for <c>ArrayName</c>Count properties!
         /// <para/>Can be used on any <b>Numeric</b> data type

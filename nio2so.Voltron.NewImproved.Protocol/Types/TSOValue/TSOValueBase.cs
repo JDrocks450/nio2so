@@ -51,7 +51,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// The value contained in this <see cref="TSOValueBase{T}"/> must match the type defined in <see cref="TypeClassID"/>
         /// </summary>
         public virtual T Value { get; set; } = default(T);
-        public object? GetValue() => Value;
+        public virtual object? GetValue() => Value;
 
         public override string ToString() => $"{TypeClassID} {GetType().Name} = ({typeof(T).Name}) {Value}";
 

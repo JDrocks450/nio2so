@@ -371,12 +371,12 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                     PropertyInfo? foundArrayProperty = property?.DeclaringType?.GetProperty(arrLegAtt.ArrayPropertyName);
                     if (foundArrayProperty == null)
                         error($"{arrLegAtt.ArrayPropertyName} is doesn't exist on the type {property?.DeclaringType.Name ?? "not found!"}");
-                    if (!foundArrayProperty.PropertyType.IsArray)
+                    if (!foundArrayProperty.PropertyType.IsAssignableTo(typeof(ICollection)))
                         error($"{arrLegAtt.ArrayPropertyName} might very well be a property on the given type -- but it is not an array. Fix this.");
-                    Array? myArrayValue = foundArrayProperty.GetValue(Instance) as Array;
+                    ICollection? myArrayValue = foundArrayProperty.GetValue(Instance) as ICollection;
                     if (myArrayValue == null)
                         error($"{arrLegAtt.ArrayPropertyName} is an array type, but its value is null. You really should not be doing this. It should be an empty array when using these attributes.");
-                    SerializeValue = Convert.ChangeType(myArrayValue.Length - arrLegAtt.Arithmetic, property.PropertyType); // set myvalue to be the length of the array
+                    SerializeValue = Convert.ChangeType(myArrayValue.Count - arrLegAtt.Arithmetic, property.PropertyType); // set myvalue to be the length of the array
                 }
             }
 

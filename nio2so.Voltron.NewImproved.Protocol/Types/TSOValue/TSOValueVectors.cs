@@ -8,6 +8,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
     internal abstract class TSOValue_VectorBase<T> : TSOValueBase<T>, ITSOValueVector
     {
+        public override abstract TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; }
+        [Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes.TSOVoltronArrayLength(nameof(Value))]
+        public uint Length { get; set; }            
+        public override T Value { get => base.Value; set => base.Value = value; }
+
         protected TSOValue_VectorBase() : base() { }
         protected TSOValue_VectorBase(T Value) : base(Value) { }
 

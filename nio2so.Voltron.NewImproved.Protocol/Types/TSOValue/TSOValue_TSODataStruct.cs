@@ -1,4 +1,5 @@
-﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+﻿using System.Dynamic;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
@@ -11,14 +12,18 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     {
         public TSOValue_DataFieldValueWrapper() { }
 
-        public TSOValue_DataFieldValueWrapper(uint TSODataDefinitionFieldID, ITSOValue TSOValue)
+        public TSOValue_DataFieldValueWrapper(uint TSODataDefinitionFieldID, string TSODataDefinitionFieldName, ITSOValue TSOValue)
         {
             this.TSODataDefinitionFieldID = TSODataDefinitionFieldID;
+            this.TSODataDefinitionFieldName = TSODataDefinitionFieldName;
             this.TSOValue = TSOValue;
         }
 
-        public uint TSODataDefinitionFieldID { get; set; }
+        public uint TSODataDefinitionFieldID { get; set; }        
+        [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>), nameof(TSOValueBase<object>.OnDeserialize))]
         public ITSOValue TSOValue { get; set; }
+
+        internal string TSODataDefinitionFieldName;
     }
 
     /// <summary>
@@ -70,9 +75,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     internal class TSOValue_TSODataStructProperty : TSOValueBase<TSOValue_TSODataStructPropertyWrapper>
     {
         const TSO_NewImproved_TSOValueBase_CLSIDs MYID = TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Property; // 0xA96E7E5B
-        public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;
+        public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;        
 
         public TSOValue_TSODataStructProperty() : base() { }
         public TSOValue_TSODataStructProperty(TSOValue_TSODataStructPropertyWrapper value) : base(value) { }
+
+        public override object? GetValue()
+        {
+            ExpandoObject obj = new();
+            foreach(var field in Value.Fields)            
+                obj.TryAdd(field.TSODataDefinitionFieldName, field.TSOValue.GetValue());
+            return obj;
+        }
     }
 }

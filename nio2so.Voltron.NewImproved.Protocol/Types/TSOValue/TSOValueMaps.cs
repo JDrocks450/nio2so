@@ -8,6 +8,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
     internal abstract class TSOValue_MapBase<T> : TSOValueBase<IDictionary<uint, T>>, ITSOValueMap
     {
+        public override abstract TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; }
+        [Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes.TSOVoltronArrayLength(nameof(Value))]
+        public uint Length { get; set; }
+        public override IDictionary<uint, T> Value { get => base.Value; set => base.Value = value; }
+
         protected TSOValue_MapBase() : base() { }
         protected TSOValue_MapBase(params KeyValuePair<uint, T>[] Values) : base(new Dictionary<uint,T>(Values)) { }
     }
