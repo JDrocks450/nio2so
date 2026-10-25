@@ -16,6 +16,16 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         [TSODataServiceTypeHandler("Avatar", (uint)TSO_NewImproved_TSOData_Constants.Avatar)]
         public void Avatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
+            switch (Context.Direction)
+            {
+                case TSODataServiceHandlerDataDirection.FromDataService:
+
+                    break;
+                case TSODataServiceHandlerDataDirection.FromTSOClient:
+
+                    break;
+            }
+
             Context.Handled = true;
             return;
 
@@ -50,6 +60,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         public async void MyAvatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             dynamic obj = Context.DataObject.GetObjectAsDynamic();
+            Context.Handled = true;
+
+            return;
 
             var financialHistoryRec = new ExpandoObject();
 

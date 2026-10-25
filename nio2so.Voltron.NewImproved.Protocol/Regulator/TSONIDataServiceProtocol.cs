@@ -271,10 +271,28 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (fieldInfo == null)
                 throw new NullReferenceException(nameof(fieldInfo));
 
-            bool successful = TSODataService_SetRemoteObjectDataField(structInfo, fieldInfo, ObjectID, ServiceMessage.Value).Result; // do remote data service query now
+            ITSOValue TSOValue = ServiceMessage.Value;
+            if (GetService<TSODataDefinitionService>().TryGetDataStruct((uint)fieldInfo.TypeID, out ITSODataStruct valueStructInfo))
+            {
+                object valueArray = TSOValue_SafeGetValue(TSOValue);
+                if (!valueArray.GetType().IsAssignableTo(typeof(IEnumerable<object>)))
+                    valueArray = new TSODataRuntimeObject[] { (TSODataRuntimeObject)valueArray };
+                List<ITSOValue> verifiedValues = new();
+                foreach (TSODataRuntimeObject StructObject in (IEnumerable<object>)valueArray)
+                {
+                    TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient);
+                    verifiedValues.Add(ConvertFieldPropertyToTSOValue(fieldInfo, StructObject));
+                }
+                if (verifiedValues.Count == 1)
+                    TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues[0]);
+                else if (verifiedValues.Count > 1)
+                    TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues);
+            }
+
+            bool successful = TSODataService_SetRemoteObjectDataField(structInfo, fieldInfo, ObjectID, TSOValue).Result; // do remote data service query now
 
             if (successful)
-                OnIncomingStandardQuery(new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, new TSOServiceMessage(new TSONetMessageStandard(),Query.Message.SequenceID)), ObjectID);
+                OnIncomingStandardQuery(new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, new TSOServiceMessage(new TSONetMessageStandard(), Query.Message.SequenceID)), ObjectID);
         }
 
         private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => OnIncomingStandardQuery(Query, (ServiceMessage.HasData2 && ServiceMessage.Data2.HasValue) ? ServiceMessage.Data2.Value : 0xFEEDF00D);
@@ -295,22 +313,28 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 TSOData_TryGetObjectInstance((uint)Query.DefinitionStringID, out StructObject);
             }
 
+            if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromDataService))
+                RespondToWithObject(Query, StructObject, ObjectID);            
+        }
+
+        private bool TSOData_SanitizeValue(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection Direction)
+        {
             if (StructObject != null)
             {
-                TSODataServiceControllerBase.HandlerContext ctx = new(Query, StructObject);
+                TSODataServiceControllerBase.HandlerContext ctx = new(Query, StructObject, Direction);
 
                 var typeService = GetService<TSODataDataServiceManager>();
                 try
                 {
                     typeService.Invoke(this, ctx);
+                    return true;
                 }
                 catch (Exception ex)
                 {
                     LogError(ex);
                 }
-
-                RespondToWithObject(Query, StructObject, ObjectID);
             }
+            return false;
         }
 
         /// <summary>

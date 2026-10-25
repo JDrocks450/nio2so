@@ -13,10 +13,18 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 {
     internal abstract class TSODataServiceControllerBase
     {
+        internal enum TSODataServiceHandlerDataDirection
+        {
+            None,
+            FromDataService,
+            FromTSOClient,
+        }
+
         public class HandlerContext
         {
             public TSODataServiceWrapperPDU Query { get; }
             public TSODataRuntimeObject DataObject { get; }
+            public TSODataServiceHandlerDataDirection Direction { get; }
             public bool Handled { get; set; }
             public uint? ObjectID
             {
@@ -29,11 +37,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 
             private List<TSODataRuntimeObject> _responseObjects = new();
 
-            public HandlerContext(TSODataServiceWrapperPDU query, TSODataRuntimeObject dataObject)
+            public HandlerContext(TSODataServiceWrapperPDU query, TSODataRuntimeObject dataObject, TSODataServiceHandlerDataDirection Direction)
             {
                 Query = query;
                 Handled = false;
                 DataObject = dataObject;
+                this.Direction = Direction;
             }
 
             /// <summary>
