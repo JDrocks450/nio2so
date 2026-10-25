@@ -25,7 +25,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         public int GetItemCount() => GetItemCollection().Count;
     }
 
-    internal class TSOValue_PropertyVector : TSOValue_VectorBase<ITSOValue[]>
+    internal class TSOValue_PropertyVector : TSOValue_VectorBase<TSOValue_TSODataStructProperty[]>
     {
         const TSO_NewImproved_TSOValueBase_CLSIDs MYID = TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Property;
 
@@ -33,7 +33,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         {
         }
 
-        public TSOValue_PropertyVector(ITSOValue[] Value) : base(Value)
+        public TSOValue_PropertyVector(TSOValue_TSODataStructProperty[] Value) : base(Value)
         {
         }
 
