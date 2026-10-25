@@ -7,19 +7,13 @@ using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
-using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
-using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
-using OpenSSL.Core;
 using System.Dynamic;
-using System.Linq.Expressions;
-using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -271,35 +265,42 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (fieldInfo == null)
                 throw new NullReferenceException(nameof(fieldInfo));
 
+            // Value verification code begins here
             ITSOValue TSOValue = ServiceMessage.Value;
             if (GetService<TSODataDefinitionService>().TryGetDataStruct((uint)fieldInfo.TypeID, out ITSODataStruct valueStructInfo))
-            {
-                object valueArray = TSOValue_SafeGetValue(TSOValue);
-                if (!valueArray.GetType().IsAssignableTo(typeof(IEnumerable<object>)))
-                    valueArray = new object[] { valueArray };
+            { // data structs require verification
+                object? valueArray = TSOValue_SafeGetValue(TSOValue); // try to read the value in the ITSOValue
+                if (valueArray == null)
+                    throw new NullReferenceException("TSOValue was null."); // null value
+                if (!valueArray.GetType().IsAssignableTo(typeof(IEnumerable<object>))) // if its a vector of objects, handle this case
+                    valueArray = new object[] { valueArray }; // ensure it is a vector ... this gets checked after verification
                 List<ITSOValue> verifiedValues = new();
                 foreach (object arbiraryValue in (IEnumerable<object>)valueArray)
-                {
+                { // for each value in this list, verify it
                     TSODataRuntimeObject StructObject = null;
-                    if (arbiraryValue is TSODataRuntimeObject)
+                    if (arbiraryValue is TSODataRuntimeObject) // is it already a runtime struct?
                         StructObject = (TSODataRuntimeObject)arbiraryValue;
-                    else
-                    {
-                        GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);
-                    }
-                    TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient);
-                    verifiedValues.Add(ConvertFieldPropertyToTSOValue(fieldInfo, StructObject));
+                    else // incoming value struct is supposed to be one but isn't, make one from what we do have
+                        GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);           
+                    //sanitize the value using Controllers
+                    if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient));
+                        verifiedValues.Add(ConvertFieldPropertyToTSOValue(fieldInfo, StructObject)); // add the sanitized value to the list
                 }
-                if (verifiedValues.Count == 1)
+                if (verifiedValues.Count == 1) // is it a Single Item list? if so just return the value
                     TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues[0]);
-                else if (verifiedValues.Count > 1)
+                else if (verifiedValues.Count > 1) // multiple objects must be wrapped into a Vector
                     TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues);
+                else throw new InvalidDataException("Verification Failed -- no values were ultimately returned from the Controller.");
             }
 
+            // UPLOAD DATA TO THE REMOTE SERVICE
             bool successful = TSODataService_SetRemoteObjectDataField(structInfo, fieldInfo, ObjectID, TSOValue).Result; // do remote data service query now
 
+            // SUCCESS. NOW REQUEST THE UPDATED VALUE FROM THE DATA SERVICE
             if (successful)
-                OnIncomingStandardQuery(new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, new TSOServiceMessage(new TSONetMessageStandard(), Query.Message.SequenceID)), ObjectID);
+                OnIncomingStandardQuery(
+                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, 
+                    new TSOServiceMessage(new TSONetMessageStandard(), Query.Message.SequenceID)), ObjectID);
         }
 
         private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => OnIncomingStandardQuery(Query, (ServiceMessage.HasData2 && ServiceMessage.Data2.HasValue) ? ServiceMessage.Data2.Value : 0xFEEDF00D);
