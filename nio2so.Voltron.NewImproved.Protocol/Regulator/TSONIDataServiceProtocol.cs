@@ -276,10 +276,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             {
                 object valueArray = TSOValue_SafeGetValue(TSOValue);
                 if (!valueArray.GetType().IsAssignableTo(typeof(IEnumerable<object>)))
-                    valueArray = new TSODataRuntimeObject[] { (TSODataRuntimeObject)valueArray };
+                    valueArray = new object[] { valueArray };
                 List<ITSOValue> verifiedValues = new();
-                foreach (TSODataRuntimeObject StructObject in (IEnumerable<object>)valueArray)
+                foreach (object arbiraryValue in (IEnumerable<object>)valueArray)
                 {
+                    TSODataRuntimeObject StructObject = null;
+                    if (arbiraryValue is TSODataRuntimeObject)
+                        StructObject = (TSODataRuntimeObject)arbiraryValue;
+                    else
+                    {
+                        GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);
+                    }
                     TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient);
                     verifiedValues.Add(ConvertFieldPropertyToTSOValue(fieldInfo, StructObject));
                 }

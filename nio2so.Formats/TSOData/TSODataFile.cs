@@ -85,44 +85,45 @@ namespace nio2so.Formats.TSOData
             throw new ArgumentException($"Unknown type: {TypeName}");
         }
 
-        public object GetObject(uint StringID, out ITSODataStruct TSODataStruct)
+        public object GetObject(uint StringID, out ITSODataStruct TSODataStruct, params object[] FieldValues)
         {
             string StructName = Strings[StringID].Value;
-            return GetObject(StructName, out TSODataStruct);
+            return GetObject(StructName, out TSODataStruct, FieldValues);
         }
 
-        public object GetObject(string StringName, out ITSODataStruct TSODataStruct)
+        public object GetObject(string StringName, out ITSODataStruct TSODataStruct, params object[] FieldValues)
         {
             if (!TryGetStructByName(StringName, out TSODataStruct, Levels.All))
                 throw new ArgumentException("Struct matching name not found", nameof(StringName));
             if (TSODataStruct is TSODerivedStruct derived)
-                return getStructObject(derived);
+                return getStructObject(derived, FieldValues);
             else if (TSODataStruct is TSODataStruct data)
-                return getStructObject(data);
+                return getStructObject(data, FieldValues);
             throw new FileNotFoundException("Struct not found by name.");
         }
 
-        public bool TryGetObject(string StringName, out TSODataRuntimeObject Object)
+        public bool TryGetObject(string StringName, out TSODataRuntimeObject Object, params object[] FieldValues)
         {
-            dynamic instance = GetObject(StringName, out ITSODataStruct struc);
+            dynamic instance = GetObject(StringName, out ITSODataStruct struc, FieldValues);
             Object = new(struc, instance);
             return instance != null;
         }
-        public bool TryGetObject(uint StringID, out TSODataRuntimeObject Object)
+        public bool TryGetObject(uint StringID, out TSODataRuntimeObject Object, params object[] FieldValues)
         {
-            dynamic instance = GetObject(StringID, out ITSODataStruct struc);
+            dynamic instance = GetObject(StringID, out ITSODataStruct struc, FieldValues);
             Object = new(struc, instance);
             return instance != null;
         }
 
-        private object getStructObject(ITSODataStruct data)
+        private object getStructObject(ITSODataStruct data, params object[] constructorParams)
         {
             ExpandoObject obj = new ExpandoObject();
             for(int i =0; i < data.Fields.Count; i++)
             {
                 var field = data.Fields[i];
                 string TypeDescriptor = field.TypeString;
-                object fieldValue = GetTypeByString(TypeDescriptor);
+                object? constructorArg = constructorParams.ElementAtOrDefault(i);
+                object fieldValue = constructorArg ?? GetTypeByString(TypeDescriptor);
                 if (fieldValue is null)
                     throw new InvalidOperationException($"Failed to get type for field {field.NameString} of type {TypeDescriptor}");
                 switch (field.Classification)

@@ -39,6 +39,12 @@ namespace nio2so.Voltron.Core.Services
                 throw new InvalidOperationException(nameof(TSODataDefinitionService) + " is not ready. Did the TSODataDefinition.dat file fail to load?");
             return file.GetObject(StringID, out TSODataStruct);
         }
+        public bool CreateObject(ITSODataStruct Struct, out TSODataRuntimeObject StructObject, params object[] FieldValues)
+        {
+            if (!Ready)
+                throw new InvalidOperationException(nameof(TSODataDefinitionService) + " is not ready. Did the TSODataDefinition.dat file fail to load?");
+            return file.TryGetObject(Struct.NameID, out StructObject, FieldValues);
+        }
 
         private void LoadDefinition() => file = TSODataImporter.Import(TSODataDefinitionPath);
 
