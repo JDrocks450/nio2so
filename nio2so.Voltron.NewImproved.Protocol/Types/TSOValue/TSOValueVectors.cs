@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         protected TSOValue_VectorBase() : base() { }
         protected TSOValue_VectorBase(T Value) : base(Value) { }
 
-        public IEnumerable<T>? GetItems() => ((ITSOValueVector)this).GetItems()?.Cast<T>() ?? null;
+        public override string ToString() => 
+            $"{TypeClassID} {GetType().Name} = ({typeof(T).Name}) {GetItemCount()} items.";
+
+        public ICollection GetItemCollection() => (ICollection)Value;
+
+        public int GetItemCount() => GetItemCollection().Count;
     }
 
     internal class TSOValue_PropertyVector : TSOValue_VectorBase<ITSOValue[]>

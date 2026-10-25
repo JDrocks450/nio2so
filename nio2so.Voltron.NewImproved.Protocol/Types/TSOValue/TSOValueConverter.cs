@@ -86,6 +86,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
                 case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_String:
                     return typeof(TSOValue_StringVector);
 
+                case TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValueVector_Property:
+                    return typeof(TSOValue_PropertyVector);
+
                 //***MAPS -- INCOMPLETE
 
 #if false

@@ -7,7 +7,7 @@
     {
         public LotController() { }
 
-        [TSODataServiceTypeHandler("Lot", (uint)TSO_NewImproved_TSOData_StructIDs.Lot)]
+        [TSODataServiceTypeHandler("Lot", (uint)TSO_NewImproved_TSOData_Constants.Lot)]
         public void Lot_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {           
             Context.Handled = true;

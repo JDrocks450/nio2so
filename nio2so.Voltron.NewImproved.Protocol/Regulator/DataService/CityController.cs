@@ -9,7 +9,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 {
     internal class CityController
     {
-        [TSODataServiceTypeHandler("City", (uint)TSO_NewImproved_TSOData_StructIDs.City)]
+        [TSODataServiceTypeHandler("City", (uint)TSO_NewImproved_TSOData_Constants.City)]
         public void City_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             Context.Handled = true;
@@ -36,7 +36,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             return;
         }
 
-        [TSODataServiceTypeHandler("Neighborhood", (uint)TSO_NewImproved_TSOData_StructIDs.Neighborhood)]
+        [TSODataServiceTypeHandler("Neighborhood", (uint)TSO_NewImproved_TSOData_Constants.Neighborhood)]
         public void Neighborhood_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             dynamic value = Context.DataObject.GetObjectAsDynamic();
@@ -46,7 +46,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             Context.Handled = true;
             return;
         }
-        [TSODataServiceTypeHandler("MapView_NearZoom_Neighborhood", (uint)TSO_NewImproved_TSOData_StructIDs.MapView_NearZoom_Neighborhood)]
+        [TSODataServiceTypeHandler("MapView_NearZoom_Neighborhood", (uint)TSO_NewImproved_TSOData_Constants.MapView_NearZoom_Neighborhood)]
         public void MapView_NearZoom_Neighborhood_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             dynamic value = Context.DataObject.GetObjectAsDynamic();

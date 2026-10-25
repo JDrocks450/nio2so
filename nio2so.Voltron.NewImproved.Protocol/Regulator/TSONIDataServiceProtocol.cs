@@ -1,5 +1,5 @@
 ﻿#define TSOTEST
-#undef TSOTEST
+//#undef TSOTEST
 
 using nio2so.DataService.Common;
 using nio2so.Formats.TSOData;
@@ -148,21 +148,25 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             Server.Services.Register(typeService);
 
             //ATTEMPT TO REACH THE TSODATADEFINITION SERVICE
-            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
+            if (!TryGetService(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
             
             //ENSURE SERVICE IS READY
             if (!service.Ready)
                 throw new InvalidOperationException($"The {nameof(TSODataDefinitionService)} did not load correctly. The TSODataService cannot continue.");
 
+            //ENSURE TSO VOLTRON ENUM MATCHES DATA DEFINITION -- this can cause struct ID mismatch issues if this isn't verified.
+            if (!service.VerifyEnum<TSO_NewImproved_TSOData_Constants>(out string[] errors) || errors.Any())
+                LogError($"The {nameof(TSO_NewImproved_TSOData_Constants)} has the following errors:\n\n{string.Join("\n",errors)}");
+
             //TSO TEST serialization/deserialization of ITSOValue
 #if TSOTEST
             if (!Directory.GetFiles("C:/nio2so/tsotcppackets").Any())
             {
-                if (service.TryGetDataStruct((uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar, out ITSODataStruct structInfo))
+                if (service.TryGetDataStruct((uint)TSO_NewImproved_TSOData_Constants.MyAvatar, out ITSODataStruct structInfo))
                 {
                     TSODataRuntimeObject data = TSODataService_GetRemoteObjectData(structInfo, 1337).Result;
-                    var pdus = MakeTSODataWrapperPDU(data, 1337, 0xFEEDF00D, 0x01);
+                    var pdus = MakeTSODataWrapperPDUs(data, 1337, 0xFEEDF00D, 0x01);
                     int i = 0;
                     foreach (var pdu in pdus)
                     {
@@ -179,7 +183,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 try
                 {
                     TSOTopicUpdateMessage message = (TSOTopicUpdateMessage)pdu.Message.GetMessageAs();
-                    LogConsole(message.Value.ToString());
+                    LogConsole(message.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -189,8 +193,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 #endif
         }
 
-        const uint Avatar_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Avatar; // ID of the Level Two Struct Avatar
-        const uint Lot_TypeID = (uint)TSO_NewImproved_TSOData_StructIDs.Lot; // ID of the Level Two Struct Lot
+        const uint Avatar_TypeID = (uint)TSO_NewImproved_TSOData_Constants.Avatar; // ID of the Level Two Struct Avatar
+        const uint Lot_TypeID = (uint)TSO_NewImproved_TSOData_Constants.Lot; // ID of the Level Two Struct Lot
 
         [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.DataServiceWrapperPDU)]
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
@@ -238,7 +242,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     bool HasEmbeddedData = ((TSONetMessageStandard)MessageContent).HasEmbeddedMessage;
                     if (HasEmbeddedData)
                     {
+#pragma warning disable CS8604 // Possible null reference argument.
                         OnIncomingServiceMessage(Query, ((TSONetMessageStandard)MessageContent).EmbeddedServiceMessage);
+#pragma warning restore CS8604 // Possible null reference argument.
                         return;
                     }
                     else
@@ -332,10 +338,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         /// <returns></returns>
         private async Task<bool> TSODataService_SetRemoteObjectDataField(ITSODataStruct Struct, TSODataField FieldInfo, uint ObjectID, ITSOValue TSOValue)
         {
-            object? value = null;
-            if (TSOValue is TSOValue_TSODataStructProperty dataStructProperty)
-                value = dataStructProperty.GetValue(GetService<TSODataDefinitionService>()); // get TSODataRuntimeObject with the correct field names
-            else value = TSOValue.GetValue();
+            // automatically uses the appropriate overload of the GetValue() function
+            object? safeGetValue(ITSOValue x)
+            {
+                if (TSOValue is TSOValue_TSODataStructProperty dataStructProperty)
+                    return dataStructProperty.GetValue(GetService<TSODataDefinitionService>()); // get TSODataRuntimeObject with the correct field names
+                else if (TSOValue is TSOValue_PropertyVector dataStructPropVec)
+                    return dataStructPropVec.Value.Select(x => safeGetValue(x)).ToArray();
+                else return TSOValue.GetValue();
+            }
+
+            object? value = safeGetValue(TSOValue);            
 
             if (value == null)
             {
@@ -357,25 +370,22 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
         private bool TSOData_TryGetObjectInstance(uint TSOData_TypeID, out TSODataRuntimeObject StructObject)
         {
-            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
+            if (!TryGetService(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
             dynamic obj = service.GetObject(TSOData_TypeID, out ITSODataStruct Struct);
             StructObject = new(Struct,obj);
             return obj != null;
         }
 
-        private bool TSOData_GetDataStruct(uint TSOData_TypeID, out ITSODataStruct Struct)
-        {
-            if (!TryGetService<TSODataDefinitionService>(out TSODataDefinitionService? service))
-                throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
-            return service.TryGetDataStruct(TSOData_TypeID, out Struct);
-        }
+        private bool TSOData_GetDataStruct(uint TSOData_TypeID, out ITSODataStruct Struct) => TryGetService(out TSODataDefinitionService? service)
+                ? service.TryGetDataStruct(TSOData_TypeID, out Struct)
+                : throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
 
         private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, TSODataServiceProperty Property, uint ObjectID, uint SendingAvatarID, uint SequenceID)
         {
             uint StructID = Struct.GetBaseStructID();
             TSOTopicUpdateMessage propertyValue = new(Property.Value, Property.FieldInfo.NameID, StructID, ObjectID);
-            return new TSODataServiceWrapperPDU(SendingAvatarID, (TSO_NewImproved_TSOData_StructIDs)StructID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
+            return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
         }
         private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, uint FieldID, uint ObjectID, ITSOValue Value, uint SendingAvatarID, uint SequenceID)
         {

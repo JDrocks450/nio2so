@@ -178,10 +178,7 @@ namespace nio2so.Formats.TSOData
 
         public override string ToString()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            });
+            return $"{nameof(TSODataFile)}[{TimeStamp}]: Level One: {LevelOneStructsCount}, Level Two: {LevelTwoStructsCount}, Derived: {DerivedStructsCount}, Constants: {StringsCount}";
             /* return
                 $"This TSODataFile was built on {TimeStamp}\n" +
                 $"---\n" +
@@ -198,6 +195,14 @@ namespace nio2so.Formats.TSOData
                 $"  {string.Join('\n', Strings.Select(x => $"[{x.Key}] {x.Value.Value} ({x.Value.Category})"))}" +
                 $"}}\n" +
                 $"End of file."; */            
+        }
+
+        public string SerializeJSON()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions()
+            {
+                WriteIndented = true,
+            });
         }
 
         public TSODataString GetStringByID(uint ID) => Strings[ID];

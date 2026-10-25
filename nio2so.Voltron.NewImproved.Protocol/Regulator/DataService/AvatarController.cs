@@ -13,7 +13,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
     {
         public AvatarController() { }
 
-        [TSODataServiceTypeHandler("Avatar", (uint)TSO_NewImproved_TSOData_StructIDs.Avatar)]
+        [TSODataServiceTypeHandler("Avatar", (uint)TSO_NewImproved_TSOData_Constants.Avatar)]
         public void Avatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             Context.Handled = true;
@@ -46,7 +46,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             Context.Handled = true;
         }
 
-        [TSODataServiceTypeHandler("MyAvatar", (uint)TSO_NewImproved_TSOData_StructIDs.MyAvatar)]
+        [TSODataServiceTypeHandler("MyAvatar", (uint)TSO_NewImproved_TSOData_Constants.MyAvatar)]
         public async void MyAvatar_StructHandler(TSOProtocol Sender, HandlerContext Context)
         {
             dynamic obj = Context.DataObject.GetObjectAsDynamic();

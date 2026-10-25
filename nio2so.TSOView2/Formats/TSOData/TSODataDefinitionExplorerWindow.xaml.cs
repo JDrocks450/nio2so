@@ -62,6 +62,12 @@ namespace nio2so.TSOView2.Formats.TSOData
 
         private void InvokeUIRedraw(UI_TSODATADEF_PAGE Page, string? SearchFilter = default)
         {
+            void ShowObjectContent(string Title, ITSODataStruct Struct)
+            {
+                DataViewer.ItemsSource = Struct.Fields;
+                ContentsBlock.Text = Title;
+            }
+
             if (string.IsNullOrWhiteSpace(SearchFilter))
                 SearchFilter = null;            
             FilterNotification.Visibility = SearchFilter != null ? Visibility.Visible : Visibility.Collapsed;
@@ -85,15 +91,25 @@ namespace nio2so.TSOView2.Formats.TSOData
                     };
                     typeItem.Selected += delegate
                     {
-                        DataViewer.ItemsSource = type.Fields;
+                        ShowObjectContent(type.NameString, type);
                     };
                     parentItem.Items.Add(typeItem);
                     foreach (var field in type.Fields)
                     {
-                        typeItem.Items.Add(new TreeViewItem()
+                        var subItem = new TreeViewItem()
                         {
                             Header = $"{field.TypeString} {field.NameString} ({field.Classification})"
-                        });
+                        };
+                        // if the variable is itself a complex TSOData struct, show that structure in the right pane
+                        if (CurrentFile.TryGetStructByID(field.TypeID, out var subTypeStruct))
+                        {
+                            subItem.Selected += delegate (object sender, RoutedEventArgs e)
+                            {
+                                ShowObjectContent(subTypeStruct.NameString, subTypeStruct);
+                                e.Handled = true;
+                            };
+                        }
+                        typeItem.Items.Add(subItem);
                     }                    
                 }
                 return parentItem;
@@ -116,7 +132,7 @@ namespace nio2so.TSOView2.Formats.TSOData
                     };
                     typeItem.Selected += delegate
                     {
-                        DataViewer.ItemsSource = type.FieldMasks;
+                        ShowObjectContent(type.NameString, type);
                     };
                     parentItem.Items.Add(typeItem);
                     foreach (var field in type.FieldMasks)
@@ -169,7 +185,13 @@ namespace nio2so.TSOView2.Formats.TSOData
                             TreeItem.Selected += delegate
                             {
                                 DataViewer.ItemsSource = CurrentFile.Strings.Where(x => x.Value.Category == stringRef.Value.Category).Select(
-                                    y => y.Value);
+                                    y => new
+                                    {
+                                        ID = y.Value.ID.ToString("X8"),
+                                        Value = y.Value.Value,
+                                        Category = y.Value.Category.ToString(),
+                                    });
+                                ContentsBlock.Text = stringRef.Value.Category.ToString();
                             };
                             TypeViewer.Items.Add(TreeItem);
                             categoryGroup.Add(stringRef.Value.Category, TreeItem);

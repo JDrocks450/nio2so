@@ -17,13 +17,18 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
         public TSOValue_DataFieldValueWrapper(uint TSODataDefinitionFieldID, ITSOValue TSOValue)
         {
-            this.TSODataDefinitionFieldID = TSODataDefinitionFieldID;
+            this.TSODataDefinitionFieldID = (TSO_NewImproved_TSOData_Constants)TSODataDefinitionFieldID;
             this.TSOValue = TSOValue;
         }
 
-        public uint TSODataDefinitionFieldID { get; set; }        
+        public TSO_NewImproved_TSOData_Constants TSODataDefinitionFieldID { get; set; }        
         [TSOVoltronCustomDeserializationBehavior(typeof(TSOValueBase<object>), nameof(TSOValueBase<object>.OnDeserialize))]
         public ITSOValue TSOValue { get; set; }
+
+        public override string ToString()
+        {
+            return $"{TSODataDefinitionFieldID}: {TSOValue}";
+        }
     }
 
     /// <summary>
@@ -44,7 +49,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// <param name="fields"></param>
         public TSOValue_TSODataStructPropertyWrapper(uint TSODataDefinition_TypeStructID, params TSOValue_DataFieldValueWrapper[] fields)
         {
-            this.TSODataDefinition_TypeStructID = TSODataDefinition_TypeStructID;
+            this.TSODataDefinition_TypeStructID = (TSO_NewImproved_TSOData_Constants)TSODataDefinition_TypeStructID;
             Fields = fields;
         }
         /// <summary>
@@ -55,7 +60,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// The StringID of the TSODataDefinition Property we're encaptulating
         /// <para/>This is a property of a data struct defined in the TSODataDefinition, the ID of the Struct is captured in the outer envelope type <see cref="TSODataServiceWrapperPDU"/>
         /// </summary>
-        public uint TSODataDefinition_TypeStructID { get; set; }
+        public TSO_NewImproved_TSOData_Constants TSODataDefinition_TypeStructID { get; set; }
         /// <summary>
         /// The number of fields contained in the <see cref="Fields"/> array. This is set by the protocol automatically.
         /// </summary>
@@ -65,6 +70,13 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         /// The fields contained within this TSODataDefinition structure
         /// </summary>
         public TSOValue_DataFieldValueWrapper[] Fields { get; set; } = new TSOValue_DataFieldValueWrapper[0];
+
+        public override string ToString()
+        {
+            return $"{TSOPropertyCLSID}  {{ \n" +
+                $"      {TSODataDefinition_TypeStructID} -- \n" +
+                $"      {string.Join("      \n", Fields.Select(x => x.ToString()))}\n}}";            
+        }
     }
 
     /// <summary>
@@ -74,11 +86,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     [Serializable]
     internal class TSOValue_TSODataStructProperty : TSOValueBase<TSOValue_TSODataStructPropertyWrapper>
     {
-        /// <summary>
-        /// You can use this switch to force GetValue() to work without proper variable names, but this is VERY EASY to mess up - leave it false.
-        /// </summary>
-        public static bool ForceGetValue = false;
-
         const TSO_NewImproved_TSOValueBase_CLSIDs MYID = TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Property; // 0xA96E7E5B
         public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;        
 
@@ -87,28 +94,28 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
         public override object? GetValue()
         {
-            if(!ForceGetValue)
-                throw new InvalidOperationException($"You cannot call ITSOValue.GetValue() on a {GetType().Name}. You must use the overload that uses the TSODataService to get variable field names.");
-
             ExpandoObject obj = new();
             foreach(var field in Value.Fields)            
                 obj.TryAdd(field.TSODataDefinitionFieldID.ToString(), field.TSOValue.GetValue());
             return obj;
         }
         /// <summary>
-        /// This overload automatically dereferences the type names into 
+        /// This overload automatically dereferences the type names into the exact values from the supplied TSODataDefinition file
+        /// <para/>This is safer than using <see cref="GetValue()"/> as that uses the <see cref="TSO_NewImproved_TSOData_Constants"/> which
+        /// (could) be version specific.
+        /// <para/>Please use this function only whenever possible!
         /// </summary>
         /// <param name="TSOData"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
         public TSODataRuntimeObject GetValue(TSODataDefinitionService TSOData)
         {            
-            if(!TSOData.TryGetDataStruct(Value.TSODataDefinition_TypeStructID, out ITSODataStruct Struct))
+            if(!TSOData.TryGetDataStruct((uint)Value.TSODataDefinition_TypeStructID, out ITSODataStruct Struct))
                 throw new Exception($"{Value.TSODataDefinition_TypeStructID} not found!");
             ExpandoObject obj = new();
             foreach (var field in Value.Fields)
-                obj.TryAdd(Struct.GetFieldByID(field.TSODataDefinitionFieldID).NameString, field.TSOValue.GetValue());
+                obj.TryAdd(Struct.GetFieldByID((uint)field.TSODataDefinitionFieldID).NameString, field.TSOValue.GetValue());
             return new TSODataRuntimeObject(Struct, obj);
-        }                
+        }        
     }
 }

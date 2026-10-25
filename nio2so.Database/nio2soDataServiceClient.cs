@@ -410,6 +410,17 @@ namespace nio2so.DataService.Common
                 (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
                 (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()),
                 (nameof(TSODataServiceQuery.FieldID), FieldID.ToString()));
+        /// <summary>
+        /// Posts an object value to a Field on a TSO Data Object
+        /// </summary>
+        /// <param name="TSOVersion"></param>
+        /// <param name="StructName"></param>
+        /// <param name="FieldName"></param>
+        /// <param name="ObjectID"></param>
+        /// <param name="Value"></param>
+        /// <param name="StructID"></param>
+        /// <param name="FieldID"></param>
+        /// <returns></returns>
         public Task<HttpResponseMessage> PostTSODataServiceObjectFieldByID(string TSOVersion, string StructName, string FieldName, uint ObjectID, object Value, uint StructID = 0, uint FieldID = 0) =>
             QueryPostAs($"tso/{TSOVersion}/data/object/{StructName}/field/{FieldName}", Value,
                 (nameof(TSODataServiceQuery.StructID), StructID.ToString()),

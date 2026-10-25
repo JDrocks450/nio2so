@@ -1,6 +1,7 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Formats.Util.Endian;
 using nio2so.Voltron.Core.TSO.Serialization;
+using System.Collections;
 using System.Runtime.Serialization;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
@@ -27,11 +28,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
     }
     public interface ITSOValueVector : ITSOValue
     {
-        IEnumerable<object>? GetItems() => (IEnumerable<object>)GetValue();
+        ICollection GetItemCollection();
+        int GetItemCount();
     }
     public interface ITSOValueMap : ITSOValue
     {
-        IDictionary<int,object>? GetItems() => (IDictionary<int, object>?)GetValue();
+
     }
 
     /// <summary>

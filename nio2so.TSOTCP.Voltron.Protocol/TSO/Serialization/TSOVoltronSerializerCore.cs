@@ -328,6 +328,14 @@ namespace nio2so.Voltron.Core.TSO.Serialization
                 }
                 return true;
             }
+            else if (PropertyType == typeof(ulong) || PropertyType == typeof(long))
+            {// LONG ULONG 2026 OCT
+                if (PropertyType == typeof(ulong)) // ulong uint64
+                    property.SetValue(Instance, Stream.ReadBodyQword(dataEndianMode)); // read in an unsigned long
+                else // int64 - long
+                    property.SetValue(Instance, Stream.ReadBodyLword(dataEndianMode)); // read in an unsigned long
+                return true;
+            }
             else readValue = false;
 
             if (readValue) return true;

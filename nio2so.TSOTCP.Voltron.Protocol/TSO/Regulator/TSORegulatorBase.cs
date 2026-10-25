@@ -329,7 +329,7 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="Caption"></param>
         /// <param name="Severity"></param>
         protected void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
-            GetService<TSOLoggerServiceBase>().LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, RegulatorName, $"[{Caption ?? ""}] {Message}"));
+            GetService<TSOLoggerServiceBase>().LogConsole(new(Severity, RegulatorName, $"[{Caption ?? ""}] {Message}"));
         /// <summary>
         /// <inheritdoc cref="LogConsole(string, string, TSOLoggerServiceBase.LogSeverity)"/> as an <see cref="TSOLoggerServiceBase.LogSeverity.Errors"/>
         /// </summary>

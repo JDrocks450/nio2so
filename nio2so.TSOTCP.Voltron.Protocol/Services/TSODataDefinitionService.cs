@@ -43,5 +43,47 @@ namespace nio2so.Voltron.Core.Services
         private void LoadDefinition() => file = TSODataImporter.Import(TSODataDefinitionPath);
 
         public bool TryGetDataStruct(uint TSOData_TypeID, out ITSODataStruct Struct) => file.TryGetStructByID(TSOData_TypeID, out Struct);
+
+        /// <summary>
+        /// Verifies that the provided <see cref="Enum"/> <see langword="struct"/> matches the <see cref="TSODataFile.Strings"/> constants table. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="Errors"></param>
+        /// <returns></returns>
+        public bool VerifyEnum<T>(out string[] Errors) where T : struct, Enum
+        {
+            List<string> errors = new List<string>();
+
+            string[] valueNames = Enum.GetNames<T>();
+            IEnumerable<uint> values = Enum.GetValuesAsUnderlyingType<T>().Cast<uint>();
+
+            if (file.StringsCount != valueNames.Length)
+                errors.Add($"Definition Count Mismatch: TSOData File has: {file.StringsCount} entries, {typeof(T).Name} has: {valueNames.Length} entries.");
+
+            foreach(TSODataString StringValue in file.Strings.Select(x => x.Value))
+            {
+                bool nameMatch = valueNames.Contains(StringValue.Value);
+                bool valueMatch = values.Contains(StringValue.ID);
+                if (!nameMatch)
+                { // name not found
+                    if (!valueMatch) // value not found either
+                        errors.Add($"Missing definition: TSOData: {StringValue.Value}::{StringValue.ID:X} not present in enum.");
+                    else // value was found under a different name
+                    {
+                        T value = Enum.Parse<T>(StringValue.ID.ToString());
+                        errors.Add($"Value Mismatch: TSOData: {StringValue.Value}::{StringValue.ID:X} is instead: {value}::{Enum.Format(typeof(T), value, "X")}");
+                    }
+                }
+                else
+                { // name is found
+                    T value = Enum.Parse<T>(StringValue.ID.ToString());
+                    if (StringValue.Value != value.ToString())
+                        errors.Add($"Incorrect Value: TSOData: {StringValue.Value}::{StringValue.ID:X} not matching {value}::{Enum.Format(typeof(T), value, "X")}");
+                }
+            }
+
+            Errors = errors.ToArray();
+            return errors.Count == 0;
+        }
     }
 }
