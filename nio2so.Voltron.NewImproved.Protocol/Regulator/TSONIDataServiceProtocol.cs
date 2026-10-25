@@ -283,11 +283,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     else // incoming value struct is supposed to be one but isn't, make one from what we do have
                         GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);           
                     //sanitize the value using Controllers
-                    if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient));
-                        verifiedValues.Add(ConvertFieldPropertyToTSOValue(fieldInfo, StructObject)); // add the sanitized value to the list
+                    if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient))
+                        verifiedValues.Add(CreateStructObjectValue(StructObject)); // add the sanitized value to the list
                 }
                 if (verifiedValues.Count == 1) // is it a Single Item list? if so just return the value
-                    TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues[0]);
+                    TSOValue = verifiedValues[0];
                 else if (verifiedValues.Count > 1) // multiple objects must be wrapped into a Vector
                     TSOValue = ConvertFieldPropertyToTSOValue(fieldInfo, verifiedValues);
                 else throw new InvalidDataException("Verification Failed -- no values were ultimately returned from the Controller.");
