@@ -143,5 +143,19 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         }
 
         public override TSO_NewImproved_TSOMessageType_CLSIDs GetMessageType() => MYID;
+
+        internal uint[] GetDataValues()
+        {
+            List<uint> values = new List<uint>();
+            if (Data1.HasValue)
+                values.Add(Data1.Value);
+            if (Data2.HasValue)
+                values.Add(Data2.Value);
+            if (Data3.HasValue)
+                values.Add(Data3.Value);
+            if (Data4.HasValue)
+                values.Add(Data4.Value);
+            return values.ToArray();
+        }
     }
 }

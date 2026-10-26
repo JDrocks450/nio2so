@@ -1,6 +1,7 @@
 ﻿using nio2so.Formats.TSOData;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -33,12 +34,27 @@ namespace nio2so.Voltron.Core.Services
             LoadDefinition();
         }
 
-        public object GetObject(uint StringID, out ITSODataStruct TSODataStruct)
-        {
+        /// <summary>
+        /// Creates a new <see cref="ExpandoObject"/> with the fields of the <see cref="ITSODataStruct"/> with default values.
+        /// </summary>
+        /// <param name="StringID"></param>
+        /// <param name="TSODataStruct"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public object GetStructObject(uint StringID, out ITSODataStruct TSODataStruct)
+        {            
             if (!Ready)
                 throw new InvalidOperationException(nameof(TSODataDefinitionService) + " is not ready. Did the TSODataDefinition.dat file fail to load?");
             return file.GetObject(StringID, out TSODataStruct);
         }
+        /// <summary>
+        /// <inheritdoc cref="TSODataFile.TryGetObject(string, out TSODataRuntimeObject, object[])"/>
+        /// </summary>
+        /// <param name="Struct"></param>
+        /// <param name="StructObject"></param>
+        /// <param name="FieldValues"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public bool CreateObject(ITSODataStruct Struct, out TSODataRuntimeObject StructObject, params object[] FieldValues)
         {
             if (!Ready)

@@ -13,6 +13,7 @@ using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
+using System.Collections;
 using System.Dynamic;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
@@ -195,7 +196,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         public void DATA_SERVICE_REQUEST(TSOVoltronPacket PDU)
         {
             if (PDU is not TSODataServiceWrapperPDU Query)
-                throw new InvalidOperationException($"Invalid PDU type for {nameof(DATA_SERVICE_REQUEST)} handler.");            
+                throw new InvalidOperationException($"Invalid PDU type for {nameof(DATA_SERVICE_REQUEST)} handler. Expected: {nameof(TSODataServiceWrapperPDU)}");            
 
             OnIncomingServiceMessage(Query, Query.Message);
 
@@ -226,7 +227,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             RespondWith(new TSODataServiceWrapperPDU(SendingAvatarID, DefinitionStringID, new PDU.DataService.TSOServiceMessage(avatarLotXY)));
 #endif
         }
-
+        /// <summary>
+        /// Redirects to the appropriate handler function for the given <see cref="ITSOMessage"/> <paramref name="ServiceMessage"/> type
+        /// </summary>
+        /// <param name="Query"></param>
+        /// <param name="ServiceMessage"></param>
         private void OnIncomingServiceMessage(TSODataServiceWrapperPDU Query, TSOServiceMessage ServiceMessage)
         {
             ITSOMessage MessageContent = ServiceMessage.GetMessageAs();
@@ -250,20 +255,33 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     break;
             }
         }
-
+        /// <summary>
+        /// Called when an incoming <see cref="TSOServiceMessage"/> is a <see cref="TSOTopicUpdateMessage"/>
+        /// <para/> <inheritdoc cref="TSOTopicUpdateMessage"/>
+        /// </summary>
+        /// <param name="Query"></param>
+        /// <param name="ServiceMessage"></param>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="NullReferenceException"></exception>
+        /// <exception cref="InvalidDataException"></exception>
         private void OnIncomingTopicUpdateMessage(TSODataServiceWrapperPDU Query, TSOTopicUpdateMessage ServiceMessage)
         {
+            // Layout the exact request parameters
             TSO_NewImproved_TSOData_Constants StructID = (TSO_NewImproved_TSOData_Constants)ServiceMessage.GetTSODataDefinitionDetail_TypeID();
             uint ObjectID = ServiceMessage.GetTSODataDefinitionDetail_ObjectID();
             TSO_NewImproved_TSOData_Constants FieldID = (TSO_NewImproved_TSOData_Constants)ServiceMessage.GetTSODataDefinitionDetail_FieldID();
 
             //Get requested data structure info
             if (!GetService<TSODataDefinitionService>().TryGetDataStruct((uint)StructID, out ITSODataStruct structInfo))
-                throw new InvalidOperationException($"Cannot locate the DataStruct: {StructID:X} (Query: {Query.DefinitionStringID:X})");
+                throw new InvalidOperationException($"Cannot locate the {nameof(ITSODataStruct)}: {StructID:X} (Query: {Query.DefinitionStringID:X})");
 
+            // find the field of the TSO Data Struct we're updating
             TSODataField? fieldInfo = structInfo.GetFieldByID((uint)FieldID);
             if (fieldInfo == null)
                 throw new NullReferenceException(nameof(fieldInfo));
+
+            // values from the TSOClient sometimes are not formatted as expected, we need to sanitize the values using Controllers
+            // these controllers take the query and the RuntimeDataObject and ensure things are well-formatted for our Data Service.
 
             // Value verification code begins here
             ITSOValue TSOValue = ServiceMessage.Value;
@@ -272,18 +290,18 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 object? valueArray = TSOValue_SafeGetValue(TSOValue); // try to read the value in the ITSOValue
                 if (valueArray == null)
                     throw new NullReferenceException("TSOValue was null."); // null value
-                if (!valueArray.GetType().IsAssignableTo(typeof(IEnumerable<object>))) // if its a vector of objects, handle this case
+                if (valueArray is not IEnumerable && valueArray is not string) // if its a vector of objects, handle this case
                     valueArray = new object[] { valueArray }; // ensure it is a vector ... this gets checked after verification
                 List<ITSOValue> verifiedValues = new();
-                foreach (object arbiraryValue in (IEnumerable<object>)valueArray)
+                foreach (object arbiraryValue in (IEnumerable)valueArray)
                 { // for each value in this list, verify it
                     TSODataRuntimeObject StructObject = null;
-                    if (arbiraryValue is TSODataRuntimeObject) // is it already a runtime struct?
+                    if (arbiraryValue is TSODataRuntimeObject) // is it already a runtime struct? remember that struct object types are expected to be this, but sometimes the client doesn't do this.
                         StructObject = (TSODataRuntimeObject)arbiraryValue;
-                    else // incoming value struct is supposed to be one but isn't, make one from what we do have
+                    else // incoming value struct is supposed to be one but isn't, make one from what data we do have
                         GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);           
                     //sanitize the value using Controllers
-                    if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient))
+                    if (TSOData_InvokeControllers(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient))
                         verifiedValues.Add(CreateStructObjectValue(StructObject)); // add the sanitized value to the list
                 }
                 if (verifiedValues.Count == 1) // is it a Single Item list? if so just return the value
@@ -299,14 +317,20 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             // SUCCESS. NOW REQUEST THE UPDATED VALUE FROM THE DATA SERVICE
             if (successful)
                 OnIncomingStandardQuery(
-                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, 
-                    new TSOServiceMessage(new TSONetMessageStandard(), Query.Message.SequenceID)), ObjectID);
+                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, Query.Message), [0,ObjectID]);
         }
 
-        private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => OnIncomingStandardQuery(Query, (ServiceMessage.HasData2 && ServiceMessage.Data2.HasValue) ? ServiceMessage.Data2.Value : 0xFEEDF00D);
+        private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => 
+            OnIncomingStandardQuery(Query, ServiceMessage.GetDataValues());
 
-        private void OnIncomingStandardQuery(TSODataServiceWrapperPDU Query, uint ObjectID)
+        private void OnIncomingStandardQuery(TSODataServiceWrapperPDU Query, params uint[] Values)
         {
+            if (!Values.Any())
+                throw new ArgumentException($"The provided {nameof(Values)} attached to this {nameof(OnIncomingStandardQuery)} are: none.");
+
+            //objectID is historically Data2 (last) ... but could change later!
+            uint ObjectID = Values.Last();
+
             //REMOTE DATA SERVICE REQUEST
 
             TSODataRuntimeObject StructObject = null;
@@ -320,12 +344,19 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 throw new InvalidDataException($"nio2so Data Service returned null or the structure was not found.");
                 TSOData_TryGetObjectInstance((uint)Query.DefinitionStringID, out StructObject);
             }
-
-            if (TSOData_SanitizeValue(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromDataService))
+            // invoke the controllers with the data service direction to double-check the data
+            if (TSOData_InvokeControllers(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromDataService))
                 RespondToWithObject(Query, StructObject, ObjectID);            
         }
 
-        private bool TSOData_SanitizeValue(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection Direction)
+        /// <summary>
+        /// Invokes a <see cref="TSODataServiceControllerBase"/> to sanitize the value provided from the Data Service or TSO depending on <paramref name="Direction"/>
+        /// </summary>
+        /// <param name="Query"></param>
+        /// <param name="StructObject"></param>
+        /// <param name="Direction"></param>
+        /// <returns></returns>
+        private bool TSOData_InvokeControllers(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection Direction)
         {
             if (StructObject != null)
             {
@@ -395,7 +426,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         {
             if (!TryGetService(out TSODataDefinitionService? service))
                 throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
-            dynamic obj = service.GetObject(TSOData_TypeID, out ITSODataStruct Struct);
+            dynamic obj = service.GetStructObject(TSOData_TypeID, out ITSODataStruct Struct);
             StructObject = new(Struct,obj);
             return obj != null;
         }
@@ -450,37 +481,54 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (Value is null)
                 throw new ArgumentException(nameof(Value) + " is null");
 
+            if (Value is TSODataRuntimeObject runtimeObject)
+                Value = runtimeObject.Instance;
+
             ITSOValue tsoValue = default;
 
             uint typeID = property.TypeID;
             switch (property.Classification)
             {
                 case TSODataFieldClassification.SingleField:
-                    //try basic value types
-                    TSOValueConverter.TryConvert(property.TypeString, Value, out tsoValue);
+                    {
+                        //attempt to locate this struct type, if it exists
+                        bool structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
+                        if (!structFound)
+                        { // struct not found, try basic value types
+                            if (!TSOValueConverter.TryConvert(property.TypeString, Value, out tsoValue))
+                                ThrowNotImplemented();
+                        }
+                        else
+                        { // struct type found, try struct type value creation
+                            tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, Value));
+                        }                        
+                    }
                     break;
                 case TSODataFieldClassification.TypedList:
-                    var structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
-                    if (!structFound)
-                    { // try basic types: bool,uint,etc.
-                        TSOValueConverter.TryConvertArray(property.TypeString, Value, out ITSOValueVector? tsoValueVector);
-                        tsoValue = tsoValueVector;
-                    }
-                    else
-                    { // try TSODataStructs vector
-                        IEnumerable<object> tsoObjectList = null;
-                        if (Value.GetType().IsAssignableTo(typeof(IEnumerable<object>))) // list of objects returned, good to go.
-                            tsoObjectList = (IEnumerable<object>)Value;
-                        else if (Value is ExpandoObject) // single object returned ... make into a list
-                            tsoObjectList = [Value];
-                        else if (Value is TSODataRuntimeObject runtimeObject)
-                        {
-                            tsoObjectList = [runtimeObject.Instance];
+                    {
+                        //attempt to locate this struct type, if it exists
+                        var structFound = TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct);
+                        if (!structFound)
+                        { // try basic types: bool,uint,etc.
+                            TSOValueConverter.TryConvertArray(property.TypeString, Value, out ITSOValueVector? tsoValueVector);
+                            tsoValue = tsoValueVector;
                         }
-                        if (Value == null)
-                            throw new InvalidDataException($"The value provided is not a list type.");
-                        // ensure that all incoming objects to this function are runtime objects
-                        tsoValue = new TSOValue_PropertyVector(tsoObjectList.Select(x => CreateStructObjectValue(x is TSODataRuntimeObject ? (TSODataRuntimeObject)x : new TSODataRuntimeObject(SubTypeStruct, x))).ToArray());
+                        else
+                        { // try TSODataStructs vector
+                            IEnumerable tsoObjectList = null;
+                            if (Value is IEnumerable && Value is not string) // list of objects returned, good to go.
+                                tsoObjectList = (IEnumerable)Value;
+                            else if (Value is ExpandoObject) // single object returned ... make into a list
+                                tsoObjectList = new ExpandoObject[] { (ExpandoObject)Value };
+
+                            if (Value == null)
+                                throw new InvalidDataException($"The value provided is not a list type.");
+
+                            // ensure that all incoming objects to this function are runtime objects
+                            tsoValue = new TSOValue_PropertyVector(tsoObjectList.
+                                Cast<object>().Select(x => 
+                                CreateStructObjectValue(x is TSODataRuntimeObject ? (TSODataRuntimeObject)x : new TSODataRuntimeObject(SubTypeStruct, x))).ToArray());
+                        }
                     }
                     break;
                 case TSODataFieldClassification.Map:
@@ -490,12 +538,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     tsoValue = tsoValueMap;
                     break;
             }
-
-            if (tsoValue == null && Value is ExpandoObject)
-            { // try struct type                   
-                if (TSOData_GetDataStruct(typeID, out ITSODataStruct SubTypeStruct))
-                    tsoValue = CreateStructObjectValue(new TSODataRuntimeObject(SubTypeStruct, Value));
-            }
+            
             if (tsoValue == null)
             {
                 ThrowNotImplemented();

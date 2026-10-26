@@ -16,6 +16,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
     }
     /// <summary>
     /// Marks this method as a handler for a specific <see cref="TSOVoltronPacket"/> type.
+    /// <para/> Please ensure all method signatures are compatible with <see cref="TSOProtocolBase.VoltronInvokationDelegate"/>:
+    /// <para/> <inheritdoc cref="TSOProtocolBase.VoltronInvokationDelegate"/>
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class TSOProtocolHandler : Attribute, ITSOProtocolHandlerAttribute
@@ -82,7 +84,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
     public abstract class TSOProtocolBase : ITSOProtocolRegulator
     {
         /// <summary>
-        /// A <see cref="TSOVoltronPacket"/> function handler delegate that will be used to handle incoming <see cref="TSOVoltronPacket"/> types
+        /// A <see cref="TSOVoltronPacket"/> function handler delegate that will be used to handle incoming <see cref="TSOVoltronPacket"/> types:
+        /// <para/> Signature: <see langword="void"/> METHOD_NAME(<see cref="TSOVoltronPacket"/> PDU);
         /// </summary>
         /// <param name="PDU"></param>
         public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);

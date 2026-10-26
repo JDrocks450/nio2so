@@ -12,6 +12,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
     /// A <see cref="ITSOMessage"/> format that is a container for an <see cref="ITSOValue"/> type on a given type found in the TSO Data Definition
     /// <para/>You can use <see cref="TSO_NewImproved_TSOData_Constants"/> for a list of all constants, many of which are TSO Data Objects
     /// <para/>This will update the client with the value of a given Field (See: <see cref="TSOTopicUpdateMessage.GetTSODataDefinitionDetail_FieldID()"/>) on a TSO Data Object
+    /// <para/>Please be aware: TSOClient can sometimes send a value that isn't a <see cref="TSOValue_TSODataStructProperty"/> to a type expected to be an Data Struct type.
+    /// In these circumstances, it is understood we should utilize the value that is responded with to make a Struct from that(those) value(s)
     /// </summary>
     internal partial class TSOTopicUpdateMessage : TSOMessageFormatBase
     {

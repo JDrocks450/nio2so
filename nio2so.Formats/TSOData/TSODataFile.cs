@@ -101,13 +101,28 @@ namespace nio2so.Formats.TSOData
                 return getStructObject(data, FieldValues);
             throw new FileNotFoundException("Struct not found by name.");
         }
-
+        /// <summary>
+        /// <inheritdoc cref="TryGetObject(uint, out TSODataRuntimeObject, object[])"/>
+        /// </summary>
+        /// <param name="StringName"></param>
+        /// <param name="Object"></param>
+        /// <param name="FieldValues"></param>
+        /// <returns></returns>
         public bool TryGetObject(string StringName, out TSODataRuntimeObject Object, params object[] FieldValues)
         {
             dynamic instance = GetObject(StringName, out ITSODataStruct struc, FieldValues);
             Object = new(struc, instance);
             return instance != null;
         }
+        /// <summary>
+        /// Creates a <see cref="TSODataRuntimeObject"/> with the given auto-initializer list Fields <paramref name="FieldValues"/>
+        /// <para/>These should match the order in which they appear in the <see cref="TSODataFile"/> <see cref="ITSODataStruct"/> <paramref name="Struct"/>
+        /// </summary>
+        /// <param name="Struct"></param>
+        /// <param name="StructObject"></param>
+        /// <param name="FieldValues"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         public bool TryGetObject(uint StringID, out TSODataRuntimeObject Object, params object[] FieldValues)
         {
             dynamic instance = GetObject(StringID, out ITSODataStruct struc, FieldValues);
@@ -123,7 +138,14 @@ namespace nio2so.Formats.TSOData
                 var field = data.Fields[i];
                 string TypeDescriptor = field.TypeString;
                 object? constructorArg = constructorParams.ElementAtOrDefault(i);
-                object fieldValue = constructorArg ?? GetTypeByString(TypeDescriptor);
+                object defaultValue = GetTypeByString(TypeDescriptor);
+                object fieldValue = defaultValue;
+                if (constructorArg != null)
+                {
+                    if (constructorArg.GetType().IsAssignableTo(defaultValue.GetType()))
+                        fieldValue = constructorArg;
+                    else throw new InvalidCastException($"{constructorArg} is not assignable to: {TypeDescriptor} ({defaultValue.GetType().Name})");
+                }
                 if (fieldValue is null)
                     throw new InvalidOperationException($"Failed to get type for field {field.NameString} of type {TypeDescriptor}");
                 switch (field.Classification)
