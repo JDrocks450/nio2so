@@ -526,6 +526,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                                 tsoObjectList = (IEnumerable)Value;
                             else if (Value is ExpandoObject) // single object returned ... make into a list
                                 tsoObjectList = new ExpandoObject[] { (ExpandoObject)Value };
+                            else
+                                throw new InvalidCastException("Struct type must be ExpandoObject or List of objects.");
 
                             if (Value == null)
                                 throw new InvalidDataException($"The value provided is not a list type.");
