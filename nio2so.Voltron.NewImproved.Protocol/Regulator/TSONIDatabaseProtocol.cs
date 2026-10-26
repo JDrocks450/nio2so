@@ -25,12 +25,13 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (PDU is not TSODBRequestWrapperPDU dbPDU)
                 throw new InvalidOperationException("Invalid PDU type for DATABASE_REQUEST handler.");
 
-            var stdMsg = dbPDU.Message.GetMessageAs<TSONetMessageStandard>();
+            ITSOMessage stdMsg = dbPDU.Message.GetMessageAs();
 
             TSOTCPPacket response = PacketBase.Parse<TSOTCPPacket>(File.ReadAllBytes(@"C:\nio2so\const\loadavatarbyid.dat"), out _);
-            var factory = GetService<TSONewImprovedPDUFactory>();
-            TSOVoltronPacket? voltronResponse = factory.CreatePacketObjectsFromAriesPacket(response).FirstOrDefault();
-            var stdMsg1 = (voltronResponse as TSODBRequestWrapperPDU).Message.GetMessageAs<TSONetMessageStandard>();
+            TSONewImprovedPDUFactory factory = GetService<TSONewImprovedPDUFactory>();
+            TSODBRequestWrapperPDU? voltronResponse = (TSODBRequestWrapperPDU)factory.CreatePacketObjectsFromAriesPacket(response).FirstOrDefault();
+            voltronResponse.SenderAvatarID = 1337;
+            ITSOMessage stdMsg1 = voltronResponse.Message.GetMessageAs();
             if (voltronResponse != null)
                 RespondWith(voltronResponse);
         }

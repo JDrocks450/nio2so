@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU
 {
@@ -27,6 +28,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// m_PlayerInfo
         /// </summary>
         public TSOPlayerInfoStruct PlayerInfo { get; set;  }
+        /// <summary>
+        /// The length of the <see cref="ContentBytes"/> property
+        /// </summary>
+        [TSOVoltronDistanceToEnd]
+        public uint ContentLength { get; set; }
         /// <summary>
         /// <inheritdoc cref="TSODataServiceWrapperPDU.Message"/>
         /// </summary>
