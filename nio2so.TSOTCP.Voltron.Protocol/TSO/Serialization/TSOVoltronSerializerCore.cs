@@ -457,7 +457,7 @@ namespace nio2so.Voltron.Core.TSO.Serialization
             else if (PropertyType == typeof(byte))
                 Stream.EmplaceBody((byte)SerializeValue);
             else if (PropertyType == typeof(sbyte))
-                Stream.EmplaceBody((byte)SerializeValue);
+                Stream.EmplaceBody(System.Convert.ToByte(SerializeValue));
             else if (PropertyType == typeof(DateTime))
                 Stream.EmplaceBody((uint)((DateTime)SerializeValue).Minute); // probably not right
             else if (PropertyType == typeof(bool))

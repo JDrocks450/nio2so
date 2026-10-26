@@ -1,6 +1,7 @@
 ﻿using nio2so.Formats.TSOData;
 using nio2so.Voltron.NewImproved.Protocol.Regulator;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -287,10 +288,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
         public static bool TryConvertArray(string TypeHint, object Value, out ITSOValueVector TypedList)
         {
-            if (Value is not IEnumerable<object>)
+            if (Value is not ICollection)
                 throw new InvalidCastException();
-            IEnumerable<object> list = (IEnumerable<object>)Value;
-            ITSOValue[] valueArray = new ITSOValue[list.Count()];
+            ICollection list = (ICollection)Value;
+            ITSOValue[] valueArray = new ITSOValue[list.Count];
             int i = 0;
             foreach(var value in list)
             {

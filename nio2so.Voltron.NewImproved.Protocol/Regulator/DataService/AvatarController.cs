@@ -1,4 +1,5 @@
 ﻿using nio2so.DataService.Common.Types.Avatar;
+using nio2so.Formats.TSOData;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using System.ComponentModel;
@@ -28,7 +29,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
                     break;
             }
             
-            obj.Avatar_IsOnline = obj.Avatar_Name == "Bisquick";
+            obj.Avatar_IsOnline = true;
 
             Context.Handled = true;
             return;
@@ -40,21 +41,46 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             dynamic obj = Context.DataObject.GetObjectAsDynamic();
             Context.Handled = true;
 
-            return;
+            //FinancialDetail
+            {
+                Sender.GetService<TSODataDefinitionService>().TryGetDataStruct((uint)TSO_NewImproved_TSOData_Constants.FinancialDetail, out var financialDetail);
+                Sender.GetService<TSODataDefinitionService>().CreateObject(financialDetail, out var financialDetailObject);
 
-            var financialHistoryRec = new ExpandoObject();
+                dynamic fd = financialDetailObject.GetObjectAsDynamic();
+                fd.FinancialDetail_TimeFrame = (byte)0x01;
+                fd.FinancialDetail_Type = (byte)0x01;
 
-            financialHistoryRec.TryAdd("FinancialHistoryRec_Amount", (int)10000);
-            financialHistoryRec.TryAdd("FinancialHistoryRec_Date", "October 24th");
+                Sender.GetService<TSODataDefinitionService>().TryGetDataStruct((uint)TSO_NewImproved_TSOData_Constants.FinancialDetailRec, out var financialDetailRec);
+                Sender.GetService<TSODataDefinitionService>().CreateObject(financialDetailRec, out var financialDetailRecObject);
 
-            var financialHistory = new ExpandoObject();
+                dynamic rec = financialDetailRecObject.GetObjectAsDynamic();
+                rec.FinancialDetailRec_Amount = (int)1000;
+                rec.FinancialDetailRec_Category = (byte)0x01;
 
-            financialHistory.TryAdd("FinancialHistory_TimeScale", (sbyte)0);
-            financialHistory.TryAdd("FinancialHistory_Type", (sbyte)1);
-            financialHistory.TryAdd("FinancialHistory_History", new object[] { financialHistoryRec });
+                fd.FinancialDetail_Detail = new object[] { financialDetailRecObject.Instance };
 
-            obj.Avatar_FinancialHistoryVec = new object[] { financialHistory };
+                obj.Avatar_FinancialDetailVec = new object[] { financialDetailObject.Instance };
+            }
+            //Fianncial History
+            {
+                Sender.GetService<TSODataDefinitionService>().TryGetDataStruct((uint)TSO_NewImproved_TSOData_Constants.FinancialHistory, out var financialHistory);
+                Sender.GetService<TSODataDefinitionService>().CreateObject(financialHistory, out var financialHistoryObject);
 
+                dynamic fh = financialHistoryObject.GetObjectAsDynamic();
+                fh.FinancialHistory_TimeScale = (sbyte)0x03;
+                fh.FinancialHistory_Type = (sbyte)0x01;
+
+                Sender.GetService<TSODataDefinitionService>().TryGetDataStruct((uint)TSO_NewImproved_TSOData_Constants.FinancialDetailRec, out var financialHistoryRec);
+                Sender.GetService<TSODataDefinitionService>().CreateObject(financialHistoryRec, out var financialHistoryRecObject);
+
+                dynamic rec = financialHistoryRecObject.GetObjectAsDynamic();
+                rec.FinancialHistoryRec_Amount = (int)2000;
+                rec.FinancialHistoryRec_Date = "September 1st, 2008";
+
+                fh.FinancialHistory_History = new object[] { financialHistoryRecObject.Instance };
+
+                obj.Avatar_FinancialHistoryVec = new object[] { financialHistoryObject.Instance };
+            }
             Context.Handled = true;
             return;
         }

@@ -290,7 +290,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 object? valueArray = TSOValue_SafeGetValue(TSOValue); // try to read the value in the ITSOValue
                 if (valueArray == null)
                     throw new NullReferenceException("TSOValue was null."); // null value
-                if (valueArray is not IEnumerable && valueArray is not string) // if its a vector of objects, handle this case
+                if (TSOValue is ITSOValueMap)
+                    throw new NotImplementedException(nameof(ITSOValueMap));
+                if (TSOValue is not ITSOValueVector) // if its a vector of objects, handle this case
                     valueArray = new object[] { valueArray }; // ensure it is a vector ... this gets checked after verification
                 List<ITSOValue> verifiedValues = new();
                 foreach (object arbiraryValue in (IEnumerable)valueArray)
@@ -299,10 +301,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     if (arbiraryValue is TSODataRuntimeObject) // is it already a runtime struct? remember that struct object types are expected to be this, but sometimes the client doesn't do this.
                         StructObject = (TSODataRuntimeObject)arbiraryValue;
                     else // incoming value struct is supposed to be one but isn't, make one from what data we do have
-                        GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);           
+                        GetService<TSODataDefinitionService>().CreateObject(valueStructInfo, out StructObject, arbiraryValue);
                     //sanitize the value using Controllers
-                    if (TSOData_InvokeControllers(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient))
-                        verifiedValues.Add(CreateStructObjectValue(StructObject)); // add the sanitized value to the list
+                    if (TSOData_InvokeControllers(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromTSOClient))                    
+                        verifiedValues.Add(CreateStructObjectValue(StructObject)); // add the sanitized value to the list                                            
                 }
                 if (verifiedValues.Count == 1) // is it a Single Item list? if so just return the value
                     TSOValue = verifiedValues[0];
@@ -316,8 +318,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             // SUCCESS. NOW REQUEST THE UPDATED VALUE FROM THE DATA SERVICE
             if (successful)
+            {                
                 OnIncomingStandardQuery(
-                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, Query.Message), [0,ObjectID]);
+                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, Query.Message), [0, ObjectID]);
+            }
         }
 
         private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => 
@@ -455,7 +459,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDUs(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint SequenceID)
         {
             foreach (var property in TSOData_GetProperties(StructObject))
+            {
                 yield return MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, SequenceID);
+            }
         }
 
         private void RespondTo(TSODataServiceWrapperPDU Query, TSODataServiceWrapperPDU Response)
@@ -516,7 +522,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                         else
                         { // try TSODataStructs vector
                             IEnumerable tsoObjectList = null;
-                            if (Value is IEnumerable && Value is not string) // list of objects returned, good to go.
+                            if (Value is IEnumerable && Value is not string && Value is not ExpandoObject) // list of objects returned, good to go.
                                 tsoObjectList = (IEnumerable)Value;
                             else if (Value is ExpandoObject) // single object returned ... make into a list
                                 tsoObjectList = new ExpandoObject[] { (ExpandoObject)Value };
