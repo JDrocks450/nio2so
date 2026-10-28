@@ -1,4 +1,5 @@
-﻿using System;
+﻿using nio2so.Voltron.NewImproved.Protocol.Constants;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,14 +24,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
             var dict = new Dictionary<uint, object>();
             obj.City_ReservedLotInfo = dict;
 
-            for(uint x = 0; x < 512; x++)
-            {
-                for (uint y = 0; y < 512; y++)
-                {
-                    uint lotID = ((uint)y << 16) | (uint)x;
-                    dict.Add(lotID, y % 10 == 0);
-                }
-            }
+            dict.Add(12058837, true);
 
             Context.Handled = true;
             return;

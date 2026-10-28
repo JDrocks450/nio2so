@@ -17,7 +17,7 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = true;
+        public static bool SplitBuffersPDUEnabled = false;
         /// <summary>
         /// Prevents databases from saving to disk for testing and debugging
         /// </summary>

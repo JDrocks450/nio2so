@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace nio2so.Voltron.NewImproved.Protocol
+namespace nio2so.Voltron.NewImproved.Protocol.Constants
 {
     public enum TSO_NewImproved_TSOData_Constants : uint
     {

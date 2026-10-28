@@ -1,4 +1,5 @@
 ﻿using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.NewImproved.Protocol.PDU.Database;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
@@ -6,6 +7,16 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
     public interface ITSOMessage
     {
         TSO_NewImproved_TSOMessageType_CLSIDs GetMessageType();
+        /// <summary>
+        /// The number assigned to this Request/Response
+        /// <para/>See: <see cref="ITSOMessage.GetResponseID"/>
+        /// </summary>
+        uint GetResponseID();
+        /// <summary>
+        /// Sets the number assigned to this Request/Response
+        /// <para/>See: <see cref="ITSOMessage.GetResponseID"/>
+        /// </summary>
+        void SetResponseID(uint NewResponseID);
     }
     public abstract class TSOMessageFormatBase : ITSOMessage
     {
@@ -20,6 +31,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// <exception cref="NotImplementedException"></exception>
         public static ITSOMessage GetMessageAs(TSO_NewImproved_TSOMessageType_CLSIDs MessageType, byte[] MessageContentBytes)
         {
+            
             switch (MessageType)
             {
                 case TSO_NewImproved_TSOMessageType_CLSIDs.cTSONetMessageStandard:
@@ -27,6 +39,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                     
                 case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOTopicUpdateMessage:
                     return GetMessageAs<TSOTopicUpdateMessage>(MessageContentBytes);
+
+                case TSO_NewImproved_TSOMessageType_CLSIDs.cTSOAvatarCreationRequest:
+                    return GetMessageAs<TSOAvatarCreationRequest>(MessageContentBytes);
 
                 default:
                     throw new NotImplementedException($"{MessageType} isn't implemented yet. Better get on that now.");
@@ -45,5 +60,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 throw new NullReferenceException($"Deserialized {typeof(T).Name} failed!");
             throw new NotImplementedException(typeof(T).Name);
         }
+
+        public abstract uint GetResponseID();
+        public abstract void SetResponseID(uint NewResponseID);
     }
 }

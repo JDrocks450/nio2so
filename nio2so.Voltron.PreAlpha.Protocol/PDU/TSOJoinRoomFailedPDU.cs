@@ -1,5 +1,5 @@
 ﻿using nio2so.Voltron.Core.TSO;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
+using nio2so.Voltron.Core.TSO.Struct;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.PDU
 {

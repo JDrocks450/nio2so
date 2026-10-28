@@ -1,4 +1,6 @@
-﻿namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
+﻿using nio2so.Voltron.NewImproved.Protocol.Constants;
+
+namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 {
     /// <summary>
     /// Verifies data structs related to the Top100 Protocol

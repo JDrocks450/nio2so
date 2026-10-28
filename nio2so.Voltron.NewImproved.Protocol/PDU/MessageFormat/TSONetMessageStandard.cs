@@ -1,5 +1,6 @@
 ﻿using nio2so.Formats.Util.Endian;
 using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using QuazarAPI.Networking.Data;
 using System.Runtime.Serialization;
@@ -17,6 +18,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         private byte[] _bytes;
 
         /// <summary>
+        /// The number assigned to this Request/Response
+        /// <para/>See: <see cref="ITSOMessage.GetResponseID"/>
+        /// </summary>
+        public uint MessageID { get; set; } = 0x2EEC9157;
+        /// <summary>
         /// <inheritdoc cref="TSODataServiceWrapperPDU.SendingAvatarID"/>
         /// </summary>
         public uint SendingAvatarID { get; set; }
@@ -28,6 +34,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
         [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public TSO_NewImproved_TSOData_Constants DataDefinitionID { get; set; }
+        
         /// <summary>
         /// The content of the message
         /// </summary>
@@ -44,6 +51,39 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                     ClearPreviousMessage();
             }
         }
+
+        public TSONetMessageStandard() : base()
+        {
+
+        }
+        public TSONetMessageStandard(byte[] MessageData) : this()
+        {
+            MessageBytes = MessageData;
+        }
+
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, uint? data1 = null, uint? data2 = null, uint? data3 = null, uint? data4 = null) : 
+            this(messageID, sendingAvatarID, dataDefinitionID, null, data1,data2,data3,data4)
+        {
+            
+        }
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, TSOServiceMessage Embedded, uint? data1 = null, uint? data2 = null, uint? data3 = null, uint? data4 = null) : this()
+        {
+            MessageID = messageID;
+            SendingAvatarID = sendingAvatarID;
+            DataDefinitionID = dataDefinitionID;
+            Data1 = data1;
+            Data2 = data2;
+            Data3 = data3;
+            Data4 = data4;
+            EmbeddedServiceMessage = Embedded;
+
+            _bytes = WriteMessageData();
+        }
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, TSOServiceMessage Embedded) : this(messageID,sendingAvatarID, dataDefinitionID, Embedded, null,null,null,null)
+        {
+
+        }
+
 
         //**autocalc**
 
@@ -135,6 +175,68 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 ;
         }
 
+        byte[] WriteMessageData()
+        {
+            using var stream = new MemoryStream();
+
+            void writeUInt(uint value, Endianness Endian = Endianness.BigEndian)
+            {
+                byte[] data = Endian == Endianness.BigEndian ?
+                    EndianBitConverter.Big.GetBytes(value) :
+                    EndianBitConverter.Little.GetBytes(value);
+                stream.Write(data, 0, data.Length);
+            }
+
+            // reset Flags before evaluation
+            Flags = 0;
+
+            // Data1 (Flag 1 << 1)
+            if (Data1.HasValue)
+            {
+                Flags |= (1 << 1);
+                writeUInt(Data1.Value, Endianness.BigEndian);
+            }
+
+            // Data2 (Flag 1 << 2)
+            if (Data2.HasValue)
+            {
+                Flags |= (1 << 2);
+                writeUInt(Data2.Value, Endianness.BigEndian);
+            }
+
+            // Data3 (Flag 1 << 3)
+            if (Data3.HasValue)
+            {
+                Flags |= (1 << 3);
+                writeUInt(Data3.Value, Endianness.BigEndian);
+            }
+
+            // EmbeddedServiceMessage (Flag 1 << 5)
+            if (EmbeddedServiceMessage != null)
+            {
+                Flags |= (1 << 5);
+                byte[] embeddedTSOMessage = TSOVoltronSerializer.Serialize(EmbeddedServiceMessage);
+                stream.Write(embeddedTSOMessage, 0, embeddedTSOMessage.Length);
+                return stream.ToArray();                
+            }
+
+            // StringContent (Flag 1 << 6)
+            if (!string.IsNullOrEmpty(StringContent))
+            {
+                Flags |= (1 << 6);
+                // TODO: Implement FC FF STR# serialization scheme here
+            }
+
+            // Data4 (Flag 1 << 4) written after StringContent to match Read function order
+            if (Data4.HasValue)
+            {
+                Flags |= (1 << 4);
+                writeUInt(Data4.Value, Endianness.BigEndian);
+            }
+
+            return stream.ToArray();
+        }
+
         private void ClearPreviousMessage()
         {
             Data1 = Data2 = Data3 = Data4 = null;
@@ -157,5 +259,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 values.Add(Data4.Value);
             return values.ToArray();
         }
+
+        public override uint GetResponseID() => MessageID;
+        public override void SetResponseID(uint NewResponseID) => MessageID = NewResponseID;
     }
 }

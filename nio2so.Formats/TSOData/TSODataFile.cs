@@ -140,10 +140,14 @@ namespace nio2so.Formats.TSOData
                 object? constructorArg = constructorParams.ElementAtOrDefault(i);
                 object defaultValue = GetTypeByString(TypeDescriptor);
                 object fieldValue = defaultValue;
+                bool usingArg = false;
                 if (constructorArg != null)
                 {
                     if (constructorArg.GetType().IsAssignableTo(defaultValue.GetType()))
+                    {
                         fieldValue = constructorArg;
+                        usingArg = true;
+                    }
                     else throw new InvalidCastException($"{constructorArg} is not assignable to: {TypeDescriptor} ({defaultValue.GetType().Name})");
                 }
                 if (fieldValue is null)
@@ -153,10 +157,16 @@ namespace nio2so.Formats.TSOData
                     case TSODataFieldClassification.SingleField:
                         break;
                     case TSODataFieldClassification.TypedList:
-                        fieldValue = Array.CreateInstance(fieldValue.GetType(), 0);
+                        Array fooArray = Array.CreateInstance(fieldValue.GetType(), 0);
+                        if (usingArg)
+                            fooArray.SetValue(fieldValue, 0);
+                        fieldValue = fooArray;
                         break;
                     case TSODataFieldClassification.Map:
-                        fieldValue = new Dictionary<string, object>();
+                        fieldValue = new Dictionary<string, object>()
+                        {
+                            { "0", fieldValue }
+                        };
                         break;
                 }
                 obj.TryAdd(field.NameString, fieldValue);

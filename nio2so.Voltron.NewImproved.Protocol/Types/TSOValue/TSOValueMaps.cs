@@ -6,15 +6,16 @@ using System.Threading.Tasks;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
-    internal abstract class TSOValue_MapBase<T> : TSOValueBase<IDictionary<uint, T>>, ITSOValueMap
+
+    internal abstract class TSOValue_MapBase<T> : TSOValueBase<TSOValue_MapKeyValuePair<T>[]>, ITSOValueMap
     {
         public override abstract TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; }
         [Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes.TSOVoltronArrayLength(nameof(Value))]
         public uint Length { get; set; }
-        public override IDictionary<uint, T> Value { get => base.Value; set => base.Value = value; }
+        public override TSOValue_MapKeyValuePair<T>[] Value { get => base.Value; set => base.Value = value; }
 
         protected TSOValue_MapBase() : base() { }
-        protected TSOValue_MapBase(params KeyValuePair<uint, T>[] Values) : base(new Dictionary<uint,T>(Values)) { }
+        protected TSOValue_MapBase(params TSOValue_MapKeyValuePair<T>[] Values) : base(Values) { }
     }
 
     internal class TSOValue_Uint32Map : TSOValue_MapBase<uint>
@@ -25,7 +26,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         {
         }
 
-        public TSOValue_Uint32Map(params KeyValuePair<uint, uint>[] Values) : base(Values)
+        public TSOValue_Uint32Map(params TSOValue_MapKeyValuePair<uint>[] Values) : base(Values)
         {
         }
 
@@ -39,7 +40,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
         {
         }
 
-        public TSOValue_BooleanMap(params KeyValuePair<uint, bool>[] Values) : base(Values)
+        public TSOValue_BooleanMap(params TSOValue_MapKeyValuePair<bool>[] Values) : base(Values)
         {
         }
 

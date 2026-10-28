@@ -2,6 +2,7 @@
 using nio2so.Formats.TSOData;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.NewImproved.Protocol.Constants;
 using System.ComponentModel;
 using System.Dynamic;
 
@@ -13,6 +14,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
     internal class AvatarController : TSODataServiceControllerBase
     {
         public AvatarController() { }
+
+        [TSODataServiceTypeHandler("Bookmark", (uint)TSO_NewImproved_TSOData_Constants.Bookmark)]
+        public void Bookmark_StructHandler(TSOProtocol Sender, HandlerContext Context)
+        {
+            Context.Handled = true;
+        }
 
         [TSODataServiceTypeHandler("Avatar", (uint)TSO_NewImproved_TSOData_Constants.Avatar)]
         public void Avatar_StructHandler(TSOProtocol Sender, HandlerContext Context)

@@ -11,9 +11,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.DataService
         /// <summary>
         /// The format of this <see cref="MessageContentBytes"/>
         /// </summary>
-        public TSO_NewImproved_TSOMessageType_CLSIDs MessageFormat { get; set; }
-
-        public uint SequenceID { get; set; } = 0x2EEC9157;
+        public TSO_NewImproved_TSOMessageType_CLSIDs MessageFormat { get; set; }        
 
         [TSOVoltronBodyArray]
         public byte[] MessageContentBytes { get; set; } = [];
@@ -23,10 +21,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.DataService
 
         }
 
-        public TSOServiceMessage(ITSOMessage MessageContent, uint SequenceID) : this()
+        public TSOServiceMessage(ITSOMessage MessageContent) : this()
         {
             SetMessageAs(MessageContent);
-            this.SequenceID = SequenceID;
+            //this.SequenceID = SequenceID;
         }
 
         /// <summary>
@@ -52,8 +50,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.DataService
 
         public override string ToString()
         {
-            return $"{GetType().Name} {{ {nameof(SequenceID)}: {SequenceID} {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} " +
+            return $"{GetType().Name} {{ {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} " +
                 $"{nameof(MessageFormat)}: {MessageFormat}";
         }
+
+        internal uint GetResponseID() => GetMessageAs().GetResponseID();
+
+        internal void SetResponseID(uint NewResponseID) => GetMessageAs().SetResponseID(NewResponseID);
     }
 }

@@ -2,7 +2,9 @@
 using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Top100;
 using nio2so.Formats.TSOData;
+using System.Collections;
 using System.Dynamic;
+using System.Reflection;
 using System.Text.Json;
 using System.Xml.Linq;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -95,6 +97,17 @@ namespace nio2so.DataService.API.Databases
                 return false;
 
             TSODataRuntimeObject obj = new TSODataRuntimeObject(Struct, dbValue.TSODataObject);
+
+            //**set field value
+            if (Field.Classification == TSODataFieldClassification.TypedList ||
+                Field.Classification == TSODataFieldClassification.Map)
+            {
+                if (Value is not ICollection || Value is ExpandoObject) // ensure it is saved as JArray ... this also handles ExpandoObject
+                    Value = new object[] { Value };
+                ICollection<object> collection = (ICollection<object>)obj.GetFieldValue(Field);
+                foreach (var item in (IEnumerable)Value)
+                    collection.Add(item);
+            }
             obj.SetFieldValue(Field, Value);
 
             await Save();

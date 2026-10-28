@@ -115,4 +115,18 @@
 
         public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;
     }
+    internal class TSOValue_iunknown : TSOValueBase<byte[]>
+    {
+        const TSO_NewImproved_TSOValueBase_CLSIDs MYID = (TSO_NewImproved_TSOValueBase_CLSIDs)TSO_NewImproved_TSOValueBase_CLSIDs.cTSOValue_Unknown;
+
+        public TSOValue_iunknown()
+        {
+        }
+
+        public TSOValue_iunknown(byte[] Value) : base(Value)
+        {
+        }
+
+        public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;
+    }
 }

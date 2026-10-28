@@ -1,4 +1,5 @@
-﻿using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
+﻿using nio2so.Voltron.NewImproved.Protocol.Constants;
+using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -51,7 +52,10 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         {
 
         }
-
+        /// <summary>
+        /// <inheritdoc cref="ITSOMessage.GetResponseID"/>
+        /// </summary>
+        public uint UpdateID { get; set; } = 0x2EEC9157;
         /// <summary>
         /// The type of <see cref="TSOTopicUpdateMessage"/> -- should be <see cref="TSO_NewImproved_GZMSGIDs.GZMSGID_cITSOApprovedTopicUpdate"/>
         /// </summary>
@@ -78,6 +82,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
 
         [TSOVoltronString(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.Length_Prefixed_Byte)]
         public string StatusMessage { get; set; } = "";
+        [TSOVoltronBodyArray]
+        public byte[] EndBytes { get; set; } = new byte[0];
 
         public uint GetTSODataDefinitionDetail_TypeID() => Vector[0];
         public uint GetTSODataDefinitionDetail_ObjectID() => Vector[1];
@@ -92,5 +98,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 $"FieldID: {(TSO_NewImproved_TSOData_Constants)GetTSODataDefinitionDetail_FieldID()} " +
                 $"with: {Value}";
         }
+
+        public override uint GetResponseID() => UpdateID;
+        public override void SetResponseID(uint NewResponseID) => UpdateID = NewResponseID;
     }
 }

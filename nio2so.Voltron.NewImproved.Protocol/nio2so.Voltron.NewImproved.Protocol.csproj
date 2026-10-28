@@ -7,12 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="PDU\Database\**" />
-    <EmbeddedResource Remove="PDU\Database\**" />
-    <None Remove="PDU\Database\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\nio2so.TSOTCP.Voltron.Protocol\nio2so.Voltron.Core.csproj" />
   </ItemGroup>
 

@@ -7,10 +7,12 @@ using nio2so.Voltron.Core;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
+using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System.Collections;
@@ -443,7 +445,14 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         {
             uint StructID = Struct.GetBaseStructID();
             TSOTopicUpdateMessage propertyValue = new(Property.Value, Property.FieldInfo.NameID, StructID, ObjectID);
-            return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new PDU.DataService.TSOServiceMessage(propertyValue, SequenceID));
+            propertyValue.UpdateID = SequenceID;
+            if (Property.Value is TSOValue_iunknown)
+            {
+                propertyValue.MessageID = (TSO_NewImproved_GZMSGIDs)0xE026278A;                
+                return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new TSOServiceMessage(new TSONetMessageStandard(propertyValue.UpdateID, SendingAvatarID,
+                    (TSO_NewImproved_TSOData_Constants)0xE026278A, new TSOServiceMessage(propertyValue))));
+            }
+            return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new PDU.DataService.TSOServiceMessage(propertyValue));
         }
         private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, uint FieldID, uint ObjectID, ITSOValue Value, uint SendingAvatarID, uint SequenceID)
         {
@@ -460,18 +469,20 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         {
             foreach (var property in TSOData_GetProperties(StructObject))
             {
-                yield return MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, SequenceID);
+                var pdu = MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, SequenceID);
+                if (pdu == null) continue;
+                yield return pdu; 
             }
         }
 
         private void RespondTo(TSODataServiceWrapperPDU Query, TSODataServiceWrapperPDU Response)
         {
             Response.SendingAvatarID = Query.SendingAvatarID;
-            Response.Message.SequenceID = Query.Message.SequenceID;
+            Response.Message.SetResponseID(Query.Message.GetResponseID());
             RespondWith(Response);
         }
-        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID) => 
-            RespondWithAll(MakeTSODataWrapperPDUs(StructObject, ObjectID, Query.SendingAvatarID, Query.Message.SequenceID));
+        private void RespondToWithObject(TSODataServiceWrapperPDU Query, TSODataRuntimeObject StructObject, uint ObjectID) =>
+            RespondWithAll(MakeTSODataWrapperPDUs(StructObject, ObjectID, Query.SendingAvatarID, Query.Message.GetResponseID()));        
 
         internal ITSOValue ConvertFieldPropertyToTSOValue(TSODataField property, object? Value)
         {
@@ -540,8 +551,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     }
                     break;
                 case TSODataFieldClassification.Map:
-                    ThrowNotImplemented();
-
                     TSOValueConverter.TryConvertMap(property.TypeString, Value, out ITSOValueMap? tsoValueMap);
                     tsoValue = tsoValueMap;
                     break;

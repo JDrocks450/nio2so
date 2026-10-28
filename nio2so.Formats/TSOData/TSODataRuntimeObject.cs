@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System.Collections;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace nio2so.Formats.TSOData
 {
@@ -115,14 +117,19 @@ namespace nio2so.Formats.TSOData
                     value = (ExpandoObject)valueConverter.Convert2((JsonElement)value);
                 if (value is not ExpandoObject)
                     throw new ArgumentException("Currently only compatible with ExpandoObject", nameof(Instance));
-                _instance = value;
+                _instance = (ExpandoObject)value;
+
+                //sanitize
+                string[] props = GetObjectAsDictionary().Where(x => x.Value is JsonElement).Select(y => y.Key).ToArray();
+                foreach (var prop in props)                
+                    GetObjectAsDictionary()[prop] = valueConverter.Convert2((JsonElement)GetObjectAsDictionary()[prop]);                  
             }
         }
-        private object _instance;
+        private ExpandoObject _instance;
         private readonly ITSODataValueConverter<JsonElement, object>? valueConverter;
 
-        public IDictionary<string, object>? GetObjectAsDictionary() => GetObjectAsExpando();
-        public ExpandoObject? GetObjectAsExpando() => Instance as ExpandoObject;
+        public IDictionary<string, object> GetObjectAsDictionary() => GetObjectAsExpando();
+        public ExpandoObject GetObjectAsExpando() => _instance;
         public dynamic GetObjectAsDynamic() => Instance;
         public T GetObjectAs<T>() => (T)Instance;
 
@@ -178,7 +185,12 @@ namespace nio2so.Formats.TSOData
         /// </summary>
         /// <param name="FieldInfo"></param>
         /// <param name="Value"></param>
-        public void SetFieldValue(TSODataField FieldInfo, object Value) => SetFieldValue(FieldInfo.NameString, Value); 
+        public void SetFieldValue(TSODataField FieldInfo, object Value)
+        {
+            if (FieldInfo.Classification != TSODataFieldClassification.SingleField && Value is not ICollection)
+                throw new InvalidCastException("Cannot set Map or TypedList to a value that doesn't implement ICollection");
+            SetFieldValue(FieldInfo.NameString, Value);
+        }
 
         public override string ToString() => Structure.ToString() ?? base.ToString();
 

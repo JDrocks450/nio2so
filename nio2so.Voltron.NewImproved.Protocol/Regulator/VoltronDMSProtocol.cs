@@ -68,14 +68,14 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         public TSOVoltronPacket GET_UPDATE_PLAYER(uint AvatarID, out string AvatarName)
         {            
             AvatarName = "default";
-            return new TSOUpdatePlayerPDU(new TSOPlayerInfoStruct(new TSOAriesIDStruct(AvatarID,AvatarName)));
+            return new TSOUpdatePlayerPDU(new TSOPlayerInfoStruct(new TSOAriesIDStruct(AvatarID,AvatarName),0x41,true));
         }
 
         public TSOVoltronPacket GET_HOST_ONLINE(ushort ClientBufferLength, params string[] Badwords) => new TSOHostOnlinePDU(ClientBufferLength, Badwords);
 
         public bool ON_CLIENT_JOIN_VOLTRON(uint AvatarID, out IEnumerable<TSOVoltronPacket> SendPackets)
         {
-            SendPackets = [];
+            SendPackets = [GET_UPDATE_PLAYER(AvatarID, out _)];
             return true;
         }
     }

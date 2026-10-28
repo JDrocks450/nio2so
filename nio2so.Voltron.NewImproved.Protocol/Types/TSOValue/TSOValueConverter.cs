@@ -149,6 +149,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
                     "uint64" => new TSOValue_Uint64(System.Convert.ToUInt64(value)),
                     "sint64" => new TSOValue_Sint64(System.Convert.ToInt64(value)),
 
+                    "iunknown" => new TSOValue_iunknown((byte[])value),
                     _ => null
                 };
                 if (returnType != null)
@@ -243,8 +244,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
                 "uint64" => new TSOValue_Uint64Vector(Source.Select(x => System.Convert.ToUInt64(x.GetValue())).ToArray()),
                 "sint64" => new TSOValue_Sint64Vector(Source.Select(x => System.Convert.ToInt64(x.GetValue())).ToArray()),*/
-                "bool" => new TSOValue_BooleanMap(Pairs.Select(x => new KeyValuePair<uint, bool>(x.Key, System.Convert.ToBoolean(x.Value.GetValue()))).ToArray()),
-                "uint32" => new TSOValue_Uint32Map(Pairs.Select(x => new KeyValuePair<uint, uint>(x.Key, System.Convert.ToUInt32(x.Value.GetValue()))).ToArray()),
+                "bool" => new TSOValue_BooleanMap(Pairs.Select(x => new TSOValue_MapKeyValuePair<bool>(x.Key, System.Convert.ToBoolean(x.Value.GetValue()))).ToArray()),
+                "uint32" => new TSOValue_Uint32Map(Pairs.Select(x => new TSOValue_MapKeyValuePair<uint>(x.Key, System.Convert.ToUInt32(x.Value.GetValue()))).ToArray()),
                 _ => null
             };
             if (returnType == null)
@@ -305,19 +306,19 @@ namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 
         public static bool TryConvertMap(string TypeHint, object Value, out ITSOValueMap Map)
         {
-            IDictionary<uint, object> sourceValue = null ;
+            ICollection< KeyValuePair<uint, object>> sourceValue = null ;
             if (Value is IDictionary<string, object> expando) // expandoObject -- convert to int - type map            
-                sourceValue = expando.Select(x => new KeyValuePair<uint, object>(System.Convert.ToUInt32(x.Key), x.Value)).ToDictionary();
-            else if (Value is not IDictionary<uint, object>)
+                sourceValue = expando.Select(x => new KeyValuePair<uint, object>(System.Convert.ToUInt32(x.Key), x.Value)).ToArray();
+            else if (Value is not ICollection<KeyValuePair<uint, object>>)
                 throw new InvalidCastException();
-            else sourceValue = (IDictionary<uint, object>?)Value;
-            
-            KeyValuePair<uint, ITSOValue>[] valueArray = new KeyValuePair<uint, ITSOValue>[sourceValue.Count()];
+            else sourceValue = (ICollection< KeyValuePair<uint, object>>)Value;
+
+            KeyValuePair<uint,ITSOValue>[] valueArray = new KeyValuePair<uint, ITSOValue>[sourceValue.Count];
             int i = 0;
             foreach (var pair in sourceValue)
             {
                 TryConvert(TypeHint, pair.Value, out ITSOValue? converted);
-                valueArray[i] = new KeyValuePair<uint, ITSOValue>(pair.Key, converted);
+                valueArray[i] = new KeyValuePair<uint,ITSOValue>(pair.Key, converted);
                 i++;
             }
             Map = convertBaseMap(TypeHint, valueArray);

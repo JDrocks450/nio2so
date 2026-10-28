@@ -1,7 +1,6 @@
 ﻿using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
