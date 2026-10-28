@@ -21,10 +21,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
         {
             dynamic obj = Context.DataObject.GetObjectAsDynamic();
 
-            var dict = new Dictionary<uint, object>();
-            obj.City_ReservedLotInfo = dict;
-
-            dict.Add(12058837, true);
+            var dict = new Dictionary<uint, object>()
+            {
+                { 12058837, true }
+            };
+            //obj.City_ReservedLotInfo = dict;
 
             Context.Handled = true;
             return;

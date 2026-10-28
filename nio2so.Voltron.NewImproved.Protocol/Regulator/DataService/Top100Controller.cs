@@ -27,5 +27,28 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator.DataService
 
             return;
         }
+        [TSODataServiceTypeHandler("Top100List_Summary", (uint)TSO_NewImproved_TSOData_Constants.Top100List_Summary)]
+        public void Top100List_Summary_StructHandler(TSOProtocol Sender, HandlerContext Context)
+        {
+            Context.Handled = true;
+
+            dynamic obj = Context.DataObject.GetObjectAsDynamic();
+
+            obj.Top100List_Name = "Bloaty's Top Picks";
+            obj.Top100List_Thumbnail = LotController.GetThumbnail();
+            obj.Top100List_Type = (byte)0x01;
+
+            switch (Context.Direction)
+            {
+                case TSODataServiceHandlerDataDirection.FromDataService:
+
+                    break;
+                case TSODataServiceHandlerDataDirection.FromTSOClient:
+
+                    break;
+            }
+
+            return;
+        }
     }
 }

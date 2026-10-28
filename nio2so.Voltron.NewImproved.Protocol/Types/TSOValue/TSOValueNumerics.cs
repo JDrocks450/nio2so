@@ -1,4 +1,6 @@
-﻿namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
+﻿using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
+
+namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {
     internal class TSOValue_Uint32 : TSOValueBase<uint>
     {
@@ -128,5 +130,13 @@
         }
 
         public override TSO_NewImproved_TSOValueBase_CLSIDs TypeClassID { get; set; } = MYID;
+        /// <summary>
+        /// The type of object enclosed in this <see cref="ITSOValue"/> type.
+        /// <para/> PNG is: <c>0x0A2C6585</c>
+        /// </summary>
+        public uint iUnknownTypeCLSID { get; set; } = 0x0A2C6585;
+        [TSOVoltronArrayLength(nameof(TSOValue_iunknown.Value))]
+        public uint ContentLength { get; set; }
+        public override byte[] Value { get => base.Value; set => base.Value = value; }
     }
 }
