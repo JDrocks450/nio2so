@@ -5,10 +5,9 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 namespace nio2so.Voltron.Core.TSO.Struct
 {
     /// <summary>
-    /// This is a structure consisting of an AriesID and MasterID </para>
-    /// </summary>
-    [Serializable]
-    public record TSOAriesIDStruct : ITSONumeralStringStruct
+    /// This is a <see cref="ITSONumeralStringStruct"/> consisting of an <c>AriesID</c> and <c>MasterID</c>
+    /// </summary>    
+    [Serializable] public record TSOAriesIDStruct : ITSONumeralStringStruct
     {
         [TSOVoltronString(TSOVoltronValueTypes.Pascal)]
         public string AriesID { get; set; } = "";        

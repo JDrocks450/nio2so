@@ -2,16 +2,10 @@
 using nio2so.Voltron.Core.Factory;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
-using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.PreAlpha.Protocol;
+using OpenSSL.X509;
 using QuazarAPI.Networking.Standard;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
@@ -85,14 +79,17 @@ namespace nio2so.TSOTCP.Voltron.Server
         TSOHSBProxyClient _voltronClient;
         uint HSB_ID = 0;
         bool ACTIVATED = false;
+        private readonly X509Certificate? certificate;
+
         private TSOPDUFactoryServiceBase _PDUFactory => Server.Services.Get<TSOPDUFactoryServiceBase>();
         //private nio2so.Voltron.PreAlpha.Protocol.Regulator.SplitBufferPDUProtocol _splitBufferInterface;
 
         public TSONeoVol2ronServer Server { get; }
 
-        public TSOHSBProxyServer(TSONeoVol2ronServer Server, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(Name, Port)
+        public TSOHSBProxyServer(TSONeoVol2ronServer Server, X509Certificate? Certificate = null, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(Name, Port)
         {
             this.Server = Server;
+            certificate = Certificate;
             //_splitBufferInterface = new();
         }
 
@@ -220,7 +217,7 @@ namespace nio2so.TSOTCP.Voltron.Server
         private async Task<bool> CreateClientAsync()
         {
             _voltronClient = new TSOHSBProxyClient();
-            await _voltronClient.Connect();
+            await _voltronClient.Connect(certificate);
             if (_voltronClient.IsConnected)
             {
                 _voltronClient.OnPacketReceived += Voltron_PacketReceived;

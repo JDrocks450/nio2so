@@ -24,6 +24,9 @@ namespace nio2so.Data.Common.Serialization.Voltron
         }
         /// <summary>
         /// Dictates how this string should be handled by the parser/decoder logic in <see cref="TSOVoltronPacket"/>
+        /// 
+        /// <para/>When used without the constructor:
+        /// <para/><inheritdoc cref="TSOVoltronString.TSOVoltronString()"/>
         /// </summary>
         [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronString : TSOVoltronValue

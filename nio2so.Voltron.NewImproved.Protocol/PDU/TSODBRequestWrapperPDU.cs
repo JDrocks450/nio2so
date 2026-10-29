@@ -52,6 +52,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// If the <see cref="Message"/> is <see cref="TSONetMessageStandard"/> then casts it to <see cref="ITSODatabaseNetMessageStandard"/>, otherwise null.
         /// <para/>This is helpful for peeking at what the <see cref="ITSODatabaseNetMessageStandard.FormatID"/> would be a named constant.
         /// </summary>
-        public ITSODatabaseNetMessageStandard? DataServiceNetMessage => Message.GetMessageAs() as ITSODatabaseNetMessageStandard;
+        [TSOVoltronIgnorable]
+        public ITSODatabaseNetMessageStandard? DataServiceNetMessage => Message?.GetMessageAs() as ITSODatabaseNetMessageStandard;
     }
 }

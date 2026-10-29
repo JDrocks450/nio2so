@@ -130,15 +130,13 @@ namespace nio2so.TSOTCP.Voltron.Server
             //START THE SERVER
             BeginListening();
 
-#if TSOPREALPHA
             //HSB SERVER PROXY
             StartHSBProxy();
-#endif
         }
 
         private void StartHSBProxy()
         {
-            TSOHSBProxyServer _proxyServer = new(this);
+            TSOHSBProxyServer _proxyServer = new(this, Settings.ServerCertificate);
             _proxyServer.Start();
         }
 

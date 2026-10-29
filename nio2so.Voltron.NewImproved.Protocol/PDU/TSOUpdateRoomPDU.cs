@@ -18,10 +18,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         /// </summary>
         public enum ReasonCodes : uint
         {
+            Success = 1,
+
             /// <summary>
             /// Meaning: Disconnected From Property. You have been disconnected from the property. Click OK to return to Map View.
             /// </summary>
-            Disconnected_2 = 2, 
+            Disconnected_2 = 2,
 
             /// <summary>
             /// <inheritdoc cref="ReasonCodes.Disconnected_2"/>
@@ -112,11 +114,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         /// <param name="ReasonCode"></param>
         /// <param name="RoomInfo"></param>
         /// <param name="DataStartByte"></param>
-        public TSOUpdateRoomPDU(ReasonCodes ReasonCode, TSORoomInfoStruct RoomInfo, bool OccupantListFollows = true)
+        public TSOUpdateRoomPDU(TSORoomInfoStruct RoomInfo, bool OccupantListFollows = true, ReasonCodes ReasonCode = ReasonCodes.Success)
         {
             this.ReasonCode = ReasonCode;
             NewRoomInfo = RoomInfo;
             this.OccupantListFollows = OccupantListFollows;
+
             MakeBodyFromProperties();
         }
 
@@ -138,5 +141,34 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
         public uint Param2 { get; set; }
         public uint Param3 { get; set; }
 #endif
+    }
+
+    /// <summary>
+    /// Sent to a remote party an empty <see cref="TSOUpdateRoomPDU"/> with just the reason code.
+    /// </summary>
+    [TSOVoltronPDU((uint)TSO_NewImproved_VoltronPacketTypes.UpdateRoomPDU)]
+    public class TSOUpdateRoomFailedPDU : TSOVoltronPacket
+    {
+        public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.UpdateRoomPDU;
+
+        public TSOUpdateRoomFailedPDU() : base() { }
+
+        /// <summary>
+        /// Creates a new <see cref="TSOUpdateRoomFailedPDU"/>                   
+        /// </summary>
+        /// <param name="ReasonCode"></param>
+        /// <param name="RoomInfo"></param>
+        /// <param name="DataStartByte"></param>
+        public TSOUpdateRoomFailedPDU(TSOUpdateRoomPDU.ReasonCodes ReasonCode)
+        {
+            this.ReasonCode = ReasonCode;
+
+            MakeBodyFromProperties();
+        }
+
+        /// <summary>
+        /// Reason codes that dictate the functionality of this <see cref="TSOUpdateRoomPDU"/>
+        /// </summary>
+        public TSOUpdateRoomPDU.ReasonCodes ReasonCode { get; set; }
     }
 }

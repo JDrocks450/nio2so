@@ -23,7 +23,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void COMPONENT_VERSION_REQUEST_PDU(TSOVoltronPacket PDU)
         {
             var versionPDU = (TSOComponentVersionRequestPDU)PDU;
-            string message = $"TSOClient Component Version: ID: {versionPDU.ComponentID}, Name: {versionPDU.ComponentName}, Version: {versionPDU.ComponentVersion}";
+            string message = versionPDU.ToString();
             LogConsole("cVoltronDMS_ComponentVersion: " + message);
             //RespondWith(new TSOComponentVersionResponsePDU());
         }

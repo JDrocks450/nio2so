@@ -13,7 +13,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
     /// <see cref="TSOHostOnlinePDU"/>, <see cref="TSOClientOnlinePDU"/>, <see cref="TSOClientBye"/>
     /// </summary>
     internal class VoltronDMSProtocol : TSOProtocol, IDMSProtocol
-    {                
+    {
+        /// <summary>
+        /// The client will send this to get what version of the server its connected to
+        /// </summary>
+        /// <param name="PDU"></param>
+        [TSOProtocolHandler((ushort)TSO_NewImproved_VoltronPacketTypes.ComponentVersionRequestPDU)]
+        public void COMPONENT_VERSION_REQUEST_PDU(TSOVoltronPacket PDU)
+        {
+            RespondWith(new TSOComponentVersionResponsePDU((PDU as TSOComponentVersionRequestPDU).SendingAvatarID));
+        }
+
         [TSOProtocolHandler((uint)TSO_NewImproved_VoltronPacketTypes.ClientByePDU)]
         public void BYE_PDU(TSOVoltronPacket PDU)
         {

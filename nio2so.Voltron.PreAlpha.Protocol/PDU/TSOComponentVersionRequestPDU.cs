@@ -1,4 +1,5 @@
 ﻿using nio2so.Voltron.Core.TSO;
+using nio2so.Voltron.Core.TSO.Struct;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,18 +23,20 @@ namespace nio2so.Voltron.PreAlpha.Protocol.PDU
 
         public override ushort VoltronPacketType => ID;
         /// <summary>
-        /// Not sure what this does yet, but appears as 0x8001 in the packets I've seen. It may be a component ID for the given component.
+        /// <inheritdoc cref="VersionStringsLength"/>
+        /// <para/>This is the most significant bit, flipped.
         /// </summary>
-        public ushort ComponentID { get; set; } = 0x8001;
+        public byte VersionStringLengthUpperByte { get; set; } = 0x80;
         /// <summary>
-        /// The name of the component, usually "ServerRuntime"
+        /// A 2-byte unsigned integer with the most significant bit flipped specifying the number of string pairs to follow
+        /// <para/>This is the lower byte, with the number of string pairs
         /// </summary>
-        [TSOVoltronString]
-        public string ComponentName { get; set; } = MyComponentName;
+        [TSOVoltronArrayLength(nameof(VersionStrings))] public byte VersionStringsLength { get; set; }
         /// <summary>
-        /// The version of the component. Matches the game build version string
+        /// Each pair of strings in this <see cref="TSOComponentVersionRequestPDU"/>
         /// </summary>
-        [TSOVoltronString]
-        public string ComponentVersion { get; set; } = PreAlphaRuntimeVersion;
+        public TSOStringPair[] VersionStrings { get; set; } = [new TSOStringPair(MyComponentName, PreAlphaRuntimeVersion)];
+
+        public override string ToString() => $"TSOClient Component Version: {string.Join(", ", (IEnumerable<TSOStringPair>)VersionStrings)}";
     }
 }
