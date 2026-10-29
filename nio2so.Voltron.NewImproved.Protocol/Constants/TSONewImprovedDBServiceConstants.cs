@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.Voltron.NewImproved.Protocol.Constants
+﻿namespace nio2so.Voltron.NewImproved.Protocol.Constants
 {
-    internal enum TSO_NewImproved_DBServiceConstants : uint
+    public enum TSO_NewImproved_DBServiceConstants : uint
     {
         GetHouseThumbByID_Request = 0x9BF18F10,
         GetHouseThumbByID_Response = 0x9BF19573,

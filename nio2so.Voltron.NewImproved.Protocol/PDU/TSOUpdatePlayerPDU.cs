@@ -7,6 +7,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
     /// Updates the <c>m_PlayerInfo</c> this client is acting as
     /// </summary>
     [TSOVoltronPDU((uint)TSO_NewImproved_VoltronPacketTypes.UpdatePlayerPDU)]
+    [TSOVoltronDuplicate("PreAlpha")]
     public class TSOUpdatePlayerPDU : TSOVoltronPacket
     {
         public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.UpdatePlayerPDU;

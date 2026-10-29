@@ -12,7 +12,6 @@ using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Regulator.DataService;
-using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.NewImproved.Protocol.Types.DataService;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
 using System.Collections;
@@ -322,7 +321,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (successful)
             {                
                 OnIncomingStandardQuery(
-                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, (uint)StructID, Query.Message), [0, ObjectID]);
+                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructID, Query.Message), [0, ObjectID]);
             }
         }
 
@@ -441,35 +440,35 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 ? service.TryGetDataStruct(TSOData_TypeID, out Struct)
                 : throw new InvalidOperationException("Failed to get TSODataDefinitionService.");
 
-        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, TSODataServiceProperty Property, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, TSODataServiceProperty Property, uint ObjectID, uint SendingAvatarID, uint ResponseID)
         {
-            uint StructID = Struct.GetBaseStructID();
-            TSOTopicUpdateMessage propertyValue = new(Property.Value, Property.FieldInfo.NameID, StructID, ObjectID);
-            propertyValue.UpdateID = SequenceID;
+            TSO_NewImproved_TSOData_Constants StructID = (TSO_NewImproved_TSOData_Constants)Struct.GetBaseStructID();
+            TSOTopicUpdateMessage propertyValue = new(Property.Value, (TSO_NewImproved_TSOData_Constants)Property.FieldInfo.NameID, StructID, ObjectID);
+            propertyValue.SetResponseID(ResponseID);
             if (Property.Value is TSOValue_iunknown)
-            {
-                propertyValue.MessageID = (TSO_NewImproved_GZMSGIDs)0xE026278A;                
-                return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new TSOServiceMessage(new TSONetMessageStandard(propertyValue.UpdateID, SendingAvatarID,
-                    (TSO_NewImproved_TSOData_Constants)0xE026278A, new TSOServiceMessage(propertyValue))));
+            { // TSOValue_iunknown needs a different GZMSGID to invoke the Regulator to change state to show the thumbnail
+                propertyValue.MessageID = TSO_NewImproved_GZMSGIDs.TSO_iUnknown_PNG;
+                return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new TSONetMessageStandard(propertyValue.UpdateID, SendingAvatarID,
+                    (uint)propertyValue.MessageID, new TSOServiceMessage(propertyValue)));
             }
             return new TSODataServiceWrapperPDU(SendingAvatarID, StructID, new PDU.DataService.TSOServiceMessage(propertyValue));
         }
-        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, uint FieldID, uint ObjectID, ITSOValue Value, uint SendingAvatarID, uint SequenceID)
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(ITSODataStruct Struct, uint FieldID, uint ObjectID, ITSOValue Value, uint SendingAvatarID, uint ResponseID)
         {
             TSODataServiceProperty property = TSOData_GetProperty(Struct, FieldID, Value);
-            return MakeTSODataWrapperPDUForProperty(Struct, property, ObjectID, SendingAvatarID, SequenceID);
+            return MakeTSODataWrapperPDUForProperty(Struct, property, ObjectID, SendingAvatarID, ResponseID);
         }
-        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(TSODataRuntimeObject StructObject, uint FieldID, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        private TSODataServiceWrapperPDU MakeTSODataWrapperPDUForProperty(TSODataRuntimeObject StructObject, uint FieldID, uint ObjectID, uint SendingAvatarID, uint ResponseID)
         {
             TSODataServiceProperty property = TSOData_GetProperty(StructObject, FieldID);
-            return MakeTSODataWrapperPDUForProperty(StructObject.Structure, property, ObjectID, SendingAvatarID, SequenceID);
+            return MakeTSODataWrapperPDUForProperty(StructObject.Structure, property, ObjectID, SendingAvatarID, ResponseID);
         }
 
-        private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDUs(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint SequenceID)
+        private IEnumerable<TSODataServiceWrapperPDU> MakeTSODataWrapperPDUs(TSODataRuntimeObject StructObject, uint ObjectID, uint SendingAvatarID, uint ResponseID)
         {
             foreach (var property in TSOData_GetProperties(StructObject))
             {
-                var pdu = MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, SequenceID);
+                var pdu = MakeTSODataWrapperPDUForProperty(StructObject, property.FieldInfo.NameID, ObjectID, SendingAvatarID, ResponseID);
                 if (pdu == null) continue;
                 yield return pdu; 
             }

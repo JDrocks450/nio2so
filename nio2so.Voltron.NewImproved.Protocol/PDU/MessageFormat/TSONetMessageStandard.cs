@@ -8,10 +8,82 @@ using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAtt
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
 {    
+    public interface ITSONetMessageStandard : ITSOMessage
+    {
+        /// <summary>
+        /// The number assigned to this Request/Response
+        /// <para/>See: <see cref="ITSOMessage.GetResponseID"/>
+        /// </summary>
+        public uint MessageID { get; set; }
+        /// <summary>
+        /// <inheritdoc cref="TSODataServiceWrapperPDU.SendingAvatarID"/>
+        /// </summary>
+        public uint SendingAvatarID { get; set; }
+        /// <summary>
+        /// The flags dictating which Data properties are available in this <see cref="TSONetMessageStandard"/>
+        /// </summary>
+        public byte Flags { get; set; }
+
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public uint FormatID { get; set; }
+
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasData1 => Data1.HasValue;
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public uint? Data1 { get; set; }
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasData2 => Data2.HasValue;
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public uint? Data2 { get; set; }
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasData3 => Data3.HasValue;
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public uint? Data3 { get; set; }
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasEmbeddedMessage => EmbeddedServiceMessage != null;
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public TSOServiceMessage? EmbeddedServiceMessage { get; set; }
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasStringContent => StringContent != null; // can be empty only check for null
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public string? StringContent { get; set; }
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public bool HasData4 => Data4.HasValue;
+        [TSOVoltronIgnorable]
+        [IgnoreDataMember]
+        public uint? Data4 { get; set; }
+    }
+    public interface ITSODataServiceNetMessageStandard : ITSONetMessageStandard
+    {
+        /// <summary>
+        /// The string entry in the TSODataDefinition corresponding with this query
+        /// </summary>
+        [TSOVoltronIgnorable]
+        public TSO_NewImproved_TSOData_Constants FormatID { get; set; }
+    }
+    public interface ITSODatabaseNetMessageStandard : ITSONetMessageStandard
+    {        
+        /// <summary>
+        /// The string entry in the TSODataDefinition corresponding with this query
+        /// </summary>
+        [TSOVoltronIgnorable]
+        public TSO_NewImproved_DBServiceConstants FormatID { get; set; }
+    }
+
     /// <summary>
     /// Represents a <see cref="TSO_NewImproved_TSOMessageType_CLSIDs.cTSONetMessageStandard"/> which is the most common type
     /// </summary>
-    public class TSONetMessageStandard : TSOMessageFormatBase
+    public class TSONetMessageStandard : TSOMessageFormatBase, ITSODataServiceNetMessageStandard, ITSODatabaseNetMessageStandard
     {
         const TSO_NewImproved_TSOMessageType_CLSIDs MYID = TSO_NewImproved_TSOMessageType_CLSIDs.cTSONetMessageStandard;
 
@@ -33,8 +105,19 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// <summary>
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public TSO_NewImproved_TSOData_Constants DataDefinitionID { get; set; }
-        
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public uint FormatID { get; set; }
+        [TSOVoltronIgnorable]
+        TSO_NewImproved_TSOData_Constants ITSODataServiceNetMessageStandard.FormatID { 
+            get => (TSO_NewImproved_TSOData_Constants)FormatID;
+            set => FormatID = (uint)value;
+        }
+        [TSOVoltronIgnorable]
+        TSO_NewImproved_DBServiceConstants ITSODatabaseNetMessageStandard.FormatID
+        {
+            get => (TSO_NewImproved_DBServiceConstants)FormatID;
+            set => FormatID = (uint)value;
+        }
+
         /// <summary>
         /// The content of the message
         /// </summary>
@@ -61,16 +144,29 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             MessageBytes = MessageData;
         }
 
-        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, uint? data1 = null, uint? data2 = null, uint? data3 = null, uint? data4 = null) : 
-            this(messageID, sendingAvatarID, dataDefinitionID, null, data1,data2,data3,data4)
+        public TSONetMessageStandard(uint messageID,
+                                     uint sendingAvatarID,
+                                     uint formatID,
+                                     uint? data1 = null,
+                                     uint? data2 = null,
+                                     uint? data3 = null,
+                                     uint? data4 = null) : 
+            this(messageID, sendingAvatarID, formatID, null, data1,data2,data3,data4)
         {
             
         }
-        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, TSOServiceMessage Embedded, uint? data1 = null, uint? data2 = null, uint? data3 = null, uint? data4 = null) : this()
+        public TSONetMessageStandard(uint messageID,
+                                     uint sendingAvatarID,
+                                     uint formatID,
+                                     TSOServiceMessage Embedded,
+                                     uint? data1 = null,
+                                     uint? data2 = null,
+                                     uint? data3 = null,
+                                     uint? data4 = null) : this()
         {
             MessageID = messageID;
             SendingAvatarID = sendingAvatarID;
-            DataDefinitionID = dataDefinitionID;
+            FormatID = formatID;
             Data1 = data1;
             Data2 = data2;
             Data3 = data3;
@@ -79,7 +175,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
 
             _bytes = WriteMessageData();
         }
-        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, TSO_NewImproved_TSOData_Constants dataDefinitionID, TSOServiceMessage Embedded) : this(messageID,sendingAvatarID, dataDefinitionID, Embedded, null,null,null,null)
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, uint formatID, TSOServiceMessage Embedded) : 
+            this(messageID,sendingAvatarID, formatID, Embedded, null,null,null,null)
         {
 
         }
@@ -122,7 +219,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public bool HasData4 => Data4.HasValue;
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public uint? Data4 { get; set; }
+        public uint? Data4 { get; set; }        
 
         private void ReadMessageData()
         {

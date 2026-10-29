@@ -1,6 +1,7 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
+using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU
@@ -35,18 +36,29 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// </summary>
         public TSOServiceMessage Message { get; set; }
 
+        /// <summary>
+        /// If the <see cref="Message"/> is <see cref="TSONetMessageStandard"/> then casts it to <see cref="ITSODataServiceNetMessageStandard"/>, otherwise null.
+        /// <para/>This is helpful for peeking at what the <see cref="ITSODataServiceNetMessageStandard.FormatID"/> would be a named constant.
+        /// </summary>
+        public ITSODataServiceNetMessageStandard? DataServiceNetMessage => Message.GetMessageAs() as ITSODataServiceNetMessageStandard;
+
         public TSODataServiceWrapperPDU() : base()
         {
             MakeBodyFromProperties();
         }
 
-        public TSODataServiceWrapperPDU(uint SendingAvatarID, uint TSODataDefinitionID, TSOServiceMessage MessageContent) : this()
+        public TSODataServiceWrapperPDU(uint SendingAvatarID, TSO_NewImproved_TSOData_Constants TSODataDefinitionID, TSOServiceMessage MessageContent) : this()
         {
             this.SendingAvatarID = SendingAvatarID;
-            DefinitionStringID = (TSO_NewImproved_TSOData_Constants)TSODataDefinitionID;
+            DefinitionStringID = TSODataDefinitionID;
             Message = MessageContent;
 
             MakeBodyFromProperties();
+        }
+        public TSODataServiceWrapperPDU(uint SendingAvatarID, TSO_NewImproved_TSOData_Constants TSODataDefinitionID, ITSODataServiceNetMessageStandard MessageContent) : 
+            this(SendingAvatarID, TSODataDefinitionID, new TSOServiceMessage(MessageContent))
+        {
+
         }
     }
 }

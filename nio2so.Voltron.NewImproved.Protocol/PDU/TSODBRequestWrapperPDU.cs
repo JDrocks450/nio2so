@@ -1,11 +1,7 @@
 ﻿using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU
@@ -15,7 +11,21 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
     {
         public TSODBRequestWrapperPDU() : base()
         {
+            MakeBodyFromProperties();
+        }
 
+        public TSODBRequestWrapperPDU(TSOPlayerInfoStruct playerInfo, TSOServiceMessage message) : this()
+        {
+            SenderAvatarID = playerInfo.PlayerID.AvatarID;
+            PlayerInfo = playerInfo;
+            Message = message;
+
+            MakeBodyFromProperties();
+        }
+        public TSODBRequestWrapperPDU(TSOPlayerInfoStruct playerInfo, ITSODatabaseNetMessageStandard message) :
+            this(playerInfo, new TSOServiceMessage(message))
+        {
+        
         }
 
         public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.DBRequestWrapperPDU;
@@ -37,5 +47,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// <inheritdoc cref="TSODataServiceWrapperPDU.Message"/>
         /// </summary>
         public TSOServiceMessage Message { get; set; }
+
+        /// <summary>
+        /// If the <see cref="Message"/> is <see cref="TSONetMessageStandard"/> then casts it to <see cref="ITSODatabaseNetMessageStandard"/>, otherwise null.
+        /// <para/>This is helpful for peeking at what the <see cref="ITSODatabaseNetMessageStandard.FormatID"/> would be a named constant.
+        /// </summary>
+        public ITSODatabaseNetMessageStandard? DataServiceNetMessage => Message.GetMessageAs() as ITSODatabaseNetMessageStandard;
     }
 }

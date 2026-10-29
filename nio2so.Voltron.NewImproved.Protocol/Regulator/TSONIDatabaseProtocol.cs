@@ -8,11 +8,6 @@ using nio2so.Voltron.NewImproved.Protocol.PDU.Database;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Services;
 using QuazarAPI.Networking.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -32,7 +27,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             if (tsoMsg is TSONetMessageStandard stdMsg)
             {
-                if ((uint)stdMsg.DataDefinitionID == 0x4E2DF83B) // LoadAvatarByID
+                if ((uint)stdMsg.FormatID == 0x4E2DF83B) // LoadAvatarByID
                 {                    
                     var message = TSOVoltronSerializer.Deserialize<TSOLoadAvatarByIDRequestMessage>(stdMsg.MessageBytes);
                     foreach (var chunk in message.Chunks)

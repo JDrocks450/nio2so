@@ -2,7 +2,6 @@
 using nio2so.Formats.Util.Endian;
 using nio2so.Voltron.Core.TSO.Serialization;
 using System.Collections;
-using System.Runtime.Serialization;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Types.TSOValue
 {

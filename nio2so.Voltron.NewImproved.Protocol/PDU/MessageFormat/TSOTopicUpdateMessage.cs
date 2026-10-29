@@ -1,10 +1,5 @@
 ﻿using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.Types.TSOValue;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
@@ -46,9 +41,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// <param name="TSODataDefinitionTypeID"></param>
         /// <param name="ObjectID"></param>
         public TSOTopicUpdateMessage(ITSOValue value,
-                                     uint TSODataDefinitionFieldID,
-                                     uint TSODataDefinitionTypeID,
-                                     uint ObjectID) : this(value, [TSODataDefinitionTypeID, ObjectID, TSODataDefinitionFieldID])
+                                     TSO_NewImproved_TSOData_Constants TSODataDefinitionFieldID,
+                                     TSO_NewImproved_TSOData_Constants TSODataDefinitionTypeID,
+                                     uint ObjectID) : this(value, [(uint)TSODataDefinitionTypeID, ObjectID, (uint)TSODataDefinitionFieldID])
         {
 
         }

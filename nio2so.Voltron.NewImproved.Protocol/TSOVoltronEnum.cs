@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace nio2so.Voltron.NewImproved.Protocol
+﻿namespace nio2so.Voltron.NewImproved.Protocol
 {
 
     /// <summary>
@@ -35,6 +29,11 @@ namespace nio2so.Voltron.NewImproved.Protocol
     public enum TSO_NewImproved_GZMSGIDs : uint
     {
         GZMSGID_cITSOApprovedTopicUpdate = 0xA97360C5,
+
+        /// <summary>
+        /// Added to nio2so, original constant name not found yet. Used for iUnknown data type holding a thumbnail.
+        /// </summary>
+        TSO_iUnknown_PNG = 0xE026278A
     }
 
     public enum TSO_NewImproved_TSOValueBase_CLSIDs : uint
