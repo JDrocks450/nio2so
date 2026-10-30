@@ -110,11 +110,14 @@ namespace nio2so.TSOTCP.Voltron.Server
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
             Services.Register(new TSODataDefinitionService(TSODataDefinitionPath)); // REGISTER THE TSO DATA DEFINITION SERVICE
 
+            bool IsPreAlpha = false;
+
             TSOPDUFactoryServiceBase pduFactory = null;
 #if TSOPLAYTEST
              Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
 #endif
 #if TSOPREALPHA
+            IsPreAlpha = true;
             Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
 #endif
 #if TSONANDI
@@ -131,12 +134,12 @@ namespace nio2so.TSOTCP.Voltron.Server
             BeginListening();
 
             //HSB SERVER PROXY
-            StartHSBProxy();
+            StartHSBProxy(IsPreAlpha);
         }
 
-        private void StartHSBProxy()
+        private void StartHSBProxy(bool IsPreAlpha)
         {
-            TSOHSBProxyServer _proxyServer = new(this, Settings.ServerCertificate);
+            TSOHSBProxyServer _proxyServer = new(IsPreAlpha, this, Settings.ServerCertificate);
             _proxyServer.Start();
         }
 

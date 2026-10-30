@@ -5,6 +5,7 @@ using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.PreAlpha.Protocol;
 using OpenSSL.X509;
 using QuazarAPI.Networking.Standard;
+using System.Net;
 using System.Net.Sockets;
 
 namespace nio2so.TSOTCP.Voltron.Server
@@ -79,23 +80,32 @@ namespace nio2so.TSOTCP.Voltron.Server
         TSOHSBProxyClient _voltronClient;
         uint HSB_ID = 0;
         bool ACTIVATED = false;
-        private readonly X509Certificate? certificate;
 
         private TSOPDUFactoryServiceBase _PDUFactory => Server.Services.Get<TSOPDUFactoryServiceBase>();
         //private nio2so.Voltron.PreAlpha.Protocol.Regulator.SplitBufferPDUProtocol _splitBufferInterface;
 
         public TSONeoVol2ronServer Server { get; }
 
-        public TSOHSBProxyServer(TSONeoVol2ronServer Server, X509Certificate? Certificate = null, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(Name, Port)
+        /// <summary>
+        /// Creates a new <see cref="TSOHSBProxyServer"/> with the given parent server <paramref name="Server"/>
+        /// <para/>For Pre-Alpha: NO SSL certificate should be provided. For Play-Test and onward, you must supply ANY valid certificate
+        /// for the <see cref="TSONeoVol2ronServer"/> and this <see cref="TSOHSBProxyServer"/> (and by extension, the <see cref="TSOHSBProxyClient"/> - but this is
+        /// done for you)
+        /// </summary>
+        /// <param name="Server"></param>
+        /// <param name="Certificate"></param>
+        /// <param name="Name"></param>
+        /// <param name="Port"></param>
+        public TSOHSBProxyServer(bool IsPreAlpha, TSONeoVol2ronServer Server, X509Certificate? Certificate = null, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(new QuazarServerSettings(Name, IPAddress.Loopback, Port, Certificate))
         {
             this.Server = Server;
-            certificate = Certificate;
-            //_splitBufferInterface = new();
+            if (!IsPreAlpha && Certificate == null)
+                throw new ArgumentException("For Play-Test and later, you HAVE to give a certificate.");
         }
 
         public override async void Start()
         {
-            CONSOLE_LOG("\n[!] Attempting to connect to Voltron...");
+            CONSOLE_LOG($"\n[!] Attempting to connect to Voltron [SSL?: {UsingSSL}]...");
             bool connected = await CreateClientAsync();
             if (connected)
             {
@@ -104,7 +114,7 @@ namespace nio2so.TSOTCP.Voltron.Server
                 OnIncomingPacket += TSOHSBProxyServer_OnIncomingPacket;                
                 BeginListening();
 
-                CONSOLE_LOG("HSB Proxy is online and connected to Voltron!");
+                CONSOLE_LOG("HSB Proxy is online and connected to Voltron!");                
             }
         }        
 
@@ -112,7 +122,7 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             base.OnClientConnect(Connection, ID);
 
-            CONSOLE_LOG("HSB Simulator Client has arrived, authenticating with Voltron...");
+            CONSOLE_LOG($"HSB Simulator Client has arrived, authenticating with Voltron [SSL?: {UsingSSL}]...");
 
             //just in-case
             DeactivateHSB();
@@ -122,6 +132,9 @@ namespace nio2so.TSOTCP.Voltron.Server
             await _voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
             uint avatarID = 90001;
             CONSOLE_LOG("Authentication sent for HSB Avatar ID: " + avatarID);
+
+            if (UsingSSL)
+                ActivateHSB(ID);
         }
 
         protected override async void OnClientDisconnect(uint ID)
@@ -146,7 +159,7 @@ namespace nio2so.TSOTCP.Voltron.Server
             _voltronClient.EventParameters = new() { OnPacketReceivedEnabled = false };
 
             //ARIES_GETCLIENTINFO -- needed to get the TSOClient to actually send anything.
-            Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
+            //Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
             ACTIVATED = true;
         }
 
@@ -207,9 +220,10 @@ namespace nio2so.TSOTCP.Voltron.Server
                     CONSOLE_LOG("[PROXY -> HSB] -- " + packet.ToString());
             }
         }
-
+        int i = 0;
         private void VoltronClient_OnDataReceived(object? sender, QEventArgs<byte[]> e)
         { // forward raw data as it comes in, no need to check packets.
+            File.WriteAllBytes($@"C:\nio2so\hsb\{i++}.dat",e.Data);
             if (ACTIVATED)
                 Send(HSB_ID, e.Data);
         }
@@ -217,12 +231,12 @@ namespace nio2so.TSOTCP.Voltron.Server
         private async Task<bool> CreateClientAsync()
         {
             _voltronClient = new TSOHSBProxyClient();
-            await _voltronClient.Connect(certificate);
+            await _voltronClient.Connect(Settings.ServerCertificate);
             if (_voltronClient.IsConnected)
             {
                 _voltronClient.OnPacketReceived += Voltron_PacketReceived;
                 _voltronClient.OnDataReceived += VoltronClient_OnDataReceived;
-                CONSOLE_LOG("Voltron connection has been established!");
+                CONSOLE_LOG($"Voltron connection has been established! [SSL?: {UsingSSL}]");
             }
             return _voltronClient.IsConnected;
         }   

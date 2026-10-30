@@ -7,7 +7,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
     /// <summary>
     /// The <see cref="TSOHostOnlinePDU"/> sends to the Client that this server is a Voltron server.
     /// <para>Encompasses a HostVersion and PacketSize</para>
-    /// <code>Unverified!</code>
     /// </summary>
     [TSOVoltronPDU((uint)TSO_NewImproved_VoltronPacketTypes.HostOnlinePDU)]
     public class TSOHostOnlinePDU : TSOVoltronPacket
@@ -21,11 +20,19 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
             [TSOVoltronArrayLength(nameof(Words))] public ushort NumberOfWords { get; set; }
             public TSOPascalString[] Words { get; set; } = Array.Empty<TSOPascalString>();
 
-            public TSOHostReservedWordsStruct(params string[] ReservedWords) => Words = ReservedWords.Select(x => new TSOPascalString(x)).ToArray();    
+            public TSOHostReservedWordsStruct(params string[] ReservedWords) => Words = ReservedWords.Select(x => new TSOPascalString(x)).ToArray();
+
+            public TSOHostReservedWordsStruct()
+            {
+            }
         }
 
         public record TSOHostParamsStruct
         {
+            public TSOHostParamsStruct()
+            {
+            }
+
             public TSOHostParamsStruct(ushort clientBufferSize = PACKET_SIZE_LIMIT, ushort hostVersion = HOST_VERSION)
             {
                 HostVersion = hostVersion;

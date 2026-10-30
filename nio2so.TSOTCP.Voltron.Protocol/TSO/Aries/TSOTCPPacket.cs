@@ -217,7 +217,7 @@ namespace nio2so.Voltron.Core.TSO.Aries
             if (!TestingConstraints.LogAriesPackets) return;
             System.IO.Directory.CreateDirectory(Directory);
             var now = DateTime.Now;
-            string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] Packet {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
+            string myName = $"{(Incoming ? "IN" : "OUT")} [{PacketName ?? "Voltron"}] [Aries] Packet {now.Hour % 12},{now.Minute},{now.Second},{now.Nanosecond}.dat";
             File.WriteAllBytes(Path.Combine(Directory, myName), GetBytes());
         }
     }

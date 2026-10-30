@@ -198,6 +198,7 @@ namespace nio2so.Voltron.Core.Factory
         {
             if (SizeLimit == 0)
                 SizeLimit = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
+            SizeLimit -= TSOSplitBufferPDUBase.TSOSplitBufferHeaderSize; // Subtract the header space
             if (PDU.BodyLength < SizeLimit)
                 throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
 

@@ -8,7 +8,7 @@
         //****BETA TESTING
 
         public const bool LogPackets = true;
-        public const bool LogAriesPackets = false;
+        public const bool LogAriesPackets = true;
         public const bool LogVoltronPackets = true;
 
         public const int City_ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
@@ -17,7 +17,7 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = false;
+        public static bool SplitBuffersPDUEnabled = true;
         /// <summary>
         /// Prevents databases from saving to disk for testing and debugging
         /// </summary>
