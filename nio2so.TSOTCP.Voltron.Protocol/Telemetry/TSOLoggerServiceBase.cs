@@ -108,7 +108,7 @@ namespace nio2so.Voltron.Core.Telemetry
             foreach (var AriesFrame in AriesFrames)
             {
                 index++;
-                string splitText = (AriesFrames.Length == 1 ? "" : $"{{Split [{index}/{AriesFrames.Length}]}} ");
+                string splitText = (AriesFrames.Length == 1 ? "" : $"(Split [{index} of {AriesFrames.Length}]) ");
                 Log($"{Time.ToLongTimeString()} - *ARIES* {splitText}[{Direction}] " +
                     $"{(TSOAriesPacketTypes)AriesFrame.PacketType}" +
                     $"{(PDUEnclosed != null ? " containing: " : "")}{PDUEnclosed?.ToShortString()}");

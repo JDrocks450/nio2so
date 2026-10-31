@@ -158,15 +158,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (!service.VerifyEnum<TSO_NewImproved_TSOData_Constants>(out string[] errors) || errors.Any())
                 LogError($"The {nameof(TSO_NewImproved_TSOData_Constants)} has the following errors:\n\n{string.Join("\n",errors)}");
 
-            TSODataServiceWrapperPDU testPdu = new TSODataServiceWrapperPDU(0xFEEDF00D, TSO_NewImproved_TSOData_Constants.Neighborhood_CenterGridXY, 
-                new TSONetMessageStandard(new byte[1000]));
-            var pdus = GetService<TSONewImprovedPDUFactory>().CreateSplitBufferPacketsFromPDU(testPdu);
-            int i = 0;
-            foreach(var pdu in pdus)
-            {
-                TSOTCPPacket packet = new TSOTCPPacket(TSOAriesPacketTypes.Voltron,0,pdu.Body);                
-                File.WriteAllBytes($@"C:\nio2so\tsotcppackets\{i++}.dat", packet.GetBytes());
-            }
             //TSO TEST serialization/deserialization of ITSOValue
 #if TSOTEST
             if (!Directory.GetFiles("C:/nio2so/tsotcppackets").Any())

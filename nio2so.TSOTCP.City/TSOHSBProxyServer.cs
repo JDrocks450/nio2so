@@ -5,6 +5,7 @@ using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.PreAlpha.Protocol;
 using OpenSSL.X509;
 using QuazarAPI.Networking.Standard;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 
@@ -219,13 +220,71 @@ namespace nio2so.TSOTCP.Voltron.Server
                 foreach (var packet in packets)
                     CONSOLE_LOG("[PROXY -> HSB] -- " + packet.ToString());
             }
-        }
-        int i = 0;
+        }        
+
         private void VoltronClient_OnDataReceived(object? sender, QEventArgs<byte[]> e)
         { // forward raw data as it comes in, no need to check packets.
-            File.WriteAllBytes($@"C:\nio2so\hsb\{i++}.dat",e.Data);
+            if (e.Data.Length == 0)
+                return;
+
+            if (!WaitForAriesFrame(e.Data, out int waitingAmount, out byte[]? client_buffer))
+            {
+                CONSOLE_LOG($"[PROXY -> HSB] -- Waiting for complete frame: {aries_stream.Length} of {waitingAmount} bytes.");
+                return;
+            }
+
             if (ACTIVATED)
-                Send(HSB_ID, e.Data);
+            {
+                Send(HSB_ID, client_buffer);
+                CONSOLE_LOG("[PROXY -> HSB] -- Sent: " + client_buffer.Length + " bytes.");
+            }
+        }
+
+        //**aries code
+        bool aries_packet_waiting = false;
+        uint totalPacketSize = 0;
+        MemoryStream aries_stream;
+        /// <summary>
+        /// This function will wait for a full aries frame to be received before writing it to the outgoing data stream
+        /// <para/>Returns true when <paramref name="OutgoingData"/> is ready to send, false when it isn't and we're waiting for more.
+        /// </summary>
+        /// <param name="IncomingData"></param>
+        /// <param name="OutgoingData"></param>
+        /// <returns></returns>
+        private bool WaitForAriesFrame(byte[] IncomingData, out int WaitingAmount, out byte[]? OutgoingData)
+        {
+            OutgoingData = null;
+            WaitingAmount = (int)totalPacketSize;
+
+            if (aries_packet_waiting)
+            {
+                aries_stream.Write(IncomingData);
+                if (aries_stream.Length >= totalPacketSize)
+                {
+                    aries_packet_waiting = false;
+                    totalPacketSize = 0;
+                    OutgoingData = aries_stream.ToArray();
+                    return true;
+                }
+            }
+            else
+            {
+                TSOTCPPacket.GetAriesHeader(IncomingData, out _, out _, out uint size);
+                WaitingAmount = (int)size;
+                if (size > (IncomingData.Length - TSOTCPPacket.ARIES_FRAME_HEADER_LEN)) // split
+                {
+                    aries_stream = new MemoryStream();
+                    aries_stream.Write(IncomingData);
+                    aries_packet_waiting = true;
+                    totalPacketSize = size;
+                }
+            }
+            if (aries_packet_waiting)
+                return false;
+
+            WaitingAmount = IncomingData.Length;
+            OutgoingData = IncomingData;
+            return true;
         }
 
         private async Task<bool> CreateClientAsync()

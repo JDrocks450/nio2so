@@ -165,7 +165,7 @@ namespace nio2so.Voltron.Core.TSO.Aries
         /// <param name="Timestamp"></param>
         /// <param name="PayloadSize"></param>
         /// <exception cref="ArgumentException"></exception>
-        protected static void GetAriesHeader(byte[] PacketData, out uint PacketType, out uint Timestamp, out uint PayloadSize)
+        public static void GetAriesHeader(byte[] PacketData, out uint PacketType, out uint Timestamp, out uint PayloadSize)
         {
             if (PacketData.Length < ARIES_FRAME_HEADER_LEN)
                 throw new ArgumentException($"{nameof(PacketData)} is less than {ARIES_FRAME_HEADER_LEN}!");
@@ -175,7 +175,7 @@ namespace nio2so.Voltron.Core.TSO.Aries
             Timestamp = BitConverter.ToUInt32(PacketData, sizeof(uint) * paramIndex++);
             PayloadSize = BitConverter.ToUInt32(PacketData, sizeof(uint) * paramIndex++);
         }
-        protected static bool TryGetAriesHeader(byte[] PacketData, out uint PacketType, out uint Timestamp, out uint PayloadSize)
+        public static bool TryGetAriesHeader(byte[] PacketData, out uint PacketType, out uint Timestamp, out uint PayloadSize)
         {
             PacketType = Timestamp = PayloadSize = 0;
             try
