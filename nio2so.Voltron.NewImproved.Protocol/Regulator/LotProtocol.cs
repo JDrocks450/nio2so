@@ -65,7 +65,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                     0xDA,0xDD,0xE5,0x14
                 };
                 using var ms = new MemoryStream(packet_data);
-                var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
+                using var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
 
                 TrySendTo(90001, houseDataPDU);
                 return;
@@ -520,7 +520,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             };
 
             using var ms = new MemoryStream(packet_data);
-            var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
+            using var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
 
             RespondWith(houseDataPDU);
         }

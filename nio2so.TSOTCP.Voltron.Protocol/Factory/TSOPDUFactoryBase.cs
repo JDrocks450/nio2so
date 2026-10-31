@@ -116,9 +116,9 @@ namespace nio2so.Voltron.Core.Factory
         /// <param name="AriesPacket"></param>
         /// <param name="ProcessSplitBuffers"></param>
         /// <returns></returns>
-        public IEnumerable<TSOVoltronPacket> CreatePacketObjectsFromAriesPacket(TSOTCPPacket AriesPacket, bool ProcessSplitBuffers = true)
+        public TSOVoltronPacketCollection CreatePacketObjectsFromAriesPacket(TSOTCPPacket AriesPacket, bool ProcessSplitBuffers = true)
         {
-            List<TSOVoltronPacket> packets = new();
+            TSOVoltronPacketCollection packets = new();
             TSOSplitBufferPDUCollection splitBufferCollection = new();
 
             AriesPacket.SetPosition(0);

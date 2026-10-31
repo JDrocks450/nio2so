@@ -95,20 +95,27 @@ namespace nio2so.Voltron.Core.Telemetry
         /// </summary>
         /// <param name="Direction"></param>
         /// <param name="Time"></param>
-        /// <param name="Packet"></param>
+        /// <param name="AriesFrames"></param>
         /// <param name="PDUEnclosed"></param>
-        public virtual void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket Packet, TSOVoltronPacket? PDUEnclosed = default)
+        public virtual void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket[] AriesFrames, TSOVoltronPacket? PDUEnclosed = default)
         {
             if (!TestingConstraints.VerboseLogging) return;
 
             Console.ForegroundColor = ConsoleColor.Magenta;
 
             string? PDUName = PDUEnclosed != null ? Parent.Services.Get<TSOPDUFactoryServiceBase>().GetVoltronPacketTypeName(PDUEnclosed.VoltronPacketType) : "Unknown";
-            Log($"{Time.ToLongTimeString()} - *ARIES* [{Direction}] {(TSOAriesPacketTypes)Packet.PacketType}" +
-                $"{(PDUEnclosed != null ? " containing: " : "")}{PDUEnclosed?.ToShortString()}");
+            int index = 0;
+            foreach (var AriesFrame in AriesFrames)
+            {
+                index++;
+                string splitText = (AriesFrames.Length == 1 ? "" : $"{{Split [{index}/{AriesFrames.Length}]}} ");
+                Log($"{Time.ToLongTimeString()} - *ARIES* {splitText}[{Direction}] " +
+                    $"{(TSOAriesPacketTypes)AriesFrame.PacketType}" +
+                    $"{(PDUEnclosed != null ? " containing: " : "")}{PDUEnclosed?.ToShortString()}");
 
-            //**LOG PDU TO DISK**
-            Packet.WritePacketToDisk(Direction == NetworkTrafficDirections.INBOUND, PDUName);
+                //**LOG PDU TO DISK**
+                AriesFrame.WritePacketToDisk(Direction == NetworkTrafficDirections.INBOUND, $"{splitText}{PDUName}");
+            }
         }
         /// <summary>
         /// Fired when a new <see cref="TSOVoltronPacket"/> is received or sent
