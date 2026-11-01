@@ -3,6 +3,7 @@ using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
@@ -50,6 +51,15 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// Fields on the <see cref="TSONetMessagePDU"/> giving context around the ObjectID, FieldID, TypeID, etc.
         /// </summary>
         public uint[] Vector { get; set; } = Array.Empty<uint>();
+
+        public uint KMSGID { get; set; }
+
+        /// <summary>
+        /// The length of the <see cref="ContentBytes"/> property
+        /// </summary>
+        [TSOVoltronDistanceToEnd]
+        public uint ContentLength { get; set; }
+
         /// <summary>
         /// The enclosed <see cref="TSOServiceMessage"/> in this <see cref="TSONetMessagePDU"/>
         /// </summary>

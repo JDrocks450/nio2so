@@ -1,5 +1,6 @@
 ﻿using nio2so.Formats.Util.Endian;
 using nio2so.Voltron.Core.TSO.Serialization;
+using nio2so.Voltron.Core.TSO.Serialization.Types;
 using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using QuazarAPI.Networking.Data;
@@ -55,7 +56,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public bool HasStringContent => StringContent != null; // can be empty only check for null
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public string? StringContent { get; set; }
+        public string[]? StringContent { get; set; }
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
         public bool HasData4 => Data4.HasValue;
@@ -213,7 +214,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         public bool HasStringContent => StringContent != null; // can be empty only check for null
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
-        public string? StringContent { get; set; }
+        public string[]? StringContent { get; set; }
         [TSOVoltronIgnorable]
         [IgnoreDataMember]
         public bool HasData4 => Data4.HasValue;
@@ -265,7 +266,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
                 return;
             }
             if ((Flags & (1 << 6)) != 0)
-                StringContent = "STR# 23 FC FF NOT IMPLEMENTED.";
+            {
+                int stringEndIndex;
+                StringContent = TSOVoltronStringConverter.ConvertVoltronStr23Format(stream.ReadToEnd(), out stringEndIndex);
+                stream.Seek(stringEndIndex, SeekOrigin.Begin);
+            }
             if ((Flags & (1 << 4)) != 0)
                 Data4 = readUInt(Endianness.BigEndian);
             if (stream.Length != stream.Position)
@@ -318,7 +323,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             }
 
             // StringContent (Flag 1 << 6)
-            if (!string.IsNullOrEmpty(StringContent))
+            if (StringContent != null && StringContent.Length > 0)
             {
                 Flags |= (1 << 6);
                 // TODO: Implement FC FF STR# serialization scheme here

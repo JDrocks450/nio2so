@@ -1,7 +1,9 @@
 ﻿using nio2so.Data.Common;
+using nio2so.DataService.Common.Tokens;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PlayTest.Protocol.PDU;
 using nio2so.Voltron.PlayTest.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.PlayTest.Protocol.Services;
@@ -23,7 +25,17 @@ namespace nio2so.Voltron.PlayTest.Protocol.Regulator
                 TSOProtocolMatchingOption.CreateVoltron<TSO_PlayTest_VoltronPacketTypes>()
             )
         { }
-
+        /// <summary>
+        /// NOT FULLY IMPLEMENTED YET
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public override TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID) => new TSOAriesIDStruct(AvatarID, "default");
+        public override TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID)
+        {
+            TSOAriesIDStruct VoltronID = GetVoltronIDStruct(AvatarID);
+            return new TSOPlayerInfoStruct(VoltronID, 0x41, true);
+        }
         protected override bool TryHandleSpecialVoltronPDU(TSOVoltronPacket PDU, ref TSOProtocolRegulatorResponse Response)
         {
             // Special VoltronPDU handling for TSO_PlayTest_Packets

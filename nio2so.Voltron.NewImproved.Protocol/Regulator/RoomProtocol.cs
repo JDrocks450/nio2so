@@ -468,9 +468,14 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             using var ms = new MemoryStream(packet_data);
             var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
 
-            return roomController.AddRoom(
+            bool successful = roomController.AddRoom(
                 new RoomProtocolRoomInfo(
-                    new TSORoomIDStruct(LotID,"BloatyLand"), GetVoltronIDStruct(HSB_ID), GetVoltronIDStruct(1337), LotID));;
+                    new TSORoomIDStruct(LotID,"BloatyLand"), GetVoltronIDStruct(HSB_ID), GetVoltronIDStruct(1337), LotID));
+
+            if (successful)            
+                TrySendTo(HSB_ID, houseDataPDU);
+
+            return successful;
         }
 
         static uint tso_entry_test_i = 0;
@@ -496,7 +501,39 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 throw new InvalidOperationException("Could not identify voltron client using the PDU.");
 
             if (joiningClient.AvatarID < Server.VoltronSettings.PreAlpha_HSBAvatarID)
-            { // maybe should be TSOOccupantArrivedPDU?                
+            { // maybe should be TSOOccupantArrivedPDU?
+                byte[] packet_data = new byte[]
+                {
+                    /* 0xACDC4FF2 */
+                    0x27,0x37,
+                    0x00,0x00,0x00,0x55,
+                    0xFE,0xED,0xF0,0x0D,
+                    0x00,0x00,0x00,0x04,
+                    0x00,0x00,0x00,0x00,
+                    0x00,0x00,0x00,0x3B,
+                    0x80,0x00,0x00,0x3B,
+                    0xAC,0xDC,0x4F,0xF2,
+                    0x00,0x00,0x00,0x3B,
+                    0x12,0x51,0x94,0xE5,
+                    0x19,0x50,0x02,0x23,
+                    0xFE,0xED,0xF0,0x0D,
+                    0xFF,
+                    0xAC,0xDC,0x4F,0xF2,
+                    0x00,0x00,0x05,0x39,
+                    0xDA,0xDD,0xE5,0x12,
+                    0xDA,0xDD,0xE5,0x13,
+                    0xDB,0xB9,0x12,0x6C,
+                    0x00,
+                    0x00,0x00,0x00,0x04,
+                    0xA0,0xA1,0xA2,0xA3,
+                    0x04,0x41,0x42,0x43,0x44,
+                    0xDA,0xDD,0xE5,0x14
+                }
+                ;
+                using var ms = new MemoryStream(packet_data);
+                var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
+
+                TrySendTo(90001, houseDataPDU);
                 return;
 #if false
                 TrySendTo(90001, new TSONetMessagePDU(joiningClient.AvatarID, 0xACDC4FF2, new TSOServiceMessage(new TSONetMessageStandard(0x19500223, joiningClient.AvatarID, 0xACDC4FF2, 0x0539))));
@@ -533,7 +570,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 throw new ArgumentException(nameof(PDU));
 
             ITSONetMessageStandard msg = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
-            if (msg.FormatID == 0x3BFC2808) // join house response
+            if (netMsg.KMSGID == 0x7D1A4415)
+            {
+                ITSONetMessageStandard embedded = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
+                LogConsole($"[RoomProtocol] Room loaded with the following message: {embedded.StringContent}");
+            }
+            if (netMsg.KMSGID == 0x3BFC2808) // join house response
             { // client joined
                 clientJoined = true;
             }
