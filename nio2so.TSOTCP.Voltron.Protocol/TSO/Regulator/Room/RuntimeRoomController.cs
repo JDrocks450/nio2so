@@ -1,19 +1,13 @@
-﻿using nio2so.Voltron.Core.Telemetry;
+﻿using nio2so.DataService.Common.Tokens;
 using nio2so.Voltron.Core.TSO.Struct;
-using nio2so.Voltron.PreAlpha.Protocol.PDU;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
+namespace nio2so.Voltron.Core.TSO.Regulator.Room
 {
     /// <summary>
     /// Tracks and serves data on the active rooms in the <see cref="RoomProtocol"/>
     /// </summary>
-    internal class RuntimeRoomController
+    public class RuntimeRoomController
     {
         /// <summary>
         /// List of rooms mapped to their <see cref="RoomProtocolRoomInfo.RoomID"/>
@@ -33,13 +27,16 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         private ConcurrentDictionary<uint, Queue<uint>> _joiningQueuesByHouseID { get; } = new();
         private ConcurrentDictionary<TSOAriesIDStruct, uint> _hsbAllocationList = new();
 
-        private RoomProtocol Parent { get; }
+        private Func<AvatarIDToken, TSOAriesIDStruct> GetVoltronIDStruct => Parent.GetVoltronIDStruct;
+        public const uint MAX_OCCUPANTS = 24;
+
+        private TSOProtocolBase Parent { get; }
 
         /// <summary>
         /// Creates a new <see cref="RuntimeRoomController"/> attached to the given <paramref name="Parent"/>
         /// </summary>
         /// <param name="Parent"></param>
-        public RuntimeRoomController(RoomProtocol Parent)
+        public RuntimeRoomController(TSOProtocolBase Parent)
         {
             this.Parent = Parent;
         }
@@ -49,7 +46,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <param name="HouseID"></param>
-        internal void SetPlayerInRoom(uint AvatarID, uint HouseID)
+        public void SetPlayerInRoom(uint AvatarID, uint HouseID)
         {
             if (!RoomExists(HouseID))
                 throw new InvalidOperationException($"Player: {AvatarID} was attempted to put into HouseID: {HouseID}, but that room doesn't exist.");
@@ -62,20 +59,20 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// <param name="AvatarID"></param>
         /// <param name="RoomID"></param>
         /// <returns></returns>
-        internal bool TryGetRoomAvatarIsIn(uint AvatarID, out uint RoomID) => _playersInRooms.TryGetValue(AvatarID, out RoomID);
+        public bool TryGetRoomAvatarIsIn(uint AvatarID, out uint RoomID) => _playersInRooms.TryGetValue(AvatarID, out RoomID);
         /// <summary>
         /// Removes the <paramref name="AvatarID"/> from the room they're in, only in the <see cref="RuntimeRoomController"/>.
         /// </summary>
         /// <param name="AvatarID"></param>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        internal bool RemoveAvatarFromRoom(uint AvatarID, out uint HouseID) => _playersInRooms.Remove(AvatarID, out HouseID);
+        public bool RemoveAvatarFromRoom(uint AvatarID, out uint HouseID) => _playersInRooms.Remove(AvatarID, out HouseID);
 
         /// <summary>
         /// Returns a list of all <see cref="TSORoomInfoStruct"/> for the rooms in this <see cref="RuntimeRoomController"/>
         /// </summary>
         /// <returns></returns>
-        internal TSORoomInfoStruct[] GetAllRoomStructs(bool OnlineOnly = false) => [.. _roomsByHouseID.Where(y => OnlineOnly ? y.Value.IsOnline : true).Select(x => x.Value.RoomInfo)];
+        public TSORoomInfoStruct[] GetAllRoomStructs(bool OnlineOnly = false) => [.. _roomsByHouseID.Where(y => OnlineOnly ? y.Value.IsOnline : true).Select(x => x.Value.RoomInfo)];
 
         /// <summary>
         /// <inheritdoc cref="TryGetByHouseID(uint, out RoomProtocolRoomInfo)"/>, if it exists.
@@ -83,14 +80,14 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// </summary>
         /// <param name="houseID"></param>
         /// <returns></returns>
-        internal RoomProtocolRoomInfo GetByHouseID(uint houseID) => _roomsByHouseID[houseID];
+        public RoomProtocolRoomInfo GetByHouseID(uint houseID) => _roomsByHouseID[houseID];
         /// <summary>
         /// Returns whether a room exists or not. You can use <see cref="EnsureRoomExists(uint, TSOAriesIDStruct?, out bool)"/> and <see cref="CreateOrGetRoomWithLeader(uint, TSOAriesIDStruct, out bool)"/>
         /// to create rooms in the protocol.
         /// </summary>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        internal bool RoomExists(uint HouseID) => _roomsByHouseID.ContainsKey(HouseID);
+        public bool RoomExists(uint HouseID) => _roomsByHouseID.ContainsKey(HouseID);
 
         /// <summary>
         /// Returns the <see cref="RoomProtocolRoomInfo"/> for the given <paramref name="houseID"/>
@@ -98,25 +95,25 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// <param name="houseID"></param>
         /// <param name="Room"></param>
         /// <returns></returns>
-        internal bool TryGetByHouseID(uint houseID, out RoomProtocolRoomInfo Room) => _roomsByHouseID.TryGetValue(houseID, out Room);
+        public bool TryGetByHouseID(uint houseID, out RoomProtocolRoomInfo Room) => _roomsByHouseID.TryGetValue(houseID, out Room);
 
-        internal bool AddRoom(RoomProtocolRoomInfo Room)
+        public bool AddRoom(RoomProtocolRoomInfo Room)
         {
             bool result = false;
-            if (Room.LeaderAvatarID == 0)
-                throw new InvalidDataException($"LeaderID is invalid: {Room.LeaderAvatarID}");
-            if (string.IsNullOrWhiteSpace(Room.LeaderID.MasterID)) // ensure this isn't blank for data integrity
-                Room.LeaderID = Parent.GetVoltronIDStruct(Room.LeaderAvatarID);
+            if (Room.HostHSBAvatarID == 0)
+                throw new InvalidDataException($"LeaderID is invalid: {Room.HostHSBAvatarID}");
+            if (Room.HostID == null) // ensure this isn't blank for data integrity
+                Room.HostID = GetVoltronIDStruct(Room.HostHSBAvatarID);
             result = _roomsByHouseID.TryAdd(Room.LotID, Room);
             if (!result)
-                result = MigrateHost(Room.LotID, Room.LeaderID);
+                result = MigrateHost(Room.LotID, Room.HostID);
             else
                 Parent.LogConsole($"HouseID: {Room.LotID} is ONLINE.");
             return result;
         }
 
         /// <summary>
-        /// Moves the <see cref="RoomProtocolRoomInfo.LeaderID"/> to be <paramref name="NewLeaderID"/>
+        /// Moves the <see cref="RoomProtocolRoomInfo.HostID"/> to be <paramref name="NewLeaderID"/>
         /// </summary>
         /// <param name="HouseID"></param>
         /// <param name="NewLeaderID"></param>
@@ -127,9 +124,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
             if (!_roomsByHouseID.ContainsKey(HouseID))
                 throw new Exception("Cannot migrate host of a room that's closed.");
             var roomInfo = GetByHouseID(HouseID);
-            if (roomInfo.LeaderID.AvatarID != NewLeaderID.AvatarID)
+            if (roomInfo.HostID.AvatarID != NewLeaderID.AvatarID)
             {
-                roomInfo.LeaderID = NewLeaderID;
+                roomInfo.HostID = NewLeaderID;
                 Parent.LogConsole($"HouseID: {HouseID} migrating host to: {NewLeaderID}.");
             }
             return true;
@@ -140,7 +137,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// <param name="HSBID"></param>
         /// <param name="HouseID"></param>
         /// <returns></returns>
-        internal bool GetNextHouseIDForHSB(TSOAriesIDStruct HSBID, out uint HouseID)
+        public bool GetNextHouseIDForHSB(TSOAriesIDStruct HSBID, out uint HouseID)
         {
             IEnumerable<uint> awaitingJoinerHouseIDs = _joiningQueuesByHouseID.Keys;
             foreach (uint houseID in awaitingJoinerHouseIDs)
@@ -163,7 +160,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
         /// <param name="Information"></param>
         /// <param name="FailureReason"></param>
         /// <returns></returns>
-        internal bool PopHouseHostingInfoForHSB(TSOAriesIDStruct HSBID, out (uint HouseID, Queue<uint> JoiningQueue)? Information, out string FailureReason)
+        public bool PopHouseHostingInfoForHSB(TSOAriesIDStruct HSBID, out (uint HouseID, Queue<uint> JoiningQueue)? Information, out string FailureReason)
         {
             FailureReason = $"This VoltronID {HSBID} doesn't match any pending HSB host clients.";
             Information = default;
@@ -181,7 +178,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator.Room
             return true;
         }
 
-        internal bool AddJoinerToQueue(uint joiningAvatarID, uint houseID, out string FailureReason)
+        public bool AddJoinerToQueue(uint joiningAvatarID, uint houseID, out string FailureReason)
         {
             FailureReason = "success.";
             if (_joiningQueuesByHouseID.TryGetValue(houseID, out var queue))

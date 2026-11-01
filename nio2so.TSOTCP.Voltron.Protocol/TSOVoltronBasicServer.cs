@@ -391,8 +391,10 @@ namespace nio2so.Voltron.Core
                 { // ERROR! Size too large!
                     if (TestingConstraints.SplitBuffersPDUEnabled)
                         throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
-                    else // Split buffers disabled -- split into many Aries frames
-                        ; // sendPackets = SplitLargeAriesFrame(splitPDU);
+                    else if (false) // Split buffers disabled -- split into many Aries frames
+                        sendPackets = SplitLargeAriesFrame(splitPDU);
+                    else
+                        ; // the client also takes no issue just sending it in segments normally, just do that.
                 }
                 Logger.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, sendPackets, voltronPacket); // DEBUG LOGGING for ARIES packet(s)
                 //Disposing handled by the Quazar API. See: QuazarSettings.DisposePacketsOnSent

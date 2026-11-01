@@ -38,12 +38,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (item == null) throw new InvalidDataException($"LotID {HouseID} doesn't exist.");
             return item;
         }
-        /// <summary>
-        /// <inheritdoc cref="AvatarProtocol.GetAvatarIDStruct(AvatarIDToken)"/>
-        /// </summary>
-        /// <param name="AvatarID"></param>
-        /// <returns></returns>
-        public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetVoltronIDStruct(AvatarID);
 
         /// <summary>
         /// This function is invoked when the <see cref="LotProtocol"/> receives an incoming <see cref="TSOBuyLotByAvatarIDRequest"/>

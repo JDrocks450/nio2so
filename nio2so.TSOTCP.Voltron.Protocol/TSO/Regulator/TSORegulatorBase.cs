@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common;
 using nio2so.DataService.Common;
+using nio2so.DataService.Common.Tokens;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO.Aries;
@@ -119,6 +120,15 @@ namespace nio2so.Voltron.Core.TSO.Regulator
                 return reg.Name;
             }
         }
+
+        /// <summary>
+        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public abstract TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID);
+        public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetPlayerInfoStruct((VoltronID as ITSONumeralStringStruct)?.NumericID ?? 0);
+        public abstract TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID);
 
         /// <summary>
         /// Creates a new <see cref="TSOProtocolBase"/> instance with the provided <paramref name="Options"/>.
@@ -331,19 +341,19 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="Message"></param>
         /// <param name="Caption"></param>
         /// <param name="Severity"></param>
-        protected void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
+        public void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
             GetService<TSOLoggerServiceBase>().LogConsole(new(Severity, RegulatorName, $"[{Caption ?? ""}] {Message}"));
         /// <summary>
         /// <inheritdoc cref="LogConsole(string, string, TSOLoggerServiceBase.LogSeverity)"/> as an <see cref="TSOLoggerServiceBase.LogSeverity.Errors"/>
         /// </summary>
         /// <param name="Error"></param>
         /// <param name="Caption"></param>
-        protected void LogError(string Error, string Caption = "") => LogConsole(Error, Caption, TSOLoggerServiceBase.LogSeverity.Errors);
+        public void LogError(string Error, string Caption = "") => LogConsole(Error, Caption, TSOLoggerServiceBase.LogSeverity.Errors);
         /// <summary>
         /// <inheritdoc cref="LogError(string, string)"/>
         /// </summary>
         /// <param name="ErrorException"></param>
-        protected void LogError(Exception ErrorException) => LogError(ErrorException.ToString(), ErrorException.GetType().Name);
+        public void LogError(Exception ErrorException) => LogError(ErrorException.ToString(), ErrorException.GetType().Name);
 
         /// <summary>
         /// Returns the type map for the provided <paramref name="PDUType"/>
