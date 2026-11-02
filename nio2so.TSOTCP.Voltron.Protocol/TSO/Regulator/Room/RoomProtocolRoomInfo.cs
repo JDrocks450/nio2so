@@ -36,7 +36,7 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         /// <summary>
         /// Creates a new <see cref="TSORoomInfoStruct"/> matching the configuration for this <see cref="RoomProtocolRoomInfo"/>
         /// </summary>
-        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, LotLeader, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
+        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, HostID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
 
         /// <summary>
         /// Adds this client to the list of clients in this room. This VoltronID will now receive network transmissions related to this room.

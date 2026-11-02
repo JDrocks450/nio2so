@@ -133,6 +133,14 @@ namespace nio2so.Voltron.Core.Telemetry
                 _ => ConsoleColor.Blue
             };            
 
+            if (!TestingConstraints.VerboseLogging)
+            { // filter out the server tick confirmation messages if verbose logging is disabled
+                PDU.SetPosition(26);
+                uint kMSGID = PDU.ReadBodyDword();
+                if (kMSGID == 0x6B6F23A1)
+                    return;
+            }
+
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
 
             //**LOG PDU TO DISK
@@ -191,6 +199,8 @@ namespace nio2so.Voltron.Core.Telemetry
         /// </summary>
         /// <param name="Entry"></param>
         public void LogConsole(ConsoleLogEntry Entry) => OnConsoleLog(Entry);
+        
+        private readonly object _logLock = new();
         /// <summary>
         /// Internal method to log a message to the console and, if enabled, to the system log file.
         /// </summary>
@@ -199,17 +209,13 @@ namespace nio2so.Voltron.Core.Telemetry
         {
             Message = $"[*THREAD: {Thread.CurrentThread.ManagedThreadId}*] {ServerName} - {Message}";
             Console.WriteLine(Message);
+
             if (!IsSysLogging) return;
-            lock (this)
+
+            lock (_logLock)
             {
-                using (FileStream fs = File.OpenWrite(_systemLogPath))
-                {
-                    fs.Seek(0, SeekOrigin.End);
-                    using (StreamWriter sw = new StreamWriter(fs))
-                    {
-                        sw.WriteLine(Message);
-                    }
-                }
+                using var sw = new StreamWriter(_systemLogPath, append: true);
+                sw.WriteLine(Message);
             }
         }
 

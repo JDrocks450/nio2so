@@ -528,6 +528,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 using var ms = new MemoryStream(packet_data);
                 var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
 
+                TrySendTo(90001, new TSOOccupantArrivedPDU(GetPlayerInfoStruct(joiningClient)));
                 TrySendTo(90001, houseDataPDU);
                 return;
 #if false
@@ -549,12 +550,13 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             RespondWith(new TSOHouseSimConstraintsResponsePDU(avatarID));
 
-            if (avatarID > Server.VoltronSettings.PreAlpha_HSBAvatarID)
+            if (avatarID >= Server.VoltronSettings.PreAlpha_HSBAvatarID)
             { // this is an HSB
                 //create the room and put the HSB into it
                 HSB_CreateRoom(houseID, 90001);
 
                 var roomInfo = roomController.GetByHouseID(houseID);
+                roomController.SetPlayerInRoom(avatarID, houseID);
                 roomInfo.ClientJoinRoom(client_session);
             }
         }
@@ -567,13 +569,16 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (PDU is not TSONetMessagePDU netMsg)
                 throw new ArgumentException(nameof(PDU));
 
+            if (netMsg.kMSGID != TSO_NewImproved_kMSGs.kServerTickConfirmationMsg)
+                ; // breakpoint
+
             ITSONetMessageStandard msg = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
 
-            if (netMsg.KMSGID == 0x7D1A4415) // maybe a dialog command? could just be a server log
+            if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kMSGID_GenericMessage)
             {
                 ITSONetMessageStandard embedded = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
-                LogConsole($"[RoomProtocol] Room loaded with the following message: {embedded.StringContent}");
-            }
+                LogConsole($"Room loaded with the following Generic Message: {embedded.StringContent}");
+            }                        
 
             // figure out the parameters of this transaction
             TSOAriesIDStruct? Dest_AvatarID = null;
@@ -588,13 +593,26 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 // get the room we're in by the avatar ID
                 roomController.TryGetRoomAvatarIsIn(Client.AvatarID, out roomID);
             }
+
             // look up failure handled here
-            if (Dest_AvatarID == null || roomID == 0)
+            if (Dest_AvatarID == null)
                 throw new Exception("Reverse lookup failure.");
+
+            if (netMsg.kMSGID == (TSO_NewImproved_kMSGs)0xCBBC0936)
+            {
+                TrySendTo(Dest_AvatarID, netMsg); // send it
+                SendAvatarNeighborPacket(1337);
+                SendAvatarNeighborPacket(90001);
+                return;
+            }
+
+            // look up failure handled here
+            if (roomID == 0)
+                throw new Exception("Reverse room lookup failure.");
 
             var roomInfo = roomController.GetByHouseID(roomID);
 
-            if (netMsg.KMSGID == 0x3BFC2808) // join house response
+            if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kMSGID_JoinHouseResponse) // join house response
             { // client joined
                 roomInfo.ClientJoinRoom(Client);
                 //forward the backlog to the client who just joined the room
@@ -611,25 +629,51 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             }
             else // client is likely still trying to joining this room, just put it into the backlog and send it when they join
             {
-                if (!roomController.AddTransactionToBacklog(roomID, new(Client.AvatarID, Dest_AvatarID.AvatarID, netMsg)))
+                if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kServerTickConfirmationMsg)
+                    ; // do not add this to the backlog
+                else if (!roomController.AddTransactionToBacklog(roomID, new(Client.AvatarID, Dest_AvatarID.AvatarID, netMsg)))
                     LogConsole($"[RoomProtocol] Failed to add transaction to backlog for room {roomID}.");
             }
 
-            if (netMsg.KMSGID == 0x3BFC2808) // join house response
+            if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kMSGID_HouseData) // house data
             { // idk house data i guess
                 SendAvatarNeighborPacket(1337);
                 SendAvatarNeighborPacket(90001);
             }
         }
 
+        /// <summary>
+        /// Sends this <paramref name="PDU"/> to every client connected to this <paramref name="HouseID"/> <see cref="RoomProtocolRoomInfo"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <param name="PDU"></param>
+        /// <param name="ExcludeHost">Do not send this PDU to the host if true</param>
+        void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, bool ExcludeHost = false)
+        {
+            RoomProtocolRoomInfo roomInfo = roomController.GetByHouseID(HouseID);
+            BroadcastPDUToRoom(HouseID, PDU, ExcludeHost ? [roomInfo.HostHSBAvatarID] : Array.Empty<uint>());
+        }
+        /// <summary>
+        /// <inheritdoc cref="BroadcastPDUToRoom(uint, TSOVoltronPacket, bool)"/>
+        /// </summary>
+        /// <param name="HouseID"></param>
+        /// <param name="PDU"></param>
+        /// <param name="ExcludeAvatarIDs">Do not send this PDU to any avatar in this list</param>
+        void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, params uint[] ExcludeAvatarIDs)
+        {
+            RoomProtocolRoomInfo roomInfo = roomController.GetByHouseID(HouseID);
+            IEnumerable<TSOAriesIDStruct> clients = roomInfo.GetConnectedClients();
+            foreach (var client in clients)
+            {
+                if (ExcludeAvatarIDs.Contains((client as ITSONumeralStringStruct)?.NumericID ?? 0))
+                    continue;
+                TrySendTo(client, PDU);
+            }
+        }
+
         private void SendAvatarNeighborPacket(uint AvatarID)
         {
             byte[] packet_data = [
-		/* Aries header */
-		0x00,0x00,0x00,0x00,
-        0xFF,0xFF,0xFF,0xFF,
-        0xF6,0x03,0x00,0x00,
-
 		/* 0x0AC11F1E packet */
 		0x27,0x37,
         0x00,0x00,0x03,0xF6,
@@ -712,7 +756,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x30,0x00,0x08,0x4A,0x6F,
         0x6C,0x6C,0x79,0x53,0x69,0x6D,0x01,0x42,0x10,0x00,0x01
     ];
-            TrySendTo(AvatarID, GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(new MemoryStream(packet_data)));
+            using var ms = new MemoryStream(packet_data);
+            ms.Seek(0, SeekOrigin.Begin);
+            TrySendTo(AvatarID, GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms));
         }
     }
 }

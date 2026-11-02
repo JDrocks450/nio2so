@@ -52,7 +52,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// </summary>
         public uint[] Vector { get; set; } = Array.Empty<uint>();
 
-        public uint KMSGID { get; set; }
+        public TSO_NewImproved_kMSGs kMSGID { get; set; }
 
         /// <summary>
         /// The length of the <see cref="ContentBytes"/> property

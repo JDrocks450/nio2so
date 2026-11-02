@@ -3,7 +3,7 @@
 #define TSOPLAYTEST
 #define TSONANDI
 */
-#define TSONANDI
+#define TSOPREALPHA
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST
@@ -126,6 +126,14 @@ namespace nio2so.TSOTCP.Voltron.Server
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
+
+            //VERIFY SETTINGS
+            if (UsingSSL && IsPreAlpha)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Pre-Alpha Voltron Server does not support SSL/TLS connections. Please disable SSL in the server settings.");
+                return;
+            }
 
             Ready = true;
             OnServerReady();

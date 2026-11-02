@@ -6,24 +6,15 @@
     /// <para>For example, the DBServiceClientD will use the <see cref="kDBServiceRequestMsg"/> to send data.
     /// and uses the <see cref="kDBServiceResponseMsg"/> to be notified when to receive data.</para>
     /// </summary>
-    public enum TSO_NewImproved_VoltronPacketTypes_kMSGs : uint
+    public enum TSO_NewImproved_kMSGs : uint
     {
+        kMSGID_HouseData = 0x9B7ED631,
+        kMSGID_JoinHouseResponse = 0x3BFC2808,
+        kMSGID_GenericMessage = 0x7D1A4415,
         /// <summary>
-        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Requests
+        /// Sent by the HSB once every second or so, a heartbeat message
         /// </summary>
-        kDBServiceRequestMsg = 0x3BF82D4E,
-        /// <summary>
-        /// <see cref="TSODBRequestWrapper"/> PDUs that are intended as Responses
-        /// </summary>
-        kDBServiceResponseMsg = 0xDBF301A9,
-        /// <summary>
-        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Responses
-        /// </summary>
-        kSimResponseMsg = 0x7B6F2221,
-        /// <summary>
-        /// <see cref="TSOVoltronDatablobContent"/> PDUs that are intended as Requests
-        /// </summary>
-        kSimRequestMsg = 0x1B6F221B,
+        kServerTickConfirmationMsg = 0x6B6F23A1,
     }
 
     public enum TSO_NewImproved_GZMSGIDs : uint

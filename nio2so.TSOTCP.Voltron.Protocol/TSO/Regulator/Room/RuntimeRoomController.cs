@@ -221,21 +221,21 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         }
 
         /// <summary>
-        /// Moves the <see cref="RoomProtocolRoomInfo.HostID"/> to be <paramref name="NewLeaderID"/>
+        /// Moves the <see cref="RoomProtocolRoomInfo.HostID"/> to be <paramref name="NewHostID"/>
         /// </summary>
         /// <param name="HouseID"></param>
-        /// <param name="NewLeaderID"></param>
+        /// <param name="NewHostID"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        private bool MigrateHost(uint HouseID, TSOAriesIDStruct NewLeaderID)
+        private bool MigrateHost(uint HouseID, TSOAriesIDStruct NewHostID)
         {
             if (!_roomsByHouseID.ContainsKey(HouseID))
                 throw new Exception("Cannot migrate host of a room that's closed.");
             var roomInfo = GetByHouseID(HouseID);
-            if (roomInfo.HostID.AvatarID != NewLeaderID.AvatarID)
+            if (roomInfo.HostID.AvatarID != NewHostID.AvatarID)
             {
-                roomInfo.HostID = NewLeaderID;
-                Parent.LogConsole($"HouseID: {HouseID} migrating host to: {NewLeaderID}.");
+                roomInfo.HostID = NewHostID;
+                Parent.LogConsole($"HouseID: {HouseID} migrating host to: {NewHostID}.");
             }
             return true;
         }

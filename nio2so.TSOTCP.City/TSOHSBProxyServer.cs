@@ -160,7 +160,7 @@ namespace nio2so.TSOTCP.Voltron.Server
             _voltronClient.EventParameters = new() { OnPacketReceivedEnabled = false };
 
             //ARIES_GETCLIENTINFO -- needed to get the TSOClient to actually send anything.
-            //Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
+            Send(QuazarID, new TSOTCPPacket(TSOAriesPacketTypes.ClientSessionInfo, 0, 0));
             ACTIVATED = true;
         }
 
@@ -258,16 +258,29 @@ namespace nio2so.TSOTCP.Voltron.Server
 
             if (aries_packet_waiting)
             {
-                aries_stream.Write(IncomingData);
+                int remaining = int.MaxValue;//(int)totalPacketSize - (int)aries_stream.Length;
+                aries_stream.Write(IncomingData, 0, Math.Min(IncomingData.Length, remaining));
                 if (aries_stream.Length >= totalPacketSize)
                 {
                     aries_packet_waiting = false;
                     totalPacketSize = 0;
                     OutgoingData = aries_stream.ToArray();
+#if false
+                    if (remaining < IncomingData.Length)
+                    { // extra data after the aries frame, so we need to process it
+                        byte[] extra = new byte[IncomingData.Length - remaining];
+                        Array.Copy(IncomingData, remaining, extra, 0, extra.Length);
+                        if (WaitForAriesFrame(extra, out WaitingAmount, out byte[] extraOutgoingData))
+                        {
+                            Array.Resize(ref OutgoingData, OutgoingData.Length + extraOutgoingData.Length);
+                            Array.Copy(extraOutgoingData, 0, OutgoingData, OutgoingData.Length - extraOutgoingData.Length, extraOutgoingData.Length);
+                        }
+                    }
+#endif
                     return true;
                 }
             }
-            else
+            else if (IncomingData.Length >= TSOTCPPacket.ARIES_FRAME_HEADER_LEN)
             {
                 TSOTCPPacket.GetAriesHeader(IncomingData, out _, out _, out uint size);
                 WaitingAmount = (int)size;

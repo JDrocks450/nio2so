@@ -8,7 +8,7 @@
         //****BETA TESTING
 
         public const bool LogPackets = true;
-        public const bool LogAriesPackets = true;
+        public const bool LogAriesPackets = false;
         public const bool LogVoltronPackets = true;
 
         public const int City_ListenPort = 49100; // 49101 HouseSimServer test and 49100 for City Server
@@ -30,7 +30,7 @@
         /// <summary>
         /// Transport layer and ServerTickConfirmation messages are logged
         /// </summary>
-        public const bool VerboseLogging = true;
+        public const bool VerboseLogging = false;
 
         /// <summary>
         /// What the ID for My House
