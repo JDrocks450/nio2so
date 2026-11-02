@@ -10,6 +10,10 @@
 
 <b>A continuation of niotso (for The Sims Online)</b> in which this project successfully emulates the server and protocols that the in-development <i>The Sims Online: Pre-Alpha</i> client interfaces with to create the gameplay experience as it were in May 2002. **_Experience it as if you were a developer at Maxis!_**
 
+<p align="center"> 
+  <img src="https://github.com/user-attachments/assets/dfe98760-b7f8-4cc1-b00e-968bd95f8050" alt="Alt text" style="float: right; margin-right: 15px;" />
+</p>
+
 ## Disclaimer
 
 _This project does not distribute, include, or provide any copyrighted materials. Any copyrighted materials required to use this software must be obtained independently by the end user. No leaked source code, proprietary assets, or other unauthorized materials were used in the development of this project or any of its components._
