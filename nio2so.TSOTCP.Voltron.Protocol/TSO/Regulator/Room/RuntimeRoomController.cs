@@ -5,6 +5,89 @@ using System.Collections.Concurrent;
 namespace nio2so.Voltron.Core.TSO.Regulator.Room
 {
     /// <summary>
+    /// Stores a backlog of transactions that are waiting to be processed by the <see cref="RoomProtocol"/>. 
+    /// This is used to ensure that transactions are processed in the correct order and that no transactions are lost.
+    /// </summary>
+    public class RuntimeRoomTransactionBacklog
+    {
+        public uint HouseID { get; }
+
+        /// <summary>
+        /// Stores a single transaction that is waiting to be processed by the <see cref="RoomProtocol"/>.
+        /// </summary>
+        public class RoomProtocolTransaction
+        {
+            public uint SendingAvatarID { get; set; }
+            public uint DestinationAvatarID { get; set; }
+            public bool IsBroadcast => DestinationAvatarID == 0;
+            public TSOVoltronPacket PDU { get; set; }
+
+            public RoomProtocolTransaction() { }
+            /// <summary>
+            /// Adds a transaction that is a Broadcast to the room.
+            /// </summary>
+            /// <param name="SendingAvatarID"></param>
+            /// <param name="PDU"></param>
+            public RoomProtocolTransaction(uint SendingAvatarID, TSOVoltronPacket PDU) : this(SendingAvatarID, 0, PDU)
+            {
+            }
+            /// <summary>
+            /// Adds a transmit PDU to the <paramref name="DestinationAvatarID"/>
+            /// </summary>
+            /// <param name="SendingAvatarID"></param>
+            /// <param name="DestinationAvatarID"></param>
+            /// <param name="PDU"></param>
+            public RoomProtocolTransaction(uint SendingAvatarID, uint DestinationAvatarID, TSOVoltronPacket PDU)
+            {
+                this.SendingAvatarID = SendingAvatarID;
+                this.DestinationAvatarID = DestinationAvatarID;
+                this.PDU = PDU;
+            }
+        }
+
+        ConcurrentDictionary<int, RoomProtocolTransaction> _backlog = new();
+        public RuntimeRoomTransactionBacklog(uint HouseID)
+        {
+            this.HouseID = HouseID;
+        }
+        
+        /// <summary>
+        /// Adds a transaction to the end of the backlog
+        /// </summary>
+        /// <param name="transaction"></param>
+        public void AddTransaction(RoomProtocolTransaction transaction)
+        {
+            int index = _backlog.Count;
+            while (!_backlog.TryAdd(index++, transaction))
+                ;
+        }
+        public bool TryGetNextTransaction(out RoomProtocolTransaction? transaction, uint DestinationAvatarID = 0)
+        {
+            bool isBroadcast = DestinationAvatarID == 0;
+
+            transaction = null;
+            int[] keys = _backlog.Keys.OrderBy(x => x).ToArray();
+            if (_backlog.Count == 0 || keys.Length == 0) return false;
+            for (int i = 0; i < keys.Length; i++)
+            {
+                var peek = _backlog[keys[i]];
+                if (!isBroadcast) // looking specifically for one avatar or the next broadcast
+                {
+                    //if the next one has 0 as the destination, then it's a broadcast and we can return it to the caller
+                    if (!peek.IsBroadcast && peek.DestinationAvatarID != DestinationAvatarID)
+                        continue;
+                }
+                if (_backlog.TryRemove(keys[i], out RoomProtocolTransaction? nextTransaction))
+                {
+                    transaction = nextTransaction;
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Tracks and serves data on the active rooms in the <see cref="RoomProtocol"/>
     /// </summary>
     public class RuntimeRoomController
@@ -18,6 +101,11 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         /// List of clients added to rooms using <see cref="ClientEnterRoom(uint, TSOAriesIDStruct, bool)"/>
         /// </summary>
         private ConcurrentDictionary<uint, uint> _playersInRooms { get; } = new();
+
+        /// <summary>
+        /// List of all transaction backlog instances for each room, mapped to their <see cref="RoomProtocolRoomInfo.RoomID"/>
+        /// </summary>
+        private ConcurrentDictionary<uint, RuntimeRoomTransactionBacklog> _transactionBacklogsByHouseID { get; } = new();
 
         /// <summary>
         /// When a room is offline but a player is set to be joining it, there is a time period where the HSB isn't online yet and the player is waiting.
@@ -97,6 +185,26 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         /// <returns></returns>
         public bool TryGetByHouseID(uint houseID, out RoomProtocolRoomInfo Room) => _roomsByHouseID.TryGetValue(houseID, out Room);
 
+        /// <summary>
+        /// Adds the room to the <see cref="RuntimeRoomController"/> and returns the <see cref="RoomProtocolRoomInfo"/> for it.
+        /// </summary>
+        /// <param name="RoomName"></param>
+        /// <param name="HouseID"></param>
+        /// <param name="HostID"></param>
+        /// <param name="LotLeader"></param>
+        /// <param name="Room"></param>
+        /// <returns></returns>
+        public bool AddRoom(string RoomName, uint HouseID, TSOAriesIDStruct HostID, TSOAriesIDStruct LotLeader, out RoomProtocolRoomInfo Room)
+        {
+            Room = new RoomProtocolRoomInfo(new(HouseID, RoomName), HostID, LotLeader, HouseID);
+            return AddRoom(Room);
+        }
+        /// <summary>
+        /// <inheritdoc cref="AddRoom(string, uint, TSOAriesIDStruct, TSOAriesIDStruct, out RoomProtocolRoomInfo)"/>
+        /// </summary>
+        /// <param name="Room"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidDataException"></exception>
         public bool AddRoom(RoomProtocolRoomInfo Room)
         {
             bool result = false;
@@ -131,6 +239,7 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
             }
             return true;
         }
+
         /// <summary>
         /// Adds this HSB Client as a pending host and will return which HouseID it will be hosting
         /// </summary>
@@ -174,7 +283,7 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
             if (joiners == null) joiners = new();
 
             FailureReason = "success.";
-            Information = (HouseID,joiners);
+            Information = (HouseID, joiners);
             return true;
         }
 
@@ -186,10 +295,29 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
                 if (!queue.Any(x => x == joiningAvatarID))
                     queue.Append(joiningAvatarID);
             }
-            else 
+            else
                 _joiningQueuesByHouseID.TryAdd(houseID, new([joiningAvatarID]));
 
             return true;
+        }
+
+        public bool AddTransactionToBacklog(uint houseID, RuntimeRoomTransactionBacklog.RoomProtocolTransaction transaction)
+        {
+            if (!_transactionBacklogsByHouseID.TryGetValue(houseID, out RuntimeRoomTransactionBacklog? backlog))
+            {
+                backlog = new(houseID);
+                _transactionBacklogsByHouseID.TryAdd(houseID, backlog);
+            }
+            backlog.AddTransaction(transaction);
+            return true;
+        }
+
+        public bool TryGetNextTransactionFromBacklog(uint houseID, out RuntimeRoomTransactionBacklog.RoomProtocolTransaction? transaction, uint DestinationAvatarID = 0)
+        {
+            transaction = null;
+            if (!_transactionBacklogsByHouseID.TryGetValue(houseID, out RuntimeRoomTransactionBacklog? backlog))
+                return false;
+            return backlog.TryGetNextTransaction(out transaction, DestinationAvatarID);
         }
     }
 }

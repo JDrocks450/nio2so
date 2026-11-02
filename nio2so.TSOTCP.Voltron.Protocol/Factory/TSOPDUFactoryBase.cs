@@ -79,7 +79,7 @@ namespace nio2so.Voltron.Core.Factory
         /// </summary>
         /// <param name="Stream"></param>
         /// <returns></returns>
-        public TSOVoltronPacket? CreatePacketObjectFromDataBuffer(Stream Stream)
+        public TSOVoltronPacket CreatePacketObjectFromDataBuffer(Stream Stream)
         {
             TSOVoltronPacket? cTSOVoltronpacket = null;
             uint currentIndex = 0;
@@ -104,7 +104,7 @@ namespace nio2so.Voltron.Core.Factory
                 {
                     LogConsole($"ERROR: Could not save the discovery packet to file: {ex}",TSOLoggerServiceBase.LogSeverity.Errors);
                 }
-                return null;
+                return cTSOVoltronpacket;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
             cTSOVoltronpacket.EnsureNoErrors();// check for errors in PDU
