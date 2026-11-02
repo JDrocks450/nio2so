@@ -10,6 +10,10 @@ namespace nio2so.Voltron.Core.TSO.PDU
     public abstract class TSOSplitBufferPDUBase : TSOVoltronPacket
     {
         /// <summary>
+        /// Size of the preceeding data: VoltronPacketType (2) + uint Size (4) + 1 byte + 4 bytes
+        /// </summary>
+        public const uint TSOSplitBufferHeaderSize = 11;
+        /// <summary>
         /// Represents if we've reached the end of the split data stream yet with this <see cref="TSOSplitBufferPDU"/> <para/>
         /// This is <see langword="true"/> if there aren't more <see cref="TSOSplitBufferPDU"/> after this one
         /// </summary>

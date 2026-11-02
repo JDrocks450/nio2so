@@ -5,6 +5,7 @@ using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
+using nio2so.Voltron.Core.TSO.Collections;
 using nio2so.Voltron.Core.TSO.PDU;
 using nio2so.Voltron.Core.TSO.Regulator;
 using OpenSSL.X509;
@@ -63,6 +64,10 @@ namespace nio2so.Voltron.Core
         /// </summary>
         public static string ServerVersionInfoString => $"==={nameof(nio2soVoltronProtocolVersion)}===\n {nio2soVoltronProtocolVersion}\n" +
                                                         $"==={nameof(QuaZarProtocolVersion)}===\n {QuaZarProtocolVersion}";
+        /// <summary>
+        /// Indicates that Server initialization completed
+        /// </summary>
+        public bool Ready { get; protected set; }
 
         /// <summary>
         /// The original instance of the <see cref="VoltronServerSettings"/> this server was created with. This can be edited.
@@ -100,7 +105,11 @@ namespace nio2so.Voltron.Core
             Regulators = new(this);
             Services = new(this);
             Logger = TelemetryServer;
-            Services.Register(TelemetryServer);
+            Services.Register(TelemetryServer);            
+        }
+
+        protected virtual void OnServerReady() {
+            Regulators.NotifyServerReady(this);
         }
 
         protected override void OnClientConnect(TcpClient Connection, uint ID)
@@ -125,7 +134,7 @@ namespace nio2so.Voltron.Core
             //ServerPauseEvent.Reset();
 
             //**Telemetry
-            Logger.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, Data);
+            Logger.OnAriesPacket(NetworkTrafficDirections.INBOUND, DateTime.Now, [Data]);
 
             switch (Data.PacketType)
             {
@@ -169,14 +178,14 @@ namespace nio2so.Voltron.Core
                         //Download player avatar name from data service.
                         try
                         {
-                            //download the player's name from data service.
-                            var UpdatePlayerPDU = dmsProtocol.GET_UPDATE_PLAYER(AvatarID, out string AvatarName);
-                            if (UpdatePlayerPDU == null)
-                                throw new NullReferenceException(nameof(UpdatePlayerPDU));
+                            string AvatarName = "default";
                             //add this connection to the session service .. this identifies the player by incoming PDU
                             sessionService.AddClient(ID, new(AvatarID, AvatarName));
+                            bool success = dmsProtocol.ON_CLIENT_JOIN_VOLTRON(AvatarID, out IEnumerable<TSOVoltronPacket> sendPackets);
+                            if (!success)                            
+                                throw new InvalidOperationException($"UserLogin(): Failed to initialize client session for AvatarID: {AvatarID}");                            
                             //send the update player PDU to the client
-                            SubmitAriesFrame(ID, UpdatePlayerPDU);
+                            SubmitAriesFrame(ID, sendPackets);
                             Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, Name, $"UserLogin(): AvatarID: {AvatarID} AvatarName: {AvatarName} (downloaded from nio2so)"));
                         }
                         catch (Exception ex)
@@ -200,12 +209,13 @@ namespace nio2so.Voltron.Core
         {
             uint ID = QuazarID;
 
-            List<TSOVoltronPacket> _VoltronBacklog = new();
-            List<TSOVoltronPacket> packetSendQueue = new List<TSOVoltronPacket>();
+            TSOVoltronPacketCollection voltronBacklog = new();
+            TSOVoltronPacketCollection packetSendQueue = new();
 
             uint? disconnectingID = null;
 
             // Sends the current packetSendQueue in a TSOAriesPacket
+            // Disposes all Voltron packets that are managed by this function
             void CloseAriesFrame(uint ID)
             {
                 while (packetSendQueue.Any())
@@ -214,9 +224,10 @@ namespace nio2so.Voltron.Core
                     packetSendQueue.Remove(voltronPacket);
 
                     SubmitAriesFrame(ID, voltronPacket);
+                    voltronPacket.Dispose(); // dispose sent packet
                 }
-                packetSendQueue.Clear();
-                _VoltronBacklog.Clear();
+                packetSendQueue.Dispose(); // dispose the list (should be empty)
+                voltronBacklog.Dispose(); // dispose the incoming pdu list
 
                 if (disconnectingID.HasValue)
                     Disconnect(disconnectingID.Value,null);
@@ -235,20 +246,20 @@ namespace nio2so.Voltron.Core
             }
 
             //GET VOLTRON PACKETS OUT OF DATA BUFFER
-            var factoryService = Services.Get<TSOPDUFactoryServiceBase>();
-            var packets = factoryService.CreatePacketObjectsFromAriesPacket(IncomingAriesPacket);
-            _VoltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
-            while (_VoltronBacklog.Count > 0)
+            TSOPDUFactoryServiceBase factoryService = Services.Get<TSOPDUFactoryServiceBase>();
+            using TSOVoltronPacketCollection packets = factoryService.CreatePacketObjectsFromAriesPacket(IncomingAriesPacket);
+            voltronBacklog.AddRange(packets); // Enqueue all incoming PDUs
+            while (voltronBacklog.Count > 0)
             { // Work through all incoming PDUs ... list can change foreach would be unsafe here                           
-                var packet = _VoltronBacklog[0];
-                _VoltronBacklog.RemoveAt(0); // pop
+                var packet = voltronBacklog[0];
+                voltronBacklog.RemoveAt(0); // pop
 
                 Debug_LogSendPDU(ID, packet, NetworkTrafficDirections.INBOUND); // DEBUG LOGGING
 
                 try
                 {
                     bool _handled = false; // DICTATES WHETHER HANDLER WAS SUCCESSFUL
-                    var returnPackets = OnIncomingVoltronPacket(ref _VoltronBacklog, ID, packet, ref _handled, out disconnectingID); // handle pdu
+                    var returnPackets = OnIncomingVoltronPacket(ref voltronBacklog, ID, packet, ref _handled, out disconnectingID); // handle pdu
                     if (!_handled)
                     { // HANDLER FAILED
                         Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Warnings, "Voltron Handler",
@@ -280,11 +291,11 @@ namespace nio2so.Voltron.Core
         /// <param name="Packet"></param>
         /// <param name="Handled"></param>
         /// <returns></returns>
-        private IEnumerable<TSOVoltronPacket> OnIncomingVoltronPacket(ref List<TSOVoltronPacket> VoltronBacklog, uint ID, TSOVoltronPacket Packet, ref bool Handled, out uint? disconnectingID)
+        private TSOVoltronPacketCollection OnIncomingVoltronPacket(ref TSOVoltronPacketCollection VoltronBacklog, uint ID, TSOVoltronPacket Packet, ref bool Handled, out uint? disconnectingID)
         {
             disconnectingID = null;
 
-            List<TSOVoltronPacket> packets = new();
+            TSOVoltronPacketCollection packets = new();
             void defaultSend(TSOVoltronPacket packetToSend)
             {
                 Debug_LogSendPDU(ID, packetToSend, NetworkTrafficDirections.CREATED);
@@ -304,17 +315,17 @@ namespace nio2so.Voltron.Core
                             foreach (var packet in Response.InsertionPackets)
                                 VoltronBacklog.Insert(0, packet);
                         }
-                        if (Response.EnqueuePackets != null) // ADD INSERTIONS TO BACKLOG
+                        if (Response.EnqueuePackets != null) // ADD ENQUEUES TO BACKLOG
                         {
                             foreach (var packet in Response.EnqueuePackets)
                                 VoltronBacklog.Add(packet);
                         }
-                        if (Response.ResponsePackets != null) // ADD RESPONSE TO SENDQUEUE
+                        if (Response.ResponsePackets != null) // ADD RESPONSES TO SENDQUEUE
                         {
                             foreach (var packet in Response.ResponsePackets)
                                 defaultSend(packet);
                         }
-                        if (Response.SessionPackets != null) // ADD SESSION TO SENDQUEUE
+                        if (Response.SessionPackets != null) // ADD SESSIONS TO SENDQUEUE
                         {
                             foreach (var packet in Response.SessionPackets)
                             {
@@ -323,9 +334,10 @@ namespace nio2so.Voltron.Core
                                 SubmitAriesFrame(sendID, packet.Packet);
                             }
                         }
-                        if (Response.AriesFrames != null)
+                        if (Response.AriesFrames != null) // ADD ARIES TO SENDQUEUE
                         {
                             Send(ID, [.. Response.AriesFrames]);
+                            //Disposed by Quazar
                         }
                         Handled = true;
                     }
@@ -335,8 +347,26 @@ namespace nio2so.Voltron.Core
         }
 
         /// <summary>
+        /// <inheritdoc cref="SubmitAriesFrame(uint, TSOVoltronPacket)"/>
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="voltronPackets"></param>
+        private void SubmitAriesFrame(uint ID, IEnumerable<TSOVoltronPacket> voltronPackets)
+        {
+            foreach (var voltronPacket in voltronPackets)
+                SubmitAriesFrame(ID, voltronPacket);
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="SubmitAriesFrame(uint, TSOVoltronPacket)"/>
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="voltronPackets"></param>
+        private void SubmitAriesFrame(uint ID, params TSOVoltronPacket[] voltronPackets) => SubmitAriesFrame(ID, voltronPackets);
+
+        /// <summary>
         /// Submits the <see cref="TSOVoltronPacket"/> to be sent to the remote connection <paramref name="ID"/> 
-        /// <para/>This will call <see cref="SplitLargePDU(TSOVoltronPacket)"/> on a larger <see cref="TSOVoltronPacket"/> size than 
+        /// <para/>This will call <see cref="CreateSplitBufferPDUCollection(TSOVoltronPacket)"/> on a larger <see cref="TSOVoltronPacket"/> size than 
         /// <see cref="ClientBufferLength"/>!
         /// <para/>Please note: TCPQuaZar also will automatically slice the data buffer of a <see cref="TSOTCPPacket"/> into multiple buffers if this is an overage.. but don't rely on this.
         /// </summary>
@@ -344,7 +374,7 @@ namespace nio2so.Voltron.Core
         /// <param name="voltronPacket"></param>
         private void SubmitAriesFrame(uint ID, TSOVoltronPacket voltronPacket)
         {
-            IEnumerable<TSOVoltronPacket> largePDUs = SplitLargePDU(voltronPacket);
+            IList<TSOVoltronPacket> largePDUs = CreateSplitBufferPDUCollection(voltronPacket);
             if (largePDUs.Count() > 1) // log console on auto TSOSplitBuffers            
                 Logger.LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, Name,
                     $"***\n" +
@@ -356,13 +386,19 @@ namespace nio2so.Voltron.Core
             foreach (var splitPDU in largePDUs)
             {
                 TSOTCPPacket ariesPacket = TSOVoltronPacket.MakeVoltronAriesPacket(splitPDU);
-                if (ariesPacket.BodyLength > ClientBufferLength)
+                TSOTCPPacket[] sendPackets = [ariesPacket];
+                if ((ariesPacket.BodyLength + TSOTCPPacket.ARIES_FRAME_HEADER_LEN) > ClientBufferLength)
                 { // ERROR! Size too large!
                     if (TestingConstraints.SplitBuffersPDUEnabled)
                         throw new OverflowException("The size of the last TSOTCPPacket was way too large.");
+                    else if (false) // Split buffers disabled -- split into many Aries frames
+                        sendPackets = SplitLargeAriesFrame(splitPDU);
+                    else
+                        ; // the client also takes no issue just sending it in segments normally, just do that.
                 }
-                Send(ID, ariesPacket);
-                Logger.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, ariesPacket, voltronPacket); // DEBUG LOGGING for ARIES packets
+                Logger.OnAriesPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, sendPackets, voltronPacket); // DEBUG LOGGING for ARIES packet(s)
+                //Disposing handled by the Quazar API. See: QuazarSettings.DisposePacketsOnSent
+                Send(ID, sendPackets);                
             }                        
             Logger.OnVoltronPacket(NetworkTrafficDirections.OUTBOUND, DateTime.Now, voltronPacket); // DEBUG LOGGING FOR VOLTRON PDUs
         }
@@ -371,19 +407,45 @@ namespace nio2so.Voltron.Core
         /// Helper function to automatically create a <see cref="TSOSplitBufferPDU"/> for largely sized networked data
         /// <para/> See: <see cref="TestingConstraints.SplitBuffersPDUEnabled"/> and <see cref="TSOSplitBufferPDU.STANDARD_CHUNK_SIZE"/>
         /// </summary>
-        /// <param name="DBWrapper"></param>
+        /// <param name="LargePDU"></param>
         /// <returns></returns>
-        protected IEnumerable<TSOVoltronPacket> SplitLargePDU(TSOVoltronPacket DBWrapper)
+        protected TSOVoltronPacket[] CreateSplitBufferPDUCollection(TSOVoltronPacket LargePDU)
         {
-            List<TSOVoltronPacket> packets = new();
+            TSOVoltronPacketCollection packets = new();
             //ensure to remove the ARIES header size from the split size to ensure we don't spill over            
             uint splitSize = ClientBufferLength != 0 ? (uint)ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN : TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
-            if (DBWrapper.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
+            if (LargePDU.BodyLength > splitSize && TestingConstraints.SplitBuffersPDUEnabled)
+            {
                 // ONLY USE ITSOSPLITBUFFERPDU ON A VOLTRON PACKET OBJECT
-                packets.AddRange(Services.Get<TSOPDUFactoryServiceBase>().CreateSplitBufferPacketsFromPDU(DBWrapper, splitSize).Cast<TSOVoltronPacket>());
+                var list = Services.Get<TSOPDUFactoryServiceBase>().CreateSplitBufferPacketsFromPDU(LargePDU, splitSize);
+                packets.AddRange(list);
+            }
             else
-                packets.Add(DBWrapper);
-            return packets;
+                packets.Add(LargePDU);
+            return packets.ToArray();
+        }
+        /// <summary>
+        /// This function is a fallback function in the event that <see cref="TestingConstraints.SplitBuffersPDUEnabled"/> is <see langword="false"/>
+        /// <para/>This will split a larger <see cref="TSOVoltronPacket"/> across many <see cref="TSOTCPPacket"/> objects to stay within the <see cref="ClientBufferLength"/>
+        /// <para/>Client buffer overruns need to be handled either with <see cref="TSOSplitBufferProtocolBase"/> or many <see cref="TSOTCPPacket"/> or else weird problems arise.
+        /// <para/>One problem would be Proxy instances connected to Voltron might send data in a way where it is lost.
+        /// </summary>
+        /// <returns></returns>
+        protected TSOTCPPacket[] SplitLargeAriesFrame(TSOVoltronPacket splitPDU)
+        {
+            using MemoryStream ms = new MemoryStream(splitPDU.Body);
+            int splittingSize = ClientBufferLength - TSOTCPPacket.ARIES_FRAME_HEADER_LEN;
+            if (ms.Length <= ClientBufferLength)
+                ;
+            List<TSOTCPPacket> packets = new List<TSOTCPPacket>();
+            while (ms.Position < ms.Length)
+            {
+                long remainingBytes = ms.Length - ms.Position;
+                byte[] splitBytes = new byte[Math.Min(splittingSize, remainingBytes)];
+                ms.ReadExactly(splitBytes, 0, splitBytes.Length);
+                packets.Add(new TSOTCPPacket(TSOAriesPacketTypes.Voltron, 0, splitBytes));
+            }
+            return packets.ToArray();
         }
 
         /// <summary>

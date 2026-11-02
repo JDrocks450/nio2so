@@ -34,7 +34,7 @@ namespace nio2so.TSOHTTPS.Protocol.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet("app/AvatarDataServlet")]
-        public Task<ActionResult<string>> Get_PlayTest() => AvatarDataServlet(TSOVersions.TSO_Release);
+        public Task<ActionResult<string>> Get_PlayTest() => AvatarDataServlet(TSOVersions.TSO_NI_1_1097_1_0);
         /// <summary>
         /// For use with The Sims Online Pre Alpha
         /// </summary>

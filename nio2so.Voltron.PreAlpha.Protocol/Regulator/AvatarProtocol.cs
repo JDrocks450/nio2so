@@ -20,26 +20,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     /// </summary>
     [TSORegulator("AvatarProtocol")]
     internal class AvatarProtocol : TSOProtocol
-    {
-        /// <summary>
-        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
-        /// </summary>
-        /// <param name="AvatarID"></param>
-        /// <returns></returns>
-        public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID)
-        {
-            if (AvatarID == 0)
-                throw new InvalidDataException($"AvatarID that was supplied to {nameof(GetVoltronIDStruct)} was invalid: {AvatarID}");
-            var client = GetService<nio2soVoltronDataServiceClient>();
-            return new(AvatarID, client.GetAvatarNameByAvatarID(AvatarID).Result);
-        }
-        public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetPlayerInfoStruct((VoltronID as ITSONumeralStringStruct)?.NumericID ?? 0);        
-        public TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID)
-        {
-            TSOAriesIDStruct VoltronID = GetVoltronIDStruct(AvatarID);
-            return new TSOPlayerInfoStruct(VoltronID,0x41,true);
-        }
-
+    {        
         /// <summary>
         /// Handles a <see cref="TSOGetCharByIDRequest"/> PDU and returns the <see cref="TSODBChar"/> data item for this player using the <see cref="nio2soVoltronDataServiceClient"/>
         /// </summary>

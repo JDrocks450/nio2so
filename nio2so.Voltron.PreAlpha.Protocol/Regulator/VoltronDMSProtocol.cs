@@ -23,7 +23,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         public void COMPONENT_VERSION_REQUEST_PDU(TSOVoltronPacket PDU)
         {
             var versionPDU = (TSOComponentVersionRequestPDU)PDU;
-            string message = $"TSOClient Component Version: ID: {versionPDU.ComponentID}, Name: {versionPDU.ComponentName}, Version: {versionPDU.ComponentVersion}";
+            string message = versionPDU.ToString();
             LogConsole("cVoltronDMS_ComponentVersion: " + message);
             //RespondWith(new TSOComponentVersionResponsePDU());
         }
@@ -102,6 +102,16 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             TSOBCVersionListPDU pdu = (TSOBCVersionListPDU)PDU;
             RespondWith(new TSOBCVersionListPDU(pdu.AvatarID, "", 0x01));
+        }
+
+        public bool ON_CLIENT_JOIN_VOLTRON(uint AvatarID, out IEnumerable<TSOVoltronPacket> SendPackets)
+        {
+            //download the player's name from data service.
+            var UpdatePlayerPDU = GET_UPDATE_PLAYER(AvatarID, out string AvatarName);
+            if (UpdatePlayerPDU == null)
+                throw new NullReferenceException(nameof(UpdatePlayerPDU));
+            SendPackets = new[] { UpdatePlayerPDU };
+            return true;
         }
     }
 }

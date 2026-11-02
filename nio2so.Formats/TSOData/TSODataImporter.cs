@@ -104,7 +104,7 @@ namespace nio2so.Formats.TSOData
                     }
                     while (true);
                     TSODataStringCategories category = (TSODataStringCategories)(byte)fs.ReadByte();
-                    file.Strings.Add(strId, new(value, category));
+                    file.Strings.Add(strId, new(strId, value, category));
                 }
             }
             Current = null;

@@ -1,6 +1,9 @@
 ﻿using nio2so.Data.Common;
+using nio2so.DataService.Common.Tokens;
+using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
 
@@ -62,6 +65,24 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             )
         {
 
+        }
+
+        /// <summary>
+        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public override TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID)
+        {
+            if (AvatarID == 0)
+                throw new InvalidDataException($"AvatarID that was supplied to {nameof(GetVoltronIDStruct)} was invalid: {AvatarID}");
+            var client = GetService<nio2soVoltronDataServiceClient>();
+            return new(AvatarID, client.GetAvatarNameByAvatarID(AvatarID).Result);
+        }
+        public override TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID)
+        {
+            TSOAriesIDStruct VoltronID = GetVoltronIDStruct(AvatarID);
+            return new TSOPlayerInfoStruct(VoltronID, 0x41, true);
         }
 
         protected virtual bool OnUnknownDataBlobPDU(ITSODataBlobPDU PDU)

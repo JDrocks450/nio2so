@@ -27,6 +27,6 @@ namespace nio2so.Formats.Terrain
         public int BottomLeftCornerPosition { get; set; } = TSOCityImporter.TSO_CITY_BOTL;
 
         public TSOVersions CityVersion => CityWidth == 256 && CityHeight == 256 ? TSOVersions.TSO_PreAlpha :
-            (CityWidth == 512 && CityHeight == 512) ? TSOVersions.TSO_Release : throw new InvalidDataException("Cannot get the version of this map because its Size is wrong.");
+            (CityWidth == 512 && CityHeight == 512) ? TSOVersions.TSO_NI_1_1097_1_0 : throw new InvalidDataException("Cannot get the version of this map because its Size is wrong.");
     }
 }

@@ -20,10 +20,10 @@ namespace nio2so.DataService.API.Controllers
             logger = Logger;
         }
 
-        bool CreateAccount(string username)
+        async Task<bool> CreateAccount(string username)
         {
-            var newToken = service.CreateAccount(username);
-            return APIDataServices.UserDataService.CreateUserInfoFile(newToken, out _);
+            var newToken = await service.CreateAccount(username);
+            return (await APIDataServices.UserDataService.CreateUserInfoFile(newToken)).result;
         }
 
         // GET: api/<AccountsController>
@@ -35,13 +35,13 @@ namespace nio2so.DataService.API.Controllers
 
         // GET api/<AccountsController>/bloaty#0001
         [HttpGet("{username}")]
-        public ActionResult<N2AccountByUserNameQueryResult> Get(string username)
+        public async Task<ActionResult<N2AccountByUserNameQueryResult>> Get(string username)
         {
             UserToken? token = null;
             try
             {
                 if (!service.AccountExists(username))
-                    if (!CreateAccount(username))
+                    if (!await CreateAccount(username))
                         throw new InvalidOperationException("Could not create account/userfile for " + username);
                 token = service.GetUserTokenByUserName(username);
             }

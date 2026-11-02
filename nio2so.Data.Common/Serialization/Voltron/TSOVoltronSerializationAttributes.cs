@@ -1,4 +1,6 @@
-﻿namespace nio2so.Data.Common.Serialization.Voltron
+﻿using System.Collections;
+
+namespace nio2so.Data.Common.Serialization.Voltron
 {
     /// <summary>
     /// Attributes for Data Members intended to be used in with a <c>TSOVoltronSerializer</c>
@@ -22,6 +24,9 @@
         }
         /// <summary>
         /// Dictates how this string should be handled by the parser/decoder logic in <see cref="TSOVoltronPacket"/>
+        /// 
+        /// <para/>When used without the constructor:
+        /// <para/><inheritdoc cref="TSOVoltronString.TSOVoltronString()"/>
         /// </summary>
         [AttributeUsage(AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
         public sealed class TSOVoltronString : TSOVoltronValue
@@ -68,7 +73,7 @@
             public TSOVoltronDistanceToEnd() { }
         }
         /// <summary>
-        /// Dictates to the <see cref="TSOVoltronPacket"/> serializer that this property should be set to the <see cref="Array.Length"/> property of the given
+        /// Dictates to the <see cref="TSOVoltronPacket"/> serializer that this property should be set to the <see cref="ICollection.Count"/> property of the given
         /// Property on this object that matches the <see cref="ArrayPropertyName"/> value of this <see cref="TSOVoltronArrayLength"/> attribute
         /// <para/>Perfect for <c>ArrayName</c>Count properties!
         /// <para/>Can be used on any <b>Numeric</b> data type
@@ -111,6 +116,32 @@
             {
 
             }
+        }
+        /// <summary>
+        /// Redirects Deserialization by the <c>TSOVoltronSerializer</c> of an object's Property to a custom type that implements a <see cref="TSOVoltron_OnDeserializeDelegate"/> method
+        /// to handle the deserialization and return an object instance of the property type.
+        /// </summary>
+        [AttributeUsage(AttributeTargets.Property, Inherited = true, AllowMultiple = true)]
+        public class TSOVoltronCustomDeserializationBehavior : Attribute
+        {
+            public const string MethodName = "OnDeserialize";
+            /// <summary>
+            /// <paramref name="DeserializeableReference"/> <inheritdoc cref="DeserializeableReference"/>
+            /// </summary>
+            /// <param name="DeserializeableReference"></param>
+            public TSOVoltronCustomDeserializationBehavior(Type DeserializeableReference, string MethodTargetName = MethodName)
+            {
+                this.DeserializeableReference = DeserializeableReference;
+                this.MethodTargetName = MethodTargetName;
+            }
+            /// <summary>
+            /// <see cref="Type"/> must implement <see cref="TSOVoltron_OnDeserializeDelegate"/>
+            /// </summary>
+            public Type DeserializeableReference { get; }
+            /// <summary>
+            /// The name of the target method on the <see cref="DeserializeableReference"/>
+            /// </summary>
+            public string MethodTargetName { get; }
         }
     }
 }

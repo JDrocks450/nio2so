@@ -79,7 +79,7 @@ namespace nio2so.Voltron.Core.Factory
         /// </summary>
         /// <param name="Stream"></param>
         /// <returns></returns>
-        public TSOVoltronPacket? CreatePacketObjectFromDataBuffer(Stream Stream)
+        public TSOVoltronPacket CreatePacketObjectFromDataBuffer(Stream Stream)
         {
             TSOVoltronPacket? cTSOVoltronpacket = null;
             uint currentIndex = 0;
@@ -104,7 +104,7 @@ namespace nio2so.Voltron.Core.Factory
                 {
                     LogConsole($"ERROR: Could not save the discovery packet to file: {ex}",TSOLoggerServiceBase.LogSeverity.Errors);
                 }
-                return null;
+                return cTSOVoltronpacket;
             }
             cTSOVoltronpacket.ReflectFromBody(temporaryBuffer);
             cTSOVoltronpacket.EnsureNoErrors();// check for errors in PDU
@@ -116,9 +116,9 @@ namespace nio2so.Voltron.Core.Factory
         /// <param name="AriesPacket"></param>
         /// <param name="ProcessSplitBuffers"></param>
         /// <returns></returns>
-        public IEnumerable<TSOVoltronPacket> CreatePacketObjectsFromAriesPacket(TSOTCPPacket AriesPacket, bool ProcessSplitBuffers = true)
+        public TSOVoltronPacketCollection CreatePacketObjectsFromAriesPacket(TSOTCPPacket AriesPacket, bool ProcessSplitBuffers = true)
         {
-            List<TSOVoltronPacket> packets = new();
+            TSOVoltronPacketCollection packets = new();
             TSOSplitBufferPDUCollection splitBufferCollection = new();
 
             AriesPacket.SetPosition(0);
@@ -198,6 +198,7 @@ namespace nio2so.Voltron.Core.Factory
         {
             if (SizeLimit == 0)
                 SizeLimit = TSOVoltronConst.SplitBufferPDU_DefaultChunkSize;
+            SizeLimit -= TSOSplitBufferPDUBase.TSOSplitBufferHeaderSize; // Subtract the header space
             if (PDU.BodyLength < SizeLimit)
                 throw new InvalidOperationException("Splitting this PDU isn't necessary. It's too small.");
 
@@ -229,8 +230,19 @@ namespace nio2so.Voltron.Core.Factory
         public bool LogDiscoveryPacketToDisk(ushort VoltronPacketType, byte[] PacketData)
         {
             string? displayName = GetVoltronPacketTypeName(VoltronPacketType);
-            Directory.CreateDirectory(TSOVoltronConst.DiscoveriesDirectory);
-            string fileName = Path.Combine(TSOVoltronConst.DiscoveriesDirectory, $"cTSOPDU [{displayName}].dat");
+            string baseDir = TSOVoltronConst.DiscoveriesDirectory;
+            Directory.CreateDirectory(baseDir);
+            //attempt to sort into the TargetingPack folder if we have one mapped
+            if (_assemblies.Any())
+            { // get the assembly (that isnt voltron.core) name
+                string name = _assemblies.FirstOrDefault(x => x != GetType().Assembly)?.GetName()?.Name ?? "";
+                if (!string.IsNullOrWhiteSpace(name))
+                {
+                    baseDir = Path.Combine(TSOVoltronConst.DiscoveriesDirectory,name);
+                    Directory.CreateDirectory(baseDir);
+                }
+            }
+            string fileName = Path.Combine(baseDir, $"cTSOPDU [{displayName}].dat");
             bool existing = File.Exists(fileName);
             File.WriteAllBytes(fileName, PacketData);
             return !existing;

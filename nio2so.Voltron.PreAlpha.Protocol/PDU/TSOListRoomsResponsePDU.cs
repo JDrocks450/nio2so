@@ -1,6 +1,6 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
 using nio2so.Voltron.Core.TSO;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
+using nio2so.Voltron.Core.TSO.Struct;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.PDU

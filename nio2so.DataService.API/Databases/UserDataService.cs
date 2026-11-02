@@ -25,8 +25,8 @@ namespace nio2so.DataService.API.Databases
         async Task CreateDefaultValues()
         {
             ServerSettings settings = CurrentSettings;
-            CreateUserInfoFile(settings.StaticAccounts[0], out _); // ensure only
-            CreateUserInfoFile(settings.StaticAccounts[1], out _); // ensure only
+            await CreateUserInfoFile(settings.StaticAccounts[0]); // ensure only
+            await CreateUserInfoFile(settings.StaticAccounts[1]); // ensure only
         }
 
         /// <summary>
@@ -35,17 +35,15 @@ namespace nio2so.DataService.API.Databases
         /// <param name="UserAccount"></param>
         /// <param name="ExistingFile">If passed, will copy the properties from this parameter into the new <see cref="UserInfo"/> to update the existing file to be this new one.</param>
         /// <returns></returns>
-        public bool CreateUserInfoFile(UserToken UserAccount, out UserInfo? NewAccount)
+        public async Task<(bool result, UserInfo? NewAccount)> CreateUserInfoFile(UserToken UserAccount)
         {
             UserInfo newFile = new(UserAccount);
-            NewAccount = null;
 
             //add/update
             bool result = UsersLibrary.TryAdd(UserAccount, newFile);
             if (result)
-                Save(); // save
-            NewAccount = newFile;
-            return result;
+                await Save(); // save
+            return (result, newFile);
         }
         /// <summary>
         /// Returns the <see cref="UserInfo"/> file in the DB attached to this <paramref name="UserID"/>
@@ -53,15 +51,15 @@ namespace nio2so.DataService.API.Databases
         /// <param name="UserID"></param>
         /// <returns></returns>
         /// <exception cref="KeyNotFoundException"></exception>
-        public UserInfo GetUserInfoByUserToken(UserToken UserID)
+        public async Task<UserInfo> GetUserInfoByUserToken(UserToken UserID)
         {
             if (UsersLibrary.TryGetValue(UserID, out UserInfo? userInfo))
             {
                 if (userInfo == null)
                 {
                     Console.WriteLine($"UserInfo for {UserID} was null! Immediately creating a new file... this may indicate data has been lost.");
-                    CreateUserInfoFile(UserID, out var NewUser);
-                    return NewUser;
+                    (bool result, UserInfo? NewAccount) = await CreateUserInfoFile(UserID);
+                    return NewAccount;
                 }
                 return userInfo;
             }
@@ -77,19 +75,19 @@ namespace nio2so.DataService.API.Databases
         /// <param name="avatarID"></param>
         /// <param name="AvatarIndex">The slot that the new avatar has been placed in.</param>
         /// <returns>True when added successfully.</returns>
-        public bool AddAvatarToAccount(UserToken user, uint avatarID, out int AvatarIndex)
+        public async Task<(bool Result, Common.Types.AvatarInfo.AvatarSlots? AvatarIndex)> AddAvatarToAccount(UserToken user, uint avatarID)
         {
-            AvatarIndex = -1;
-            UserInfo userInfo = GetUserInfoByUserToken(user);
+            Common.Types.AvatarInfo.AvatarSlots? AvatarIndex = null;
+            UserInfo userInfo = await GetUserInfoByUserToken(user);
             for (int i = 0; i < 3; i++)
             {
                 AvatarIDToken existing = userInfo.Avatars[i];
                 if (existing != 0) continue;
                 userInfo.Avatars[i] = avatarID;
-                AvatarIndex = i;
+                AvatarIndex = (AvatarInfo.AvatarSlots?)i;
                 break;
             }
-            return AvatarIndex != -1;
+            return (AvatarIndex != null, AvatarIndex);
         }
     }
 }

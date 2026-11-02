@@ -14,6 +14,7 @@ namespace nio2so.DataService.API
         internal static LotsDataService LotDataService { get; } = new LotsDataService();
         internal static InboxDataService InboxDataService { get; } = new InboxDataService();
         internal static Top100DataService Top100Service { get; } = new Top100DataService();
+        internal static TSODataObjectsDataService TSOData_DataService { get; } = new TSODataObjectsDataService();
 
         private static Dictionary<Type, DataServiceBase> _dataServices = new()
         {
@@ -23,7 +24,8 @@ namespace nio2so.DataService.API
             { typeof(LotsDataService), LotDataService },
             { typeof(ConfigurationDataService), ConfigService },
             { typeof(InboxDataService), InboxDataService },
-            { typeof(Top100DataService), Top100Service }
+            { typeof(Top100DataService), Top100Service },
+            { typeof(TSODataObjectsDataService), TSOData_DataService }
         };
 
         /// <summary>

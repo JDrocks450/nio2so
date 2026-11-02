@@ -5,12 +5,12 @@ using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
+using nio2so.Voltron.Core.TSO.Regulator.Room;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.Datablob.Structures;
 using nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers;
-using nio2so.Voltron.PreAlpha.Protocol.Regulator.Room;
 using nio2so.Voltron.PreAlpha.Protocol.Struct;
 
 namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
@@ -21,7 +21,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
     [TSORegulator]
     internal class RoomProtocol : TSOProtocol
     {
-        public const uint MAX_OCCUPANTS = 24;
+        public const uint MAX_OCCUPANTS = RuntimeRoomController.MAX_OCCUPANTS;
         public const double RESYNC_TIMEOUT = 0;
         private readonly int HSB_AWAKE_TIMEOUT = 1000;
         private DateTime _reSyncTime = DateTime.MinValue;
@@ -53,50 +53,42 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         internal new void LogConsole(string Message) => base.LogConsole(Message);
 
         /// <summary>
-        /// Creates a new <see cref="RoomProtocolRoomInfo"/> that is empty, uses the info from the given <paramref name="HouseID"/> and is lead by <paramref name="Leader"/>
+        /// Creates a new <see cref="RoomProtocolRoomInfo"/> that is empty, uses the info from the given <paramref name="HouseID"/> and is lead by <paramref name="HSBID"/>
         /// <para/><paramref name="Created"/> True if the room as just now created, false if it already was open. <b>Will migrate host to this passed one if already existed.</b>
         /// <para/>Rooms are tracked and maintained in the protocol, you can use <see cref="EnsureRoomExists(uint, TSOAriesIDStruct?, out bool)"/> and <see cref="RoomExists(uint)"/>
         /// to poll whether or not a room exists or not, without risk of accidental host migrations.
         /// </summary>
         /// <param name="HouseID">The ID of the house in the Database</param>
-        /// <param name="Leader">If null, will throw an exception -- This will be ensured to be the new HouseLeader whereby <see cref="MigrateHost(uint, TSOAriesIDStruct)"/> is used</param>
+        /// <param name="HSBID">If null, will throw an exception -- This will be ensured to be the new HouseLeader whereby <see cref="MigrateHost(uint, TSOAriesIDStruct)"/> is used</param>
         /// <param name="Created">True if prior to calling this function, this runtime room was not yet created in the protocol.</param>
         /// <returns></returns>
-        private RoomProtocolRoomInfo CreateOrGetRoomWithLeader(uint HouseID, TSOAriesIDStruct Leader, out bool Created)
+        private RoomProtocolRoomInfo CreateOrGetRoomWithHost(uint HouseID, TSOAriesIDStruct? HSBID, out bool Created)
         {
             Created = false;
             //download lot profile
             var lot = GetLotProfile(HouseID);
-            if (Leader == null)
-                throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithLeader));
-            if (Server.VoltronSettings.PreAlpha_HSBEnabled)
-            { // HSB_TEST requires the leader in all aspects to be the HSB
-                Leader = GetVoltronIDStruct(HSB_AVATAR_ID);
-            }
+            if (HSBID == null)
+                throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithHost));            
             //add the room
-            Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), Leader, HouseID));            
+            Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), HSBID, GetVoltronIDStruct(lot.OwnerAvatar), HouseID));            
             return _roomController.GetByHouseID(HouseID);
         }
 
         /// <summary>
-        /// If the room exists, returns it without changing the host of the room. If it doesn't exist, it will create the room with the given <paramref name="Leader"/>        
+        /// If the room exists, returns it without changing the host of the room. If it doesn't exist, it will create the room with the given <paramref name="HSB"/>        
         /// <para/>
         /// </summary>
         /// <param name="HouseID">The ID of the house in the database</param>
-        /// <param name="Leader">If null, will use the Lot's Owner ID -- use with caution!</param>
+        /// <param name="HSB">If null, will use the Lot's Owner ID -- use with caution!</param>
         /// <param name="Created"></param>
         /// <returns></returns>
-        private RoomProtocolRoomInfo EnsureRoomExists(uint HouseID, TSOAriesIDStruct? Leader, out bool Created)
+        private RoomProtocolRoomInfo EnsureRoomExists(uint HouseID, TSOAriesIDStruct? HSB, out bool Created)
         {
             Created = false;
             if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? Room))
                 return Room;
 
-            //download lot profile
-            var lot = GetLotProfile(HouseID);
-            if (Leader == null)
-                Leader = GetVoltronIDStruct(lot.OwnerAvatar);
-            return CreateOrGetRoomWithLeader(HouseID, Leader, out Created);
+            return CreateOrGetRoomWithHost(HouseID, HSB, out Created);
         }
 
         private bool AddRoom(RoomProtocolRoomInfo Room) => _roomController.AddRoom(Room);
@@ -112,10 +104,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             List<TSOAriesIDStruct> purgeList = new(Room.GetConnectedClients().ToArray());
             foreach (var client in purgeList)
             {
-                if (client.AvatarID == Room.LeaderID.AvatarID) continue;
+                if (client.AvatarID == Room.HostID.AvatarID) continue;
                 ClientUpdateRoom_LeaveRoom(client, out string reason);
             }
-            Room.ClientLeaveRoom(Room.LeaderID);
+            Room.ClientLeaveRoom(Room.HostID);
         }        
 
         /// <summary>
@@ -223,12 +215,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             TrySendTo(VoltronID, new TSOUpdateRoomPDU(134, TSORoomInfoStruct.NoRoom));
 
             //Check if this client is the host of the lot
-            if (roomInfo.LeaderAvatarID == VoltronID.AvatarID) // Leader of the lot (host)
+            if (roomInfo.HostHSBAvatarID == VoltronID.AvatarID) // Leader of the lot (host)
                 TakeRoomOffline(roomInfo);
             else
             {
-                TrySendTo(VoltronID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(roomInfo.LeaderAvatarID))); // testing
-                TrySendTo(roomInfo.LeaderID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(VoltronID)));
+                TrySendTo(VoltronID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(roomInfo.HostHSBAvatarID))); // testing
+                TrySendTo(roomInfo.HostID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(VoltronID)));
             }
 
             //**notify all connected clients the updated avatar list
@@ -273,7 +265,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         void UpdateLotOccupants(RoomProtocolRoomInfo roomInfo)
         {
             //**tell the clients (NOT the host) the new list of players currently in this room            
-            if (GetRoomUpdateOccupantsPDUByRoomID(roomInfo.LotID, roomInfo.LeaderAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
+            if (GetRoomUpdateOccupantsPDUByRoomID(roomInfo.LotID, roomInfo.HostHSBAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
                 BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU, true);
 
             //TEST
@@ -291,7 +283,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         void BroadcastPDUToRoom(uint HouseID, TSOVoltronPacket PDU, bool ExcludeHost = false)
         {
             RoomProtocolRoomInfo roomInfo = _roomController.GetByHouseID(HouseID);
-            BroadcastPDUToRoom(HouseID, PDU, ExcludeHost ? [roomInfo.LeaderAvatarID] : Array.Empty<uint>());
+            BroadcastPDUToRoom(HouseID, PDU, ExcludeHost ? [roomInfo.HostHSBAvatarID] : Array.Empty<uint>());
         }
         /// <summary>
         /// <inheritdoc cref="BroadcastPDUToRoom(uint, TSOVoltronPacket, bool)"/>
@@ -317,14 +309,6 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// <param name="HouseID"></param>
         /// <returns></returns>
         public LotProfile GetLotProfile(HouseIDToken HouseID) => GetRegulator<LotProtocol>().GetLotProfile(HouseID);
-        /// <summary>
-        /// <inheritdoc cref="AvatarProtocol.GetAvatarIDStruct(AvatarIDToken)"/>
-        /// </summary>
-        /// <param name="AvatarID"></param>
-        /// <returns></returns>
-        public TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetVoltronIDStruct(AvatarID);
-        public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(VoltronID);
-        public TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID) => GetRegulator<AvatarProtocol>().GetPlayerInfoStruct(AvatarID);
         public TSORoomInfoStruct GetRoomByPlayerID(uint AvatarID)
         {
             _roomController.TryGetRoomAvatarIsIn(AvatarID, out uint HouseID);
@@ -561,7 +545,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
                 //get create pdu with room details
                 //add this room to the RoomProtocol Voltron Protocol
-                var createRoomInfo = CreateOrGetRoomWithLeader(HouseID, HSBID, out bool Created);
+                var createRoomInfo = CreateOrGetRoomWithHost(HouseID, HSBID, out bool Created);
 
                 successful = true;
                 if (successful) // TELL THE CLIENT TO START THE HOST PROTOCOL   
@@ -643,7 +627,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             }
 
             //Needed to prevent the client from shutting down after 30 seconds
-            TrySendTo(roomInfo.LeaderID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.LeaderID.AvatarID));
+            TrySendTo(roomInfo.HostID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.HostID.AvatarID));
         }
 
         /// <summary>
@@ -670,7 +654,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 throw new InvalidDataException($"AvatarID sending a broadcast PDU is {sender_avatarID}, ARIESID: {sender}");
             if (!_roomController.TryGetRoomAvatarIsIn(sender_avatarID, out uint HouseID))
                 throw new InvalidOperationException($"AvatarID {sender_avatarID} is not in a room, yet is sending a broadcast PDU.");
-            var roomInfo = _roomController.GetByHouseID(HouseID);
+            RoomProtocolRoomInfo? roomInfo = _roomController.GetByHouseID(HouseID);
+            if (roomInfo == null)
+                throw new InvalidOperationException($"The room {HouseID} doesn't exist.");
 
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
             { // *** PDU is being sent from one Client to another Client, so we need to wrap it in a broadcast PDU and send it to the destination client
@@ -683,9 +669,11 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             if (PDU is TSOBroadcastDatablobPacket && broadcastPDU != null)
             { // this is a broadcast PDU, so we need to send it to all clients in the room except the sender
-                if (sender_avatarID != roomInfo.LeaderAvatarID)
+                if (roomInfo?.HostID == null)
+                    throw new InvalidOperationException($"The room {HouseID} has no host Avatar (HSB) set.");
+                if (sender_avatarID != roomInfo.HostHSBAvatarID)
                 { // clients should accept broadcast PDUs from the host, but not from other clients. We should correct this before sending
-                    broadcastPDU.SenderSessionID = GetPlayerInfoStruct(roomInfo.LeaderID);
+                    broadcastPDU.SenderSessionID = GetPlayerInfoStruct(roomInfo.HostID);
                 }
                 BroadcastPDUToRoom(HouseID, broadcastPDU); // host to room
             }
@@ -712,9 +700,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
             if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? room))
             {
-                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.LeaderAvatarID != HSB_AVATAR_ID) // HSB_TEST
+                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.HostHSBAvatarID != HSB_AVATAR_ID) // HSB_TEST
                     throw new InvalidDataException("HSB is enabled but we're telling a client that the host is NOT the HSB.");
-                RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LeaderAvatarID));
+                RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.HostHSBAvatarID));
             }
         }
 

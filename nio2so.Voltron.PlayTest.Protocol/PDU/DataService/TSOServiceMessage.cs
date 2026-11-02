@@ -48,7 +48,7 @@ namespace nio2so.Voltron.PlayTest.Protocol.PDU.DataService
 
         public override string ToString()
         {
-            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} (reported: {ContentLength-WIDTH}" +
+            return $"{GetType().Name} {{ {nameof(ContentLength)}: {ContentLength}, {nameof(MessageContentBytes)}.Length: {MessageContentBytes.Length} (reported: {ContentLength-WIDTH}) " +
                 $"{nameof(MessageFormat)}: {MessageFormat}";
         }
     }

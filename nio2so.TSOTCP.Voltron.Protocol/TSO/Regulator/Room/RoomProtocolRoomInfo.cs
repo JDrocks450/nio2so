@@ -1,37 +1,42 @@
 ﻿using nio2so.Voltron.Core.TSO.Struct;
-using nio2so.Voltron.PreAlpha.Protocol.Struct;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
+namespace nio2so.Voltron.Core.TSO.Regulator.Room
 {
-    internal class RoomProtocolRoomInfo
+    public class RoomProtocolRoomInfo
     {
         private Dictionary<uint, TSOPlayerInfoStruct> occupants = new();
         private Dictionary<uint, TSOAriesIDStruct> clients = new();
 
-        public RoomProtocolRoomInfo(TSORoomIDStruct roomID, TSOAriesIDStruct leaderID, uint lotID)
+        public RoomProtocolRoomInfo(TSORoomIDStruct roomID, TSOAriesIDStruct hsbID, TSOAriesIDStruct lotLeader, uint lotID)
         {
             RoomID = roomID;
-            LeaderID = leaderID;
+            HostID = hsbID;
+            LotLeader = lotLeader;
             LotID = lotID;
         }
 
         public TSORoomIDStruct RoomID { get; set; }
-        public TSOAriesIDStruct LeaderID { get; set; }
-        public uint LeaderAvatarID => (LeaderID as ITSONumeralStringStruct).NumericID.Value;
+        /// <summary>
+        /// The AvatarID of the Avatar who owns the lot.
+        /// </summary>
+        public TSOAriesIDStruct LotLeader { get; set; }
+        public TSOAriesIDStruct? HostID { get; set; }
+
+        public uint HostHSBAvatarID => (HostID as ITSONumeralStringStruct)?.NumericID ?? 0;
         public uint LotID { get; set; }
         public IEnumerable<TSOPlayerInfoStruct> Occupants => occupants.Values;
         public uint OccupantsCount => (uint)occupants.Count;
-        public uint MaxOccupants { get; set; } = RoomProtocol.MAX_OCCUPANTS;
+        public uint MaxOccupants { get; set; } = RuntimeRoomController.MAX_OCCUPANTS;
         public bool IsLocked { get; set; } = false;
         public IEnumerable<TSOAriesIDStruct> Admins => [new("??1337", "bisquick")];
         /// <summary>
-        /// Gets if this room is online, meaning that the <see cref="LeaderID"/> is still connected to this room, hosting it.
+        /// Gets if this room is online, meaning that the <see cref="HostID"/> is still connected to this room, hosting it.
         /// </summary>
-        public bool IsOnline => clients.ContainsKey(LeaderAvatarID);
+        public bool IsOnline => HostID != null && clients.ContainsKey(HostHSBAvatarID);
         /// <summary>
         /// Creates a new <see cref="TSORoomInfoStruct"/> matching the configuration for this <see cref="RoomProtocolRoomInfo"/>
         /// </summary>
-        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, LeaderID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
+        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, HostID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
 
         /// <summary>
         /// Adds this client to the list of clients in this room. This VoltronID will now receive network transmissions related to this room.

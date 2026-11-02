@@ -36,7 +36,7 @@ namespace nio2so.DataService.API.Databases
         /// </summary>
         /// <param name="UserName"></param>        
         /// <returns></returns>
-        public UserToken CreateAccount(string UserName)
+        public async Task<UserToken> CreateAccount(string UserName)
         {
             UserToken newToken = default;
             int failcount = 0, failmax = 5;
@@ -52,7 +52,7 @@ namespace nio2so.DataService.API.Databases
                 failcount++; // retry with a fresh user account token
                 goto retry;
             }
-            Save();
+            await Save();
             return newToken;
         }
 

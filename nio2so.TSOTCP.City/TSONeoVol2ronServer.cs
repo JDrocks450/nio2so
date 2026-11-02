@@ -1,10 +1,15 @@
-﻿#define TSOPREALPHA
+﻿/*
+#define TSOPREALPHA
 #define TSOPLAYTEST
-
-//#undef TSOPREALPHA
+#define TSONANDI
+*/
+#define TSOPREALPHA
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST
+#undef TSONANDI
+#elif TSOPLAYTEST
+#undef TSONANDI
 #endif
 
 using nio2so.DataService.Common.Types;
@@ -16,6 +21,7 @@ using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
 using OpenSSL.X509;
 using System.Net.Http.Json;
+using System.Reflection;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
@@ -29,6 +35,9 @@ namespace nio2so.TSOTCP.Voltron.Server
     /// </summary>
     public class TSONeoVol2ronServer : TSOVoltronBasicServer
     {
+        public Assembly TargetingPack { get; private set; }
+        public string TargetingPackName => TargetingPack?.FullName ?? string.Empty;
+
         /// <summary>
         /// Uses the <see cref="LocalServerSettings.APIUrl"/> to download <see cref="VoltronServerSettings"/>
         /// </summary>
@@ -54,6 +63,8 @@ namespace nio2so.TSOTCP.Voltron.Server
             return new nio2so.Voltron.PlayTest.Protocol.TSOPlayTestLoggerService(SysLogPath);
 #elif TSOPREALPHA
             return new nio2so.Voltron.PreAlpha.Protocol.TSOPreAlphaLoggerService(SysLogPath);
+#elif TSONANDI
+            return new nio2so.Voltron.NewImproved.Protocol.TSONewImprovedLoggerService(SysLogPath);
 #endif
         }
 
@@ -66,14 +77,21 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             //**REGULATOR
             Regulators.RegisterDefaultProtocols(); // register all Voltron.Core.TSO protocols (very few)
-            
+
+            TargetingPack = null;
+
             // register The Sims Online targeting pack protocols (protocol assembly)
 #if TSOPLAYTEST
-            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PlayTest.Protocol.Regulator.TSOProtocol).Assembly); 
+            TargetingPack = (typeof(nio2so.Voltron.PlayTest.Protocol.Regulator.TSOProtocol).Assembly); 
 #endif
 #if TSOPREALPHA
-            Regulators.RegisterProtocols(typeof(nio2so.Voltron.PreAlpha.Protocol.Regulator.TSOProtocol).Assembly); 
+            TargetingPack = (typeof(nio2so.Voltron.PreAlpha.Protocol.Regulator.TSOProtocol).Assembly); 
 #endif
+#if TSONANDI
+            TargetingPack = typeof(nio2so.Voltron.NewImproved.Protocol.Regulator.TSOProtocol).Assembly;
+#endif
+            if (TargetingPack == null) throw new NullReferenceException("Targeting Pack not supplied!");
+            Regulators.RegisterProtocols(TargetingPack);
             Regulators.RegisterProtocols(GetType().Assembly); // register custom protocols
         }
 
@@ -85,32 +103,51 @@ namespace nio2so.TSOTCP.Voltron.Server
             //API Url from local settings
             string APIUrl = LocalServerSettings.Default.APIUrl;
 
+            string TSODataDefinitionPath = VoltronSettings.TSODataFilePath;
+
             //Startup Services
             Services.Register(new nio2soVoltronDataServiceClient(new(APIUrl))); // REGISTER THE NIO2SO DATA SERVICE
             Services.Register(new nio2soClientSessionService()); // REGISTER THE CLIENT SESSION SERVICE
+            Services.Register(new TSODataDefinitionService(TSODataDefinitionPath)); // REGISTER THE TSO DATA DEFINITION SERVICE
+
+            bool IsPreAlpha = false;
+
             TSOPDUFactoryServiceBase pduFactory = null;
 #if TSOPLAYTEST
-             pduFactory = new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory(); // REGISTER THE TSOPLAYTEST PDU FACTORY
+             Services.Register(new nio2so.Voltron.PlayTest.Protocol.Services.TSOPlayTestPDUFactory()); // REGISTER THE TSOPLAYTEST PDU FACTORY
 #endif
 #if TSOPREALPHA
-            pduFactory = new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory(); // REGISTER THE TSOPREALPHA PDU FACTORY
+            IsPreAlpha = true;
+            Services.Register(new nio2so.Voltron.PreAlpha.Protocol.Services.TSOPreAlphaPDUFactory()); // REGISTER THE TSOPREALPHA PDU FACTORY
 #endif
-            if (pduFactory == null) throw new NullReferenceException("PDU Factory was not initialized.");
-            Services.Register(pduFactory);
+#if TSONANDI
+            Services.Register(new nio2so.Voltron.NewImproved.Protocol.Services.TSONewImprovedPDUFactory()); // REGISTER THE TSO New & Improved PDU FACTORY
+#endif
 
             //HOOK EVENTS
             OnIncomingPacket += OnIncomingAriesFrameCallback;
+
+            //VERIFY SETTINGS
+            if (UsingSSL && IsPreAlpha)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Pre-Alpha Voltron Server does not support SSL/TLS connections. Please disable SSL in the server settings.");
+                return;
+            }
+
+            Ready = true;
+            OnServerReady();
 
             //START THE SERVER
             BeginListening();
 
             //HSB SERVER PROXY
-            StartHSBProxy();
+            StartHSBProxy(IsPreAlpha);
         }
 
-        private void StartHSBProxy()
+        private void StartHSBProxy(bool IsPreAlpha)
         {
-            TSOHSBProxyServer _proxyServer = new(this);
+            TSOHSBProxyServer _proxyServer = new(IsPreAlpha, this, Settings.ServerCertificate);
             _proxyServer.Start();
         }
 

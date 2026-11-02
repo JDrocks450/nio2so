@@ -2,16 +2,12 @@
 using nio2so.Voltron.Core.Factory;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Aries;
-using nio2so.Voltron.Core.TSO.Serialization;
 using nio2so.Voltron.PreAlpha.Protocol;
+using OpenSSL.X509;
 using QuazarAPI.Networking.Standard;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace nio2so.TSOTCP.Voltron.Server
 {
@@ -85,20 +81,32 @@ namespace nio2so.TSOTCP.Voltron.Server
         TSOHSBProxyClient _voltronClient;
         uint HSB_ID = 0;
         bool ACTIVATED = false;
+
         private TSOPDUFactoryServiceBase _PDUFactory => Server.Services.Get<TSOPDUFactoryServiceBase>();
         //private nio2so.Voltron.PreAlpha.Protocol.Regulator.SplitBufferPDUProtocol _splitBufferInterface;
 
         public TSONeoVol2ronServer Server { get; }
 
-        public TSOHSBProxyServer(TSONeoVol2ronServer Server, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(Name, Port)
+        /// <summary>
+        /// Creates a new <see cref="TSOHSBProxyServer"/> with the given parent server <paramref name="Server"/>
+        /// <para/>For Pre-Alpha: NO SSL certificate should be provided. For Play-Test and onward, you must supply ANY valid certificate
+        /// for the <see cref="TSONeoVol2ronServer"/> and this <see cref="TSOHSBProxyServer"/> (and by extension, the <see cref="TSOHSBProxyClient"/> - but this is
+        /// done for you)
+        /// </summary>
+        /// <param name="Server"></param>
+        /// <param name="Certificate"></param>
+        /// <param name="Name"></param>
+        /// <param name="Port"></param>
+        public TSOHSBProxyServer(bool IsPreAlpha, TSONeoVol2ronServer Server, X509Certificate? Certificate = null, string Name = "TSO_HSB_PROXY", int Port = 49101) : base(new QuazarServerSettings(Name, IPAddress.Loopback, Port, Certificate))
         {
             this.Server = Server;
-            //_splitBufferInterface = new();
+            if (!IsPreAlpha && Certificate == null)
+                throw new ArgumentException("For Play-Test and later, you HAVE to give a certificate.");
         }
 
         public override async void Start()
         {
-            CONSOLE_LOG("\n[!] Attempting to connect to Voltron...");
+            CONSOLE_LOG($"\n[!] Attempting to connect to Voltron [SSL?: {UsingSSL}]...");
             bool connected = await CreateClientAsync();
             if (connected)
             {
@@ -107,7 +115,7 @@ namespace nio2so.TSOTCP.Voltron.Server
                 OnIncomingPacket += TSOHSBProxyServer_OnIncomingPacket;                
                 BeginListening();
 
-                CONSOLE_LOG("HSB Proxy is online and connected to Voltron!");
+                CONSOLE_LOG("HSB Proxy is online and connected to Voltron!");                
             }
         }        
 
@@ -115,7 +123,7 @@ namespace nio2so.TSOTCP.Voltron.Server
         {
             base.OnClientConnect(Connection, ID);
 
-            CONSOLE_LOG("HSB Simulator Client has arrived, authenticating with Voltron...");
+            CONSOLE_LOG($"HSB Simulator Client has arrived, authenticating with Voltron [SSL?: {UsingSSL}]...");
 
             //just in-case
             DeactivateHSB();
@@ -125,6 +133,9 @@ namespace nio2so.TSOTCP.Voltron.Server
             await _voltronClient.SendPacket(new TSOTCPPacket(TSOAriesPacketTypes.Client_SessionInfoResponse,0,aries_infoPacket));
             uint avatarID = 90001;
             CONSOLE_LOG("Authentication sent for HSB Avatar ID: " + avatarID);
+
+            if (UsingSSL)
+                ActivateHSB(ID);
         }
 
         protected override async void OnClientDisconnect(uint ID)
@@ -209,23 +220,95 @@ namespace nio2so.TSOTCP.Voltron.Server
                 foreach (var packet in packets)
                     CONSOLE_LOG("[PROXY -> HSB] -- " + packet.ToString());
             }
-        }
+        }        
 
         private void VoltronClient_OnDataReceived(object? sender, QEventArgs<byte[]> e)
         { // forward raw data as it comes in, no need to check packets.
+            if (e.Data.Length == 0)
+                return;
+
+            if (!WaitForAriesFrame(e.Data, out int waitingAmount, out byte[]? client_buffer))
+            {
+                CONSOLE_LOG($"[PROXY -> HSB] -- Waiting for complete frame: {aries_stream.Length} of {waitingAmount} bytes.");
+                return;
+            }
+
             if (ACTIVATED)
-                Send(HSB_ID, e.Data);
+            {
+                Send(HSB_ID, client_buffer);
+                CONSOLE_LOG("[PROXY -> HSB] -- Sent: " + client_buffer.Length + " bytes.");
+            }
+        }
+
+        //**aries code
+        bool aries_packet_waiting = false;
+        uint totalPacketSize = 0;
+        MemoryStream aries_stream;
+        /// <summary>
+        /// This function will wait for a full aries frame to be received before writing it to the outgoing data stream
+        /// <para/>Returns true when <paramref name="OutgoingData"/> is ready to send, false when it isn't and we're waiting for more.
+        /// </summary>
+        /// <param name="IncomingData"></param>
+        /// <param name="OutgoingData"></param>
+        /// <returns></returns>
+        private bool WaitForAriesFrame(byte[] IncomingData, out int WaitingAmount, out byte[]? OutgoingData)
+        {
+            OutgoingData = null;
+            WaitingAmount = (int)totalPacketSize;
+
+            if (aries_packet_waiting)
+            {
+                int remaining = int.MaxValue;//(int)totalPacketSize - (int)aries_stream.Length;
+                aries_stream.Write(IncomingData, 0, Math.Min(IncomingData.Length, remaining));
+                if (aries_stream.Length >= totalPacketSize)
+                {
+                    aries_packet_waiting = false;
+                    totalPacketSize = 0;
+                    OutgoingData = aries_stream.ToArray();
+#if false
+                    if (remaining < IncomingData.Length)
+                    { // extra data after the aries frame, so we need to process it
+                        byte[] extra = new byte[IncomingData.Length - remaining];
+                        Array.Copy(IncomingData, remaining, extra, 0, extra.Length);
+                        if (WaitForAriesFrame(extra, out WaitingAmount, out byte[] extraOutgoingData))
+                        {
+                            Array.Resize(ref OutgoingData, OutgoingData.Length + extraOutgoingData.Length);
+                            Array.Copy(extraOutgoingData, 0, OutgoingData, OutgoingData.Length - extraOutgoingData.Length, extraOutgoingData.Length);
+                        }
+                    }
+#endif
+                    return true;
+                }
+            }
+            else if (IncomingData.Length >= TSOTCPPacket.ARIES_FRAME_HEADER_LEN)
+            {
+                TSOTCPPacket.GetAriesHeader(IncomingData, out _, out _, out uint size);
+                WaitingAmount = (int)size;
+                if (size > (IncomingData.Length - TSOTCPPacket.ARIES_FRAME_HEADER_LEN)) // split
+                {
+                    aries_stream = new MemoryStream();
+                    aries_stream.Write(IncomingData);
+                    aries_packet_waiting = true;
+                    totalPacketSize = size;
+                }
+            }
+            if (aries_packet_waiting)
+                return false;
+
+            WaitingAmount = IncomingData.Length;
+            OutgoingData = IncomingData;
+            return true;
         }
 
         private async Task<bool> CreateClientAsync()
         {
             _voltronClient = new TSOHSBProxyClient();
-            await _voltronClient.Connect();
+            await _voltronClient.Connect(Settings.ServerCertificate);
             if (_voltronClient.IsConnected)
             {
                 _voltronClient.OnPacketReceived += Voltron_PacketReceived;
                 _voltronClient.OnDataReceived += VoltronClient_OnDataReceived;
-                CONSOLE_LOG("Voltron connection has been established!");
+                CONSOLE_LOG($"Voltron connection has been established! [SSL?: {UsingSSL}]");
             }
             return _voltronClient.IsConnected;
         }   

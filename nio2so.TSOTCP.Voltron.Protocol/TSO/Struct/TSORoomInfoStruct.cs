@@ -1,10 +1,8 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Voltron.Core.TSO.Struct;
-using nio2so.Voltron.PreAlpha.Protocol.Regulator;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Struct
+namespace nio2so.Voltron.Core.TSO.Struct
 {
 
     /// <summary>
@@ -12,7 +10,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Struct
     /// </summary>
     public record TSORoomInfoStruct
     {        
-        public const uint MAX_OCCUPANTS = RoomProtocol.MAX_OCCUPANTS;
+        public const uint MAX_OCCUPANTS = 8;
 
         public TSORoomInfoStruct()
         {

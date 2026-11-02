@@ -1,12 +1,31 @@
-﻿using System.Text.Json;
+﻿using System.Dynamic;
+using System.Reflection.Metadata;
+using System.Text.Json;
+using System.Xml.Linq;
 
 namespace nio2so.Formats.TSOData
 {
+    public interface ITSODataStringIDAccessor
+    {
+        TSODataString GetStringByID(uint ID);
+        uint GetIDByString(string Value);
+    }
+
     /// <summary>
     /// Check out the file structure here: <see href="http://wiki.niotso.org/TSOData"/>
     /// </summary>
-    public class TSODataFile : ITSOImportable
+    public class TSODataFile : ITSOImportable, ITSODataStringIDAccessor
     {
+        [Flags]
+        public enum Levels
+        {
+            One = 1 << 0, // 1
+            Two = 1 << 1, // 2
+            Derived = 1 << 2, // 4
+
+            All = One | Two | Derived
+        }
+
         public DateTime TimeStamp { get; set; }
         public uint LevelOneStructsCount => (uint)LevelOneStructs.Count;
         public List<TSODataStruct> LevelOneStructs { get; } = new();
@@ -17,12 +36,182 @@ namespace nio2so.Formats.TSOData
         public uint StringsCount => (uint)Strings.Count;
         public Dictionary<uint,TSODataString> Strings { get; } = new();
 
+        public object GetTypeByString(string TypeName)
+        {
+            object getDefault(Type type) => Activator.CreateInstance(type);
+
+            switch (TypeName)
+            {
+                case "bool":
+                    return getDefault(typeof(bool));
+
+                case "Uint8":
+                    return getDefault(typeof(byte));
+
+                case "Uint16":
+                    return getDefault(typeof(ushort));
+
+                case "Uint32":
+                    return getDefault(typeof(uint));
+
+                case "Uint64":
+                    return getDefault(typeof(ulong));
+
+                case "Sint8":
+                    return getDefault(typeof(sbyte));
+
+                case "Sint16":
+                    return getDefault(typeof(short));
+
+                case "Sint32":
+                    return getDefault(typeof(int));
+
+                case "Sint64":
+                    return getDefault(typeof(long));
+
+                case "string":
+                    return "";
+
+                case "iunknown":
+                    return Array.CreateInstance(typeof(byte), 0);  
+
+                default:
+                    break;
+            }
+
+            //**try level one struct 
+            return GetObject(TypeName, out _);
+
+            throw new ArgumentException($"Unknown type: {TypeName}");
+        }
+
+        public object GetObject(uint StringID, out ITSODataStruct TSODataStruct, params object[] FieldValues)
+        {
+            string StructName = Strings[StringID].Value;
+            return GetObject(StructName, out TSODataStruct, FieldValues);
+        }
+
+        public object GetObject(string StringName, out ITSODataStruct TSODataStruct, params object[] FieldValues)
+        {
+            if (!TryGetStructByName(StringName, out TSODataStruct, Levels.All))
+                throw new ArgumentException("Struct matching name not found", nameof(StringName));
+            if (TSODataStruct is TSODerivedStruct derived)
+                return getStructObject(derived, FieldValues);
+            else if (TSODataStruct is TSODataStruct data)
+                return getStructObject(data, FieldValues);
+            throw new FileNotFoundException("Struct not found by name.");
+        }
+        /// <summary>
+        /// <inheritdoc cref="TryGetObject(uint, out TSODataRuntimeObject, object[])"/>
+        /// </summary>
+        /// <param name="StringName"></param>
+        /// <param name="Object"></param>
+        /// <param name="FieldValues"></param>
+        /// <returns></returns>
+        public bool TryGetObject(string StringName, out TSODataRuntimeObject Object, params object[] FieldValues)
+        {
+            dynamic instance = GetObject(StringName, out ITSODataStruct struc, FieldValues);
+            Object = new(struc, instance);
+            return instance != null;
+        }
+        /// <summary>
+        /// Creates a <see cref="TSODataRuntimeObject"/> with the given auto-initializer list Fields <paramref name="FieldValues"/>
+        /// <para/>These should match the order in which they appear in the <see cref="TSODataFile"/> <see cref="ITSODataStruct"/> <paramref name="Struct"/>
+        /// </summary>
+        /// <param name="Struct"></param>
+        /// <param name="StructObject"></param>
+        /// <param name="FieldValues"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        public bool TryGetObject(uint StringID, out TSODataRuntimeObject Object, params object[] FieldValues)
+        {
+            dynamic instance = GetObject(StringID, out ITSODataStruct struc, FieldValues);
+            Object = new(struc, instance);
+            return instance != null;
+        }
+
+        private object getStructObject(ITSODataStruct data, params object[] constructorParams)
+        {
+            ExpandoObject obj = new ExpandoObject();
+            for(int i =0; i < data.Fields.Count; i++)
+            {
+                var field = data.Fields[i];
+                string TypeDescriptor = field.TypeString;
+                object? constructorArg = constructorParams.ElementAtOrDefault(i);
+                object defaultValue = GetTypeByString(TypeDescriptor);
+                object fieldValue = defaultValue;
+                bool usingArg = false;
+                if (constructorArg != null)
+                {
+                    if (constructorArg.GetType().IsAssignableTo(defaultValue.GetType()))
+                    {
+                        fieldValue = constructorArg;
+                        usingArg = true;
+                    }
+                    else throw new InvalidCastException($"{constructorArg} is not assignable to: {TypeDescriptor} ({defaultValue.GetType().Name})");
+                }
+                if (fieldValue is null)
+                    throw new InvalidOperationException($"Failed to get type for field {field.NameString} of type {TypeDescriptor}");
+                switch (field.Classification)
+                {
+                    case TSODataFieldClassification.SingleField:
+                        break;
+                    case TSODataFieldClassification.TypedList:
+                        Array fooArray = Array.CreateInstance(fieldValue.GetType(), 0);
+                        if (usingArg)
+                            fooArray.SetValue(fieldValue, 0);
+                        fieldValue = fooArray;
+                        break;
+                    case TSODataFieldClassification.Map:
+                        fieldValue = new Dictionary<string, object>()
+                        {
+                            { "0", fieldValue }
+                        };
+                        break;
+                }
+                obj.TryAdd(field.NameString, fieldValue);
+            }   
+            return obj;
+        }       
+
+        public bool StringExists(uint StringID) => Strings.ContainsKey(StringID);
+        public bool TryGetStringByID(uint ID, out TSODataString str) => Strings.TryGetValue(ID, out str);
+
+        public bool TryGetStructByID(uint ID, out ITSODataStruct Struct, Levels Level = Levels.All)
+        {
+            Struct = null;
+            if (Level.HasFlag(Levels.One))
+                Struct = LevelOneStructs.FirstOrDefault(x => x.NameID == ID);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Two))
+                Struct = LevelTwoStructs.FirstOrDefault(x => x.NameID == ID);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Derived))
+                Struct = DerivedStructs.FirstOrDefault(x => x.NameID == ID);
+            return Struct != null;
+        }
+
+        public bool TryGetStructByName(string Name, out ITSODataStruct Struct, Levels Level = Levels.All)
+        {
+            Struct = null;
+            if (Level.HasFlag(Levels.One))
+                Struct = LevelOneStructs.FirstOrDefault(x => x.NameString == Name);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Two))
+                Struct = LevelTwoStructs.FirstOrDefault(x => x.NameString == Name);
+            if (Struct != null)
+                return true;
+            if (Level.HasFlag(Levels.Derived))
+                Struct = DerivedStructs.FirstOrDefault(x => x.NameString == Name);
+            return Struct != null;
+        }
+
         public override string ToString()
         {
-            return JsonSerializer.Serialize(this, new JsonSerializerOptions()
-            {
-                WriteIndented = true,
-            });
+            return $"{nameof(TSODataFile)}[{TimeStamp}]: Level One: {LevelOneStructsCount}, Level Two: {LevelTwoStructsCount}, Derived: {DerivedStructsCount}, Constants: {StringsCount}";
             /* return
                 $"This TSODataFile was built on {TimeStamp}\n" +
                 $"---\n" +
@@ -40,5 +229,17 @@ namespace nio2so.Formats.TSOData
                 $"}}\n" +
                 $"End of file."; */            
         }
+
+        public string SerializeJSON()
+        {
+            return JsonSerializer.Serialize(this, new JsonSerializerOptions()
+            {
+                WriteIndented = true,
+            });
+        }
+
+        public TSODataString GetStringByID(uint ID) => Strings[ID];
+
+        public uint GetIDByString(string Value) => Strings.First(x => x.Value.Value == Value).Key;
     }
 }

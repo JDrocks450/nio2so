@@ -47,7 +47,7 @@ namespace nio2so.DataService.API.Databases.Libraries
             return await JsonSerializer.DeserializeAsync<T>(fs, Options);
         }
 
-        public Task Save()
+        public async Task Save()
         {
             lock (DataFile)
             {
@@ -56,7 +56,7 @@ namespace nio2so.DataService.API.Databases.Libraries
                 if (File.Exists(_baseDir)) // if original db file exists, move it to a ".bak" filename, overwriting the previous version
                     File.Move(_baseDir, _baseDir + ".bak", true);
                 using FileStream fs = File.Create(_baseDir);
-                return JsonSerializer.SerializeAsync(fs, DataFile);
+                JsonSerializer.Serialize(fs, DataFile);
             }
         }
     }

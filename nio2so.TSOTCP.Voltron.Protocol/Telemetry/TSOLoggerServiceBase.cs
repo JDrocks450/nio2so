@@ -95,20 +95,27 @@ namespace nio2so.Voltron.Core.Telemetry
         /// </summary>
         /// <param name="Direction"></param>
         /// <param name="Time"></param>
-        /// <param name="Packet"></param>
+        /// <param name="AriesFrames"></param>
         /// <param name="PDUEnclosed"></param>
-        public virtual void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket Packet, TSOVoltronPacket? PDUEnclosed = default)
+        public virtual void OnAriesPacket(NetworkTrafficDirections Direction, DateTime Time, TSOTCPPacket[] AriesFrames, TSOVoltronPacket? PDUEnclosed = default)
         {
             if (!TestingConstraints.VerboseLogging) return;
 
             Console.ForegroundColor = ConsoleColor.Magenta;
 
             string? PDUName = PDUEnclosed != null ? Parent.Services.Get<TSOPDUFactoryServiceBase>().GetVoltronPacketTypeName(PDUEnclosed.VoltronPacketType) : "Unknown";
-            Log($"{Time.ToLongTimeString()} - *ARIES* [{Direction}] {(TSOAriesPacketTypes)Packet.PacketType}" +
-                $"{(PDUEnclosed != null ? " containing: " : "")}{PDUEnclosed?.ToShortString()}");
+            int index = 0;
+            foreach (var AriesFrame in AriesFrames)
+            {
+                index++;
+                string splitText = (AriesFrames.Length == 1 ? "" : $"(Split [{index} of {AriesFrames.Length}]) ");
+                Log($"{Time.ToLongTimeString()} - *ARIES* {splitText}[{Direction}] " +
+                    $"{(TSOAriesPacketTypes)AriesFrame.PacketType}" +
+                    $"{(PDUEnclosed != null ? " containing: " : "")}{PDUEnclosed?.ToShortString()}");
 
-            //**LOG PDU TO DISK**
-            Packet.WritePacketToDisk(Direction == NetworkTrafficDirections.INBOUND, PDUName);
+                //**LOG PDU TO DISK**
+                AriesFrame.WritePacketToDisk(Direction == NetworkTrafficDirections.INBOUND, $"{splitText}{PDUName}");
+            }
         }
         /// <summary>
         /// Fired when a new <see cref="TSOVoltronPacket"/> is received or sent
@@ -125,6 +132,14 @@ namespace nio2so.Voltron.Core.Telemetry
                 NetworkTrafficDirections.OUTBOUND => ConsoleColor.Cyan,
                 _ => ConsoleColor.Blue
             };            
+
+            if (!TestingConstraints.VerboseLogging)
+            { // filter out the server tick confirmation messages if verbose logging is disabled
+                PDU.SetPosition(26);
+                uint kMSGID = PDU.ReadBodyDword();
+                if (kMSGID == 0x6B6F23A1)
+                    return;
+            }
 
             Log($"{Time.ToLongTimeString()} - *VOLTRON* [{Direction}] {PDU.ToShortString()}");
 
@@ -184,6 +199,8 @@ namespace nio2so.Voltron.Core.Telemetry
         /// </summary>
         /// <param name="Entry"></param>
         public void LogConsole(ConsoleLogEntry Entry) => OnConsoleLog(Entry);
+        
+        private readonly object _logLock = new();
         /// <summary>
         /// Internal method to log a message to the console and, if enabled, to the system log file.
         /// </summary>
@@ -192,17 +209,13 @@ namespace nio2so.Voltron.Core.Telemetry
         {
             Message = $"[*THREAD: {Thread.CurrentThread.ManagedThreadId}*] {ServerName} - {Message}";
             Console.WriteLine(Message);
+
             if (!IsSysLogging) return;
-            lock (this)
+
+            lock (_logLock)
             {
-                using (FileStream fs = File.OpenWrite(_systemLogPath))
-                {
-                    fs.Seek(0, SeekOrigin.End);
-                    using (StreamWriter sw = new StreamWriter(fs))
-                    {
-                        sw.WriteLine(Message);
-                    }
-                }
+                using var sw = new StreamWriter(_systemLogPath, append: true);
+                sw.WriteLine(Message);
             }
         }
 

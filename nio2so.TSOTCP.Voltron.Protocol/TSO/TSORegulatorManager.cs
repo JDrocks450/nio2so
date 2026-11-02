@@ -40,6 +40,11 @@ namespace nio2so.Voltron.Core.TSO
         /// <param name="Server"></param>
         void Init(ITSOServer Server);
         /// <summary>
+        /// Raised when the server has completed all initialization tasks.
+        /// </summary>
+        /// <param name="Server"></param>
+        void ServerReady(ITSOServer Server);
+        /// <summary>
         /// Handles an incoming PDU.
         /// <para>Returns <see langword="false"/> if this particulator <see cref="ITSOProtocolRegulator"/> cannot handle that request.</para>
         /// </summary>
@@ -160,6 +165,13 @@ namespace nio2so.Voltron.Core.TSO
                     return true;
                 }
             return false;
+        }
+
+        internal void NotifyServerReady(ITSOServer Server)
+        {
+            List<ITSOProtocolRegulator> protocols = new List<ITSOProtocolRegulator>(typeMap);
+            foreach (var service in protocols)
+                service.ServerReady(Server);
         }
     }
 }

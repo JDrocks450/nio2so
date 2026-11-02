@@ -1,10 +1,8 @@
 ﻿using nio2so.Data.Common.Serialization.Voltron;
-using nio2so.Voltron.Core.TSO.Struct;
-using nio2so.Voltron.PreAlpha.Protocol.PDU.DBWrappers;
 using System.Runtime.Serialization;
 using static nio2so.Data.Common.Serialization.Voltron.TSOVoltronSerializationAttributes;
 
-namespace nio2so.Voltron.PreAlpha.Protocol.Struct
+namespace nio2so.Voltron.Core.TSO.Struct
 {
     /// <summary>
     /// A <see cref="ITSONumeralStringStruct"/> that contains the <see cref="HouseID"/> and <see cref="RoomName"/>

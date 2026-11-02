@@ -4,6 +4,7 @@ using nio2so.DataService.Common.Types;
 using nio2so.DataService.Common.Types.Avatar;
 using nio2so.DataService.Common.Types.Lot;
 using nio2so.DataService.Common.Types.Top100;
+using nio2so.DataService.Common.Types.TSOData;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text;
@@ -391,6 +392,40 @@ namespace nio2so.DataService.Common
         /// </summary>
         /// <returns></returns>
         public Task<HTTPServiceResult<Top100ListItemsInfo>> GetTop100ListItemsByID(uint ListID) => GetQueryAs<Top100ListItemsInfo>($"top100/{ListID}");
+        /// <summary>
+        /// Retrieves an instance of a TSOData Definition object matching the <paramref name="StructName"/> and optionally <paramref name="StructID"/>
+        /// matching the given <paramref name="ObjectID"/>
+        /// </summary>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<object>> GetTSODataServiceObjectByID(string TSOVersion, string StructName, uint ObjectID, uint StructID = 0) =>
+            GetQueryAs<object>($"tso/{TSOVersion}/data/object/{StructName}", 
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()));
+        /// <summary>
+        /// <inheritdoc cref="GetTSODataServiceObjectByID"/>, then returns the value of the <paramref name="FieldName"/> and optionally matching <paramref name="FieldID"/>
+        /// </summary>
+        /// <returns></returns>
+        public Task<HTTPServiceResult<object>> GetTSODataServiceObjectFieldByID(string TSOVersion, string StructName, string FieldName, uint ObjectID, uint StructID = 0, uint FieldID = 0) =>
+            GetQueryAs<object>($"tso/{TSOVersion}/data/object/{StructName}/field/{FieldName}",
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()),
+                (nameof(TSODataServiceQuery.FieldID), FieldID.ToString()));
+        /// <summary>
+        /// Posts an object value to a Field on a TSO Data Object
+        /// </summary>
+        /// <param name="TSOVersion"></param>
+        /// <param name="StructName"></param>
+        /// <param name="FieldName"></param>
+        /// <param name="ObjectID"></param>
+        /// <param name="Value"></param>
+        /// <param name="StructID"></param>
+        /// <param name="FieldID"></param>
+        /// <returns></returns>
+        public Task<HttpResponseMessage> PostTSODataServiceObjectFieldByID(string TSOVersion, string StructName, string FieldName, uint ObjectID, object Value, uint StructID = 0, uint FieldID = 0) =>
+            QueryPostAs($"tso/{TSOVersion}/data/object/{StructName}/field/{FieldName}", Value,
+                (nameof(TSODataServiceQuery.StructID), StructID.ToString()),
+                (nameof(TSODataServiceQuery.ObjectID), ObjectID.ToString()),
+                (nameof(TSODataServiceQuery.FieldID), FieldID.ToString()));
 
     }
 }

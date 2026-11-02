@@ -1,0 +1,30 @@
+﻿using nio2so.Voltron.Core.TSO;
+
+namespace nio2so.Voltron.NewImproved.Protocol.PDU
+{
+    [TSOVoltronPDU((uint)TSO_NewImproved_VoltronPacketTypes.ClientByePDU)]
+    public class TSOClientBye : TSOVoltronPacket
+    {
+        public TSOClientBye() : base()
+        {
+        }
+
+        public TSOClientBye(uint reasonCode, string reasonText = "") : this()
+        {
+            ReasonCode = reasonCode;
+            ReasonText = reasonText;
+            MakeBodyFromProperties();
+        }
+
+        /// <summary>
+        /// m_ReasonCode
+        /// </summary>
+        public uint ReasonCode { get; set; }
+        /// <summary>
+        /// m_ReasonText
+        /// </summary>
+        public string ReasonText { get; set; } = "";
+
+        public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.ClientByePDU;
+    }
+}

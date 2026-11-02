@@ -65,9 +65,15 @@
 
                     </TreeView>
                 </DockPanel>
-                <DataGrid Grid.Column="1" Margin="5,0,0,0" Name="DataViewer">
-                    
-                </DataGrid>
+                <DockPanel Grid.Column="1" Margin="5,0,0,0" >
+                    <TextBlock DockPanel.Dock="Top" Margin="0,2.5,0,7.5">
+                        <Run>Showing Contents of: </Run>
+                        <Run Name="ContentsBlock">NULL</Run>
+                    </TextBlock>
+                    <DataGrid Name="DataViewer">
+
+                    </DataGrid>
+                </DockPanel>
             </Grid>
         </Grid>
     </DockPanel>

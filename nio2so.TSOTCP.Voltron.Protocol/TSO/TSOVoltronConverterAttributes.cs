@@ -19,4 +19,14 @@ namespace nio2so.Voltron.Core.TSO
 
         public UIntEnum Type { get; }
     }
+
+    /// <summary>
+    /// Marks a type as a duplicate of a PDU found in another version TargetingPack.
+    /// <para/>Has no affect on serialization or any behavior, just used for the IDE.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public class TSOVoltronDuplicate : Attribute
+    {
+        public TSOVoltronDuplicate(params string[] Versions) { }
+    }
 }

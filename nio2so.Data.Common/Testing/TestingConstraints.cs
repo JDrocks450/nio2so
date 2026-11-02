@@ -17,11 +17,11 @@
         /// <summary>
         /// Dictates whether the api will automagically split large PDUs to smaller ones.
         /// </summary>
-        public static bool SplitBuffersPDUEnabled = true;
+        public static bool SplitBuffersPDUEnabled = false;
         /// <summary>
         /// Prevents databases from saving to disk for testing and debugging
         /// </summary>
-        public static bool DatabaseSaveEnabled;
+        public static bool DatabaseSaveEnabled = true;
         /// <summary>
         /// This can crash HSBs, don't want this being disabled to go unnoticed in the future.
         /// </summary>

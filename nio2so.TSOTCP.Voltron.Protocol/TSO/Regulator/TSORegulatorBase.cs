@@ -1,5 +1,6 @@
 ﻿using nio2so.Data.Common;
 using nio2so.DataService.Common;
+using nio2so.DataService.Common.Tokens;
 using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.Telemetry;
 using nio2so.Voltron.Core.TSO.Aries;
@@ -16,6 +17,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
     }
     /// <summary>
     /// Marks this method as a handler for a specific <see cref="TSOVoltronPacket"/> type.
+    /// <para/> Please ensure all method signatures are compatible with <see cref="TSOProtocolBase.VoltronInvokationDelegate"/>:
+    /// <para/> <inheritdoc cref="TSOProtocolBase.VoltronInvokationDelegate"/>
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = true)]
     public sealed class TSOProtocolHandler : Attribute, ITSOProtocolHandlerAttribute
@@ -82,7 +85,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
     public abstract class TSOProtocolBase : ITSOProtocolRegulator
     {
         /// <summary>
-        /// A <see cref="TSOVoltronPacket"/> function handler delegate that will be used to handle incoming <see cref="TSOVoltronPacket"/> types
+        /// A <see cref="TSOVoltronPacket"/> function handler delegate that will be used to handle incoming <see cref="TSOVoltronPacket"/> types:
+        /// <para/> Signature: <see langword="void"/> METHOD_NAME(<see cref="TSOVoltronPacket"/> PDU);
         /// </summary>
         /// <param name="PDU"></param>
         public delegate void VoltronInvokationDelegate(TSOVoltronPacket PDU);
@@ -118,6 +122,15 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         }
 
         /// <summary>
+        /// Downloads the <see cref="AvatarProfile"/> for the given <paramref name="AvatarID"/> using the <see cref="nio2soVoltronDataServiceClient"/>
+        /// </summary>
+        /// <param name="AvatarID"></param>
+        /// <returns></returns>
+        public abstract TSOAriesIDStruct GetVoltronIDStruct(AvatarIDToken AvatarID);
+        public TSOPlayerInfoStruct GetPlayerInfoStruct(TSOAriesIDStruct VoltronID) => GetPlayerInfoStruct((VoltronID as ITSONumeralStringStruct)?.NumericID ?? 0);
+        public abstract TSOPlayerInfoStruct GetPlayerInfoStruct(AvatarIDToken AvatarID);
+
+        /// <summary>
         /// Creates a new <see cref="TSOProtocolBase"/> instance with the provided <paramref name="Options"/>.
         /// <para/>Please ensure that the <paramref name="Options"/> are unique and in order of most generic to most specific.
         /// <para/>As in, you should position <see cref="TSOVoltronPacket"/> as the first option, and then more specific PDUs/interfaces after that.
@@ -135,6 +148,8 @@ namespace nio2so.Voltron.Core.TSO.Regulator
             MapInternal(options);
             LogConsole($"Initialized {GetType().Name} Regulator", "Initialization");
         }
+
+        public virtual void ServerReady(ITSOServer Server) { }
 
         /// <summary>
         /// Maps all <see cref="TSOProtocolMatchingOption.AttributeType"/> adorned methods as VoltronPDU handlers to this <see cref="TSOProtocolBase"/> instance.
@@ -191,26 +206,26 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <typeparam name="T"></typeparam>
         /// <param name="Service"></param>
         /// <returns></returns>
-        protected bool TryGetService<T>(out T? Service) where T : ITSOService => Server.Services.TryGet(out Service);
+        public bool TryGetService<T>(out T? Service) where T : ITSOService => Server.Services.TryGet(out Service);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> Service from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Service"></param>
         /// <returns></returns>
-        protected T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
+        public T GetService<T>() where T : ITSOService => Server.Services.Get<T>();
         /// <summary>
         /// <inheritdoc cref="GetRegulator{T}"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        protected bool TryGetRegulator<T>(out T? Regulator) where T : ITSOProtocolRegulator => Server.Regulators.TryGet<T>(out Regulator);
+        public bool TryGetRegulator<T>(out T? Regulator) where T : ITSOProtocolRegulator => Server.Regulators.TryGet<T>(out Regulator);
         /// <summary>
         /// Tries to get the requested <typeparamref name="T"/> other <see cref="ITSOProtocolRegulator"/> from the <see cref="ITSOServer"/> that this regulator is attached to
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <returns></returns>
-        protected T GetRegulator<T>() where T : ITSOProtocolRegulator => Server.Regulators.Get<T>();
+        public T GetRegulator<T>() where T : ITSOProtocolRegulator => Server.Regulators.Get<T>();
 
         /// <summary>
         /// Sends this packet to the remote connection(s) at the end of this Aries frame.
@@ -224,6 +239,11 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// </summary>
         /// <param name="Responses"></param>
         protected void RespondWithAll(params TSOVoltronPacket[] Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
+        /// <summary>
+        /// <inheritdoc cref="RespondWithAll(TSOVoltronPacket[])"/>
+        /// </summary>
+        /// <param name="Responses"></param>
+        protected void RespondWithAll(IEnumerable<TSOVoltronPacket> Responses) => ((List<TSOVoltronPacket>)CurrentResponse.ResponsePackets).AddRange(Responses);
 
         protected void RespondWithAriesFrame(params TSOTCPPacket[] AriesFrames) => ((List<TSOTCPPacket>)CurrentResponse.AriesFrames).AddRange(AriesFrames);
 
@@ -321,19 +341,19 @@ namespace nio2so.Voltron.Core.TSO.Regulator
         /// <param name="Message"></param>
         /// <param name="Caption"></param>
         /// <param name="Severity"></param>
-        protected void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
-            GetService<TSOLoggerServiceBase>().LogConsole(new(TSOLoggerServiceBase.LogSeverity.Message, RegulatorName, $"[{Caption ?? ""}] {Message}"));
+        public void LogConsole(string Message, string Caption = "", TSOLoggerServiceBase.LogSeverity Severity = TSOLoggerServiceBase.LogSeverity.Message) =>
+            GetService<TSOLoggerServiceBase>().LogConsole(new(Severity, RegulatorName, $"[{Caption ?? ""}] {Message}"));
         /// <summary>
         /// <inheritdoc cref="LogConsole(string, string, TSOLoggerServiceBase.LogSeverity)"/> as an <see cref="TSOLoggerServiceBase.LogSeverity.Errors"/>
         /// </summary>
         /// <param name="Error"></param>
         /// <param name="Caption"></param>
-        protected void LogError(string Error, string Caption = "") => LogConsole(Error, Caption, TSOLoggerServiceBase.LogSeverity.Errors);
+        public void LogError(string Error, string Caption = "") => LogConsole(Error, Caption, TSOLoggerServiceBase.LogSeverity.Errors);
         /// <summary>
         /// <inheritdoc cref="LogError(string, string)"/>
         /// </summary>
         /// <param name="ErrorException"></param>
-        protected void LogError(Exception ErrorException) => LogError(ErrorException.ToString(), ErrorException.GetType().Name);
+        public void LogError(Exception ErrorException) => LogError(ErrorException.ToString(), ErrorException.GetType().Name);
 
         /// <summary>
         /// Returns the type map for the provided <paramref name="PDUType"/>
