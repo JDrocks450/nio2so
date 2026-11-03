@@ -323,17 +323,27 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (successful)
             {                
                 OnIncomingStandardQuery(
-                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructID, Query.Message), [0, ObjectID]);
+                    new TSODataServiceWrapperPDU(Query.SendingAvatarID, StructID, Query.Message), null, [0, ObjectID]);
             }
         }
 
         private void OnIncomingNetMessageStandard(TSODataServiceWrapperPDU Query, TSONetMessageStandard ServiceMessage) => 
-            OnIncomingStandardQuery(Query, ServiceMessage.GetDataValues());
+            OnIncomingStandardQuery(Query, ServiceMessage, ServiceMessage.GetDataValues());
 
-        private void OnIncomingStandardQuery(TSODataServiceWrapperPDU Query, params uint[] Values)
+        private void OnIncomingStandardQuery(TSODataServiceWrapperPDU Query, ITSODataServiceNetMessageStandard? StandardMessage, params uint[] Values)
         {
             if (!Values.Any())
                 throw new ArgumentException($"The provided {nameof(Values)} attached to this {nameof(OnIncomingStandardQuery)} are: none.");
+
+            // Get the object data structure requested first ... some versions of TSO do not put it into the DataServiceWrapperPDU,
+            // so we need to check the StandardMessage for the FormatID as a fallback.
+            TSO_NewImproved_TSOData_Constants DataDefinitionID = Query.DefinitionStringID;            
+
+            if (StandardMessage != null)
+            {
+                DataDefinitionID = StandardMessage.DataDefinitionID;
+                bool Subscribe = StandardMessage.FormatID == 0x09C83484; // topic subscribe message
+            }
 
             //objectID is historically Data2 (last) ... but could change later!
             uint ObjectID = Values.Last();
@@ -342,14 +352,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             TSODataRuntimeObject StructObject = null;
 
+            if (DataDefinitionID == 0)
+                throw new InvalidOperationException($"The {nameof(DataDefinitionID)} is invalid. Query: {Query.DefinitionStringID:X} StandardMessage: {StandardMessage?.DataDefinitionID:X}");
+
             //Get requested data structure info
-            if (GetService<TSODataDefinitionService>().TryGetDataStruct((uint)Query.DefinitionStringID, out ITSODataStruct structInfo))
+            if (GetService<TSODataDefinitionService>().TryGetDataStruct((uint)DataDefinitionID, out ITSODataStruct structInfo))
                 StructObject = TSODataService_GetRemoteObjectData(structInfo, ObjectID).Result; // do remote data service query now
 
             if (StructObject == null)
             { // Data Service returned null or the structure was not found.
                 throw new InvalidDataException($"nio2so Data Service returned null or the structure was not found.");
-                TSOData_TryGetObjectInstance((uint)Query.DefinitionStringID, out StructObject);
+                TSOData_TryGetObjectInstance((uint)DataDefinitionID, out StructObject);
             }
             // invoke the controllers with the data service direction to double-check the data
             if (TSOData_InvokeControllers(Query, StructObject, TSODataServiceControllerBase.TSODataServiceHandlerDataDirection.FromDataService))

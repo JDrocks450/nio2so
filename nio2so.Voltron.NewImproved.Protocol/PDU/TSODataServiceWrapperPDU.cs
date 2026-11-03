@@ -19,10 +19,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// The AvatarID of the player who sent this <see cref="TSODataServiceWrapperPDU"/>
         /// </summary>
         public uint SendingAvatarID { get; set; }
-
         /// <summary>
         /// The ID of the string in the TSODataDefinition.dat this data service query structure        
         /// </summary>
+#if !TSONANDI
+        [TSOVoltronIgnorable]
+#endif        
         public TSO_NewImproved_TSOData_Constants DefinitionStringID { get; set; }
 
         /// <summary>
@@ -38,7 +40,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
 
         /// <summary>
         /// If the <see cref="Message"/> is <see cref="TSONetMessageStandard"/> then casts it to <see cref="ITSODataServiceNetMessageStandard"/>, otherwise null.
-        /// <para/>This is helpful for peeking at what the <see cref="ITSODataServiceNetMessageStandard.FormatID"/> would be a named constant.
+        /// <para/>This is helpful for peeking at what the <see cref="ITSODataServiceNetMessageStandard.DataDefinitionID"/> would be a named constant.
         /// </summary>
         [TSOVoltronIgnorable] public ITSODataServiceNetMessageStandard? DataServiceNetMessage => Message?.GetMessageAs() as ITSODataServiceNetMessageStandard;
 

@@ -70,7 +70,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
         [TSOVoltronIgnorable]
-        public TSO_NewImproved_TSOData_Constants FormatID { get; set; }
+        public TSO_NewImproved_TSOData_Constants DataDefinitionID { get; set; }
     }
     public interface ITSODatabaseNetMessageStandard : ITSONetMessageStandard
     {        
@@ -108,9 +108,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// </summary>
         [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public uint FormatID { get; set; }
         [TSOVoltronIgnorable]
-        TSO_NewImproved_TSOData_Constants ITSODataServiceNetMessageStandard.FormatID { 
-            get => (TSO_NewImproved_TSOData_Constants)FormatID;
-            set => FormatID = (uint)value;
+        TSO_NewImproved_TSOData_Constants ITSODataServiceNetMessageStandard.DataDefinitionID { 
+            get => (TSO_NewImproved_TSOData_Constants)(Data1 ?? 0);
+            set => Data1 = (uint)value;
         }
         [TSOVoltronIgnorable]
         TSO_NewImproved_DBServiceConstants ITSODatabaseNetMessageStandard.FormatID

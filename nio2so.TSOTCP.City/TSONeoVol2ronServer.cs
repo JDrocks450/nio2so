@@ -3,7 +3,7 @@
 #define TSOPLAYTEST
 #define TSONANDI
 */
-#define TSOPREALPHA
+#define TSONANDI
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST
@@ -27,7 +27,7 @@ namespace nio2so.TSOTCP.Voltron.Server
 {
 
     /// <summary>
-    /// The <see cref="TSONeoVol2ronServer"/> is a The Sims Online Pre-Alpha Voltron Server analog.
+    /// The <see cref="TSONeoVol2ronServer"/> is a The Sims Online [Targeting Pack Version] Voltron Server analog.
     /// <para>It is designed to work with an unmodified copy of The Sims Online Pre-Alpha.</para>
     /// <para>It will by default host with a send/recv buffer allocated to be <see cref="TSOVoltronConst.TSOAriesClientBufferLength"/></para>
     /// <para>To get the Client to connect to a <see cref="TSONeoVol2ronServer"/>, ensure your TSOHTTPS server's ShardSelector points to the selected PORT,
