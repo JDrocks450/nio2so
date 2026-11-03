@@ -181,6 +181,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         {
 
         }
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, uint formatID, string[] StringContent) : 
+            this(messageID, sendingAvatarID, formatID)
+        {
+            this.StringContent = StringContent;
+            _bytes = WriteMessageData();
+        }
 
 
         //**autocalc**
@@ -326,7 +332,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             if (StringContent != null && StringContent.Length > 0)
             {
                 Flags |= (1 << 6);
-                // TODO: Implement FC FF STR# serialization scheme here
+                Flags |= (1 << 0);
+                stream.Write(TSOVoltronStringConverter.GetVoltronStr23FormatBytes(StringContent));
             }
 
             // Data4 (Flag 1 << 4) written after StringContent to match Read function order

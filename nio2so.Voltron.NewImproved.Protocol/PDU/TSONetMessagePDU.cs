@@ -17,10 +17,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         {
         }
 
-        public TSONetMessagePDU(uint sendingAvatarID, TSOServiceMessage message, params uint[] vector) : this()
+        public TSONetMessagePDU(uint sendingAvatarID, TSO_NewImproved_kMSGs kMSGID, TSOServiceMessage message, params uint[] vector) : this()
         {
             SendingAvatarID = sendingAvatarID;
             StatusCode = 0x0;
+            this.kMSGID = kMSGID;
             Vector = vector;
             Message = message;
 
@@ -34,9 +35,16 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// <param name="sendingAvatarID"></param>
         /// <param name="kMSGID"></param>
         /// <param name="message"></param>
-        public TSONetMessagePDU(uint sendingAvatarID, uint kMSGID, TSOServiceMessage message) : 
-            this(sendingAvatarID, message, 0x3b, 0x3b, kMSGID, 0x3b)
-        { }
+        public TSONetMessagePDU(uint sendingAvatarID, TSO_NewImproved_kMSGs kMSGID, TSOServiceMessage message) :
+            this(sendingAvatarID, kMSGID, message, 0, 0)
+        {
+            MakeBodyFromProperties();
+            
+            Vector[0] = ContentLength;
+            Vector[1] = 0x80000000 | ContentLength;
+
+            MakeBodyFromProperties();
+        }
 
         public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.cTSONetMessagePDU;
 

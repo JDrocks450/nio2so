@@ -8,9 +8,11 @@
     /// </summary>
     public enum TSO_NewImproved_kMSGs : uint
     {
+        kMSGID_Unconfirmed_AvatarJoinCancel = 0xAA7B191E,
         kMSGID_HouseData = 0x9B7ED631,
         kMSGID_JoinHouseResponse = 0x3BFC2808,
         kMSGID_GenericMessage = 0x7D1A4415,
+        kMSGID_GenericMessage_Little = 0x15441A7D,
         /// <summary>
         /// Sent by the HSB once every second or so, a heartbeat message
         /// </summary>
