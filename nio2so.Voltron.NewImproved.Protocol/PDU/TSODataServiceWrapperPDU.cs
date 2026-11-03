@@ -1,4 +1,6 @@
-﻿using nio2so.Voltron.Core.TSO;
+﻿#define TSONANDI
+
+using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.NewImproved.Protocol.Constants;
 using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
@@ -20,11 +22,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// </summary>
         public uint SendingAvatarID { get; set; }
         /// <summary>
-        /// The ID of the string in the TSODataDefinition.dat this data service query structure        
+        /// The ID of the string in the TSODataDefinition.dat this data service query structure       
+        /// <para/>This was first seen in <c>1.1097.1.0</c>. In prior versions, use the <see cref="TSOVoltronIgnorable"/> attribute to ignore this property.
         /// </summary>
 #if !TSONANDI
         [TSOVoltronIgnorable]
-#endif        
+#endif
         public TSO_NewImproved_TSOData_Constants DefinitionStringID { get; set; }
 
         /// <summary>

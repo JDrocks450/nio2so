@@ -342,7 +342,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (StandardMessage != null)
             {
                 DataDefinitionID = StandardMessage.DataDefinitionID;
-                bool Subscribe = StandardMessage.FormatID == 0x09C83484; // topic subscribe message
+                var subscribeEvt = StandardMessage.TopicRequestMode;
             }
 
             //objectID is historically Data2 (last) ... but could change later!
