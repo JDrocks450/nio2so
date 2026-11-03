@@ -101,10 +101,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         {
             LogConsole($"Room is going offline: RoomID: {Room.RoomID}\n {Room}");
 
-            List<TSOAriesIDStruct> purgeList = new(Room.GetConnectedClients().ToArray());
+            TSOAriesIDStruct[] purgeList = Room.GetConnectedClients();
             foreach (var client in purgeList)
             {
-                if (client.AvatarID == Room.HostID.AvatarID) continue;
+                if (client.AvatarID == (Room?.HostID?.AvatarID ?? 0)) continue;
                 ClientUpdateRoom_LeaveRoom(client, out string reason);
             }
             Room.ClientLeaveRoom(Room.HostID);
