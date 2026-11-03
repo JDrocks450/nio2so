@@ -123,7 +123,7 @@ namespace nio2so.Voltron.NewImproved.Protocol
     }
     internal enum TSO_NewImproved_VoltronPacketTypes : ushort
     {
-#if TSONANDI
+#if TSONANDI // This is for 1.1097.1.0
         AlertHandledPDU = 0x0001,
         AlertMsgPDU = 0x0002,
         AlertMsgResponsePDU = 0x0003,
@@ -242,7 +242,8 @@ namespace nio2so.Voltron.NewImproved.Protocol
         ResetWatchdogPDU = 0x0073,
         ResetWatchdogResponsePDU = 0x0074,
 
-#else
+#else // This is for 1.3.2.81
+
         AlertHandledPDU = 0x0001,
         AlertMsgPDU = 0x0002,
         AlertMsgResponsePDU = 0x0003,

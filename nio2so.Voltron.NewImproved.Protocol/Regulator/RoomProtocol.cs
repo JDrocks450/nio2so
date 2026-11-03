@@ -8,6 +8,8 @@ using nio2so.Voltron.NewImproved.Protocol.PDU;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
+using OpenSSL.Core;
+using System.Reflection;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -492,6 +494,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             TSOUpdateRoomPDU.ReasonCodes code = values[tso_entry_test_i++];
             RespondWith(new TSOUpdateRoomPDU(roomInfo.RoomInfo));
 
+            ClientShowMessage(1337, "Joining lot started.");
+
             nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
             if (!clientSessionService.GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? joiningClient) || joiningClient == null)
                 throw new InvalidOperationException("Could not identify voltron client using the PDU.");
@@ -531,6 +535,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
                 TrySendTo(90001, new TSOOccupantArrivedPDU(GetPlayerInfoStruct(joiningClient)));
                 TrySendTo(90001, houseDataPDU);
+                ClientShowMessage(90001, "Avatar is joining.");
                 return;
 #if false
                 TrySendTo(90001, new TSONetMessagePDU(joiningClient.AvatarID, 0xACDC4FF2, new TSOServiceMessage(new TSONetMessageStandard(0x19500223, joiningClient.AvatarID, 0xACDC4FF2, 0x0539))));
@@ -583,8 +588,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kMSGID_GenericMessage)
             {
-                ClientShowMessage(90001, "Welcome to nio2so!","What a jolly lot");
-                return;
                 ITSONetMessageStandard embedded = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
                 LogConsole($"Room loaded with the following Generic Message: {embedded.StringContent}");
                 TrySendTo(90001, netMsg); // send it
@@ -653,14 +656,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
         /// <summary>
         /// Shows a generic message on a remote connection
         /// </summary>
-        void ClientShowMessage(AvatarIDToken Client, params string[] Messages)
-        {
-            TSO_NewImproved_kMSGs kMSGID = TSO_NewImproved_kMSGs.kMSGID_GenericMessage_Little;  
-            TrySendTo(Client.AvatarID, 
-                new TSONetMessagePDU(Client.AvatarID, kMSGID,
-                    new PDU.DataService.TSOServiceMessage(
-                        new TSONetMessageStandard((uint)0x6E440016, Client.AvatarID, (uint)kMSGID, Messages))));
-        }
+        void ClientShowMessage(AvatarIDToken Client, params string[] Messages) => TrySendTo(Client.AvatarID, 
+            new TSONetMessagePDU(Client.AvatarID, TSO_NewImproved_kMSGs.kMSGID_GenericMessage_Little, new PDU.DataService.TSOServiceMessage(
+                        new TSONetMessageStandard(0, Client.AvatarID, (uint)TSO_NewImproved_kMSGs.kMSGID_GenericMessage_Little, Messages))));
 
         /// <summary>
         /// Sends this <paramref name="PDU"/> to every client connected to this <paramref name="HouseID"/> <see cref="RoomProtocolRoomInfo"/>
