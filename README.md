@@ -143,7 +143,7 @@ These will intercept network traffic from the TSOClient.exe to the nio2so **TSON
 
 This was designed to run with an unmodified client. However, it's basically required for you to use FatBag's patches, due to the nature of using The Sims Online: Pre-Alpha. It is detailed more thoroughly in this wiki article: http://wiki.niotso.org/Maxis_Protocol
 
-Luckily, in the Releases section, I have packaged a ZIP with two patched Pre-Alpha TSOClient.exe executables in it. I have used a Hex Editor to make one executable a **server** and one a **client**. (it's a single bit swap)
+Luckily, I have included a PS Script to patch your executables yourself, to make one Client and one Server executable. It's a single-byte change, anyway.
 
 One instance should be a server, this will be the HOST. Now, all subsequent instances should be a client instance, that will connect to the host server instance's lot.
 
