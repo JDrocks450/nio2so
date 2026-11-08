@@ -207,16 +207,14 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         /// <exception cref="InvalidDataException"></exception>
         public bool AddRoom(RoomProtocolRoomInfo Room)
         {
-            bool result = false;
-            if (Room.HostHSBAvatarID == 0)
-                throw new InvalidDataException($"LeaderID is invalid: {Room.HostHSBAvatarID}");
+            bool result = false;            
             if (Room.HostID == null) // ensure this isn't blank for data integrity
-                Room.HostID = GetVoltronIDStruct(Room.HostHSBAvatarID);
+                throw new InvalidDataException($"LeaderID is invalid: {Room.HostHSBAvatarID}");
             result = _roomsByHouseID.TryAdd(Room.LotID, Room);
             if (!result)
                 result = MigrateHost(Room.LotID, Room.HostID);
             else
-                Parent.LogConsole($"HouseID: {Room.LotID} is ONLINE.");
+                Parent.LogConsole($"HouseID: {Room.LotID} is {(Room.IsOnline ? "ONLINE" : "OFFLINE")}.");
             return result;
         }
 

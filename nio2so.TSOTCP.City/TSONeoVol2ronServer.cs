@@ -3,7 +3,6 @@
 #define TSOPLAYTEST
 #define TSONANDI
 */
-#define TSONANDI
 
 #if TSOPREALPHA
 #undef TSOPLAYTEST

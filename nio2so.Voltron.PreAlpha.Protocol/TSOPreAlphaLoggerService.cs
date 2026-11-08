@@ -28,8 +28,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol
                     return; // skip these
                 if (PDU is ITSODataBlobPDU standardMsg &&
                     standardMsg.DataBlobContentObject.GetAs<TSOStandardMessageContent>().
-                    Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg))
-                    return; // this is a server confirmation message, they spam. Do not log these.
+                    Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg)) ;
+                    //return; // this is a server confirmation message, they spam. Do not log these.
             }
             base.OnVoltronPacket(Direction, Time, PDU, ClientID);
         }

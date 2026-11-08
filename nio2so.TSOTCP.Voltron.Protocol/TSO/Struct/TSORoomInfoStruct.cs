@@ -18,17 +18,46 @@ namespace nio2so.Voltron.Core.TSO.Struct
 
         public TSORoomInfoStruct(TSORoomIDStruct roomLocationInfo,
                            TSOAriesIDStruct ownerVector,
-                           uint currentOccupants,                           
+                           uint currentOccupants,
                            uint maxOccupants = MAX_OCCUPANTS,
-                           bool isLocked = false,
-                           params TSOAriesIDStruct[] AdminList)                           
+                           bool isLocked = false) : this(roomLocationInfo,
+                                                         ownerVector,
+                                                         currentOccupants,
+                                                         maxOccupants,
+                                                         isLocked,
+                                                         [],
+                                                         [],
+                                                         [])
+        {
+
+        }
+
+        public TSORoomInfoStruct(TSORoomIDStruct roomLocationInfo,
+                           TSOAriesIDStruct ownerVector,
+                           uint currentOccupants,                           
+                           uint maxOccupants,
+                           bool isLocked,
+                           TSOAriesIDStruct[] AdminList,
+                           TSOAriesIDStruct[] AdmitList,
+                           TSOAriesIDStruct[] DenyList)                           
         {            
             RoomLocationInfo = StageID = roomLocationInfo;
             OwnerVector = ownerVector;
-            if (AdminList.Any())
+            AdmitListEnabled = DenyListEnabled = AdminListEnabled = false;
+            if (AdminList.Length > 0)
             {
                 this.AdminList = AdminList;
                 AdminListEnabled = true;
+            }
+            if (AdmitList.Length > 0)
+            {
+                this.AdmitList = AdmitList;
+                AdmitListEnabled = true;
+            }
+            if (DenyList.Length > 0)
+            {
+                this.DenyList = DenyList;
+                DenyListEnabled = true;
             }
             CurrentOccupants = currentOccupants;
             MaxOccupants = maxOccupants;

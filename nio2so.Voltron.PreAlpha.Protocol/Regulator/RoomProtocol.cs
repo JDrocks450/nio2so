@@ -67,8 +67,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             Created = false;
             //download lot profile
             var lot = GetLotProfile(HouseID);
+            HSBID = GetVoltronIDStruct(90001);
             if (HSBID == null)
-                throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithHost));            
+            {                
+                if (false)
+                     throw new InvalidOperationException("Leader cannot be null when using " + nameof(CreateOrGetRoomWithHost));
+            }         
             //add the room
             Created = AddRoom(new RoomProtocolRoomInfo(new TSORoomIDStruct(lot.HouseID, lot.Name), HSBID, GetVoltronIDStruct(lot.OwnerAvatar), HouseID));            
             return _roomController.GetByHouseID(HouseID);
@@ -264,6 +268,8 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         }
         void UpdateLotOccupants(RoomProtocolRoomInfo roomInfo)
         {
+            return;
+
             //**tell the clients (NOT the host) the new list of players currently in this room            
             if (GetRoomUpdateOccupantsPDUByRoomID(roomInfo.LotID, roomInfo.HostHSBAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
                 BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU, true);
@@ -627,7 +633,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             }
 
             //Needed to prevent the client from shutting down after 30 seconds
-            TrySendTo(roomInfo.HostID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.HostID.AvatarID));
+            //TrySendTo(roomInfo.HostID, new TSOGetHouseLeaderByIDResponse(HouseID, roomInfo.HostID.AvatarID));
         }
 
         /// <summary>
@@ -661,7 +667,18 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (PDU is TSOTransmitDataBlobPacket transmitPDU)
             { // *** PDU is being sent from one Client to another Client, so we need to wrap it in a broadcast PDU and send it to the destination client
                 broadcastPDU = new TSOBroadcastDatablobPacket(transmitPDU);
-                bool successful = TrySendTo(transmitPDU.DestinationSessionID, broadcastPDU);
+
+                // *** prevent sending to itself ***
+
+                uint dest_Client = transmitPDU.DestinationSessionID.AvatarID;
+                if (dest_Client == sender.AvatarID && sender.AvatarID != 90001)                
+                    dest_Client = 90001;  
+                if (dest_Client == roomInfo.LotLeader.AvatarID && sender.AvatarID != 90001) // if the destination is the host, send it to the HSB instead                
+                    dest_Client = 90001;                
+
+                // **
+
+                bool successful = TrySendTo(dest_Client, broadcastPDU);
                 if (!successful) // client no longer reachable via Voltron. they must have disconnected
                     throw new InvalidOperationException($"Could not send broadcast PDU to {transmitPDU.DestinationSessionID} from {transmitPDU.SenderSessionID}. Did the destination " +
                         $"TSOClient disconnect from Voltron?");
@@ -683,7 +700,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (PDU.DataBlobContentObject.TryGetAsStandardContent(out TSOStandardMessageContent? obj))
             {
                 //check if this is confirming entry to a room, in which case transition this avatar into the room they're joining
-                if (obj.kMSG == TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived)
+                if (obj.kMSG == TSO_PreAlpha_MasterConstantsTable.GZCLSID_cLoadCharacterAppointment)
                     if (!AdmitAvatarToRoom(sender_avatarID))
                         throw new InvalidOperationException($"Could not admit: {sender_avatarID} into room {HouseID} after {TSO_PreAlpha_MasterConstantsTable.kMSGID_HouseReceived}!");
             }
@@ -700,9 +717,12 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             uint HouseID = ((TSOGetHouseLeaderByIDRequest)PDU).HouseID;
             if (_roomController.TryGetByHouseID(HouseID, out RoomProtocolRoomInfo? room))
             {
-                if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.HostHSBAvatarID != HSB_AVATAR_ID) // HSB_TEST
-                    throw new InvalidDataException("HSB is enabled but we're telling a client that the host is NOT the HSB.");
-                RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.HostHSBAvatarID));
+                //if (Server.VoltronSettings.PreAlpha_HSBEnabled && room.HostHSBAvatarID != HSB_AVATAR_ID) // HSB_TEST
+                  //  throw new InvalidDataException("HSB is enabled but we're telling a client that the host is NOT the HSB.");
+                if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out var actualSender) && actualSender.AvatarID == 90001)
+                    RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LotLeader.AvatarID)); // HSB gets this one
+                else
+                    RespondTo(PDU, new TSOGetHouseLeaderByIDResponse(HouseID, room.LotLeader.AvatarID)); // regular clients get this one
             }
         }
 
@@ -833,6 +853,13 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             // 0x01 for HouseSimServer and 0x02 for TSOClient
             // 00469FE8 is the bit that controls hosting or not
 
+            //** HSB MODE **/
+            if (GetService<nio2soClientSessionService>().GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? VoltronID) )
+            { // identified -- are they an HSB avatar?
+                if (VoltronID.AvatarID != Server.VoltronSettings.PreAlpha_HSBAvatarID) return; // they are not an HSB avatar, they cannot host
+            }
+            else throw new Exception("Could not identify what Client sent this PDU."); // not good if this happens, indicates a Login to Voltron issue. Client needs to be initialized using Aries ClientSessionInfo
+
             //read the houseID to make sure its 0 -- if not, how did that happen?
             var houseID = ((TSOLoadHouseResponsePDU)PDU).HouseID;
 
@@ -843,6 +870,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             }
 
             if (houseID == 0) return;
+
             ((TSOLoadHouseResponsePDU)PDU).HouseID = houseID;
 
             // fib a LotEntry Request PDU to Voltron for this client
@@ -871,6 +899,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
 
             //wait a bit
             Thread.Sleep(HSB_AWAKE_TIMEOUT);
+
             //run hsb joiner process 
             HSB_LotIsOnline(info.Value.HouseID, info.Value.JoiningQueue);
         }

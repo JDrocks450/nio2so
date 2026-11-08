@@ -8,6 +8,7 @@
     <ApplicationIcon>dataservicelogo.ico</ApplicationIcon>
     <Title>nio2so Data Service</Title>
     <PackageIcon>dataservicelogo.png</PackageIcon>
+    <Configurations>Debug;Release;Debug_PreAlpha;Debug_NewImproved</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
