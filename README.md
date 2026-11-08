@@ -22,6 +22,8 @@ _This project is provided free of charge and on an "as is" basis, without warran
 
 _This project is a non-commercial, open-source effort. The software and its components are not offered for sale, and access to the project will not be restricted behind payment. The authors do not solicit or accept donations, sponsorships, or other forms of compensation related to this project._
 
+_This project does not use AI, and AI-assisted code or code entirely generated using AI will not be accepted._
+
 ## Videos
 
 Check out the various videos stemming from this project, documenting The Sims Online: Pre-Alpha!
