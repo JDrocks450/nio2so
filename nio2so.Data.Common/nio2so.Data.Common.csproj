@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x86</Platforms>
+    <Configurations>Debug;Release;Debug_PreAlpha;Debug_NewImproved</Configurations>
   </PropertyGroup>
 
 </Project>

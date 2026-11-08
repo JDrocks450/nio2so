@@ -70,7 +70,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             RespondWith(PDU);
         }
 
-        bool HandleLoadAvatarByID(out TSOVoltronPacket Response)
+        public bool HandleLoadAvatarByID(out TSOVoltronPacket Response)
         {
             TSOTCPPacket response = PacketBase.Parse<TSOTCPPacket>(File.ReadAllBytes(@"C:\nio2so\const\loadavatarbyid.dat"), out _);
             TSONewImprovedPDUFactory factory = GetService<TSONewImprovedPDUFactory>();

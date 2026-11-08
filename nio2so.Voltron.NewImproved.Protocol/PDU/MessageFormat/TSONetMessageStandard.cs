@@ -64,21 +64,43 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         [IgnoreDataMember]
         public uint? Data4 { get; set; }
     }
+
     public interface ITSODataServiceNetMessageStandard : ITSONetMessageStandard
     {
+        public enum TSO_NewImproved_TSODataService_TopicUpdateRequest : uint
+        {
+            NotApplicable = 0x00000000,
+            Topic_Subscribe = 0x09C83484,
+            Topic_Unsubscribe = 0x29C8348F,
+        }
+
         /// <summary>
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
         [TSOVoltronIgnorable]
-        public TSO_NewImproved_TSOData_Constants FormatID { get; set; }
+        TSO_NewImproved_TSOData_Constants DataDefinitionID
+        {
+            get => (TSO_NewImproved_TSOData_Constants)(Data1 ?? 0);
+            set => Data1 = (uint)value;
+        }
+        /// <summary>
+        /// Whether this is a <see cref="TSO_NewImproved_TSODataService_TopicUpdateRequest.Topic_Subscribe"/> or <see cref="TSO_NewImproved_TSODataService_TopicUpdateRequest.Topic_Unsubscribe"/> request
+        /// </summary>
+        [TSOVoltronIgnorable]
+        public TSO_NewImproved_TSODataService_TopicUpdateRequest TopicRequestMode => Data1.HasValue ? (TSO_NewImproved_TSODataService_TopicUpdateRequest)Data1.Value : TSO_NewImproved_TSODataService_TopicUpdateRequest.NotApplicable;
     }
+
     public interface ITSODatabaseNetMessageStandard : ITSONetMessageStandard
-    {        
+    {
         /// <summary>
-        /// The string entry in the TSODataDefinition corresponding with this query
+        /// The <see cref="TSO_NewImproved_DBServiceConstants"/> corresponding with this query
         /// </summary>
         [TSOVoltronIgnorable]
-        public TSO_NewImproved_DBServiceConstants FormatID { get; set; }
+        TSO_NewImproved_DBServiceConstants DBAction
+        {
+            get => (TSO_NewImproved_DBServiceConstants)FormatID;
+            set => FormatID = (uint)value;
+        }
     }
 
     /// <summary>
@@ -106,18 +128,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
         /// <summary>
         /// The string entry in the TSODataDefinition corresponding with this query
         /// </summary>
-        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public uint FormatID { get; set; }
-        [TSOVoltronIgnorable]
-        TSO_NewImproved_TSOData_Constants ITSODataServiceNetMessageStandard.FormatID { 
-            get => (TSO_NewImproved_TSOData_Constants)FormatID;
-            set => FormatID = (uint)value;
-        }
-        [TSOVoltronIgnorable]
-        TSO_NewImproved_DBServiceConstants ITSODatabaseNetMessageStandard.FormatID
-        {
-            get => (TSO_NewImproved_DBServiceConstants)FormatID;
-            set => FormatID = (uint)value;
-        }
+        [TSOVoltronValue(Data.Common.Serialization.Voltron.TSOVoltronValueTypes.LittleEndian)] public uint FormatID { get; set; }                
 
         /// <summary>
         /// The content of the message
@@ -180,6 +191,12 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             this(messageID,sendingAvatarID, formatID, Embedded, null,null,null,null)
         {
 
+        }
+        public TSONetMessageStandard(uint messageID, uint sendingAvatarID, uint formatID, string[] StringContent) : 
+            this(messageID, sendingAvatarID, formatID)
+        {
+            this.StringContent = StringContent;
+            _bytes = WriteMessageData();
         }
 
 
@@ -326,7 +343,8 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat
             if (StringContent != null && StringContent.Length > 0)
             {
                 Flags |= (1 << 6);
-                // TODO: Implement FC FF STR# serialization scheme here
+                Flags |= (1 << 0);
+                stream.Write(TSOVoltronStringConverter.GetVoltronStr23FormatBytes(StringContent));
             }
 
             // Data4 (Flag 1 << 4) written after StringContent to match Read function order

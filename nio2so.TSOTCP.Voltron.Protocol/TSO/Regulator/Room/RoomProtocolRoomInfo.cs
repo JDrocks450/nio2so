@@ -13,6 +13,10 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
             HostID = hsbID;
             LotLeader = lotLeader;
             LotID = lotID;
+
+            AdmitList = [];
+            Admins = [];
+            DenyList = [new TSOAriesIDStruct(1337, "Bisquick")];
         }
 
         public TSORoomIDStruct RoomID { get; set; }
@@ -28,7 +32,9 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         public uint OccupantsCount => (uint)occupants.Count;
         public uint MaxOccupants { get; set; } = RuntimeRoomController.MAX_OCCUPANTS;
         public bool IsLocked { get; set; } = false;
-        public IEnumerable<TSOAriesIDStruct> Admins => [new("??1337", "bisquick")];
+        public TSOAriesIDStruct[] Admins { get; set; }
+        public TSOAriesIDStruct[] AdmitList { get; set; }
+        public TSOAriesIDStruct[] DenyList { get; set; }
         /// <summary>
         /// Gets if this room is online, meaning that the <see cref="HostID"/> is still connected to this room, hosting it.
         /// </summary>
@@ -36,8 +42,9 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
         /// <summary>
         /// Creates a new <see cref="TSORoomInfoStruct"/> matching the configuration for this <see cref="RoomProtocolRoomInfo"/>
         /// </summary>
-        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, HostID, OccupantsCount, MaxOccupants, IsLocked, Admins.ToArray());
+        public TSORoomInfoStruct RoomInfo => new TSORoomInfoStruct(RoomID, LotLeader, OccupantsCount, MaxOccupants, IsLocked, Admins, AdmitList, DenyList);
 
+        public bool ClientInRoom(TSOAriesIDStruct VoltronID) => clients.ContainsKey(VoltronID.AvatarID);
         /// <summary>
         /// Adds this client to the list of clients in this room. This VoltronID will now receive network transmissions related to this room.
         /// <para/>To be a 'Client', means that this TSOClient instance is in the process of joining the lot, just after the user selects to join the lot.
@@ -72,6 +79,6 @@ namespace nio2so.Voltron.Core.TSO.Regulator.Room
             }
             throw new InvalidOperationException($"This player, {Player.PlayerID} is not a client of this room. They cannot be admitted this way.");
         }
-        public IEnumerable<TSOAriesIDStruct> GetConnectedClients() => clients.Values.ToArray();
+        public TSOAriesIDStruct[] GetConnectedClients() => clients.Values.ToArray();
     }
 }

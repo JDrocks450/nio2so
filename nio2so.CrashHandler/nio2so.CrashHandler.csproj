@@ -7,6 +7,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>ErrorIcon.ico</ApplicationIcon>
+    <Configurations>Debug;Release;Debug_PreAlpha;Debug_NewImproved</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

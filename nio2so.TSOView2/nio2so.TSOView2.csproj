@@ -5,7 +5,7 @@
     <TargetFramework>net9.0-windows7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <Configurations>Debug;Release</Configurations>
+    <Configurations>Debug;Release;Debug_PreAlpha;Debug_NewImproved</Configurations>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <UseWindowsForms>true</UseWindowsForms>
     <Platforms>AnyCPU;x86</Platforms>

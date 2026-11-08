@@ -24,108 +24,119 @@ namespace nio2so.TSOTCP.Voltron.Server
             try
             {
 #endif
-                //BOOTSTRAPPER CODE BEGINS HERE
+            //BOOTSTRAPPER CODE BEGINS HERE
 
-                AppContext.SetSwitch(DisableCachingName, true);
-                AppContext.SetSwitch(DontEnableSchUseStrongCryptoName, true);
+            AppContext.SetSwitch(DisableCachingName, true);
+            AppContext.SetSwitch(DontEnableSchUseStrongCryptoName, true);
 
-                //VersionInfo is a special color
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{TSOVoltronBasicServer.ServerVersionInfoString}");
+            //VersionInfo is a special color
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($"{nameof(TSONeoVol2ronServer)} is starting up...\n\nVERSION INFO:\n{TSOVoltronBasicServer.ServerVersionInfoString}");
 
-                //Init is a special color
-                Console.ForegroundColor = ConsoleColor.Yellow;
+            //Init is a special color
+            Console.ForegroundColor = ConsoleColor.Yellow;
 
-                //CLEAR PREVIOUS PACKETS
-                string clearDirProcName = Path.Combine(TestingConstraints.WorkspaceDirectory, @"cleandir.bat");
-                if (File.Exists(clearDirProcName))
+            //CLEAR PREVIOUS PACKETS
+            string clearDirProcName = Path.Combine(TestingConstraints.WorkspaceDirectory, @"cleandir.bat");
+            if (File.Exists(clearDirProcName))
+            {
+                Console.WriteLine("Cleaning up prior session...");
+                Process.Start(new ProcessStartInfo()
                 {
-                    Console.WriteLine("Cleaning up prior session...");
-                    Process.Start(new ProcessStartInfo()
-                    {
-                        UseShellExecute = false,
-                        WorkingDirectory = Path.GetDirectoryName(clearDirProcName),
-                        FileName = clearDirProcName
-                    })?.WaitForExit();
-                }
-                else Console.WriteLine("Clean up script could not be found. Please purge tsotcppackets often to avoid disk usage...");
+                    UseShellExecute = false,
+                    WorkingDirectory = Path.GetDirectoryName(clearDirProcName),
+                    FileName = clearDirProcName
+                })?.WaitForExit();
+            }
+            else Console.WriteLine("Clean up script could not be found. Please purge tsotcppackets often to avoid disk usage...");
 
-                //PING DATA SERVICE
-                Console.WriteLine("Downloading server settings...");
-                VoltronServerSettings? settings;
-                try
+            //PING DATA SERVICE
+            Console.WriteLine("Downloading server settings...");
+            VoltronServerSettings? settings;
+            try
+            {
+                settings = TSONeoVol2ronServer.DownloadSettings().Result;
+                if (settings == null)
+                    throw new InvalidOperationException("Please check your LocalServerSettings.config file to ensure your API Data Service URL is accurate.\n" +
+                        "Could not download " + nameof(VoltronServerSettings));
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex);
+                File.WriteAllBytes("crashdump.log", System.Text.Encoding.UTF8.GetBytes(ex.ToString()));
+                return 1;
+            }
+
+            Console.WriteLine("\nStarting engines! Settings: " + settings);
+            Console.ResetColor();
+
+            //OPEN SSL CERT IF ONE IS AVAILABLE
+            X509Certificate? voltronCertificate = default;
+            string certPath = @".\cert.pem";
+
+            if (settings.SSLEnabled)
+            {
+                Console.WriteLine("SSL is enabled, loading certificate at: " + certPath);
+                //NIO2SO
+                if (File.Exists(certPath))
                 {
-                    settings = TSONeoVol2ronServer.DownloadSettings().Result;
-                    if (settings == null)
-                        throw new InvalidOperationException("Please check your LocalServerSettings.config file to ensure your API Data Service URL is accurate.\n" +
-                            "Could not download " + nameof(VoltronServerSettings));
+                    //load certificate chain first
+                    var chain = new X509Chain(File.ReadAllText(certPath));
+                    var cert = voltronCertificate = chain[0];
+                    //next attempt to find the key
+                    var keyPath = @".\key.pem";
+                    Console.WriteLine("Server Certificate loaded, attempting accompanying key at: " + certPath);
+                    var key = CryptoKey.FromPrivateKey(File.ReadAllText(keyPath), settings.SSLCertificatePassword);
+                    if (!cert.CheckPrivateKey(key) || cert.Verify(key))
+                        Console.WriteLine($"Private key failed or not verified! {nameof(cert.CheckPrivateKey)} failure code: false");
+                    cert.PrivateKey = key;
                 }
-                catch (Exception ex)
+                //failed to load cert
+                if (voltronCertificate == null)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine(ex);
-                    File.WriteAllBytes("crashdump.log", System.Text.Encoding.UTF8.GetBytes(ex.ToString()));
-                    return 1;
+                    Console.WriteLine("Could not load the certificate file. Please ensure voltron.pfx (or niotso cert.pem) is in the working directory. Disabling SSL...");
                 }
-
-                Console.WriteLine("\nStarting engines! Settings: " + settings);
-                Console.ResetColor();
-
-                //OPEN SSL CERT IF ONE IS AVAILABLE
-                X509Certificate? voltronCertificate = default;
-                string certPath = @".\cert.pem";
-
-                if (settings.SSLEnabled)
+                else
                 {
-                    Console.WriteLine("SSL is enabled, loading certificate at: " + certPath);
-                    //NIO2SO
-                    if (File.Exists(certPath))
-                    {
-                        //load certificate chain first
-                        var chain = new X509Chain(File.ReadAllText(certPath));
-                        var cert = voltronCertificate = chain[0];
-                        //next attempt to find the key
-                        var keyPath = @".\key.pem";
-                        Console.WriteLine("Server Certificate loaded, attempting accompanying key at: " + certPath);
-                        var key = CryptoKey.FromPrivateKey(File.ReadAllText(keyPath), settings.SSLCertificatePassword);
-                        if (!cert.CheckPrivateKey(key) || cert.Verify(key))
-                            Console.WriteLine($"Private key failed or not verified! {nameof(cert.CheckPrivateKey)} failure code: false");
-                        cert.PrivateKey = key;
-                    }
-                    //failed to load cert
-                    if (voltronCertificate == null)
-                    {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine("Could not load the certificate file. Please ensure voltron.pfx (or niotso cert.pem) is in the working directory. Disabling SSL...");
-                    }
-                    else
-                    {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.WriteLine("Server Certificate and Key Loaded! SSL is enabled.");
-                    }
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    Console.WriteLine("Server Certificate and Key Loaded! SSL is enabled.");
                 }
-                Console.ResetColor();
+            }
+            Console.ResetColor();
 
-                bool usingSSL = settings.SSLEnabled && voltronCertificate != null;
+            bool usingSSL = settings.SSLEnabled && voltronCertificate != null;
 
-                //START THE CITY SERVER
-                TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings, voltronCertificate); // 49000 for City Server || HouseSimServer testing is 49101           
-                cityServer.Start();
+#if TSOPREALPHA
+            Console.ForegroundColor = ConsoleColor.Red;
+            if (usingSSL)
+            {
+                Console.WriteLine("WARNING: TSOPREALPHA switch active. SSL disabled by force.");
+                settings.SSLEnabled = false;
+                voltronCertificate = null;
+            }
+            Console.ResetColor();
+#endif            
 
-                //Go is a special color
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"\n\n >> {nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({cityServer.MyIP}:{cityServer.PORT}) and" +
-                    $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n");
-                Console.ForegroundColor = usingSSL ? ConsoleColor.Green : ConsoleColor.Red;
-                Console.WriteLine($" >> SSL: " + (usingSSL ? "Enabled (Play-Test and later only)" : "Disabled (Pre-Alpha only)") + "\n");
-                Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.WriteLine($" >> Targeting Pack: {cityServer.TargetingPackName}");
-                Console.ResetColor();
+            //START THE CITY SERVER
+            TSONeoVol2ronServer cityServer = new TSONeoVol2ronServer(settings, voltronCertificate); // 49000 for City Server || HouseSimServer testing is 49101           
+            cityServer.Start();
 
-                while (Console.ReadLine() != "shutdown")
-                {
-                  ; // empty
-                }
+            //Go is a special color
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"\n\n >> {nameof(TSONeoVol2ronServer)} Shard: \"{cityServer.Name}\" is: ONLINE ({cityServer.MyIP}:{cityServer.PORT}) and" +
+                $" nio2so DataService is: CONNECTED ({LocalServerSettings.Default.APIUrl})\n");
+            Console.ForegroundColor = usingSSL ? ConsoleColor.Green : ConsoleColor.Red;
+            Console.WriteLine($" >> SSL: " + (usingSSL ? "Enabled (Play-Test and later only)" : "Disabled (Pre-Alpha only)") + "\n");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine($" >> Targeting Pack: {cityServer.TargetingPackName}");
+            Console.ResetColor();
+
+            while (Console.ReadLine() != "shutdown")
+            {
+                ; // empty
+            }
 #if ERRORHANDLER
             }
             catch (Exception e)

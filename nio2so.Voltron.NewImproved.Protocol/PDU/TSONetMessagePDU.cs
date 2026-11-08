@@ -17,26 +17,23 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         {
         }
 
-        public TSONetMessagePDU(uint sendingAvatarID, TSOServiceMessage message, params uint[] vector) : this()
+        /// <summary>
+        /// Creates a new <see cref="TSONetMessagePDU"/> with the given <paramref name="kMSGID"/> and <paramref name="message"/>
+        /// </summary>
+        public TSONetMessagePDU(uint sendingAvatarID, TSO_NewImproved_kMSGs kMSGID, TSOServiceMessage message, uint Parameter = 0x02) : this()
         {
-            SendingAvatarID = sendingAvatarID;
-            StatusCode = 0x0;
-            Vector = vector;
+            this.kMSGID = kMSGID;
             Message = message;
+            MakeBodyFromProperties();
+
+            uint adjustedLength = ContentLength + 8;
+
+            this.Parameter = Parameter;
+            Size1 = adjustedLength;
+            Size2 = 0x80000000 | adjustedLength;            
 
             MakeBodyFromProperties();
         }
-        /// <summary>
-        /// Creates a new <see cref="TSONetMessagePDU"/> with the given <paramref name="kMSGID"/> and <paramref name="message"/>
-        /// <para/>In niotso, this is populated with 3 <c>0x3b</c> values surrounding <paramref name="kMSGID"/>. This has been brought forward for now.
-        /// <para/>It is unsure why it is doing this or if it is even needed.
-        /// </summary>
-        /// <param name="sendingAvatarID"></param>
-        /// <param name="kMSGID"></param>
-        /// <param name="message"></param>
-        public TSONetMessagePDU(uint sendingAvatarID, uint kMSGID, TSOServiceMessage message) : 
-            this(sendingAvatarID, message, 0x3b, 0x3b, kMSGID, 0x3b)
-        { }
 
         public override ushort VoltronPacketType => (ushort)TSO_NewImproved_VoltronPacketTypes.cTSONetMessagePDU;
 
@@ -44,13 +41,17 @@ namespace nio2so.Voltron.NewImproved.Protocol.PDU
         /// <summary>
         /// The amount of items in the following <see cref="Vector"/> -- automatically populated by <see cref="TSOVoltronSerializer"/>
         /// </summary>
-        [TSOVoltronArrayLength(nameof(Vector))]
-        public uint VectorCount { get; set; }
+        public uint Parameter { get; set; } = 0x02;
         public uint StatusCode { get; set; }        
         /// <summary>
-        /// Fields on the <see cref="TSONetMessagePDU"/> giving context around the ObjectID, FieldID, TypeID, etc.
+        /// The size of all data including <see cref="kMSGID"/> onward.
         /// </summary>
-        public uint[] Vector { get; set; } = Array.Empty<uint>();
+        public uint Size1 { get; set; }
+        /// <summary>
+        /// The size of all data including <see cref="kMSGID"/> onward.
+        /// <para/> 0x8000[<see cref="Size1"/>] - example: <c>0x80000050</c>
+        /// </summary>
+        public uint Size2 { get; set; }
 
         public TSO_NewImproved_kMSGs kMSGID { get; set; }
 

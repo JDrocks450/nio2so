@@ -135,8 +135,10 @@ namespace nio2so.Voltron.Core.Telemetry
 
             if (!TestingConstraints.VerboseLogging)
             { // filter out the server tick confirmation messages if verbose logging is disabled
+                long pos = PDU.BodyPosition;
                 PDU.SetPosition(26);
                 uint kMSGID = PDU.ReadBodyDword();
+                PDU.SetPosition(pos);
                 if (kMSGID == 0x6B6F23A1)
                     return;
             }

@@ -1,12 +1,16 @@
-﻿using nio2so.Voltron.Core.Services;
+﻿using nio2so.DataService.Common.Tokens;
+using nio2so.Voltron.Core.Services;
 using nio2so.Voltron.Core.TSO;
 using nio2so.Voltron.Core.TSO.Regulator;
 using nio2so.Voltron.Core.TSO.Regulator.Room;
 using nio2so.Voltron.Core.TSO.Struct;
 using nio2so.Voltron.NewImproved.Protocol.PDU;
+using nio2so.Voltron.NewImproved.Protocol.PDU.DataService;
 using nio2so.Voltron.NewImproved.Protocol.PDU.MessageFormat;
 using nio2so.Voltron.NewImproved.Protocol.Services;
 using nio2so.Voltron.PreAlpha.Protocol.PDU;
+using OpenSSL.Core;
+using System.Reflection;
 
 namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 {
@@ -472,7 +476,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
 
             return successful;
         }
-
+        bool joined = false;
         static uint tso_entry_test_i = 0;
 
         [TSOProtocolHandler((uint)TSO_NewImproved_VoltronPacketTypes.LotEntryRequestPDU)]
@@ -490,6 +494,9 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             // UPDATE ROOM
             TSOUpdateRoomPDU.ReasonCodes code = values[tso_entry_test_i++];
             RespondWith(new TSOUpdateRoomPDU(roomInfo.RoomInfo));
+
+            joined = true;
+            ClientShowMessage(1337, "Joining lot started.");
 
             nio2soClientSessionService clientSessionService = GetService<nio2soClientSessionService>();
             if (!clientSessionService.GetVoltronClientByPDU(PDU, out TSOAriesIDStruct? joiningClient) || joiningClient == null)
@@ -528,8 +535,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 using var ms = new MemoryStream(packet_data);
                 var houseDataPDU = GetService<TSONewImprovedPDUFactory>().CreatePacketObjectFromDataBuffer(ms);
 
+                TrySendTo(90001, new TSONetMessagePDU(joiningClient.AvatarID, (TSO_NewImproved_kMSGs)0xC984DE7B, new TSOServiceMessage(new TSONetMessageStandard(0x19500223, joiningClient.AvatarID, 0xC984DE7B, 0x0539))));
+                return;
                 TrySendTo(90001, new TSOOccupantArrivedPDU(GetPlayerInfoStruct(joiningClient)));
                 TrySendTo(90001, houseDataPDU);
+                ClientShowMessage(90001, "Avatar is joining.");
                 return;
 #if false
                 TrySendTo(90001, new TSONetMessagePDU(joiningClient.AvatarID, 0xACDC4FF2, new TSOServiceMessage(new TSONetMessageStandard(0x19500223, joiningClient.AvatarID, 0xACDC4FF2, 0x0539))));
@@ -569,8 +579,15 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (PDU is not TSONetMessagePDU netMsg)
                 throw new ArgumentException(nameof(PDU));
 
+            if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kMSGID_Unconfirmed_AvatarJoinCancel)
+            {
+                LogConsole($"Cancelled joining a room.");
+                return;
+            }
+
             if (netMsg.kMSGID != TSO_NewImproved_kMSGs.kServerTickConfirmationMsg)
                 ; // breakpoint
+            else TrySendTo(90001, netMsg);
 
             ITSONetMessageStandard msg = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
 
@@ -578,6 +595,7 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             {
                 ITSONetMessageStandard embedded = netMsg.Message.GetMessageAs<TSONetMessageStandard>();
                 LogConsole($"Room loaded with the following Generic Message: {embedded.StringContent}");
+                TrySendTo(90001, netMsg); // send it
             }                        
 
             // figure out the parameters of this transaction
@@ -601,8 +619,6 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             if (netMsg.kMSGID == (TSO_NewImproved_kMSGs)0xCBBC0936)
             {
                 TrySendTo(Dest_AvatarID, netMsg); // send it
-                SendAvatarNeighborPacket(1337);
-                SendAvatarNeighborPacket(90001);
                 return;
             }
 
@@ -630,7 +646,11 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
             else // client is likely still trying to joining this room, just put it into the backlog and send it when they join
             {
                 if (netMsg.kMSGID == TSO_NewImproved_kMSGs.kServerTickConfirmationMsg)
+                {
+                    if (joined)
+                        TrySendTo(1337, netMsg);
                     ; // do not add this to the backlog
+                }
                 else if (!roomController.AddTransactionToBacklog(roomID, new(Client.AvatarID, Dest_AvatarID.AvatarID, netMsg)))
                     LogConsole($"[RoomProtocol] Failed to add transaction to backlog for room {roomID}.");
             }
@@ -641,6 +661,13 @@ namespace nio2so.Voltron.NewImproved.Protocol.Regulator
                 SendAvatarNeighborPacket(90001);
             }
         }
+
+        /// <summary>
+        /// Shows a generic message on a remote connection
+        /// </summary>
+        void ClientShowMessage(AvatarIDToken Client, params string[] Messages) => TrySendTo(Client.AvatarID, 
+            new TSONetMessagePDU(Client.AvatarID, TSO_NewImproved_kMSGs.kMSGID_GenericMessage_Little, new PDU.DataService.TSOServiceMessage(
+                        new TSONetMessageStandard(0, Client.AvatarID, (uint)TSO_NewImproved_kMSGs.kMSGID_GenericMessage_Little, Messages))));
 
         /// <summary>
         /// Sends this <paramref name="PDU"/> to every client connected to this <paramref name="HouseID"/> <see cref="RoomProtocolRoomInfo"/>

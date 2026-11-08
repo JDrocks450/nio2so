@@ -5,9 +5,25 @@
     <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Configurations>Debug;Release</Configurations>
+    <Configurations>Debug;Release;Debug_PreAlpha;Debug_NewImproved</Configurations>
     <Platforms>AnyCPU;x86</Platforms>
     <ApplicationIcon>voltronlogo.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_PreAlpha|AnyCPU'">
+    <DefineConstants>$(DefineConstants);TSOPREALPHA;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_PreAlpha|x86'">
+    <DefineConstants>$(DefineConstants);TSOPREALPHA;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_NewImproved|AnyCPU'">
+    <DefineConstants>$(DefineConstants);TSONANDI;DEBUG</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_NewImproved|x86'">
+    <DefineConstants>$(DefineConstants);TSONANDI;DEBUG</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

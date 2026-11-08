@@ -31,5 +31,21 @@ namespace nio2so.Voltron.Core.TSO.Serialization.Types
             EndIndex = Bytes.Length;
             return strings.ToArray();
         }
+
+        public static ReadOnlySpan<byte> GetVoltronStr23FormatBytes(string[] stringContent)
+        {
+            byte[] result = new byte[1 +stringContent.Sum(s => Encoding.UTF8.GetByteCount(s) + 1)];
+            result[0] = (byte)(result.Length - 1);
+            int index = 1;
+            foreach (string s in stringContent)
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(s);
+                Array.Copy(bytes, 0, result, index, bytes.Length);
+                index += bytes.Length;
+                result[index] = 0x0A;
+                index++;
+            }
+            return new ReadOnlySpan<byte>(result);
+        }
     }
 }
