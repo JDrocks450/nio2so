@@ -166,8 +166,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             // send the occupant arrived pdu to the host
             bool result = true;
             JoinFailureReason = "Couldn't communicate with the host using Voltron. (Did they disconnect?)";
+
             if (!HSB)
             { // the host should not get this packet received for themself, causes issues.
+                //the host should be the only one to receive this packet, as they are the one who is hosting the lot and will be sending the list of occupants to all clients in the room.
                 result = true; 
                 TrySendTo(roomInfo.HostHSBAvatarID, new TSOOccupantArrivedPDU(playerInfo));
             }
