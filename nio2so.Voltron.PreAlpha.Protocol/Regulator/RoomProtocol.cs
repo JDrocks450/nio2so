@@ -169,7 +169,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (!HSB)
             { // the host should not get this packet received for themself, causes issues.
                 result = true; 
-                BroadcastPDUToRoom(HouseID, new TSOOccupantArrivedPDU(playerInfo));
+                TrySendTo(roomInfo.HostHSBAvatarID, new TSOOccupantArrivedPDU(playerInfo));
             }
             if (!result) return false;
 
