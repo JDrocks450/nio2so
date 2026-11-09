@@ -170,8 +170,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (!HSB)
             { // the host should not get this packet received for themself, causes issues.
                 //the host should be the only one to receive this packet, as they are the one who is hosting the lot and will be sending the list of occupants to all clients in the room.
-                result = true; 
-                TrySendTo(roomInfo.HostHSBAvatarID, new TSOOccupantArrivedPDU(playerInfo));
+                result = TrySendTo(roomInfo.HostHSBAvatarID, new TSOOccupantArrivedPDU(playerInfo));
             }
             if (!result) return false;
 
