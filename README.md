@@ -246,12 +246,9 @@ This project is a lot of Reverse-Engineering. Here's some helpful tips on what s
  * **Cadence.dll** - Packet Send/Receive
 
 <figure>
-  <img
-  src="https://github.com/JDrocks450/nio2so/assets/16988651/9cce0310-42c2-41aa-8644-0003b9a6ccbe"
-  alt="An image of TSOView2.exe rendering City terrain as it would appear in TSO Pre-Alpha.">
-  <figcaption></figcaption>
+  <img alt="An image of TSOView2.exe rendering City terrain as it would appear in TSO Pre-Alpha." src="https://github.com/user-attachments/assets/55db6241-e8a4-496a-8015-061632081e9e" />
 </figure>
 
-An image of <b>TSOView2</b> rendering the terrain of the city "Dan's Grove" as it would appear in The Sims Online: Pre-Alpha.
+An image of <b>TSOView2</b> rendering the terrain of the city "[Interhogan](https://www.tsomania.net/cities/lost.php)" as it would appear in The Sims Online: Pre-Alpha.
 
-<i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/TSOView2-City-Viewer).</i>
+<i>More info in the [wiki](https://github.com/JDrocks450/nio2so/wiki/nio2so-%E2%80%90-Tools-%E2%80%90-TSOView2-City-Viewer).</i>
