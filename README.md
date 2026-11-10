@@ -15,15 +15,18 @@
   <img width="445" alt="image" src="https://github.com/user-attachments/assets/637bd054-92a1-4a25-b61c-5e65db2d8b2e" />
 </p>
 
-## Disclaimer
-
-_This project does not distribute, include, or provide any copyrighted materials. Any copyrighted materials required to use this software must be obtained independently by the end user. No leaked source code, proprietary assets, or other unauthorized materials were used in the development of this project or any of its components._
-
-_This project is provided free of charge and on an "as is" basis, without warranties or guarantees of any kind, express or implied. The authors and contributors assume no responsibility for any damages, losses, or other consequences resulting from the use, misuse, or inability to use this software. Use of this project is entirely at your own risk._
-
-_This project is a non-commercial, open-source effort. The software and its components are not offered for sale, and access to the project will not be restricted behind payment. The authors do not solicit or accept donations, sponsorships, or other forms of compensation related to this project._
-
-_This project does not use AI, and AI-assisted code or code entirely generated using AI will not be accepted._
+> [!NOTE]
+> **Disclaimer:** 
+> _This project does not distribute, include, or provide any copyrighted materials. Any copyrighted materials required to use this software must be obtained independently by the end user. No leaked source code,
+> proprietary assets, or other unauthorized materials were used in the development of this project or any of its components._
+> 
+> _This project is provided free of charge and on an "as is" basis, without warranties or guarantees of any kind, express or implied. The authors and contributors assume no responsibility for any damages, losses, or
+> other consequences resulting from the use, misuse, or inability to use this software. Use of this project is entirely at your own risk._
+> 
+> _This project is a non-commercial, open-source effort. The software and its components are not offered for sale, and access to the project will not be restricted behind payment. The authors do not solicit or accept
+> donations, sponsorships, or other forms of compensation related to this project._
+> 
+> _This project does not use AI, and AI-assisted code or code entirely generated using AI will not be accepted._
 
 ## Videos
 
