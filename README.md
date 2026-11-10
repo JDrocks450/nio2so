@@ -1,14 +1,18 @@
-<p> 
-  <img align="left" src="Bisquick Logo.png" height="100">   
-  <img align="center" src="projectlogods.png" height="200"> 
+<p align="center"> 
+  <img  src="projectlogods.png" height="200"> 
 </p>
 
 # New Implementation Of The Sims Online (Version 2)
 
+<img align="left" src="Bisquick Logo.png" height="100">   
+
 <b>A continuation of niotso (for The Sims Online)</b> in which this project successfully emulates the server and protocols that the in-development <i>The Sims Online: Pre-Alpha</i> client interfaces with to create the gameplay experience as it were in May 2002. **_Experience it as if you were a developer at Maxis!_**
 
+<br clear="left"/>
+
 <p align="center"> 
-  <img src="https://github.com/user-attachments/assets/dfe98760-b7f8-4cc1-b00e-968bd95f8050" alt="Alt text" style="float: right; margin-right: 15px;" />
+  <img src="https://github.com/user-attachments/assets/dfe98760-b7f8-4cc1-b00e-968bd95f8050" alt="Alt text" width="386"/>
+  <img width="445" alt="image" src="https://github.com/user-attachments/assets/637bd054-92a1-4a25-b61c-5e65db2d8b2e" />
 </p>
 
 ## Disclaimer
