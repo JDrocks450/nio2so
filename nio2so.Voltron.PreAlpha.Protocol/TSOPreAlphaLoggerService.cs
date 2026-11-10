@@ -24,12 +24,23 @@ namespace nio2so.Voltron.PreAlpha.Protocol
             //filter out dumb stuff
             if (!TestingConstraints.VerboseLogging)
             {
-                if (PDU is TSOPreAlphaSplitBufferPDU)
+                //**split buffers
+                if (PDU is TSOPreAlphaSplitBufferPDU) // split buffers are logged in a special way
                     return; // skip these
+                { // ** find player responses, not pretty but works.
+                    TSOFindPlayerPDU? findPlayer = PDU as TSOFindPlayerPDU;
+                    TSOFindPlayerResponsePDU? findPlayerResponse = PDU as TSOFindPlayerResponsePDU;
+                    if (findPlayer != null || findPlayerResponse != null) 
+                    { // these are so frequent and also densely packed with data, make these into stubs.
+                        Log($"{PDU.GetType().Name} requested for AriesID: {(findPlayer?.RequestedPlayer ?? findPlayerResponse?.PlayerInfo.PlayerID) ?? Core.TSO.Struct.TSOAriesIDStruct.Default}");
+                        return;
+                    }
+                }
+                //**server confirmatio tick msg
                 if (PDU is ITSODataBlobPDU standardMsg &&
                     standardMsg.DataBlobContentObject.GetAs<TSOStandardMessageContent>().
                     Match(TSO_PreAlpha_MasterConstantsTable.kServerTickConfirmationMsg)) ;
-                    //return; // this is a server confirmation message, they spam. Do not log these.
+                    return; // this is a server confirmation message, they spam. Do not log these.
             }
             base.OnVoltronPacket(Direction, Time, PDU, ClientID);
         }

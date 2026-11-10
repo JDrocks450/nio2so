@@ -152,10 +152,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         /// </summary>
         /// <param name="HouseID"></param>
         /// <param name="JoinerVoltronID"></param>
-        /// <param name="HSB">If true, this Avatar is not a physical avatar is will not be treated as an occupant</param>
+        /// <param name="IsHost">If true, this Avatar is not a physical avatar is will not be treated as an occupant</param>
         /// <returns></returns>
         /// <exception cref="InvalidDataException"></exception>
-        bool ClientUpdateRoom_EnterRoom(uint HouseID, TSOAriesIDStruct JoinerVoltronID, bool HSB, out string JoinFailureReason)
+        bool ClientUpdateRoom_EnterRoom(uint HouseID, TSOAriesIDStruct JoinerVoltronID, bool IsHost, out string JoinFailureReason)
         {
             TSOPlayerInfoStruct playerInfo = GetPlayerInfoStruct(JoinerVoltronID);
             uint avatarID = (JoinerVoltronID as ITSONumeralStringStruct)?.NumericID ?? 0;
@@ -167,7 +167,7 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             bool result = true;
             JoinFailureReason = "Couldn't communicate with the host using Voltron. (Did they disconnect?)";
 
-            if (!HSB)
+            if (!IsHost)
             { // the host should not get this packet received for themself, causes issues.
                 //the host should be the only one to receive this packet, as they are the one who is hosting the lot and will be sending the list of occupants to all clients in the room.
                 result = TrySendTo(roomInfo.HostHSBAvatarID, new TSOOccupantArrivedPDU(playerInfo));
@@ -180,10 +180,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
             if (!result) return false;
 
             // ensure we can set this avatar into the room in the protocol -- shouldn't fail
-            JoinFailureReason = "Mapping which room your avatar is in failed.";
+            JoinFailureReason = "Mapping which room your avatar is in has failed.";
             _roomController.SetPlayerInRoom(avatarID, HouseID);
             JoinFailureReason = "success.";
-            LogConsole($"VoltronID: {JoinerVoltronID} TSOClient has connected to HouseID: {HouseID} -- {(HSB ? "as a host" : "as a visitor")}.");
+            LogConsole($"VoltronID: {JoinerVoltronID} TSOClient has connected to {nameof(HouseID)}: {HouseID} -- as a {(IsHost ? "host" : "visitor")}.");
             return result;
         }
 
@@ -224,9 +224,10 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
                 TakeRoomOffline(roomInfo);
             else
             {
-                TrySendTo(VoltronID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(roomInfo.HostHSBAvatarID))); // testing
                 TrySendTo(roomInfo.HostID, new TSOOccupantDepartedPDU(GetPlayerInfoStruct(VoltronID)));
-            }
+                //**send the DeleteCharacterAppointment to all connected parties to force the avatar off the lot.
+                //BroadcastPDUToRoom(HouseID, new TSOBroadcastDatablobPacket(TSO_PreAlpha_MasterConstantsTable.GZCLSID_cDeleteCharacterAppointment, new TSODeleteCharacterAppointmentBlobContent(VoltronID.AvatarID)));
+            }    
 
             //**notify all connected clients the updated avatar list
             UpdateLotOccupants(roomInfo);
@@ -269,16 +270,9 @@ namespace nio2so.Voltron.PreAlpha.Protocol.Regulator
         }
         void UpdateLotOccupants(RoomProtocolRoomInfo roomInfo)
         {
+            // stubbed these are not used this way. the client measures whos on the lot using which Avatar objects themselves are currently on the lot.
+            // the only client to use Occupant PDUs is the host.
             return;
-
-            //**tell the clients (NOT the host) the new list of players currently in this room            
-            if (GetRoomUpdateOccupantsPDUByRoomID(roomInfo.LotID, roomInfo.HostHSBAvatarID, out TSOUpdateOccupantsPDU? HostOccupantsPDU))
-                BroadcastPDUToRoom(roomInfo.LotID, HostOccupantsPDU, true);
-
-            //TEST
-            return;
-            TSOListOccupantsResponsePDU occupantsPDU = GetOccupantsPDUByRoomID(roomInfo.LotID, out _);
-            BroadcastPDUToRoom(roomInfo.LotID, occupantsPDU);
         }
 
         /// <summary>
