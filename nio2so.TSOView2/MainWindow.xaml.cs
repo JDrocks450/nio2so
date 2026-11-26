@@ -10,6 +10,7 @@ using nio2so.TSOView2.Formats.TSOData;
 using nio2so.TSOView2.Formats.UIs;
 using nio2so.TSOView2.Formats.UIs.Subpages;
 using nio2so.TSOView2.Plugins;
+using nio2so.TSOView2.TS2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -105,6 +106,7 @@ namespace nio2so.TSOView2
                 { OpenRASStreamItem, () => ShowPlugin(new TSORASUIPage()) },
                 { OpenCityBinFileItem, () => ShowPlugin(new TSOCityBinPage(TSOCityBinPage.OpenMode.AutomaticTSODirectory)) },
                 { OpenCityBinManualFileItem, () => ShowPlugin(new TSOCityBinPage(TSOCityBinPage.OpenMode.ManualDirectorySelect)) },
+                { OpenTREEElement, () => ShowPlugin(new TS2EdithPage()) },
             };
             //Set all named MenuItems to be included in the system
             void SearchChildren(MenuItem MenuItem)

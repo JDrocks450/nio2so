@@ -36,6 +36,9 @@
                         <MenuItem Name="OpenFAR1ArchiveItem" Header="Open FAR1 Archive"/>
                         <MenuItem Name="OpenFARV1BArchiveItem" Header="Open FARV1B Archive"/>
                     </MenuItem>
+                    <MenuItem Header="Open The Sims 2 Content...">
+                        <MenuItem Name="OpenTREEElement" Header="The Sims TREE IFF Chunk..."/>
+                    </MenuItem>
                     <MenuItem Header="Targa Images..." Name="ViewTGAItem"/>
                 </MenuItem>
                 <MenuItem Name="RedoLastActionItem" Header="RECENT_ITEM"/>
